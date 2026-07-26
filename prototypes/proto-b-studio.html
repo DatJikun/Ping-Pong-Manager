@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype B — Studio (minimal)</title>
+<!-- Newsreader (serif, narrow, editorial) for display + names; IBM Plex Sans for UI and figures.
+     No monospace anywhere — that was what made it read "terminal". -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   PING PONG MANAGER — "sports almanac"
+   Ink on paper, hairline rules, mono numerals. No display font, no
+   cards-with-shadows, no gradients, one accent colour.
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#f4f1ea; --sheet:#fffdf8; --sheet2:#faf7f0; --ink:#17130f; --ink2:#4f483e; --ink3:#8d8477;
+  --rule:#e6e0d4; --rule2:#d2c9b8;
+  --accent:#a8281d;        /* one sharp accent, used for state + brand only */
+  --pos:#176b4b; --warn:#a66a00;
+  --row:30px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{background:var(--paper);color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;line-height:1.5;font-weight:450}
+/* paper grain — 3%, fixed, never in the way */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.035;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>")}
+.num,.tbl td.n,.kpi b,.stat-v{font-family:'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+/* micro label: the one repeated typographic motif */
+.lab{font-size:9.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)}
+
+/* ── shell: thin rail, no icons, keyboard-first ───────────────── */
+#app{display:grid;grid-template-columns:186px 1fr;min-height:100vh}
+#rail{background:var(--ink);color:#cdc6bb;display:flex;flex-direction:column;padding:18px 0 14px;position:sticky;top:0;height:100vh}
+.mark{padding:0 18px 18px;display:flex;align-items:baseline;gap:7px;border-bottom:1px solid #2a2620;margin-bottom:14px}
+.mark b{font-size:14px;font-weight:600;color:#fff;letter-spacing:-.02em}
+.mark span{font-family:'IBM Plex Sans',sans-serif;font-size:9px;letter-spacing:.18em;color:#6f675c;text-transform:uppercase}
+.rgroup{padding:16px 18px 6px;font-family:'IBM Plex Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5e564c}
+.rnav{display:flex;align-items:baseline;gap:9px;width:100%;padding:6px 18px;border:none;background:none;color:#cdc6bb;
+  font:450 13px/1.6 'IBM Plex Sans';text-align:left;cursor:pointer;position:relative}
+.rnav:hover{color:#fff;background:#ffffff09}
+.rnav.on{color:#fff;font-weight:500}
+.rnav.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:2px;background:var(--accent)}
+.rnav .k{font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;color:#5e564c;width:9px}
+.rnav.on .k{color:var(--accent)}
+.rnav .c{margin-left:auto;font-family:'IBM Plex Sans',sans-serif;font-size:10px;color:var(--accent)}
+.rfoot{margin-top:auto;padding:12px 18px 0;border-top:1px solid #2a2620;font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;color:#5e564c;letter-spacing:.1em}
+
+/* ── masthead ─────────────────────────────────────────────────── */
+#head{background:var(--sheet);border-bottom:1px solid var(--rule2);position:sticky;top:0;z-index:30}
+.mast{display:flex;align-items:center;gap:22px;padding:13px 26px}
+.crest{width:30px;height:30px;border:1px solid var(--rule2);display:grid;place-items:center;
+  font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:11px;letter-spacing:.02em}
+.who h1{font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.who p{font-size:11.5px;color:var(--ink3)}
+.mstats{margin-left:auto;display:flex}
+.mstat{padding:0 18px;border-left:1px solid var(--rule);text-align:right}
+.mstat .v{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:2px}
+.mstat .v.pos{color:var(--pos)}
+/* the only loud element on the page */
+.play{margin-left:20px;border:none;background:var(--accent);color:#fff;padding:10px 18px;
+  font:500 12px/1 'IBM Plex Sans';letter-spacing:.01em;cursor:pointer;border-radius:2px}
+.play:hover{background:#9d1c15}
+.subnav{display:flex;gap:20px;padding:0 26px}
+.sn{padding:8px 0 9px;border:none;background:none;font:450 12.5px 'IBM Plex Sans';color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.sn:hover{color:var(--ink)}
+.sn.on{color:var(--ink);font-weight:500;border-bottom-color:var(--accent)}
+
+main{padding:24px 26px 70px;max-width:1680px}
+.screen{display:none}.screen.on{display:block}
+/* ── page head: asymmetric, rule under the title only ─────────── */
+.ph{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:24px;padding-bottom:12px;border-bottom:1px solid var(--rule2);margin-bottom:20px}
+.ph h2{font-size:19px;font-weight:600;letter-spacing:-.025em}
+.ph p{font-size:12px;color:var(--ink3);margin-top:3px}
+.tools{display:flex;gap:7px}
+.btn{border:1px solid var(--rule2);background:var(--sheet);color:var(--ink);padding:6px 12px;border-radius:2px;
+  font:450 11.5px/1.4 'IBM Plex Sans';cursor:pointer}
+.btn:hover{border-color:var(--ink3);background:var(--sheet2)}
+.btn.on,.btn.solid{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:500}
+.btn.acc{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.btn.quiet{border-color:transparent;background:none;color:var(--ink2)}
+.btn.quiet:hover{border-color:var(--rule2);background:var(--sheet)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.xs{padding:4px 9px;font-size:11px}
+
+/* ── KPI strip: one bordered band, hairline dividers ──────────── */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--rule2);background:var(--sheet);margin-bottom:20px}
+.kpi{padding:13px 16px 14px;border-right:1px solid var(--rule)}
+.kpi:last-child{border-right:none}
+.kpi b.txt{font-family:'IBM Plex Sans',sans-serif;font-weight:600;letter-spacing:-.03em}
+.kpi b{display:block;font-size:25px;font-weight:500;letter-spacing:-.03em;line-height:1.15;margin-top:5px}
+.kpi b.pos{color:var(--pos)}.kpi b.acc{color:var(--accent)}
+.kpi s{display:block;text-decoration:none;font-size:11px;color:var(--ink3);margin-top:2px}
+.kpi.mark-l{box-shadow:inset 2px 0 0 var(--accent)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.stack{display:grid;gap:20px}
+.panel{background:var(--sheet);border:1px solid var(--rule2)}
+.panel.scroll{overflow-x:auto}
+.panel>h3{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--rule);
+  font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.pad{padding:14px 16px}
+
+/* ── tables: 30px rows, mono figures, hairlines ───────────────── */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{position:sticky;top:0;background:var(--sheet2);text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule2);
+  font-family:'IBM Plex Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);white-space:nowrap;cursor:pointer;user-select:none}
+.tbl th:hover{color:var(--ink)}
+.tbl th.n,.tbl td.n{text-align:right}
+.tbl td{height:var(--row);padding:0 9px;border-bottom:1px solid var(--rule);font-size:12.5px;white-space:nowrap}
+.tbl tbody tr:hover td{background:var(--sheet2)}
+.tbl tbody tr.on td{background:#b7241c0a}
+.tbl tbody tr.on td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+.tbl tbody tr{animation:in .22s ease both}
+/* below ~1600px the inline meters yield to the numbers they annotate */
+
+@keyframes in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.face{width:22px;height:22px;border-radius:50%;vertical-align:-6px;margin-right:9px;display:inline-block;background-size:cover;filter:grayscale(.15)}
+.name{font-weight:500}
+.dim{color:var(--ink3)}
+.meter{display:inline-block;width:26px;height:3px;background:var(--rule2);vertical-align:middle;margin-right:7px;position:relative}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+.meter i.hi{background:var(--pos)}.meter i.lo{background:var(--accent)}
+/* status words instead of coloured pills everywhere */
+.st{font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;letter-spacing:.06em}
+.st.up{color:var(--pos)}.st.down{color:var(--accent)}.st.warn{color:var(--warn)}
+.flag{display:inline-block;font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 7px;border:1px solid var(--rule2);color:var(--ink2)}
+.flag.acc{border-color:var(--accent);color:var(--accent)}
+.flag.pos{border-color:var(--pos);color:var(--pos)}
+
+/* ── decisions: rules, not cards ──────────────────────────────── */
+.dec{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--rule)}
+.dec:last-child{border-bottom:none}
+.dec .f{width:34px;height:34px;border-radius:50%;background-size:cover;filter:grayscale(.15)}
+.dec .t{font-weight:500;font-size:13.5px}
+.dec .d{font-size:11.5px;color:var(--ink3);margin-top:1px}
+
+/* ── inspector: a column, not a floating card ─────────────────── */
+.insp{background:var(--sheet);border:1px solid var(--rule2);position:sticky;top:104px}
+.insp-h{padding:16px;border-bottom:1px solid var(--rule);display:flex;gap:12px;align-items:center;background:var(--sheet2)}
+.insp-h .f{width:46px;height:46px;border-radius:50%;background-size:cover;filter:grayscale(.15)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 16px;border-bottom:1px solid var(--rule);font-size:12px}
+.kv:last-of-type{border-bottom:none}
+.kv span:first-child{color:var(--ink3)}
+.kv span:last-child{font-family:'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* ── pre-season flow ──────────────────────────────────────────── */
+.track{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule2);background:var(--sheet);margin-bottom:20px}
+.trk{padding:12px 16px;border-right:1px solid var(--rule);display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center;cursor:pointer}
+.trk:last-child{border-right:none}
+.trk .n{width:22px;height:22px;border:1px solid var(--rule2);display:grid;place-items:center;
+  font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;color:var(--ink3)}
+.trk.done .n{border-color:var(--pos);color:var(--pos)}
+.trk.on{background:#b7241c07;box-shadow:inset 0 -2px 0 var(--accent)}
+.trk.on .n{border-color:var(--accent);background:var(--accent);color:#fff}
+.trk .t{font-size:12.5px;font-weight:500}
+.trk .d{font-size:11px;color:var(--ink3)}
+.stage{background:var(--sheet);border:1px solid var(--rule2);padding:26px 28px;display:grid;gap:18px}
+.stage .over{font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.stage h4{font-size:23px;font-weight:600;letter-spacing:-.03em;margin-top:6px}
+.stage .why{font-size:13.5px;color:var(--ink2);max-width:62ch;margin-top:6px}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:20px;align-items:center;padding:15px 18px;border:1px solid var(--rule);cursor:pointer;background:var(--sheet)}
+.opt+.opt{border-top:none}
+.opt:hover{background:var(--sheet2)}
+.opt.on{border-color:var(--pos);box-shadow:inset 2px 0 0 var(--pos);background:#176b4b06}
+.opt .t{font-size:14.5px;font-weight:500}
+.opt .d{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.opt .m{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:500;text-align:right}
+.opt .m.pos{color:var(--pos)}.opt .m.neg{color:var(--accent)}
+.stage-f{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:16px;border-top:1px solid var(--rule)}
+
+/* ── inbox ────────────────────────────────────────────────────── */
+.inbox{display:grid;grid-template-columns:168px minmax(0,1fr) 336px;gap:20px;align-items:start}
+.fold{display:flex;justify-content:space-between;padding:6px 12px;font-size:12.5px;color:var(--ink2);cursor:pointer}
+.fold:hover{background:var(--sheet2)}
+.fold.on{background:var(--ink);color:var(--paper);font-weight:500}
+.fold b{font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;font-weight:500}
+.mrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--rule);cursor:pointer}
+.mrow:hover{background:var(--sheet2)}
+.mrow.on{background:#b7241c07;box-shadow:inset 2px 0 0 var(--accent)}
+.mrow .f{width:30px;height:30px;border-radius:50%;background-size:cover;filter:grayscale(.15)}
+.mrow .w{font-weight:500;font-size:13px}
+.mrow .p{font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quote{font-size:13.5px;line-height:1.62;padding:14px 16px;border-bottom:1px solid var(--rule)}
+.outcome{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 16px;border-bottom:1px solid var(--rule);font-size:11.5px;align-items:center}
+.outcome span:first-child{color:var(--ink3)}
+.outcome .v{font-family:'IBM Plex Sans',sans-serif;font-size:11px}
+/* below ~1600px the inline meters yield to the numbers they annotate */
+@media(max-width:1600px){.tbl .meter{display:none}}
+
+/* ── the beauty layer: a narrow editorial serif carries display + names,
+      the sans carries UI chrome and data. Figures stay lining + tabular. ── */
+h1,h2,h4,.who h1,.mark b,.kpi b,.mstat .v,.ph h2,.stage h4,.opt .t,.dec .t,.name,.insp-h div>div:first-child{
+  font-family:'Newsreader',Georgia,serif;font-weight:500;font-variant-numeric:tabular-nums lining-nums}
+.kpi b{font-weight:400;font-size:30px;letter-spacing:-.01em}
+.kpi b.txt{font-family:'Newsreader',Georgia,serif;font-weight:400}
+.ph h2{font-size:26px;font-weight:400;letter-spacing:-.01em}
+.stage h4{font-size:30px;font-weight:400;letter-spacing:-.01em}
+.who h1{font-size:17px;font-weight:500}
+.mstat .v{font-size:16px;font-weight:400}
+.name{font-size:13.5px;font-weight:500}
+.opt .t{font-size:16px;font-weight:500}
+.dec .t{font-size:15px;font-weight:500}
+.quote{font-family:'Newsreader',Georgia,serif;font-size:16px;font-weight:400;line-height:1.55}
+.stage .why{font-size:14px;line-height:1.62}
+/* figures in tables: sans, tabular, quietly aligned */
+.tbl td.n,.kv span:last-child,.opt .m,.mstat .v{font-variant-numeric:tabular-nums lining-nums}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="mark"><b>PingPong</b><span>MGR</span></div>
+    <div class="rgroup">Club</div>
+    <button class="rnav on" data-go="hub"><span class="k">1</span>Dashboard</button>
+    <button class="rnav" data-go="squad"><span class="k">2</span>Squad</button>
+    <button class="rnav"><span class="k">3</span>Staff</button>
+    <button class="rnav"><span class="k">4</span>Facilities</button>
+    <button class="rnav"><span class="k">5</span>Finances</button>
+    <div class="rgroup">Operations</div>
+    <button class="rnav" data-go="market"><span class="k">6</span>Transfers</button>
+    <button class="rnav" data-go="flow"><span class="k">7</span>Pre-season<span class="c">2</span></button>
+    <button class="rnav" data-go="inbox"><span class="k">8</span>Inbox<span class="c">3</span></button>
+    <div class="rgroup">Competition</div>
+    <button class="rnav"><span class="k">9</span>League</button>
+    <button class="rnav"><span class="k">0</span>Cup</button>
+    <button class="rnav"><span class="k">–</span>History</button>
+    <div class="rfoot">S4 · R7/22</div>
+  </nav>
+
+  <div>
+    <header id="head">
+      <div class="mast">
+        <div class="crest">KP</div>
+        <div class="who"><h1>KS Piorun</h1><p>1st Division · 3rd place · season 4</p></div>
+        <div class="mstats">
+          <div class="mstat"><div class="lab">Budget</div><div class="v pos">412,900</div></div>
+          <div class="mstat"><div class="lab">Round</div><div class="v">07/22</div></div>
+          <div class="mstat"><div class="lab">Squad</div><div class="v">79</div></div>
+          <div class="mstat"><div class="lab">Prestige</div><div class="v">46</div></div>
+        </div>
+        <button class="play">Play round 8</button>
+      </div>
+      <div class="subnav"><button class="sn on">Overview</button><button class="sn">Fixtures</button><button class="sn">Table</button><button class="sn">Statistics</button><button class="sn">Media</button></div>
+    </header>
+
+    <main>
+      <!-- ── DASHBOARD ── -->
+      <section class="screen on" id="s-hub">
+        <div class="ph"><div><h2>Dashboard</h2><p>Round 7 of 22 · transfer window closed · three decisions open</p></div>
+          <div class="tools"><button class="btn">Nomination</button><button class="btn quiet">Auto-play season</button></div></div>
+        <div class="kpis">
+          <div class="kpi mark-l"><div class="lab">League</div><b class="txt">3rd</b><s>14 pts · 4W 2D 1L</s></div>
+          <div class="kpi"><div class="lab">Budget</div><b class="pos">412.9k</b><s>+71k projected</s></div>
+          <div class="kpi"><div class="lab">Squad rating</div><b>79</b><s>3rd strongest</s></div>
+          <div class="kpi"><div class="lab">Morale</div><b>72%</b><s>Confident</s></div>
+          <div class="kpi"><div class="lab">Board goal</div><b class="txt">Top 4</b><s>On track · 45.9k bonus</s></div>
+        </div>
+        <div class="cols">
+          <div class="stack">
+            <div class="panel"><h3>Needs a decision <span class="flag acc">3 open</span></h3>
+              <div class="dec"><div class="f" data-av="0"></div>
+                <div><div class="t">Izydor Ignaczak wants a start</div><div class="d">Reserve · form 8/10 · you promised him a game in round 5</div></div>
+                <div class="tools"><button class="btn acc xs">Promise</button><button class="btn xs">Decline</button></div></div>
+              <div class="dec"><div class="f" data-av="1"></div>
+                <div><div class="t">Rotate Otton Czerwonka</div><div class="d">Fatigue 81% · injury risk doubles this round</div></div>
+                <button class="btn xs">Open squad</button></div>
+              <div class="dec"><div class="f" data-av="2"></div>
+                <div><div class="t">Strzeżymir enters his final year</div><div class="d">Rivals may pre-sign him from next season</div></div>
+                <button class="btn xs">Negotiate</button></div>
+            </div>
+            <div class="panel"><h3>Starting four <span class="lab">board order</span></h3>
+              <table class="tbl"><thead><tr><th style="width:34px">#</th><th>Player</th><th>Style</th><th class="n">Form</th><th class="n">Fatigue</th><th class="n">Rating</th></tr></thead>
+                <tbody id="hubRows"></tbody></table></div>
+          </div>
+          <div class="stack">
+            <div class="panel"><h3>1st Division</h3>
+              <table class="tbl"><thead><tr><th style="width:30px">#</th><th>Club</th><th class="n">Pts</th><th class="n">Ovr</th></tr></thead><tbody>
+                <tr><td class="n dim">1</td><td>KTS Pantera</td><td class="n">19</td><td class="n dim">83</td></tr>
+                <tr><td class="n dim">2</td><td>GKS Wicher</td><td class="n">16</td><td class="n dim">82</td></tr>
+                <tr class="on"><td class="n">3</td><td class="name">KS Piorun</td><td class="n">14</td><td class="n dim">79</td></tr>
+                <tr><td class="n dim">4</td><td>AKS Feniks</td><td class="n">13</td><td class="n dim">82</td></tr>
+                <tr><td class="n dim">5</td><td>MKS Błyskawica</td><td class="n">11</td><td class="n dim">79</td></tr>
+                <tr><td class="n dim">6</td><td>UKS Sokół</td><td class="n">10</td><td class="n dim">79</td></tr>
+              </tbody></table></div>
+            <div class="panel"><h3>Season story</h3>
+              <div class="pad" style="display:grid;gap:13px;font-size:12.5px;color:var(--ink2)">
+                <div><span class="lab">Round 7</span><div style="margin-top:4px">Mroczek beat an 88-rated opponent in five — the upset of the round.</div></div>
+                <div><span class="lab">Streak</span><div style="margin-top:4px">Three straight wins; the board has stopped asking questions.</div></div>
+                <div><span class="lab">Academy</span><div style="margin-top:4px">A 17-year-old from the Silesia trial is ready to sign.</div></div>
+              </div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SQUAD ── -->
+      <section class="screen" id="s-squad">
+        <div class="ph"><div><h2>Squad</h2><p>Boards 1–4 decide the tie · click a row to inspect</p></div>
+          <div class="tools"><button class="btn on">First team</button><button class="btn quiet">Reserves</button><button class="btn quiet">Academy</button><button class="btn quiet">Loans</button></div></div>
+        <div class="cols">
+          <div class="panel scroll">
+            <table class="tbl"><thead><tr>
+              <th style="width:34px">#</th><th>Player</th><th>Style</th><th class="n">Age</th><th class="n">Ovr</th><th class="n">Peak</th>
+              <th class="n">FH</th><th class="n">BH</th><th class="n">SRV</th><th class="n">RET</th><th class="n">FTW</th><th class="n">MEN</th>
+              <th class="n">Form</th><th class="n">Fat</th><th class="n">Wage</th><th class="n">Yrs</th></tr></thead>
+              <tbody id="squadRows"></tbody></table></div>
+          <aside class="insp">
+            <div class="insp-h"><div class="f" data-av="3"></div><div><div style="font-weight:600;font-size:14.5px;letter-spacing:-.02em">Mściwoj Mroczek</div><div class="dim" style="font-size:11.5px">29 · forehand topspin · board 1</div></div></div>
+            <div class="kv"><span>Overall / peak</span><span>83 / 86</span></div>
+            <div class="kv"><span>Contract</span><span>2 yrs · 63,452</span></div>
+            <div class="kv"><span>Form</span><span class="st up">good run</span></div>
+            <div class="kv"><span>Fatigue</span><span>24%</span></div>
+            <div class="kv"><span>Morale</span><span>72%</span></div>
+            <div class="kv"><span>Market value</span><span>214,000</span></div>
+            <div class="pad tools"><button class="btn acc xs" style="flex:1">Contract</button><button class="btn xs" style="flex:1">Loan</button><button class="btn xs" style="flex:1">Sell</button></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ── TRANSFERS ── -->
+      <section class="screen" id="s-market">
+        <div class="ph"><div><h2>Transfers</h2><p>645 listed · players and staff in one sortable ledger</p></div>
+          <div class="tools"><input class="btn" style="width:210px" placeholder="Search name, club, role"><button class="btn">Filters</button></div></div>
+        <div class="panel" style="overflow:hidden">
+          <table class="tbl"><thead><tr><th style="width:32px"></th><th>Name</th><th>Club</th><th>Type</th><th class="n">Age</th><th class="n">Ovr</th><th class="n">Peak</th><th class="n">Wage</th><th class="n">Fee</th><th>Status</th><th></th></tr></thead>
+            <tbody id="marketRows"></tbody></table></div>
+      </section>
+
+      <!-- ── PRE-SEASON FLOW ── -->
+      <section class="screen" id="s-flow">
+        <div class="ph"><div><h2>Pre-season</h2><p>Four decisions before season 5 · two done</p></div>
+          <button class="btn solid" disabled>Start season 5</button></div>
+        <div class="track">
+          <div class="trk done"><div class="n">✓</div><div><div class="t">Sponsors</div><div class="d">3 of 3 signed</div></div></div>
+          <div class="trk done"><div class="n">✓</div><div><div class="t">Ticket price</div><div class="d">€50 · 69% full</div></div></div>
+          <div class="trk on"><div class="n">3</div><div><div class="t">Equipment</div><div class="d">Choose one</div></div></div>
+          <div class="trk"><div class="n">4</div><div><div class="t">Board goal</div><div class="d">Pick your risk</div></div></div>
+        </div>
+        <div class="stage">
+          <div>
+            <div class="over">Step 3 of 4</div>
+            <h4>Who kits out your squad?</h4>
+            <div class="why">One deal per season: rubbers for every player plus a marketing package. Prestige <b>46</b> puts three of the five partners in reach. Locked once the season starts.</div>
+          </div>
+          <div>
+            <div class="opt on"><div><div class="t">Butterfly Performance <span class="flag pos">best fit</span></div><div class="d">+1 to all stats · +12% marketability · prestige 30–58</div></div><div class="m pos">+1,000</div><div class="lab">per season</div></div>
+            <div class="opt"><div><div class="t">Andro Regional Lab</div><div class="d">+1 to all stats · +6% marketability · safer, cheaper</div></div><div class="m neg">−500</div><div class="lab">per season</div></div>
+            <div class="opt" style="opacity:.45"><div><div class="t">Tibhar Pro Circuit</div><div class="d">+1 all, +1 ATK/SRV · +18% marketability · needs prestige 48</div></div><div class="m">+3,000</div><div class="lab">locked</div></div>
+          </div>
+          <div class="stage-f"><button class="btn quiet">← Ticket price</button><span class="dim" style="font-size:11.5px">Sponsors and tickets are already locked in</span><button class="btn acc">Next: board goal →</button></div>
+        </div>
+      </section>
+
+      <!-- ── INBOX ── -->
+      <section class="screen" id="s-inbox">
+        <div class="ph"><div><h2>Inbox</h2><p>Three decisions waiting · round 7</p></div><button class="btn quiet">Mark all read</button></div>
+        <div class="inbox">
+          <div class="panel" style="padding:6px">
+            <div class="fold on">Decisions <b>3</b></div><div class="fold">Board <b>1</b></div><div class="fold">Players <b>2</b></div><div class="fold">Staff <b>1</b></div><div class="fold">Press <b>—</b></div><div class="fold">Archive <b>—</b></div>
+          </div>
+          <div class="panel" style="overflow:hidden">
+            <div class="mrow on"><div class="f" data-av="4"></div><div><div class="w">Izydor Ignaczak <span class="flag acc">by round 8</span></div><div class="p">“I've won five in a row in training and I'm out of the team again…”</div></div><span class="lab">R7</span></div>
+            <div class="mrow"><div class="f" data-av="5"></div><div><div class="w">Board of KS Piorun</div><div class="p">“Third is fine, but the merchandising line is flat…”</div></div><span class="lab">R7</span></div>
+            <div class="mrow"><div class="f" data-av="6"></div><div><div class="w">Medical staff</div><div class="p">Otton Czerwonka is at 81% fatigue before a home round…</div></div><span class="lab">R7</span></div>
+            <div class="mrow"><div class="f" data-av="7"></div><div><div class="w">Agent of S. Jasiński</div><div class="p">“My client is entering his final year. Let's talk before rivals do.”</div></div><span class="lab">R6</span></div>
+          </div>
+          <aside class="insp">
+            <div class="insp-h"><div class="f" data-av="4"></div><div><div style="font-weight:600;font-size:14px;letter-spacing:-.02em">Izydor Ignaczak</div><div class="dim" style="font-size:11.5px">reserve · 31 · form 8/10</div></div></div>
+            <div class="quote">“I've won five in a row in training and I'm out of the team again. Put me on a board this round — or tell me straight that I'm not in your plans.”</div>
+            <div class="outcome"><span>Promise &amp; field him</span><span class="v st up">+4 morale</span></div>
+            <div class="outcome"><span>Promise &amp; bench him</span><span class="v st down">−12 morale, −1 loyalty</span></div>
+            <div class="outcome"><span>Decline honestly</span><span class="v st warn">−6 morale</span></div>
+            <div class="pad" style="display:grid;gap:6px"><button class="btn acc">Promise a start</button><button class="btn">Not this round</button><button class="btn quiet">Offer him a transfer</button></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>window.store={G:{countryId:'PL',teams:[{id:0,name:'KS Piorun'},{id:1,name:'MKS Blyskawica'},{id:2,name:'UKS Sokol'}]}};</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script>
+const {getAvatarData}=window.PPM.gameplayVisuals;
+const P=[
+ {n:'Mściwoj Mroczek',a:29,s:'FH topspin',o:83,pk:86,st:[84,84,82,77,84,84],f:'good',ft:24,w:'63,452',y:2},
+ {n:'Izydor Ignaczak',a:31,s:'two-winged',o:77,pk:80,st:[71,71,94,71,72,83],f:'hot',ft:12,w:'30,956',y:1},
+ {n:'Otton Czerwonka',a:29,s:'counter/block',o:75,pk:78,st:[64,77,80,84,76,73],f:'steady',ft:81,w:'23,952',y:3},
+ {n:'Strzeżymir Jasiński',a:22,s:'two-winged',o:71,pk:84,st:[70,76,84,63,63,63],f:'dip',ft:8,w:'14,552',y:1},
+ {n:'Pakosław Prus',a:19,s:'defender',o:64,pk:79,st:[58,66,61,72,70,60],f:'rising',ft:0,w:'8,100',y:2},
+ {n:'Bolesław Kot',a:26,s:'blocker',o:69,pk:73,st:[66,70,68,71,69,70],f:'steady',ft:30,w:'17,400',y:2},
+];
+const M=[
+ {n:'Krzesisław Izdebski',c:'SKS Delfin',t:'pre-sign',a:26,o:86,pk:92,w:'180,598',fee:'—',s:'final year'},
+ {n:'Jacek Górski',c:'free agent',t:'coach',a:30,o:89,pk:93,w:'31,279',fee:'—',s:'available now'},
+ {n:'Sykstus Ulatowski',c:'free agent',t:'scout',a:53,o:97,pk:99,w:'70,800',fee:'—',s:'available now'},
+ {n:'Aureliusz Lisowski',c:'UKS Sokół',t:'transfer',a:33,o:85,pk:85,w:'56,300',fee:'18,204',s:'joins next season'},
+ {n:'Damian Sieczka',c:'SKS Delfin',t:'coach',a:32,o:87,pk:91,w:'27,066',fee:'—',s:'contract too long'},
+];
+const cls=v=>v>=82?'hi':v<66?'lo':'';
+const stc=f=>f==='hot'||f==='rising'?'up':f==='dip'?'down':'';
+const av=(i,n,a)=>getAvatarData({id:300+i,name:n,age:a,nationality:'PL',teamId:i%3},'player');
+const meter=v=>`<span class="meter"><i class="${cls(v)}" style="width:${v}%"></i></span>${v}`;
+document.querySelectorAll('[data-av]').forEach((el,i)=>{const p=P[i%P.length];el.style.backgroundImage=`url("${av(i,p.n,p.a)}")`;});
+document.getElementById('hubRows').innerHTML=P.slice(0,4).map((p,i)=>`<tr style="animation-delay:${i*35}ms">
+ <td class="n dim">${i+1}</td><td><span class="face" style="background-image:url('${av(i,p.n,p.a)}')"></span><span class="name">${p.n}</span></td>
+ <td class="dim">${p.s}</td><td class="n"><span class="st ${stc(p.f)}">${p.f}</span></td>
+ <td class="n ${p.ft>70?'st down':''}">${p.ft}%</td><td class="n" style="font-weight:600">${p.o}</td></tr>`).join('');
+document.getElementById('squadRows').innerHTML=P.map((p,i)=>`<tr class="${i===0?'on':''}" style="animation-delay:${i*35}ms">
+ <td class="n dim">${i<4?i+1:'·'}</td><td><span class="face" style="background-image:url('${av(i,p.n,p.a)}')"></span><span class="name">${p.n}</span></td>
+ <td class="dim">${p.s}</td><td class="n dim">${p.a}</td><td class="n" style="font-weight:600">${p.o}</td><td class="n dim">${p.pk}</td>
+ ${p.st.map(v=>`<td class="n">${meter(v)}</td>`).join('')}
+ <td class="n"><span class="st ${stc(p.f)}">${p.f}</span></td><td class="n ${p.ft>70?'st down':''}">${p.ft}%</td>
+ <td class="n">${p.w}</td><td class="n dim">${p.y}</td></tr>`).join('');
+document.getElementById('marketRows').innerHTML=M.map((m,i)=>`<tr style="animation-delay:${i*35}ms">
+ <td><span class="face" style="background-image:url('${av(i+9,m.n,m.a)}')"></span></td><td class="name">${m.n}</td><td class="dim">${m.c}</td>
+ <td><span class="flag${m.t==='pre-sign'?' acc':''}">${m.t}</span></td><td class="n dim">${m.a}</td><td class="n" style="font-weight:600">${m.o}</td>
+ <td class="n dim">${m.pk}</td><td class="n">${m.w}</td><td class="n dim">${m.fee}</td><td class="dim">${m.s}</td>
+ <td class="n"><button class="btn xs">Open</button></td></tr>`).join('');
+document.querySelectorAll('.rnav[data-go]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.rnav').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+b.dataset.go).classList.add('on');window.scrollTo(0,0);
+});
+// deep-link: #squad / #flow / #inbox / #market opens that screen directly
+const _h=location.hash.slice(1);if(_h){const _b=document.querySelector(`[data-go="${_h}"]`);if(_b)_b.click();}
+</script>
+</body>
+</html>

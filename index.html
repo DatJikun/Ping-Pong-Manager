@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PingPong Manager</title>
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link rel="stylesheet" href="./styles/main.css?v=23">
+</head>
+<body>
+<div id="app">
+<div id="hdr">
+  <div class="logo"><span class="logo-ball">&#127955;</span><span class="r">PING</span><span class="g">PONG</span><span class="logo-sub">MGR</span></div>
+  <div class="hstats">
+    <div class="hs hs-club"><div class="l">Klub</div><div class="v" id="h-club">-</div><div class="s" id="h-club-sub">-</div></div>
+    <div class="hs"><div class="l">Bud&#380;et</div><div class="v g" id="h-budget">-</div><div class="s" id="h-budget-sub">&nbsp;</div></div>
+    <div class="hs"><div class="l">Sezon</div><div class="v" id="h-season">-</div><div class="s" id="h-season-sub">&nbsp;</div></div>
+    <div class="hs"><div class="l">OVR</div><div class="v" id="h-ovr">-</div><div class="s" id="h-staff-ovr">&nbsp;</div></div>
+    <div class="hs"><div class="l">Presti&#380;</div><div class="v gold" id="h-prestige">-</div><div class="s" id="h-prestige-sub">&nbsp;</div></div>
+  </div>
+  <div class="hbtns">
+    <button class="hbtn" onclick="saveGame()">&#128190; ZAPIS</button>
+    <button class="hbtn" onclick="document.getElementById('fi').click()">&#128194; WCZYTAJ</button>
+    <button class="hbtn pr" onclick="openSettings()">&#9881; USTAWIENIA</button>
+    <input type="file" id="fi" accept=".json" style="display:none" onchange="loadGame(event)">
+    <input type="file" id="dbi" accept=".json" style="display:none" onchange="loadDatabaseFile(event)">
+  </div>
+</div>
+<div class="mobile-nav">
+  <div class="mobile-nav-scroll">
+    <button class="mn-btn on" onclick="go('dash')" data-page="dash">Pulpit</button>
+    <button class="mn-btn" onclick="go('squad')" data-page="squad">Sk&#322;ad</button>
+    <button class="mn-btn" onclick="go('staff')" data-page="staff">Sztab</button>
+    <button class="mn-btn" onclick="go('club')" data-page="club">Klub</button>
+    <button class="mn-btn" onclick="go('budget')" data-page="budget">Bud&#380;et</button>
+    <button class="mn-btn" onclick="go('market')" data-page="market">Transfery</button>
+    <button class="mn-btn" onclick="go('news')" data-page="news">News</button>
+    <button class="mn-btn" onclick="go('inbox')" data-page="inbox">&#128231; Skrzynka</button>
+    <button class="mn-btn" onclick="go('league')" data-page="league">Liga</button>
+    <button class="mn-btn" onclick="go('preseason')" data-page="preseason">Sezon</button>
+  </div>
+</div>
+<div id="main">
+  <div id="sidebar">
+    <div class="sb-brand">
+      <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1.5px">PREZES / GM</div>
+    </div>
+    <div class="nav-sep" data-label="Zarz&#261;dzanie"></div>
+    <button class="nb on" onclick="go('dash')" id="n-dash"><span class="nb-ic">&#128202;</span><span class="nb-lb">Pulpit</span></button>
+    <button class="nb" onclick="go('squad')" id="n-squad"><span class="nb-ic">&#128101;</span><span class="nb-lb">Sk&#322;ad</span></button>
+    <button class="nb" onclick="go('staff')" id="n-staff"><span class="nb-ic">&#127891;</span><span class="nb-lb">Sztab</span></button>
+    <button class="nb" onclick="go('club')" id="n-club"><span class="nb-ic">&#127967;</span><span class="nb-lb">Klub</span></button>
+    <button class="nb" onclick="go('budget')" id="n-budget"><span class="nb-ic">&#128176;</span><span class="nb-lb">Bud&#380;et</span></button>
+    <div class="nav-sep" data-label="Operacje"></div>
+    <button class="nb" onclick="go('sponsors')" id="n-sponsors"><span class="nb-ic">&#129309;</span><span class="nb-lb">Sponsorzy</span></button>
+    <button class="nb" onclick="go('market')" id="n-market"><span class="nb-ic">&#128260;</span><span class="nb-lb">Transfery</span></button>
+    <div class="nav-sep" data-label="Raporty"></div>
+    <button class="nb" onclick="go('league')" id="n-league"><span class="nb-ic">&#127942;</span><span class="nb-lb">Liga</span></button>
+    <button class="nb" onclick="go('news')" id="n-news"><span class="nb-ic">&#128240;</span><span class="nb-lb">News</span></button>
+    <button class="nb" onclick="go('inbox')" id="n-inbox"><span class="nb-ic">&#128231;<span id="inbox-badge" class="nb-badge" style="display:none"></span></span><span class="nb-lb">Skrzynka</span></button>
+    <button class="nb" onclick="go('cup')" id="n-cup"><span class="nb-ic">&#127941;</span><span class="nb-lb">Puchar</span></button>
+    <button class="nb" onclick="go('mundial')" id="n-mundial"><span class="nb-ic">&#127757;</span><span class="nb-lb">Mundial</span></button>
+    <button class="nb" onclick="go('history')" id="n-history"><span class="nb-ic">&#128200;</span><span class="nb-lb">Historia</span></button>
+    <button class="nb" onclick="go('hof')" id="n-hof"><span class="nb-ic">&#11088;</span><span class="nb-lb">Hall of Fame</span></button>
+    <button class="nb" onclick="openGuide()" id="n-guide"><span class="nb-ic">&#128214;</span><span class="nb-lb">Pomoc</span></button>
+
+  </div>
+  <div id="content"></div>
+</div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="ov" id="ov" onclick="if(!(window.ui&&(ui.running||ui.autoPlay)))closeModal()"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
+<script charset="UTF-8" src="./src/data/names.js?v=23"></script>
+<script charset="UTF-8" src="./src/data/constants.js?v=23"></script>
+<script charset="UTF-8" src="./src/core/utils.js?v=23"></script>
+<script charset="UTF-8" src="./src/core/state.js?v=23"></script>
+<script charset="UTF-8" src="./src/ui/shell.js?v=23"></script>
+<script charset="UTF-8" src="./src/core/gameplay.js?v=23"></script>
+<script charset="UTF-8" src="./src/core/gameplay.visuals.js?v=23"></script>
+<script charset="UTF-8" src="./src/core/gameplay.club-ui.js?v=23"></script>
+<script charset="UTF-8" src="./src/ui/pages.js?v=23"></script>
+<script charset="UTF-8" src="./src/main.js?v=23"></script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype E — Matchday</title>
+<!-- Titillium Web: the sports-sim workhorse (FM/F1 flavour). One family, many weights. -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   MATCHDAY — Football-Manager flavour: deep navy, cyan/lime data
+   colours, attribute grids, crest-led chrome, dense but lively.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#0b131d; --panel:#132030; --panel2:#18293b; --raise:#1f3348; --line:#22364c; --line2:#31506e;
+  --ink:#eaf3fb; --ink2:#a3b8cd; --ink3:#6b8299;
+  --cyan:#2fc6e8; --lime:#8ed84a; --amber:#f5b52c; --red:#ef5a4c; --club:#d63b2f; --violet:#9b7cf0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--navy);color:var(--ink);font-family:'Titillium Web',system-ui,sans-serif;font-size:13.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(900px 420px at 12% -6%,rgba(47,198,232,.10),transparent 62%),
+             radial-gradient(700px 380px at 92% 4%,rgba(214,59,47,.12),transparent 60%)}
+#app{display:grid;grid-template-columns:198px 1fr;min-height:100vh;position:relative}
+h1,h2,h3,h4{font-weight:700;letter-spacing:.005em}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── rail ── */
+#rail{background:linear-gradient(180deg,#0f1a26,#0a1119);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.badge{display:flex;align-items:center;gap:11px;padding:15px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(47,198,232,.10),transparent)}
+.shield{width:38px;height:42px;flex:0 0 auto;background:linear-gradient(160deg,var(--club),#7d1a12);display:grid;place-items:center;font-weight:900;font-size:14px;color:#fff;
+  clip-path:polygon(0 0,100% 0,100% 68%,50% 100%,0 68%)}
+.badge b{display:block;font-size:15px;font-weight:700;line-height:1.15}
+.badge s{display:block;text-decoration:none;font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.rgrp{padding:13px 14px 5px;font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.rnav{display:flex;align-items:center;gap:10px;width:100%;padding:8px 14px;border:none;background:none;color:var(--ink2);
+  font:600 13px 'Titillium Web';text-align:left;cursor:pointer;border-left:3px solid transparent}
+.rnav:hover{background:#ffffff08;color:var(--ink)}
+.rnav.on{background:linear-gradient(90deg,rgba(47,198,232,.16),transparent);border-left-color:var(--cyan);color:#fff}
+.rnav .ic{width:15px;height:15px;flex:0 0 auto}
+.rnav .cnt{margin-left:auto;background:var(--club);color:#fff;font-size:11px;font-weight:700;padding:0 6px;border-radius:9px;line-height:17px}
+.rfoot{margin-top:auto;padding:11px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* ── header ── */
+#head{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#16273a,#101c29);border-bottom:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.mast{display:flex;align-items:center;gap:16px;padding:11px 22px}
+.mast .shield{width:44px;height:48px;font-size:15px}
+.who h2{font-size:21px;font-weight:900;text-transform:uppercase;line-height:1.05}
+.who p{font-size:11.5px;color:var(--ink3);font-weight:600}
+.mstats{margin-left:auto;display:flex;gap:2px}
+.mstat{padding:5px 16px;text-align:right;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);border-top:2px solid var(--tone,var(--line2))}
+.mstat i{font-style:normal;display:block;font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.mstat b{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.go{margin-left:16px;border:none;background:linear-gradient(180deg,#ea4a3c,var(--club));color:#fff;font:700 13px 'Titillium Web';
+  text-transform:uppercase;letter-spacing:.06em;padding:12px 22px;border-radius:4px;cursor:pointer;box-shadow:0 6px 20px rgba(214,59,47,.4)}
+.go:hover{filter:brightness(1.1)}
+.tabs{display:flex;padding:0 22px;background:#0e1926;border-top:1px solid var(--line)}
+.tab{padding:8px 15px;border:none;background:none;color:var(--ink3);font:600 12px 'Titillium Web';text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab:hover{color:var(--ink)}
+
+main{padding:18px 22px 60px;max-width:1720px}
+.screen{display:none}.screen.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}
+.ph h3{font-size:22px;font-weight:900;text-transform:uppercase;line-height:1}
+.ph p{font-size:12px;color:var(--ink3)}
+.tools{display:flex;gap:7px;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--panel2);color:var(--ink);font:600 11.5px 'Titillium Web';text-transform:uppercase;letter-spacing:.04em;padding:7px 13px;border-radius:4px;cursor:pointer}
+.btn:hover{background:var(--raise);border-color:var(--cyan);color:#fff}
+.btn.acc{background:linear-gradient(180deg,#3ad2f2,#1fa9c9);border-color:#3ad2f2;color:#062533;font-weight:700}
+.btn.on{background:var(--raise);border-color:var(--cyan);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.xs{padding:4px 9px;font-size:10.5px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.panel>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 13px;
+  background:linear-gradient(180deg,var(--panel2),#152436);border-bottom:1px solid var(--line)}
+.panel>header h4{font-size:12.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--cyan)}
+.panel>header.warm h4{color:var(--amber)}.panel>header.hot h4{color:var(--club)}
+.pad{padding:13px}
+.grid{display:grid;gap:12px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:5px;padding:11px 14px;position:relative}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tone,var(--cyan));border-radius:5px 0 0 5px}
+.kpi i{font-style:normal;display:block;font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.kpi b{display:block;font-size:31px;font-weight:900;line-height:1.05;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink3)}
+
+/* tables with FM-style attribute colouring */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:#101c29;text-align:left;padding:6px 9px;border-bottom:1px solid var(--line2);font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);white-space:nowrap;cursor:pointer}
+.tbl th:hover{color:var(--cyan)}
+.tbl th.n,.tbl td.n{text-align:right}
+.tbl td{height:33px;padding:0 9px;border-bottom:1px solid #1b2c3f;font-size:13px;white-space:nowrap;vertical-align:middle}
+.tbl tbody tr:nth-child(even) td{background:#ffffff04}
+.tbl tbody tr:hover td{background:rgba(47,198,232,.07)}
+.tbl tbody tr.on td{background:rgba(47,198,232,.12);border-bottom-color:#2b4a66}
+.tbl td.n{font-weight:700;font-variant-numeric:tabular-nums}
+.a5{color:var(--cyan)}.a4{color:var(--lime)}.a3{color:var(--amber)}.a2{color:#f58a4c}.a1{color:var(--red)}
+.face{width:25px;height:25px;border-radius:3px;vertical-align:-8px;margin-right:8px;display:inline-block;background-size:cover;border:1px solid var(--line2)}
+.pname{font-weight:600}
+.dim{color:var(--ink3)}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:3px;background:var(--raise);color:var(--ink2)}
+.tag.pos{background:rgba(142,216,74,.18);color:var(--lime)}
+.tag.hot{background:rgba(214,59,47,.2);color:#ff8d80}
+.tag.warm{background:rgba(245,181,44,.18);color:var(--amber)}
+.tag.cy{background:rgba(47,198,232,.18);color:var(--cyan)}
+
+/* attribute grid — the FM profile motif */
+.attrs{display:grid;grid-template-columns:repeat(2,1fr);gap:3px 18px}
+.attr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #1b2c3f}
+.attr span{font-size:12px;color:var(--ink2)}
+.attr b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:2px;margin-top:5px}
+.dots i{height:4px;flex:1;background:#22364c}
+.dots i.f{background:var(--tone,var(--cyan))}
+
+/* decisions */
+.dec{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:13px;align-items:center;padding:12px 13px;border-bottom:1px solid #1b2c3f}
+.dec:last-child{border-bottom:none}
+.dec .f{width:40px;height:44px;border-radius:3px;background-size:cover;border:1px solid var(--line2)}
+.dec h5{font-size:14.5px;font-weight:700}
+.dec p{font-size:12px;color:var(--ink3)}
+
+/* flow */
+.track{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.trk{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:10px 13px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;cursor:pointer;border-top:3px solid var(--line2)}
+.trk.done{border-top-color:var(--lime)}
+.trk.on{border-top-color:var(--cyan);background:var(--panel2)}
+.trk .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:var(--raise);color:var(--ink3)}
+.trk.done .n{background:var(--lime);color:#0d2405}.trk.on .n{background:var(--cyan);color:#06222e}
+.trk b{display:block;font-size:13px;font-weight:700}
+.trk s{display:block;text-decoration:none;font-size:11px;color:var(--ink3)}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:22px 24px}
+.stage .over{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+.stage h3{font-size:30px;font-weight:900;text-transform:uppercase;margin:5px 0 8px;line-height:1}
+.stage .why{color:var(--ink2);font-size:13.5px;max-width:66ch}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:14px 16px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:5px;margin-top:9px;cursor:pointer}
+.opt:hover{border-color:var(--line2);background:var(--raise)}
+.opt.on{border-color:var(--lime);background:rgba(142,216,74,.08)}
+.opt b{font-size:16px;font-weight:700}
+.opt p{font-size:12px;color:var(--ink3);margin-top:2px}
+.opt .m{font-size:20px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+.opt .m.pos{color:var(--lime)}.opt .m.neg{color:var(--red)}
+.opt .m s{display:block;text-decoration:none;font-size:10.5px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.stage-f{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* inbox */
+.inbox{display:grid;grid-template-columns:186px minmax(0,1fr) 344px;gap:12px;align-items:start}
+.fold{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;color:var(--ink2);font-weight:600;font-size:12.5px;border-bottom:1px solid #1b2c3f}
+.fold:last-child{border-bottom:none}
+.fold:hover{background:#ffffff08;color:var(--ink)}
+.fold.on{background:linear-gradient(90deg,rgba(47,198,232,.18),transparent);color:#fff}
+.fold b{font-size:12px}
+.mrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;padding:11px 13px;border-bottom:1px solid #1b2c3f;cursor:pointer}
+.mrow:hover{background:#ffffff08}
+.mrow.on{background:rgba(47,198,232,.10);border-left:3px solid var(--cyan);padding-left:10px}
+.mrow .f{width:34px;height:38px;border-radius:3px;background-size:cover;border:1px solid var(--line2)}
+.mrow b{display:block;font-size:13.5px;font-weight:700}
+.mrow p{font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quote{padding:15px;font-size:14px;line-height:1.6;border-bottom:1px solid var(--line);background:#152436}
+.out{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 15px;border-bottom:1px solid #1b2c3f;font-size:12px}
+.out span:first-child{color:var(--ink3)}
+.out b{font-size:12.5px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="badge"><div class="shield">KP</div><div><b>KS Piorun</b><s>Season 4</s></div></div>
+    <div class="rgrp">Club</div>
+    <button class="rnav on" data-go="hub"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="9" rx="1"/><rect x="9" y="1" width="6" height="5" rx="1"/><rect x="9" y="8" width="6" height="7" rx="1"/><rect x="1" y="12" width="6" height="3" rx="1"/></svg>Dashboard</button>
+    <button class="rnav" data-go="squad"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="5" r="3"/><circle cx="12" cy="6" r="2.2"/><path d="M0 15c0-3 2.5-5 5.5-5s5.5 2 5.5 5z"/><path d="M11 15c0-2 .6-3.4 1.6-4.3 2 .3 3.4 2 3.4 4.3z"/></svg>Squad</button>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 4-8 4-8-4z"/><path d="M2 7v4c0 2 3 4 6 4s6-2 6-4V7l-6 3z"/></svg>Staff</button>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M1 15V6l7-5 7 5v9h-5v-5H6v5z"/></svg>Facilities</button>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="3" width="16" height="10" rx="2" opacity=".6"/><circle cx="8" cy="8" r="2.6"/></svg>Finances</button>
+    <div class="rgrp">Operations</div>
+    <button class="rnav" data-go="market"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M0 5l4-4v2.5h12V6.5H4V9z"/><path d="M16 11l-4 4v-2.5H0V10h12V7.5z"/></svg>Transfers</button>
+    <button class="rnav" data-go="flow"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0c3 3 4.5 6 4.5 9A4.5 4.5 0 0 1 8 16a4.5 4.5 0 0 1-4.5-7C3.5 6 5 3 8 0z"/></svg>Pre-season<span class="cnt">2</span></button>
+    <button class="rnav" data-go="inbox"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="3" width="16" height="10" rx="1.5" opacity=".55"/><path d="M0 4l8 6 8-6z"/></svg>Inbox<span class="cnt">3</span></button>
+    <div class="rgrp">Competition</div>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h10v4a5 5 0 0 1-10 0z"/><path d="M6 10h4v4H6z"/><path d="M3 15h10v1H3z"/></svg>League</button>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="10" r="5"/><path d="M5 0h6l-1.5 4h-3z"/></svg>Cup</button>
+    <button class="rnav"><svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M1 14L6 7l3 3 5-8 2 1-6 10-3-3-4 5z"/></svg>History</button>
+    <div class="rfoot">Round 7 of 22</div>
+  </nav>
+
+  <div>
+    <header id="head">
+      <div class="mast">
+        <div class="shield">KP</div>
+        <div class="who"><h2>KS Piorun</h2><p>1st Division · 3rd place · 14 pts</p></div>
+        <div class="mstats">
+          <div class="mstat" style="--tone:var(--lime)"><i>Budget</i><b style="color:var(--lime)">412.9k</b></div>
+          <div class="mstat" style="--tone:var(--cyan)"><i>Round</i><b>07/22</b></div>
+          <div class="mstat" style="--tone:var(--violet)"><i>Squad</i><b>79</b></div>
+          <div class="mstat" style="--tone:var(--amber)"><i>Prestige</i><b style="color:var(--amber)">46</b></div>
+        </div>
+        <button class="go">▶ Play round 8</button>
+      </div>
+      <div class="tabs"><button class="tab on">Overview</button><button class="tab">Fixtures</button><button class="tab">Table</button><button class="tab">Statistics</button><button class="tab">Media</button></div>
+    </header>
+
+    <main>
+      <!-- HUB -->
+      <section class="screen on" id="s-hub">
+        <div class="ph"><div><h3>Dashboard</h3><p>Round 7 of 22 · transfer window closed · three decisions open</p></div>
+          <div class="tools"><button class="btn">Nomination</button><button class="btn ghost">Auto-play season</button></div></div>
+        <div class="kpis">
+          <div class="kpi" style="--tone:var(--amber)"><i>League</i><b>3<span style="font-size:17px">rd</span></b><s>14 pts · 4W 2D 1L</s></div>
+          <div class="kpi" style="--tone:var(--lime)"><i>Budget</i><b style="color:var(--lime)">412.9k</b><s>+71k projected</s></div>
+          <div class="kpi" style="--tone:var(--cyan)"><i>Squad rating</i><b>79</b><s>3rd strongest</s></div>
+          <div class="kpi" style="--tone:var(--violet)"><i>Morale</i><b>72%</b><s>Confident</s></div>
+          <div class="kpi" style="--tone:var(--club)"><i>Board goal</i><b style="font-size:24px">TOP 4</b><s>On track · 45.9k bonus</s></div>
+        </div>
+        <div class="cols">
+          <div class="grid">
+            <div class="panel"><header class="hot"><h4>Needs a decision</h4><span class="tag hot">3 open</span></header>
+              <div class="dec"><div class="f" data-av="0"></div><div><h5>Izydor Ignaczak wants a start</h5><p>Reserve · form 8/10 · you promised him a game in round 5</p></div>
+                <div class="tools"><button class="btn acc xs">Promise</button><button class="btn xs">Decline</button></div></div>
+              <div class="dec"><div class="f" data-av="1"></div><div><h5>Rotate Otton Czerwonka</h5><p>Fatigue 81% · injury risk doubles this round</p></div><button class="btn xs">Open squad</button></div>
+              <div class="dec"><div class="f" data-av="2"></div><div><h5>Strzeżymir enters his final year</h5><p>Rivals may pre-sign him from next season</p></div><button class="btn xs">Negotiate</button></div>
+            </div>
+            <div class="panel"><header><h4>Starting four</h4><span class="tag">Board order</span></header>
+              <table class="tbl"><thead><tr><th style="width:34px">#</th><th>Player</th><th>Style</th><th class="n">Form</th><th class="n">Fatigue</th><th class="n">Rating</th></tr></thead><tbody id="hubRows"></tbody></table></div>
+          </div>
+          <div class="grid">
+            <div class="panel"><header class="warm"><h4>1st Division</h4><span class="tag">Top 6</span></header>
+              <table class="tbl"><thead><tr><th style="width:30px">#</th><th>Club</th><th class="n">Pts</th><th class="n">Ovr</th></tr></thead><tbody id="tableRows"></tbody></table></div>
+            <div class="panel"><header><h4>Season story</h4></header>
+              <div class="pad" style="display:grid;gap:12px">
+                <div><span class="tag warm">Round 7</span><p style="margin-top:5px;color:var(--ink2)">Mroczek beat an 88-rated opponent in five — the upset of the round.</p></div>
+                <div><span class="tag pos">Streak</span><p style="margin-top:5px;color:var(--ink2)">Three straight wins; the board has stopped asking questions.</p></div>
+                <div><span class="tag cy">Academy</span><p style="margin-top:5px;color:var(--ink2)">A 17-year-old from the Silesia trial is ready to sign.</p></div>
+              </div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SQUAD -->
+      <section class="screen" id="s-squad">
+        <div class="ph"><div><h3>Squad</h3><p>Boards 1–4 decide the tie · click a row to inspect</p></div>
+          <div class="tools"><button class="btn on">First team</button><button class="btn ghost">Reserves</button><button class="btn ghost">Academy</button><button class="btn ghost">Loans</button></div></div>
+        <div class="cols">
+          <div class="panel" style="overflow-x:auto">
+            <table class="tbl"><thead><tr><th style="width:34px">#</th><th>Player</th><th>Style</th><th class="n">Age</th><th class="n">Ovr</th><th class="n">Peak</th>
+              <th class="n">FH</th><th class="n">BH</th><th class="n">SRV</th><th class="n">RET</th><th class="n">FTW</th><th class="n">MEN</th>
+              <th class="n">Form</th><th class="n">Fat</th><th class="n">Wage</th><th class="n">Yrs</th></tr></thead><tbody id="squadRows"></tbody></table></div>
+          <aside class="panel"><header><h4>Player profile</h4><span class="tag cy">Board 1</span></header>
+            <div class="pad" style="display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--line)">
+              <div style="width:62px;height:68px;border-radius:4px;background-size:cover;border:1px solid var(--line2)" data-av="3"></div>
+              <div><div style="font-size:17px;font-weight:700;line-height:1.15">Mściwoj Mroczek</div>
+                <div class="dim" style="font-size:12px">29 · forehand topspin</div>
+                <div style="margin-top:6px"><span class="tag pos">Good run</span> <span class="tag">2 yrs</span></div></div>
+              <div style="margin-left:auto;text-align:right"><div style="font-size:38px;font-weight:900;line-height:.95;color:var(--lime)">83</div><div class="dim" style="font-size:11px">peak 86</div></div>
+            </div>
+            <div class="pad"><div class="attrs" id="inspAttrs"></div></div>
+            <div class="pad" style="padding-top:0;display:grid;gap:7px">
+              <div class="attr" style="border:none"><span>Wage</span><b>63,452</b></div>
+              <div class="attr" style="border:none"><span>Market value</span><b>214,000</b></div>
+              <div style="display:flex;gap:7px;margin-top:4px"><button class="btn acc xs" style="flex:1">Contract</button><button class="btn xs" style="flex:1">Loan</button><button class="btn xs" style="flex:1">Sell</button></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- TRANSFERS -->
+      <section class="screen" id="s-market">
+        <div class="ph"><div><h3>Transfers</h3><p>645 listed · players and staff in one ledger</p></div>
+          <div class="tools"><input class="btn" style="width:220px;text-transform:none" placeholder="Search name, club, role"><button class="btn">Filters</button></div></div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="tbl"><thead><tr><th style="width:32px"></th><th>Name</th><th>Club</th><th>Type</th><th class="n">Age</th><th class="n">Ovr</th><th class="n">Peak</th><th class="n">Wage</th><th class="n">Fee</th><th>Status</th><th></th></tr></thead><tbody id="marketRows"></tbody></table></div>
+      </section>
+
+      <!-- FLOW -->
+      <section class="screen" id="s-flow">
+        <div class="ph"><div><h3>Pre-season</h3><p>Four decisions before season 5 · two done</p></div><button class="btn" disabled>Start season 5</button></div>
+        <div class="track">
+          <div class="trk done"><div class="n">✓</div><div><b>Sponsors</b><s>3 of 3 signed</s></div></div>
+          <div class="trk done"><div class="n">✓</div><div><b>Ticket price</b><s>€50 · 69% full</s></div></div>
+          <div class="trk on"><div class="n">3</div><div><b>Equipment</b><s>Choose one</s></div></div>
+          <div class="trk"><div class="n">4</div><div><b>Board goal</b><s>Pick your risk</s></div></div>
+        </div>
+        <div class="stage">
+          <div class="over">Step 3 of 4</div>
+          <h3>Who kits out your squad?</h3>
+          <p class="why">One deal per season: rubbers for every player plus a marketing package. Prestige <b style="color:var(--amber)">46</b> puts three of the five partners in reach. Locked once the season starts.</p>
+          <div style="margin-top:12px">
+            <div class="opt on"><div><b>Butterfly Performance <span class="tag pos" style="margin-left:6px">Best fit</span></b><p>+1 to all stats · +12% marketability · prestige 30–58</p></div><div class="m pos">+1,000<s>per season</s></div><button class="btn acc xs">Selected</button></div>
+            <div class="opt"><div><b>Andro Regional Lab</b><p>+1 to all stats · +6% marketability · safer, cheaper</p></div><div class="m neg">−500<s>per season</s></div><button class="btn xs">Choose</button></div>
+            <div class="opt" style="opacity:.45"><div><b>Tibhar Pro Circuit</b><p>+1 all, +1 ATK/SRV · +18% marketability · needs prestige 48</p></div><div class="m">+3,000<s>locked</s></div><button class="btn xs" disabled>Locked</button></div>
+          </div>
+          <div class="stage-f"><button class="btn ghost">← Ticket price</button><span class="dim" style="font-size:12px">Sponsors and tickets are already locked in</span><button class="btn acc">Next: board goal →</button></div>
+        </div>
+      </section>
+
+      <!-- INBOX -->
+      <section class="screen" id="s-inbox">
+        <div class="ph"><div><h3>Inbox</h3><p>Three decisions waiting · round 7</p></div><button class="btn ghost">Mark all read</button></div>
+        <div class="inbox">
+          <div class="panel">
+            <div class="fold on">Decisions <b>3</b></div><div class="fold">Board <b>1</b></div><div class="fold">Players <b>2</b></div><div class="fold">Staff <b>1</b></div><div class="fold">Press <b>—</b></div><div class="fold">Archive <b>—</b></div>
+          </div>
+          <div class="panel">
+            <div class="mrow on"><div class="f" data-av="4"></div><div><b>Izydor Ignaczak <span class="tag hot" style="margin-left:4px">By round 8</span></b><p>“I've won five in a row in training and I'm out of the team again…”</p></div><span class="tag">R7</span></div>
+            <div class="mrow"><div class="f" data-av="5"></div><div><b>Board of KS Piorun</b><p>“Third is fine, but the merchandising line is flat…”</p></div><span class="tag">R7</span></div>
+            <div class="mrow"><div class="f" data-av="6"></div><div><b>Medical staff</b><p>Otton Czerwonka is at 81% fatigue before a home round…</p></div><span class="tag">R7</span></div>
+            <div class="mrow"><div class="f" data-av="7"></div><div><b>Agent of S. Jasiński</b><p>“My client is entering his final year. Let's talk before rivals do.”</p></div><span class="tag">R6</span></div>
+          </div>
+          <aside class="panel"><header class="hot"><h4>Izydor Ignaczak</h4><span class="tag hot">Decide by R8</span></header>
+            <div class="quote">“I've won five in a row in training and I'm out of the team again. Put me on a board this round — or tell me straight that I'm not in your plans.”</div>
+            <div class="out"><span>Promise &amp; field him</span><b style="color:var(--lime)">+4 morale</b></div>
+            <div class="out"><span>Promise &amp; bench him</span><b style="color:var(--red)">−12 morale, −1 loyalty</b></div>
+            <div class="out"><span>Decline honestly</span><b style="color:var(--amber)">−6 morale</b></div>
+            <div class="pad" style="display:grid;gap:7px"><button class="btn acc">Promise a start</button><button class="btn">Not this round</button><button class="btn ghost">Offer him a transfer</button></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>window.store={G:{countryId:'PL',teams:[{id:0,name:'KS Piorun'},{id:1,name:'MKS Blyskawica'},{id:2,name:'UKS Sokol'}]}};</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script>
+const {getAvatarData}=window.PPM.gameplayVisuals;
+const P=[
+ {n:'Mściwoj Mroczek',a:29,s:'FH topspin',o:83,pk:86,st:[84,84,82,77,84,84],f:'Good',ft:24,w:'63,452',y:2},
+ {n:'Izydor Ignaczak',a:31,s:'Two-winged',o:77,pk:80,st:[71,71,94,71,72,83],f:'Hot',ft:12,w:'30,956',y:1},
+ {n:'Otton Czerwonka',a:29,s:'Counter/block',o:75,pk:78,st:[64,77,80,84,76,73],f:'Steady',ft:81,w:'23,952',y:3},
+ {n:'Strzeżymir Jasiński',a:22,s:'Two-winged',o:71,pk:84,st:[70,76,84,63,63,63],f:'Dip',ft:8,w:'14,552',y:1},
+ {n:'Pakosław Prus',a:19,s:'Defender',o:64,pk:79,st:[58,66,61,72,70,60],f:'Rising',ft:0,w:'8,100',y:2},
+ {n:'Bolesław Kot',a:26,s:'Blocker',o:69,pk:73,st:[66,70,68,71,69,70],f:'Steady',ft:30,w:'17,400',y:2},
+];
+const M=[
+ {n:'Krzesisław Izdebski',c:'SKS Delfin',t:'Pre-sign',a:26,o:86,pk:92,w:'180,598',fee:'—',s:'Final year'},
+ {n:'Jacek Górski',c:'Free agent',t:'Coach',a:30,o:89,pk:93,w:'31,279',fee:'—',s:'Available now'},
+ {n:'Sykstus Ulatowski',c:'Free agent',t:'Scout',a:53,o:97,pk:99,w:'70,800',fee:'—',s:'Available now'},
+ {n:'Aureliusz Lisowski',c:'UKS Sokół',t:'Transfer',a:33,o:85,pk:85,w:'56,300',fee:'18,204',s:'Joins next season'},
+ {n:'Damian Sieczka',c:'SKS Delfin',t:'Coach',a:32,o:87,pk:91,w:'27,066',fee:'—',s:'Contract too long'},
+];
+const T=[['KTS Pantera',19,83],['GKS Wicher',16,82],['KS Piorun',14,79],['AKS Feniks',13,82],['MKS Błyskawica',11,79],['UKS Sokół',10,79]];
+const SL=['Forehand','Backhand','Serve','Return','Footwork','Mental'];
+const ac=v=>v>=88?'a5':v>=80?'a4':v>=70?'a3':v>=60?'a2':'a1';
+const tone=v=>v>=88?'var(--cyan)':v>=80?'var(--lime)':v>=70?'var(--amber)':'var(--red)';
+const fc=f=>f==='Hot'||f==='Rising'?'pos':f==='Dip'?'hot':'';
+const av=(i,n,a)=>getAvatarData({id:500+i,name:n,age:a,nationality:'PL',teamId:i%3},'player');
+document.querySelectorAll('[data-av]').forEach((el,i)=>{const p=P[i%P.length];el.style.backgroundImage=`url("${av(i,p.n,p.a)}")`;});
+document.getElementById('hubRows').innerHTML=P.slice(0,4).map((p,i)=>`<tr>
+ <td class="n dim">${i+1}</td><td><span class="face" style="background-image:url('${av(i,p.n,p.a)}')"></span><span class="pname">${p.n}</span></td>
+ <td class="dim">${p.s}</td><td class="n"><span class="tag ${fc(p.f)}">${p.f}</span></td>
+ <td class="n ${p.ft>70?'a1':''}">${p.ft}%</td><td class="n ${ac(p.o)}">${p.o}</td></tr>`).join('');
+document.getElementById('tableRows').innerHTML=T.map((t,i)=>`<tr class="${t[0]==='KS Piorun'?'on':''}">
+ <td class="n dim">${i+1}</td><td class="${t[0]==='KS Piorun'?'pname':''}">${t[0]}</td><td class="n">${t[1]}</td><td class="n dim">${t[2]}</td></tr>`).join('');
+document.getElementById('squadRows').innerHTML=P.map((p,i)=>`<tr class="${i===0?'on':''}">
+ <td class="n dim">${i<4?i+1:'·'}</td><td><span class="face" style="background-image:url('${av(i,p.n,p.a)}')"></span><span class="pname">${p.n}</span></td>
+ <td class="dim">${p.s}</td><td class="n dim">${p.a}</td><td class="n ${ac(p.o)}">${p.o}</td><td class="n dim">${p.pk}</td>
+ ${p.st.map(v=>`<td class="n ${ac(v)}">${v}</td>`).join('')}
+ <td class="n"><span class="tag ${fc(p.f)}">${p.f}</span></td><td class="n ${p.ft>70?'a1':''}">${p.ft}%</td>
+ <td class="n">${p.w}</td><td class="n dim">${p.y}</td></tr>`).join('');
+document.getElementById('marketRows').innerHTML=M.map((m,i)=>`<tr>
+ <td><span class="face" style="background-image:url('${av(i+9,m.n,m.a)}')"></span></td><td class="pname">${m.n}</td><td class="dim">${m.c}</td>
+ <td><span class="tag ${m.t==='Pre-sign'?'warm':m.t==='Transfer'?'cy':''}">${m.t}</span></td><td class="n dim">${m.a}</td><td class="n ${ac(m.o)}">${m.o}</td>
+ <td class="n dim">${m.pk}</td><td class="n">${m.w}</td><td class="n dim">${m.fee}</td><td class="dim">${m.s}</td>
+ <td class="n"><button class="btn xs">Open</button></td></tr>`).join('');
+document.getElementById('inspAttrs').innerHTML=P[0].st.map((v,j)=>`<div>
+ <div class="attr"><span>${SL[j]}</span><b class="${ac(v)}">${v}</b></div>
+ <div class="dots" style="--tone:${tone(v)}">${Array.from({length:10},(_,k)=>`<i class="${k<Math.round(v/10)?'f':''}"></i>`).join('')}</div></div>`).join('');
+document.querySelectorAll('.rnav[data-go]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.rnav').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+b.dataset.go).classList.add('on');window.scrollTo(0,0);
+});
+const _h=location.hash.slice(1);if(_h){const _b=document.querySelector(`[data-go="${_h}"]`);if(_b)_b.click();}
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Avatar diversity preview — PingPong Manager</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#15130f;color:#f2ebe3;margin:0;padding:24px;}
+  h1{font-size:20px;margin:0 0 6px;font-weight:800;letter-spacing:-.5px;}
+  p.lead{opacity:.72;font-size:13px;max-width:760px;line-height:1.5;margin:0 0 18px;}
+  h2{font-size:12px;margin:30px 0 12px;color:#f0a090;text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid #2c2620;padding-bottom:7px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:16px;}
+  .grid.big{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));}
+  .card{text-align:center;}
+  .card img{width:88px;height:88px;border-radius:50%;box-shadow:0 8px 20px rgba(0,0,0,.45);background:#333;display:block;margin:0 auto;}
+  .grid.big .card img{width:150px;height:150px;}
+  .card span{display:block;font-size:10px;margin-top:7px;opacity:.78;line-height:1.3;}
+  .row-small{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;}
+  .row-small img{width:44px;height:44px;border-radius:50%;box-shadow:none;}
+</style>
+</head>
+<body>
+  <h1>Avatar diversity preview</h1>
+  <p class="lead">Players wear <b>club colours</b>; staff wear blazers, polos, quarter-zips or knitwear. Faces vary by
+  <b>nationality</b> (region face families, skin, hair and iris pools are unchanged) and then by ~20 independent knobs:
+  head shape, jaw, hairline, hair style + texture, brows, eye shape, nose, mouth/expression, ears, beard, glasses, kit and
+  age marks. Hard-refresh if you still see old faces.</p>
+
+  <h2>Detail check — 150px</h2>
+  <div class="grid big" id="detail"></div>
+  <h2>Poland (European)</h2>
+  <div class="grid" id="pl"></div>
+  <h2>Germany / Sweden</h2>
+  <div class="grid" id="eu2"></div>
+  <h2>China / Korea / Japan</h2>
+  <div class="grid" id="asia"></div>
+  <h2>Ageing — same man, 18 to 70</h2>
+  <div class="grid" id="ages"></div>
+  <h2>Same club — jersey should match</h2>
+  <div class="grid" id="club"></div>
+  <h2>Staff</h2>
+  <div class="grid" id="staff"></div>
+  <h2>List size sanity check — 44px, as used in the squad list</h2>
+  <div class="row-small" id="tiny"></div>
+
+  <script>
+    // Stub world so getTeamBranding works
+    window.store = {
+      G: {
+        countryId: 'PL',
+        teams: [
+          { id: 0, name: 'KS Piorun' },
+          { id: 1, name: 'MKS Blyskawica' },
+          { id: 2, name: 'UKS Sokol' },
+          { id: 3, name: 'GKS Wicher' },
+        ]
+      }
+    };
+  </script>
+  <script src="../src/core/gameplay.visuals.js"></script>
+  <script>
+    const { getAvatarData, getTeamBranding } = window.PPM.gameplayVisuals;
+    function add(el, entity, kind, label) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const img = document.createElement('img');
+      img.src = getAvatarData(entity, kind);
+      img.alt = label || '';
+      card.appendChild(img);
+      if (label) { const lab = document.createElement('span'); lab.innerHTML = label; card.appendChild(lab); }
+      el.appendChild(card);
+    }
+    const plNames = ['Marek Kowalski','Tomasz Nowak','Paweł Wiśniewski','Jakub Zieliński','Adam Lewandowski','Szymon Wójcik','Krzysztof Duda','Rafał Kamiński','Maciej Grabowski','Dawid Mazur','Filip Lis','Igor Kot','Bartosz Sowa','Michał Rak','Piotr Zaj','Kamil Bąk','Oskar Mróz','Nikodem Cichy'];
+    plNames.slice(0,6).forEach((name,i)=>{
+      add(document.getElementById('detail'), {id:900+i,name,age:20+i*4,nationality:i>3?'CN':'PL',teamId:i%4}, 'player',
+        name.split(' ')[0]+' · '+(20+i*4)+'l');
+    });
+    plNames.forEach((name,i)=>{
+      add(document.getElementById('pl'), {id:100+i,name,age:18+i,nationality:'PL',teamId:i%4}, 'player',
+        name.split(' ')[0]+'<br>'+(18+i)+'l · club '+(i%4));
+    });
+    [['DE','Thomas Müller',24],['DE','Lukas Schmidt',31],['DE','Felix Weber',19],['DE','Jonas Fischer',37],['SE','Erik Andersson',27],['SE','Lars Nilsson',35],['SE','Johan Berg',22],['SE','Nils Holm',44]].forEach((r,i)=>{
+      add(document.getElementById('eu2'), {id:200+i,name:r[1],age:r[2],nationality:r[0],teamId:i%3}, 'player', r[0]+' · '+r[2]+'l');
+    });
+    [['CN','Wei Zhang',21],['CN','Ming Li',28],['CN','Hao Chen',33],['CN','Jun Wu',25],['KR','Minjun Kim',23],['KR','Seojun Park',29],['KR','Doyun Lee',34],['JP','Haruto Sato',20],['JP','Yuki Tanaka',26],['JP','Sota Yamamoto',34],['JP','Ren Suzuki',30]].forEach((r,i)=>{
+      add(document.getElementById('asia'), {id:300+i,name:r[1],age:r[2],nationality:r[0],teamId:1}, 'player', r[0]+' · '+r[2]+'l');
+    });
+    [18,23,28,33,38,44,50,56,62,70].forEach((age,i)=>{
+      add(document.getElementById('ages'), {id:600,name:'Wiktor Sosna',age,nationality:'PL',teamId:2}, i>5?'staff':'player', age+' lat');
+    });
+    const b = getTeamBranding(0);
+    for (let i=0;i<6;i++){
+      add(document.getElementById('club'), {id:400+i,name:'Player '+i,age:22+i,nationality:'PL',teamId:0}, 'player',
+        'Club 0<br><span style="color:'+b.primary+'">●</span> '+b.primary);
+    }
+    [{name:'Andrzej Malik',age:48,type:'coach'},{name:'Zbigniew Rot',age:55,type:'physio'},{name:'Henryk Ptak',age:39,type:'scout'},{name:'Józef Kula',age:62,type:'coach'},{name:'Tadeusz Wrona',age:44,type:'psychologist'},{name:'Wei Fang',age:41,type:'coach',nationality:'CN'},{name:'Marian Bąk',age:67,type:'coach'},{name:'Igor Sowa',age:36,type:'pr'}].forEach((r,i)=>{
+      add(document.getElementById('staff'), {id:500+i,...r,teamId:i%3}, 'staff', r.type+' · '+r.age);
+    });
+    plNames.slice(0,10).forEach((name,i)=>{
+      add(document.getElementById('tiny'), {id:100+i,name,age:18+i,nationality:'PL',teamId:i%4}, 'player', '');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Club crests — preview</title>
+<style>
+body{background:#12151b;color:#e8eef6;font-family:system-ui,sans-serif;margin:0;padding:24px}
+h1{font-size:18px;margin:0 0 4px}p{opacity:.7;font-size:13px;margin:0 0 20px}
+h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#f0a090;margin:26px 0 10px;border-bottom:1px solid #262d38;padding-bottom:6px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:18px}
+.c{text-align:center}.c img{width:84px;height:84px;display:block;margin:0 auto}
+.c span{display:block;font-size:10.5px;margin-top:7px;opacity:.75;line-height:1.3}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#1a1f28;border:1px solid #262d38;padding:14px;border-radius:8px}
+.row img{width:44px;height:44px}
+.row .s24 img{width:24px;height:24px}
+</style></head><body>
+<h1>Club crests</h1>
+<p>Five compositions (roundel · shield · banner · diamond · hex) × four devices (paddle+ball · chevron · stars · bar+ball) × the club's own colours. Deterministic per club.</p>
+<h2>Default league — 24 clubs</h2>
+<div class="g" id="g"></div>
+<h2>List size — 44px, as used in tables</h2>
+<div class="row" id="r44"></div>
+<h2>Nav size — 24px</h2>
+<div class="row s24" id="r24"></div>
+<script>
+const CLUBS=['KS Piorun','MKS Błyskawica','UKS Sokół','GKS Wicher','TTS Orzeł','KS Grom','MTS Huragan','AZS Burza',
+ 'WKS Lew','KTS Pantera','SKS Delfin','AKS Feniks','Victoria Łódź','Sygnał Lublin','Stal Mielec','Rapid Białystok',
+ 'Korona Kielce','Start Gdańsk','Rekord Bielsko','Energia Poznań','Tempo Wrocław','Iskra Opole','Olimp Rzeszów','Akademia Orłów'];
+window.store={G:{countryId:'PL',teams:CLUBS.map((name,id)=>({id,name}))}};
+</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script>
+const {getTeamLogoData,getTeamBranding}=window.PPM.gameplayVisuals;
+const g=document.getElementById('g');
+store.G.teams.forEach(t=>{
+  const b=getTeamBranding(t);
+  const d=document.createElement('div');d.className='c';
+  d.innerHTML=`<img src="${getTeamLogoData(t)}" alt=""><span>${t.name}<br><span style="color:${b.primary}">${b.initials}</span> · ${b.nickname}</span>`;
+  g.appendChild(d);
+});
+document.getElementById('r44').innerHTML=store.G.teams.slice(0,12).map(t=>`<img src="${getTeamLogoData(t)}" alt="">`).join('');
+document.getElementById('r24').innerHTML=store.G.teams.slice(0,12).map(t=>`<img src="${getTeamLogoData(t)}" alt="">`).join('');
+</script>
+</body></html>

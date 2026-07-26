@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype A — Broadcast</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10; --bg2:#0f131a; --panel:#151a22; --panel2:#1b222c; --line:#242d39; --line2:#33404f;
+  --ink:#eaf0f7; --ink2:#b6c2d1; --ink3:#7e8b9c;
+  --red:#ff4a37; --amber:#ffb524; --green:#28d17c; --blue:#4aa8ff; --violet:#a98bff;
+  --r:10px; --r2:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.syne{font-family:Syne,sans-serif}
+/* ── chrome ───────────────────────────────────────────────── */
+#app{display:grid;grid-template-columns:64px 1fr;min-height:100vh}
+#rail{background:linear-gradient(180deg,#0d1015,#080a0e);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 0;position:sticky;top:0;height:100vh}
+.rail-logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(140deg,var(--red),#8a1d12);display:grid;place-items:center;font-size:18px;margin-bottom:14px;box-shadow:0 6px 18px rgba(255,74,55,.35)}
+.rail-btn{width:44px;height:40px;border-radius:11px;border:none;background:transparent;color:var(--ink3);font-size:17px;cursor:pointer;display:grid;place-items:center;position:relative;transition:.15s}
+.rail-btn:hover{background:#ffffff0d;color:var(--ink)}
+.rail-btn.on{background:#ffffff12;color:#fff}
+.rail-btn.on::before{content:'';position:absolute;left:-10px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--red)}
+.rail-badge{position:absolute;top:4px;right:6px;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:99px;padding:0 4px;line-height:14px}
+.rail-sp{flex:1}
+#topbar{display:flex;align-items:center;gap:20px;padding:0 22px;height:62px;background:linear-gradient(180deg,#10141b,#0c1015);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.crest{width:34px;height:34px;border-radius:9px;background:linear-gradient(140deg,#2a3442,#182029);border:1px solid var(--line2);display:grid;place-items:center;font-family:Syne;font-weight:800;font-size:12px;color:var(--amber)}
+.club{font-family:Syne;font-weight:800;font-size:16px;letter-spacing:-.2px}
+.club small{display:block;font-family:Inter;font-weight:500;font-size:10.5px;color:var(--ink3);letter-spacing:.2px}
+.tstats{display:flex;gap:26px;margin-left:auto}
+.tstat .k{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink3);font-weight:600}
+.tstat .v{font-family:Syne;font-weight:800;font-size:16px;line-height:1.15}
+.tstat .v.g{color:var(--green)}.tstat .v.a{color:var(--amber)}
+main{padding:22px 26px 60px;max-width:1560px}
+/* ── bits ─────────────────────────────────────────────────── */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}
+h1{font-family:Syne;font-weight:800;font-size:26px;letter-spacing:-.6px}
+.sub{color:var(--ink3);font-size:12px;margin-top:4px}
+.btn{border:1px solid var(--line2);background:#ffffff08;color:var(--ink);border-radius:99px;padding:9px 16px;font:600 11px/1 Inter;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:.15s}
+.btn:hover{background:#ffffff14;border-color:#4a5a6d}
+.btn.primary{background:linear-gradient(180deg,#ff5a46,#e0331f);border-color:#ff5a46;color:#fff;box-shadow:0 6px 18px rgba(255,74,55,.3)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 11px;font-size:10px}
+.card{background:linear-gradient(180deg,#161c25,#12171e);border:1px solid var(--line);border-radius:var(--r2);padding:18px 20px}
+.card h2{font-family:Syne;font-weight:700;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink2);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(5,1fr)}
+.kpi{background:linear-gradient(180deg,#171d27,#12161d);border:1px solid var(--line);border-radius:var(--r2);padding:15px 17px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;inset:auto 0 0 0;height:2px;background:var(--tone,var(--red));opacity:.85}
+.kpi .k{font-size:9.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink3);font-weight:600}
+.kpi .v{font-family:Syne;font-weight:800;font-size:30px;line-height:1.05;margin-top:6px}
+.kpi .s{font-size:10.5px;color:var(--ink3);margin-top:3px}
+.two{grid-template-columns:1fr 380px}
+.row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.av{width:40px;height:40px;border-radius:50%;background:#222;flex:0 0 auto;border:1px solid var(--line2)}
+.av.lg{width:52px;height:52px}
+.nm{font-weight:600}
+.mut{color:var(--ink3);font-size:11px}
+.ovr{font-family:Syne;font-weight:800;font-size:22px;margin-left:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink3);font-weight:600;padding:0 10px 9px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid #1c232c}
+tr.me td{background:#ff4a3712}
+.pos{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:#232c37;font-weight:700;font-size:11px}
+.pos.p1{background:var(--amber);color:#241a00}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.chip.red{color:var(--red);border-color:#5a2820;background:#ff4a3714}
+.chip.grn{color:var(--green);border-color:#1e5a3f;background:#28d17c14}
+.chip.amb{color:var(--amber);border-color:#5c4415;background:#ffb52414}
+/* squad grid */
+.squad{grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+.pcard{background:linear-gradient(180deg,#171d26,#12161d);border:1px solid var(--line);border-radius:var(--r2);padding:15px;display:flex;flex-direction:column;gap:11px;transition:.15s}
+.pcard:hover{border-color:#3a4a5c;transform:translateY(-2px)}
+.pcard .top{display:flex;gap:11px;align-items:center}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
+.bar{display:grid;grid-template-columns:24px 1fr 20px;align-items:center;gap:7px;font-size:10px;color:var(--ink3)}
+.bar i{height:4px;border-radius:3px;background:#242c36;display:block;position:relative;overflow:hidden}
+.bar i b{position:absolute;inset:0 auto 0 0;border-radius:3px}
+.bar em{font-style:normal;font-weight:700;color:var(--ink);text-align:right;font-size:11px}
+/* ── the flow (preseason) ─────────────────────────────────── */
+.flow{display:grid;grid-template-columns:250px 1fr;gap:20px;align-items:start}
+.steps{background:linear-gradient(180deg,#161c25,#12171e);border:1px solid var(--line);border-radius:var(--r2);padding:14px;position:sticky;top:84px}
+.step{display:grid;grid-template-columns:26px 1fr;gap:11px;align-items:start;padding:11px 10px;border-radius:11px;cursor:pointer;transition:.15s}
+.step:hover{background:#ffffff08}
+.step.on{background:#ff4a3714;box-shadow:inset 0 0 0 1px #4a2a24}
+.step .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:11px;background:#232c37;color:var(--ink3)}
+.step.done .n{background:var(--green);color:#04180e}
+.step.on .n{background:var(--red);color:#fff}
+.step .t{font-weight:600;font-size:12.5px}
+.step .d{font-size:10.5px;color:var(--ink3);margin-top:2px}
+.stage{background:linear-gradient(180deg,#161c25,#12171e);border:1px solid var(--line);border-radius:var(--r2);padding:24px 26px;min-height:420px;display:flex;flex-direction:column}
+.stage-h{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.stage-h .t{font-family:Syne;font-weight:800;font-size:20px}
+.stage-h .d{color:var(--ink3);font-size:12px;margin-top:4px;max-width:60ch}
+.offers{display:grid;gap:9px}
+.offer{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#12171f;transition:.15s}
+.offer:hover{border-color:#3a4a5c}
+.offer.picked{border-color:var(--green);background:#28d17c0f}
+.money{font-family:Syne;font-weight:800;font-size:17px;color:var(--green)}
+.stage-f{margin-top:auto;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:14px}
+.progress{height:5px;border-radius:3px;background:#232c37;overflow:hidden;margin-top:12px}
+.progress b{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--amber));border-radius:3px}
+/* ── inbox ─────────────────────────────────────────────────── */
+.inbox{display:grid;grid-template-columns:210px 1fr;gap:18px;align-items:start}
+.folders{display:grid;gap:4px}
+.folder{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--ink2);font-weight:500}
+.folder:hover{background:#ffffff08}
+.folder.on{background:#ffffff12;color:#fff;font-weight:600}
+.folder b{font-size:10px;background:#232c37;border-radius:99px;padding:1px 7px}
+.folder.on b{background:var(--red);color:#fff}
+.mail{border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:10px;background:#12171f;border-left:3px solid var(--tone,var(--line2))}
+.mail.unread{background:#151d27}
+.mail-h{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.mail-h .who{font-weight:700}
+.mail-h .when{margin-left:auto;font-size:10.5px;color:var(--ink3)}
+.mail p{color:var(--ink2);font-size:12.5px;margin:6px 0 0}
+.mail .acts{display:flex;gap:8px;margin-top:12px}
+.screen{display:none}
+.screen.on{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="rail-logo">🏓</div>
+    <button class="rail-btn on" data-go="hub" title="Club hub">◧</button>
+    <button class="rail-btn" data-go="squad" title="Squad">👥</button>
+    <button class="rail-btn" data-go="flow" title="Pre-season">🚀</button>
+    <button class="rail-btn" data-go="inbox" title="Inbox">✉<span class="rail-badge">3</span></button>
+    <div class="rail-sp"></div>
+    <button class="rail-btn" title="Settings">⚙</button>
+  </nav>
+  <div>
+    <header id="topbar">
+      <div class="crest">KP</div>
+      <div class="club">KS Piorun<small>1st Division · 3rd · Season 4</small></div>
+      <div class="tstats">
+        <div class="tstat"><div class="k">Budget</div><div class="v g">€412,900</div></div>
+        <div class="tstat"><div class="k">Round</div><div class="v">7<span style="color:var(--ink3);font-size:12px">/22</span></div></div>
+        <div class="tstat"><div class="k">Team OVR</div><div class="v">79</div></div>
+        <div class="tstat"><div class="k">Prestige</div><div class="v a">46</div></div>
+      </div>
+      <button class="btn primary" style="margin-left:22px">▶ Play round 8</button>
+    </header>
+    <main>
+      <!-- HUB -->
+      <section class="screen on" id="s-hub">
+        <div class="page-head"><div><h1>Club hub</h1><div class="sub">Everything that needs you, in one place.</div></div>
+          <div style="display:flex;gap:8px"><button class="btn ghost">Auto-play season</button><button class="btn">Match nomination</button></div></div>
+        <div class="grid kpis" style="margin-bottom:16px">
+          <div class="kpi" style="--tone:var(--amber)"><div class="k">Table</div><div class="v">#3</div><div class="s">14 pts · 4W 2D 1L</div></div>
+          <div class="kpi" style="--tone:var(--green)"><div class="k">Budget</div><div class="v" style="color:var(--green)">412k</div><div class="s">+71k projected</div></div>
+          <div class="kpi" style="--tone:var(--blue)"><div class="k">Squad OVR</div><div class="v">79</div><div class="s">4/4 fit</div></div>
+          <div class="kpi" style="--tone:var(--violet)"><div class="k">Morale</div><div class="v">72%</div><div class="s">Confident</div></div>
+          <div class="kpi" style="--tone:var(--red)"><div class="k">Board goal</div><div class="v">Top 4</div><div class="s">On track</div></div>
+        </div>
+        <div class="grid two">
+          <div style="display:grid;gap:14px">
+            <div class="card"><h2>Needs a decision <span class="chip red">3</span></h2>
+              <div class="row"><div class="av" data-av="0"></div><div><div class="nm">Izydor Ignaczak wants a start</div><div class="mut">Reserve · form 8/10 · you promised him a game in round 5</div></div><div style="margin-left:auto;display:flex;gap:6px"><button class="btn sm primary">Promise</button><button class="btn sm">Decline</button></div></div>
+              <div class="row"><div class="av" data-av="1"></div><div><div class="nm">Medical: rotate Otton Czerwonka</div><div class="mut">Fatigue 81% · injury risk doubled this round</div></div><div style="margin-left:auto"><button class="btn sm">Open squad</button></div></div>
+              <div class="row"><div class="av" data-av="2"></div><div><div class="nm">Agent: Strzeżymir enters his final year</div><div class="mut">Rivals can pre-sign him from next season</div></div><div style="margin-left:auto"><button class="btn sm">Negotiate</button></div></div>
+            </div>
+            <div class="card"><h2>Starting four <span class="mut">board order</span></h2>
+              <div class="row"><span class="chip">1</span><div class="av" data-av="3"></div><div><div class="nm">Mściwoj Mroczek</div><div class="mut">29 · Forehand topspin · form 7</div></div><div class="ovr">83</div></div>
+              <div class="row"><span class="chip">2</span><div class="av" data-av="4"></div><div><div class="nm">Izydor Ignaczak</div><div class="mut">31 · Two-winged attacker · form 8</div></div><div class="ovr">77</div></div>
+              <div class="row"><span class="chip">3</span><div class="av" data-av="5"></div><div><div class="nm">Otton Czerwonka</div><div class="mut">29 · Counter &amp; block · fatigue 81%</div></div><div class="ovr" style="color:var(--amber)">75</div></div>
+              <div class="row"><span class="chip">4</span><div class="av" data-av="6"></div><div><div class="nm">Strzeżymir Jasiński</div><div class="mut">22 · Two-winged attacker · rising</div></div><div class="ovr">71</div></div>
+            </div>
+          </div>
+          <div style="display:grid;gap:14px">
+            <div class="card"><h2>1st Division <span class="mut">top 6</span></h2>
+              <table><tr><th>#</th><th>Club</th><th>Pts</th><th>OVR</th></tr>
+                <tr><td><span class="pos p1">1</span></td><td>KTS Pantera</td><td>19</td><td>83</td></tr>
+                <tr><td><span class="pos">2</span></td><td>GKS Wicher</td><td>16</td><td>82</td></tr>
+                <tr class="me"><td><span class="pos">3</span></td><td><b>KS Piorun</b></td><td>14</td><td>79</td></tr>
+                <tr><td><span class="pos">4</span></td><td>AKS Feniks</td><td>13</td><td>82</td></tr>
+                <tr><td><span class="pos">5</span></td><td>MKS Błyskawica</td><td>11</td><td>79</td></tr>
+                <tr><td><span class="pos">6</span></td><td>UKS Sokół</td><td>10</td><td>79</td></tr>
+              </table></div>
+            <div class="card"><h2>Season story</h2>
+              <div style="display:grid;gap:10px">
+                <div><div class="chip amb">Round 7</div><p class="mut" style="margin-top:6px">Mroczek beat a 88-rated opponent in five — the biggest upset of the round.</p></div>
+                <div><div class="chip grn">Streak</div><p class="mut" style="margin-top:6px">Three wins in a row; the board's Top 4 target is now realistic.</p></div>
+              </div></div>
+          </div>
+        </div>
+      </section>
+      <!-- SQUAD -->
+      <section class="screen" id="s-squad">
+        <div class="page-head"><div><h1>Squad</h1><div class="sub">Board order 1–4, rotation, contracts.</div></div>
+          <div style="display:flex;gap:8px"><button class="btn">First team 4</button><button class="btn ghost">Reserves 6</button><button class="btn ghost">Academy 2</button></div></div>
+        <div class="grid squad" id="squadGrid"></div>
+      </section>
+      <!-- PRESEASON FLOW -->
+      <section class="screen" id="s-flow">
+        <div class="page-head"><div><h1>Pre-season setup</h1><div class="sub">Four decisions, then the season starts. Nothing else is hiding on this page.</div></div>
+          <button class="btn primary" disabled style="opacity:.5">Start season 5</button></div>
+        <div class="progress" style="margin-bottom:18px"><b style="width:50%"></b></div>
+        <div class="flow">
+          <div class="steps">
+            <div class="step done"><div class="n">✓</div><div><div class="t">Sponsors</div><div class="d">3 of 3 signed</div></div></div>
+            <div class="step done"><div class="n">✓</div><div><div class="t">Ticket price</div><div class="d">€50 · 69% full</div></div></div>
+            <div class="step on"><div class="n">3</div><div><div class="t">Equipment partner</div><div class="d">Choose one</div></div></div>
+            <div class="step"><div class="n">4</div><div><div class="t">Board objective</div><div class="d">Pick your risk</div></div></div>
+          </div>
+          <div class="stage">
+            <div class="stage-h">
+              <div><div class="t">Equipment partner</div><div class="d">Your kit deal for the season: rubbers for the whole squad plus a marketing package. Higher prestige unlocks the bigger names — you're at 46.</div></div>
+              <div class="chip amb">Step 3 of 4</div>
+            </div>
+            <div class="offers">
+              <div class="offer picked"><div><div class="nm">Butterfly Performance <span class="chip grn" style="margin-left:6px">Recommended</span></div><div class="mut">+1 all stats · +12% marketability · prestige 30–58</div></div><div class="money">+€1,000<span class="mut">/season</span></div><button class="btn sm primary">Selected</button></div>
+              <div class="offer"><div><div class="nm">Andro Regional Lab</div><div class="mut">+1 all stats · +6% marketability · prestige 16–38</div></div><div class="money">−€500<span class="mut">/season</span></div><button class="btn sm">Choose</button></div>
+              <div class="offer" style="opacity:.5"><div><div class="nm">Tibhar Pro Circuit</div><div class="mut">+1 all, +1 ATK/SRV · +18% marketability · needs prestige 48</div></div><div class="money">+€3,000<span class="mut">/season</span></div><button class="btn sm" disabled>Locked</button></div>
+            </div>
+            <div class="stage-f"><button class="btn ghost">← Ticket price</button><div class="mut">Signed deals are locked for the season</div><button class="btn primary">Board objective →</button></div>
+          </div>
+        </div>
+      </section>
+      <!-- INBOX -->
+      <section class="screen" id="s-inbox">
+        <div class="page-head"><div><h1>Inbox</h1><div class="sub">Threads that matter, grouped by who is talking to you.</div></div>
+          <button class="btn ghost">Mark all read</button></div>
+        <div class="inbox">
+          <div class="folders">
+            <div class="folder on">Decisions <b>3</b></div>
+            <div class="folder">Board <b>1</b></div>
+            <div class="folder">Players <b>2</b></div>
+            <div class="folder">Staff &amp; medical <b>1</b></div>
+            <div class="folder">Press</div>
+            <div class="folder">Archive</div>
+          </div>
+          <div>
+            <div class="mail unread" style="--tone:var(--red)">
+              <div class="mail-h"><div class="av" data-av="7" style="width:32px;height:32px"></div><div><div class="who">Izydor Ignaczak <span class="chip red">Deadline: round 8</span></div><div class="mut">Player · reserve</div></div><div class="when">Round 7</div></div>
+              <p>“I've won five in a row in training and I'm out of the team again. Put me on a board this round — or tell me straight that I'm not in your plans.”</p>
+              <div class="mut" style="margin-top:8px;font-size:11px">If you promise and don't field him, he loses 12 morale and a loyalty point.</div>
+              <div class="acts"><button class="btn sm primary">Promise a start</button><button class="btn sm">Not this round</button><button class="btn sm ghost">Offer a transfer</button></div>
+            </div>
+            <div class="mail unread" style="--tone:var(--amber)">
+              <div class="mail-h"><div class="av" data-av="8" style="width:32px;height:32px"></div><div><div class="who">Board of KS Piorun</div><div class="mut">Board · quarterly review</div></div><div class="when">Round 7</div></div>
+              <p>“Third place is fine, but the merchandising line is flat. Either the shop gets an upgrade or we revisit your Top 4 bonus.”</p>
+              <div class="acts"><button class="btn sm primary">Upgrade the shop (€15,000)</button><button class="btn sm">Push back</button></div>
+            </div>
+            <div class="mail" style="--tone:var(--blue)">
+              <div class="mail-h"><div class="av" data-av="9" style="width:32px;height:32px"></div><div><div class="who">Medical staff</div><div class="mut">Staff · fatigue report</div></div><div class="when">Round 7</div></div>
+              <p>Otton Czerwonka is at 81% fatigue. Rotating him this round costs you ~4 OVR on board 3 and halves his injury risk.</p>
+              <div class="acts"><button class="btn sm">Open nomination</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>window.store={G:{countryId:'PL',teams:[{id:0,name:'KS Piorun'},{id:1,name:'MKS Blyskawica'},{id:2,name:'UKS Sokol'}]}};</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script>
+const {getAvatarData}=window.PPM.gameplayVisuals;
+const PLAYERS=[
+ {id:11,name:'Mściwoj Mroczek',age:29,style:'Forehand topspin',ovr:83,peak:86,st:[84,84,82,77,84,84],mor:72,fat:24,tag:'Board 1'},
+ {id:12,name:'Izydor Ignaczak',age:31,style:'Two-winged attacker',ovr:77,peak:80,st:[71,71,94,71,72,83],mor:57,fat:12,tag:'Board 2'},
+ {id:13,name:'Otton Czerwonka',age:29,style:'Counter & block',ovr:75,peak:78,st:[64,77,80,84,76,73],mor:64,fat:81,tag:'Board 3'},
+ {id:14,name:'Strzeżymir Jasiński',age:22,style:'Two-winged attacker',ovr:71,peak:84,st:[70,76,84,63,63,63],mor:70,fat:8,tag:'Board 4'},
+ {id:15,name:'Pakosław Prus',age:19,style:'Defender',ovr:64,peak:79,st:[58,66,61,72,70,60],mor:80,fat:0,tag:'Reserve'},
+ {id:16,name:'Bolesław Kot',age:26,style:'Blocker',ovr:69,peak:73,st:[66,70,68,71,69,70],mor:66,fat:30,tag:'Reserve'},
+];
+const tone=v=>v>=85?'var(--green)':v>=75?'var(--blue)':v>=62?'var(--amber)':'var(--red)';
+const SL=['FH','BH','SRV','RET','FTW','MEN'];
+document.querySelectorAll('[data-av]').forEach((el,i)=>{
+  const p=PLAYERS[i%PLAYERS.length];
+  el.style.background=`center/cover url("${getAvatarData({id:p.id+i,name:p.name,age:p.age,nationality:'PL',teamId:i%3},'player')}")`;
+});
+document.getElementById('squadGrid').innerHTML=PLAYERS.map(p=>`
+ <div class="pcard">
+  <div class="top"><div class="av lg" style="background:center/cover url('${getAvatarData({id:p.id,name:p.name,age:p.age,nationality:'PL',teamId:0},'player')}')"></div>
+   <div style="min-width:0"><div class="nm" style="font-family:Syne;font-weight:700;font-size:14px">${p.name}</div>
+    <div class="mut">${p.age} · ${p.style}</div></div>
+   <div style="margin-left:auto;text-align:right"><div class="ovr" style="margin:0">${p.ovr}</div><div class="mut" style="font-size:9.5px">peak ${p.peak}</div></div></div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap"><span class="chip">${p.tag}</span>${p.fat>70?'<span class="chip red">Fatigue '+p.fat+'%</span>':''}${p.peak-p.ovr>8?'<span class="chip grn">Rising</span>':''}</div>
+  <div class="bars">${p.st.map((v,i)=>`<div class="bar"><span>${SL[i]}</span><i><b style="width:${v}%;background:${tone(v)}"></b></i><em>${v}</em></div>`).join('')}</div>
+  <div style="display:flex;gap:6px;margin-top:auto"><button class="btn sm" style="flex:1">Profile</button><button class="btn sm" style="flex:1">Contract</button></div>
+ </div>`).join('');
+document.querySelectorAll('.rail-btn[data-go]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.rail-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+b.dataset.go).classList.add('on');window.scrollTo(0,0);
+});
+
+// deep-link: #squad / #flow / #inbox / #market opens that screen directly
+const _h=location.hash.slice(1);if(_h){const _b=document.querySelector(`[data-go="${_h}"]`);if(_b)_b.click();}
+</script>
+</body>
+</html>
