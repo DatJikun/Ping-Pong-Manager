@@ -67,6 +67,10 @@ const COMMON_FIRST={
 // clubs above 110% of their budget (was 0%) purely by re-aligning the stream.
 // A private PRNG keeps naming cosmetic — balance is untouched by name changes.
 let _nameSeed=(Date.now()^0x9e3779b9)>>>0;
+// Pinning the stream makes a whole career byte-reproducible, which is what the
+// long-career soak runner needs to report "it broke here" and have that be true
+// on the next run too. Never called by the game itself — names stay cosmetic.
+function setNameSeed(seed){_nameSeed=(Number(seed)>>>0)||1;}
 function nameRand(){
   _nameSeed^=_nameSeed<<13;_nameSeed>>>=0;
   _nameSeed^=_nameSeed>>>17;
@@ -92,4 +96,4 @@ function randNameForCountry(countryId,age){
   return first+' '+last;
 }
 
-window.PPM.utils = { rnd, sleep, formatMoney, clamp, getCountryNamePools, randNameForCountry, COMMON_FIRST };
+window.PPM.utils = { rnd, sleep, formatMoney, clamp, getCountryNamePools, randNameForCountry, setNameSeed, COMMON_FIRST };
