@@ -7,7 +7,9 @@
 - English is now the release default; Polish remains selectable and persists in
   app settings.
 - Migrated the application shell, navigation, settings, career library and new
-  game wizard to translation keys. Language changes apply without a restart.
+  game wizard, dashboard and pre-season decision flow to translation keys.
+  Language changes apply without a restart.
+- Save validation and autosave failures now follow the selected language.
 - Added a rendered-HTML test for switching the start screen between EN and PL.
 
 ## 2026-07-28 — Fictional official database

@@ -331,7 +331,7 @@ const defaultManager=createSaveManager({
     :JSON.parse(text),
   loadText:text=>window.PPM.stateApi?.loadGameFromText?.(text),
   serializeCurrent:()=>window.PPM.stateApi?.serializeGame?.()||null,
-  onError:()=>globalThis.toast?.('Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.'),
+  onError:()=>globalThis.toast?.(t('storage.autosaveFailed')),
 });
 
 window.PPM.saveManagerApi={createSaveManager,parseSummary,ORDINARY_BACKUP_LIMIT};

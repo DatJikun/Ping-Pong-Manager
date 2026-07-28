@@ -140,7 +140,7 @@ function persistGame(){
   }catch(_error){
     if(!ui._saveFailureNotified){
       ui._saveFailureNotified=true;
-      toast('Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.');
+      toast(t('storage.autosaveFailed'));
     }
     return false;
   }
@@ -149,15 +149,15 @@ function persistGame(){
 // guards still run; schemaVersion records the highest migration floor applied.
 const SAVE_SCHEMA_VERSION=21;
 function validateSaveObject(parsed){
-  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Zapis musi być obiektem.');
-  if(!Number.isFinite(parsed.season))throw new Error('Zapis nie ma poprawnego numeru sezonu.');
-  if(!Array.isArray(parsed.teams))throw new Error('Zapis nie zawiera listy klubów.');
-  if(!Array.isArray(parsed.players))throw new Error('Zapis nie zawiera listy zawodników.');
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
+  if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
+  if(!Array.isArray(parsed.teams))throw new Error(t('save.missingTeams'));
+  if(!Array.isArray(parsed.players))throw new Error(t('save.missingPlayers'));
   if(parsed.schemaVersion!==undefined&&!Number.isFinite(parsed.schemaVersion)){
-    throw new Error('Zapis ma niepoprawną wersję formatu.');
+    throw new Error(t('save.invalidSchema'));
   }
   if(Number.isFinite(parsed.schemaVersion)&&parsed.schemaVersion>SAVE_SCHEMA_VERSION){
-    throw new Error('Ten zapis pochodzi z nowszej wersji gry.');
+    throw new Error(t('save.futureSchema'));
   }
   return parsed;
 }
