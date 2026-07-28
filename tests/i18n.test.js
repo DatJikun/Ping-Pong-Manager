@@ -244,3 +244,23 @@ test('the career history views follow the active locale', () => {
   assert.match(polish, /Historia i statystyki/i);
   assert.match(polish, /OVR zawodników/i);
 });
+
+test('league tables and the cup bracket follow the active locale', () => {
+  const g = boot(3115);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const englishLeague = g.PPM.pages.pageLeague();
+  const englishCup = g.PPM.pages.pageCup();
+  assert.match(englishLeague, /League · Season/i);
+  assert.match(englishLeague, /Division I table/i);
+  assert.match(englishCup, /National Cup/i);
+  assert.doesNotMatch(englishLeague, /Ostatnie dwie drużyny/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polishLeague = g.PPM.pages.pageLeague();
+  const polishCup = g.PPM.pages.pageCup();
+  assert.match(polishLeague, /Liga · Sezon/i);
+  assert.match(polishLeague, /Tabela I Ligi/i);
+  assert.match(polishCup, /Puchar krajowy/i);
+});

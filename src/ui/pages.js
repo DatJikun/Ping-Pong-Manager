@@ -392,44 +392,44 @@ function pageLeague(){
   const teamPointsLost=[...sorted].sort((a,b)=>(a.pointsLost||0)-(b.pointsLost||0)||b.pts-a.pts).slice(0,10);
   
   function playerStatsTable(players,statLabel,mode){
-    return`<table class="t"><tr><th>#</th><th>Zawodnik</th><th>Klub</th><th>Wiek</th><th>Kontrakt</th><th>${statLabel}</th><th>OVR</th><th>Akcja</th></tr>
+    return`<table class="t"><tr><th>#</th><th>${t('league.player')}</th><th>${t('market.club')}</th><th>${t('league.age')}</th><th>${t('league.contract')}</th><th>${statLabel}</th><th>OVR</th><th>${t('league.action')}</th></tr>
     ${players.map((p,i)=>{
       const isMine=p.teamId===myId;
       const val=mode==='won'?(p.leagueSeasonPointsWon||0):(p.leagueSeasonPointsLost||0);
-      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} r.</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td class="ink3">${ovr(p)}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">PRE-SIGN</button>`:'-'}</td></tr>`;
+      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} ${t((p.contractYears||0)===1?'common.year':'common.years')}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td class="ink3">${ovr(p)}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">${t('market.preSign')}</button>`:'-'}</td></tr>`;
     }).join('')}</table>`;
   }
   function teamStatsTable(teams,statLabel,mode){
-    return`<table class="t"><tr><th>#</th><th>Drużyna</th><th>OVR</th><th>${statLabel}</th><th>Pkt</th><th>Bilans</th><th>Różnica</th></tr>
-    ${teams.map((t,i)=>`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}</td><td class="ink3">${teamOvr(t.id)}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${mode==='won'?(t.pointsWon||0):(t.pointsLost||0)}</td><td>${t.pts}</td><td class="fs10 ink3">${t.w}W/${t.d||0}R/${t.l}P</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td></tr>`).join('')}</table>`;
+    return`<table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>${statLabel}</th><th>Pts</th><th>${t('league.record')}</th><th>${t('league.difference')}</th></tr>
+    ${teams.map((team,i)=>`<tr class="${team.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${team.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${team.id})">${team.name}</td><td class="ink3">${teamOvr(team.id)}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${mode==='won'?(team.pointsWon||0):(team.pointsLost||0)}</td><td>${team.pts}</td><td class="fs10 ink3">${team.w}W/${team.d||0}D/${team.l}L</td><td style="font-weight:700;color:${teamPointDiff(team)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(team)>=0?'+':''}${teamPointDiff(team)}</td></tr>`).join('')}</table>`;
   }
   
-  return`<div class="ph"><div><div class="pt">LIGA <span>Sezon ${store.G.season}</span></div><div class="ps">Kolejka ${store.G.matchday}/${TOTAL_MATCHDAYS}</div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('league.title',{season:store.G.season})}</div><div class="ps">${t('league.matchday',{current:store.G.matchday,total:TOTAL_MATCHDAYS})}</div></div></div>
   <div class="rtabs mb10">
-    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">I LIGA</div>
-    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">II LIGA</div>
+    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">${t('league.divisionOne')}</div>
+    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">${t('league.divisionTwo')}</div>
   </div>
   <div class="rtabs mb14">
-    <div class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">TABELA</div>
-    <div class="rtab ${statsTab==='points_for'?'on':''}" onclick="ui.leagueStatsTab='points_for';render()">ZAW. PUNKTY+</div>
-    <div class="rtab ${statsTab==='points_against'?'on':''}" onclick="ui.leagueStatsTab='points_against';render()">ZAW. PUNKTY-</div>
-    <div class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="ui.leagueStatsTab='team_points_for';render()">DRUŻ. PUNKTY+</div>
-    <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">DRUŻ. PUNKTY-</div>
+    <div class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">${t('league.table')}</div>
+    <div class="rtab ${statsTab==='points_for'?'on':''}" onclick="ui.leagueStatsTab='points_for';render()">${t('league.playerPointsFor')}</div>
+    <div class="rtab ${statsTab==='points_against'?'on':''}" onclick="ui.leagueStatsTab='points_against';render()">${t('league.playerPointsAgainst')}</div>
+    <div class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="ui.leagueStatsTab='team_points_for';render()">${t('league.teamPointsFor')}</div>
+    <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">${t('league.teamPointsAgainst')}</div>
   </div>
-  ${statsTab==='table'?`<div class="card"><div class="ct">TABELA ${league===1?'I':'II'} LIGI</div>
-  <table class="t"><tr><th>#</th><th>Dru\u017cyna</th><th>OVR</th><th>M</th><th>W</th><th>R</th><th>P</th><th>Punkty</th><th>R\u00f3\u017cnica</th><th>Pkt</th></tr>
+  ${statsTab==='table'?`<div class="card"><div class="ct">${t('league.tableTitle',{division:league===1?'I':'II'})}</div>
+  <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>Pts</th></tr>
   ${sorted.map((t,i)=>{
     const isRelegation=league===1&&i>=sorted.length-2;
     const isPromotion=league===2&&i<2;
     return`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}${isRelegation?' rel':''}${isPromotion?' p1':''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}${isRelegation?' <span class="cr fs9">\u2193</span>':''}${isPromotion?' <span class="cg fs9">\u2191</span>':''}</td><td class="ink3">${teamOvr(t.id)}</td><td>${t.w+(t.d||0)+t.l}</td><td class="cg b7">${t.w}</td><td class="cgold">${t.d||0}</td><td class="cr">${t.l}</td><td class="ink3 fs10">${t.pointsWon||0}:${t.pointsLost||0}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="syne b8 fs14">${t.pts}</td></tr>`;
   }).join('')}
   </table>
-  ${league===1?`<div class="mt-8 fs10 ink3">\u2b07 Ostatnie 2 dru\u017cyny spadaj\u0105 do II Ligi</div>`:`<div class="mt-8 fs10 ink3">\u2b06 Pierwsze 2 dru\u017cyny awansuj\u0105 do I Ligi</div>`}
+  ${league===1?`<div class="mt-8 fs10 ink3">\u2b07 ${t('league.relegation')}</div>`:`<div class="mt-8 fs10 ink3">\u2b06 ${t('league.promotion')}</div>`}
   </div>`
-  :statsTab==='points_for'?`<div class="card"><div class="ct">NAJWI\u0118CEJ ZDOBYTYCH PUNKT\u00d3W ${league===1?'I':'II'} LIGI</div>${playerStatsTable(topPointsWon,'Punkty zdobyte','won')}</div>`
-  :statsTab==='points_against'?`<div class="card"><div class="ct">NAJMNIEJ STRACONYCH PUNKT\u00d3W ${league===1?'I':'II'} LIGI</div>${playerStatsTable(topPointsLost,'Punkty stracone','lost')}</div>`
-  :statsTab==='team_points_for'?`<div class="card"><div class="ct">DRU\u017bYNY: NAJWI\u0118CEJ ZDOBYTYCH PUNKT\u00d3W ${league===1?'I':'II'} LIGI</div>${teamStatsTable(teamPointsWon,'Punkty zdobyte','won')}</div>`
-  :statsTab==='team_points_against'?`<div class="card"><div class="ct">DRU\u017bYNY: NAJMNIEJ STRACONYCH PUNKT\u00d3W ${league===1?'I':'II'} LIGI</div>${teamStatsTable(teamPointsLost,'Punkty stracone','lost')}</div>`
+  :statsTab==='points_for'?`<div class="card"><div class="ct">${t('league.mostPoints',{division:league===1?'I':'II'})}</div>${playerStatsTable(topPointsWon,t('league.pointsWon'),'won')}</div>`
+  :statsTab==='points_against'?`<div class="card"><div class="ct">${t('league.fewestLost',{division:league===1?'I':'II'})}</div>${playerStatsTable(topPointsLost,t('league.pointsLost'),'lost')}</div>`
+  :statsTab==='team_points_for'?`<div class="card"><div class="ct">${t('league.teamsMostPoints',{division:league===1?'I':'II'})}</div>${teamStatsTable(teamPointsWon,t('league.pointsWon'),'won')}</div>`
+  :statsTab==='team_points_against'?`<div class="card"><div class="ct">${t('league.teamsFewestLost',{division:league===1?'I':'II'})}</div>${teamStatsTable(teamPointsLost,t('league.pointsLost'),'lost')}</div>`
   :''}`;
 }
 
@@ -437,15 +437,15 @@ function pageLeague(){
 // PAGE: CUP
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function pageCup(){
-  if(!store.G.cup)return`<div class="ph"><div><div class="pt">PUCHAR <span>POLSKI</span></div></div></div><div class="card">Brak danych pucharowych.</div>`;
+  if(!store.G.cup)return`<div class="ph"><div><div class="pt">${t('cup.title')}</div></div></div><div class="card">${t('cup.noData')}</div>`;
   const cup=store.G.cup;const myId=store.G.myTeamId;
-  const roundNames=['1/16','1/8','\u0106wier\u0107fina\u0142','P\u00f3\u0142fina\u0142','Fina\u0142'];
+  const roundNames=['1/16','1/8',t('cup.quarterfinal'),t('cup.semifinal'),t('cup.final')];
   const canPlay=shouldPlayCup();
   
-  return`<div class="ph"><div><div class="pt">PUCHAR <span>POLSKI</span></div><div class="ps">Sezon ${store.G.season} ${cup.finished?'/ ZAKO\u0143CZONY':''}</div></div>
-  ${canPlay?`<div class="fs11 cpurple b7">Runda pucharowa zostanie rozegrana jako kolejny krok sezonu.</div>`:''}
+  return`<div class="ph"><div><div class="pt">${t('cup.title')}</div><div class="ps">${t('common.season')} ${store.G.season} ${cup.finished?`/ ${t('cup.finished')}`:''}</div></div>
+  ${canPlay?`<div class="fs11 cpurple b7">${t('cup.next')}</div>`:''}
   </div>
-  ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>ZWYCI\u0118ZCA: ${cup.winner.name}</div>`:''}
+  ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>${t('cup.winner',{name:cup.winner.name})}</div>`:''}
   <div class="cup-bracket">
     ${cup.rounds.map((round,ri)=>`<div class="cup-round">
       <div class="cup-round-title">${roundNames[Math.min(ri,roundNames.length-1)]}</div>

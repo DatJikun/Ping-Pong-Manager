@@ -25,6 +25,8 @@
   then localized both archive screens and the club welcome message.
 - Migrated season, manager, club and coaching history views while preserving the
   compact permanent ledgers and locale-aware historical money values.
+- Localized league tables, all four statistical rankings and the national cup
+  bracket without changing competition rules or stored results.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 
