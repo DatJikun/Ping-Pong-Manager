@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    name: Fast checks
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm test
+
+  full:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Full suite
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm run test:full
