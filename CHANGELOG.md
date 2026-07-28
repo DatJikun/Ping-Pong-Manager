@@ -3,6 +3,107 @@
 All notable changes to the engineering/codebase. Gameplay-feel changes are noted
 separately where relevant. Newest first.
 
+## 2026-07-26 — Design language: proto-final ("Paddock") applied to the whole game
+
+Owner brief: *"`prototypes/proto-final.html` is the design language we need to
+incorporate into the whole game."* All 112 tests green; no gameplay change. This
+is the **skin/system** half of M1 — the information architecture (season stage
+rail, one-flow season, screen-by-screen rebuilds) is still ahead.
+
+**`styles/main.css` rewritten on the prototype's system.** Same class names, new
+language, so all 15 screens converted at once instead of one at a time:
+- **Tokens are the whole language.** Carbon surfaces (`--carbon/--surf/--surf2/
+  --raise`), one ink ramp, signal colours (`--volt/--cyan/--lime/--red`), and the
+  club livery (`--club/--club2`). Every legacy token (`--r --g --gold --blue
+  --purple --teal --orange --s1..s3 --b1 --b2 --tint-*`) is now an alias onto
+  them, which is why 1500 lines of existing markup kept working untouched.
+- **Typography:** Saira Condensed (display + every figure, tabular) + Barlow
+  (body). Replaces Syne/Helvetica. The 24 inline `font-family:Syne` call sites in
+  JS were swapped too — carefully, since `styleSynergy` contains that substring.
+- **Flat geometry:** `--radius: 0`. No rounded corners anywhere; the radius
+  utilities (`.r3 … .rpill`) are retained as no-ops so markup still parses.
+  Accents are 3px tone bars and slanted (`clip-path`) markers instead.
+- **Components reskinned:** `.card`/`.ct` became the panel with a full-bleed
+  slanted header, `.sb` became the KPI tile with a top livery bar (its accent
+  follows the figure's colour class via `:has()`), `table.t` got the FM-style
+  colour-coded treatment, `.btn` variants got clipped corners, and every
+  chip/badge (`.pill .pc-tag .tb .award .league-badge .mkt-badge`) collapsed onto
+  one pill shape.
+- **Prototype kit added** for screens as they get rebuilt: `.panel/.kpi/.tbl/
+  .attrs/.dots/.stagebar/.stg/.substeps/.ss/.stage/.opt/.dec/.inbox`.
+- **Light theme kept** as a daylight variant of the same language (token swap
+  only). The prototype is dark by design, so **dark is now the default** —
+  `DEFAULT_APP_SETTINGS.theme` flipped to `'dark'`.
+
+**Shell rebuilt (`index.html` + `shell.js`).**
+- Masthead is the livery band: crest + club + standing on the left, stat blocks
+  right-aligned, 2px club-coloured rule under it. Every `updateHeader()` id kept.
+- Rail is grouped (Klub / Operacje / Rozgrywki / Raporty) with a season footer
+  line, and its **emoji icons are now monochrome inline SVG** that inherit
+  `currentColor`, so the active row takes the club livery.
+- **Per-club livery is live:** `applyClubLivery()` derives `--club/--club2` from
+  the club's own crest palette (lifted toward white on carbon, deepened on the
+  light theme) — the UI is recoloured per team, as the prototype intends.
+  It must be written to `<body>`, not `<html>`: the theme classes declare
+  `--club` on body, and a declaration there beats one inherited from html.
+- Main menu: one accented action (Nowa gra) instead of seven solid slabs.
+
+**Second pass, same day (owner: *"nadal nie wygląda jak prototyp, na początku jest
+biały ekran, wszędzie niech będzie czarny"*):**
+- **Light theme removed.** A returning player's `localStorage` still held
+  `theme:'light'`, so the game opened into the light variant — which is why it
+  did not look like the prototype. `normalizeAppSettings()` now coerces any
+  stored theme to `'dark'`, the `body.theme-light` token block is gone, and the
+  theme switch is out of Ustawienia. One theme: dark carbon.
+- **No more white flash on load.** `<html>` gets the carbon background (the first
+  paint happens before any script runs, and an unpainted `<html>` is white), an
+  inline `<style>` paints it before the CDN stylesheets arrive, the Google Fonts
+  link is loaded non-render-blocking via the `media="print"` swap, and GSAP moved
+  out of `<head>` to `defer` — in `<head>` it blocked first paint on CDN latency.
+- **All 163 decorative emoji removed** from `pages.js`, `gameplay.js`,
+  `shell.js` and `index.html` — the prototype contains none. Typographic marks it
+  *does* use (▶ ✓ ✕ ← → ↑ ↓ ⌛ ·) were deliberately kept, as were the country
+  flags in `constants.js` (data, not chrome). News items already carry meaning
+  through their colour-coded left border, so the emoji prefixes were redundant.
+- Brand mark is now the prototype's slanted livery square (`PP`) instead of a
+  table-tennis emoji.
+
+**Third pass, same day — market overhaul + the first two real flows.**
+
+**Transfer market rebuilt on the owner's reference (Motorsport Manager's staff
+market): a filter panel on top, one dense sortable table underneath.**
+- **Role tabs** (Zawodnicy / Trenerzy / Fizjo / Psycholodzy / Skauci / PR)
+  replace the type dropdown; the market is one role at a time. `ui.marketTypeFilter`
+  default moved `'all'` → `'player'`, and `'all'` from an old save is mapped to
+  `'player'` so nobody opens an empty market.
+- **Filter groups**: Widok (Wszyscy z licznikiem / Obserwowani), Wiek
+  (16-22 / 22-28 / 28-34 / 34+), Ocena (próg gwiazdek ze stepperem), plus search.
+- **Star ratings** from OVR over a 45–95 band (a 0–100 map squeezed every
+  professional into three-and-a-half stars), drawn as a clipped overlay so half
+  stars are exact.
+- **Table columns**: obserwuj / nazwisko (z portretem) / kraj / wiek / ocena /
+  klub / rozgrywki / pensja / odstępne / kontrakt do / status / akcja — every
+  header sorts. Players and staff share one row shape.
+- Favourites now work for staff too (`marketShortlistStaff`), and are a *view*,
+  not a separate card. The S+1 commitments and negotiation history moved behind
+  one toggle instead of being permanent cards above the list.
+
+**Pre-season is now a flow, not a stack.** Four steps (sponsorzy → partner
+techniczny → cena biletów → cel zarządu) on a step rail, one decision on screen
+at a time, each rendered as `.stage` + `.opt` with visible consequences. It opens
+on the first *unsettled* step, the footer always names what is still missing, and
+the season unlocks only when all four are closed.
+
+**The academy is four sub-steps** (Juniorzy / Nabór / Skauci / Raporty) with one
+block on screen at a time, plus a KPI strip — it was five stacked cards on one
+scroll.
+
+**Two real CSS collisions fixed** (both found by measuring, not by eye):
+`.pill.pos` and `.opt .m.pos` were inheriting `width:24px;height:22px;clip-path`
+from `.pos`, the league *position chip* — so every positive pill and every money
+figure in a flow step was squashed to 24px and clipped. The pill and figure rules
+now reset that geometry; the league chip is untouched.
+
 ## 2026-07-24 — Portrait rewrite + UI pass (theme tokens, dark theme, key screens)
 
 Owner brief: *"improve and diversify the avatars (leave ethnicities as they are),

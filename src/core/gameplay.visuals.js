@@ -573,7 +573,7 @@ function getTeamLogoData(team){
   const shape=seed%5;                      // composition
   const device=Math.floor(seed/5)%4;       // 0 paddle+ball 1 chevron 2 star row 3 bar+ball
   const mono=brand.initials;
-  const font=`font-family="'Syne','Helvetica Neue',Arial,sans-serif" font-weight="800"`;
+  const font=`font-family="'Saira Condensed','Arial Narrow',Arial,sans-serif" font-weight="800"`;
   // Monogram, always optically centred (dominant-baseline keeps it true at any size).
   const label=(cx,cy,size,fill)=>`<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" ${font} font-size="${size}" fill="${fill}" letter-spacing="-0.5">${mono}</text>`;
 

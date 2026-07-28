@@ -4,24 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PingPong Manager</title>
-<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<link rel="stylesheet" href="./styles/main.css?v=23">
+<!-- Painted before anything else loads. Without this the browser shows a white
+     page for as long as the CDN stylesheets take to arrive. -->
+<style>html,body{background:#101319;color:#eef2f8;margin:0}</style>
+<!-- Saira Condensed carries every figure and display line (broadcast/motorsport
+     condensed), Barlow carries body copy. Locked with the proto-final skin.
+     Loaded non-render-blocking (media swap) so the fonts never gate first paint;
+     `display=swap` draws the fallback in the meantime. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="./styles/main.css?v=25">
+<!-- deferred: GSAP is only used for page/modal transitions at runtime, and every
+     call site guards with `typeof gsap`. In <head> it blocked the first paint. -->
+<script defer charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
 <div id="app">
 <div id="hdr">
-  <div class="logo"><span class="logo-ball">&#127955;</span><span class="r">PING</span><span class="g">PONG</span><span class="logo-sub">MGR</span></div>
+  <!-- Brand: the prototype's slanted livery mark + wordmark, not an emoji. -->
+  <div class="logo"><span class="logo-sq">PP</span><span class="r">PING</span><span class="g">PONG</span><span class="logo-sub">MGR</span></div>
+  <div class="mast-club">
+    <img class="crest" id="h-crest" alt="">
+    <div class="who"><div class="v" id="h-club">-</div><div class="s" id="h-club-sub">-</div></div>
+  </div>
   <div class="hstats">
-    <div class="hs hs-club"><div class="l">Klub</div><div class="v" id="h-club">-</div><div class="s" id="h-club-sub">-</div></div>
     <div class="hs"><div class="l">Bud&#380;et</div><div class="v g" id="h-budget">-</div><div class="s" id="h-budget-sub">&nbsp;</div></div>
     <div class="hs"><div class="l">Sezon</div><div class="v" id="h-season">-</div><div class="s" id="h-season-sub">&nbsp;</div></div>
     <div class="hs"><div class="l">OVR</div><div class="v" id="h-ovr">-</div><div class="s" id="h-staff-ovr">&nbsp;</div></div>
     <div class="hs"><div class="l">Presti&#380;</div><div class="v gold" id="h-prestige">-</div><div class="s" id="h-prestige-sub">&nbsp;</div></div>
   </div>
   <div class="hbtns">
-    <button class="hbtn" onclick="saveGame()">&#128190; ZAPIS</button>
-    <button class="hbtn" onclick="document.getElementById('fi').click()">&#128194; WCZYTAJ</button>
-    <button class="hbtn pr" onclick="openSettings()">&#9881; USTAWIENIA</button>
+    <button class="hbtn" onclick="saveGame()">ZAPIS</button>
+    <button class="hbtn" onclick="document.getElementById('fi').click()">WCZYTAJ</button>
+    <button class="hbtn pr" onclick="openSettings()">USTAWIENIA</button>
     <input type="file" id="fi" accept=".json" style="display:none" onchange="loadGame(event)">
     <input type="file" id="dbi" accept=".json" style="display:none" onchange="loadDatabaseFile(event)">
   </div>
@@ -35,7 +51,7 @@
     <button class="mn-btn" onclick="go('budget')" data-page="budget">Bud&#380;et</button>
     <button class="mn-btn" onclick="go('market')" data-page="market">Transfery</button>
     <button class="mn-btn" onclick="go('news')" data-page="news">News</button>
-    <button class="mn-btn" onclick="go('inbox')" data-page="inbox">&#128231; Skrzynka</button>
+    <button class="mn-btn" onclick="go('inbox')" data-page="inbox">Skrzynka</button>
     <button class="mn-btn" onclick="go('league')" data-page="league">Liga</button>
     <button class="mn-btn" onclick="go('preseason')" data-page="preseason">Sezon</button>
   </div>
@@ -43,27 +59,30 @@
 <div id="main">
   <div id="sidebar">
     <div class="sb-brand">
-      <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1.5px">PREZES / GM</div>
+      <div style="font-size:9.5px;color:#5f6c80;text-transform:uppercase;letter-spacing:.16em;font-weight:700">PREZES / GM</div>
     </div>
-    <div class="nav-sep" data-label="Zarz&#261;dzanie"></div>
-    <button class="nb on" onclick="go('dash')" id="n-dash"><span class="nb-ic">&#128202;</span><span class="nb-lb">Pulpit</span></button>
-    <button class="nb" onclick="go('squad')" id="n-squad"><span class="nb-ic">&#128101;</span><span class="nb-lb">Sk&#322;ad</span></button>
-    <button class="nb" onclick="go('staff')" id="n-staff"><span class="nb-ic">&#127891;</span><span class="nb-lb">Sztab</span></button>
-    <button class="nb" onclick="go('club')" id="n-club"><span class="nb-ic">&#127967;</span><span class="nb-lb">Klub</span></button>
-    <button class="nb" onclick="go('budget')" id="n-budget"><span class="nb-ic">&#128176;</span><span class="nb-lb">Bud&#380;et</span></button>
+    <!-- Rail icons are monochrome SVG, not emoji: they inherit currentColor so
+         they take the club livery on the active row, the way the skin intends. -->
+    <div class="nav-sep" data-label="Klub"></div>
+    <button class="nb on" onclick="go('dash')" id="n-dash"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="9"/><rect x="9" y="1" width="6" height="5"/><rect x="9" y="8" width="6" height="7"/><rect x="1" y="12" width="6" height="3"/></svg></span><span class="nb-lb">Pulpit</span></button>
+    <button class="nb" onclick="go('squad')" id="n-squad"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="5" r="3"/><circle cx="12" cy="6" r="2.2"/><path d="M0 15c0-3 2.5-5 5.5-5s5.5 2 5.5 5z"/><path d="M11 15c0-2 .6-3.4 1.6-4.3 2 .3 3.4 2 3.4 4.3z"/></svg></span><span class="nb-lb">Sk&#322;ad</span></button>
+    <button class="nb" onclick="go('staff')" id="n-staff"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 4-8 4-8-4z"/><path d="M2 7v4c0 2 3 4 6 4s6-2 6-4V7l-6 3z"/></svg></span><span class="nb-lb">Sztab</span></button>
+    <button class="nb" onclick="go('club')" id="n-club"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 15V6l7-5 7 5v9h-5v-5H6v5z"/></svg></span><span class="nb-lb">Klub</span></button>
+    <button class="nb" onclick="go('budget')" id="n-budget"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><circle cx="8" cy="8" r="2.8"/></svg></span><span class="nb-lb">Bud&#380;et</span></button>
     <div class="nav-sep" data-label="Operacje"></div>
-    <button class="nb" onclick="go('sponsors')" id="n-sponsors"><span class="nb-ic">&#129309;</span><span class="nb-lb">Sponsorzy</span></button>
-    <button class="nb" onclick="go('market')" id="n-market"><span class="nb-ic">&#128260;</span><span class="nb-lb">Transfery</span></button>
+    <button class="nb" onclick="go('sponsors')" id="n-sponsors"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h5l1 1 1-1h5v3l-4 4-2-2-2 2-4-4z"/><path d="M4 2h3v3H4zM9 2h3v3H9z" opacity=".55"/></svg></span><span class="nb-lb">Sponsorzy</span></button>
+    <button class="nb" onclick="go('market')" id="n-market"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 5l4-4v2.5h12V6.5H4V9z"/><path d="M16 11l-4 4v-2.5H0V10h12V7.5z"/></svg></span><span class="nb-lb">Transfery</span></button>
+    <button class="nb" onclick="go('inbox')" id="n-inbox"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><path d="M0 3l8 6 8-6z"/></svg><span id="inbox-badge" class="nb-badge" style="display:none"></span></span><span class="nb-lb">Skrzynka</span></button>
+    <div class="nav-sep" data-label="Rozgrywki"></div>
+    <button class="nb" onclick="go('league')" id="n-league"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h10v4a5 5 0 0 1-10 0z"/><path d="M6 10h4v4H6z"/><path d="M3 15h10v1H3z"/></svg></span><span class="nb-lb">Liga</span></button>
+    <button class="nb" onclick="go('cup')" id="n-cup"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="10" r="5"/><path d="M5 0h6l-1.5 4h-3z"/></svg></span><span class="nb-lb">Puchar</span></button>
+    <button class="nb" onclick="go('mundial')" id="n-mundial"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7" opacity=".5"/><path d="M8 1c2 2 2 12 0 14C6 13 6 3 8 1z"/><path d="M1 8h14v1.4H1z"/></svg></span><span class="nb-lb">Mundial</span></button>
     <div class="nav-sep" data-label="Raporty"></div>
-    <button class="nb" onclick="go('league')" id="n-league"><span class="nb-ic">&#127942;</span><span class="nb-lb">Liga</span></button>
-    <button class="nb" onclick="go('news')" id="n-news"><span class="nb-ic">&#128240;</span><span class="nb-lb">News</span></button>
-    <button class="nb" onclick="go('inbox')" id="n-inbox"><span class="nb-ic">&#128231;<span id="inbox-badge" class="nb-badge" style="display:none"></span></span><span class="nb-lb">Skrzynka</span></button>
-    <button class="nb" onclick="go('cup')" id="n-cup"><span class="nb-ic">&#127941;</span><span class="nb-lb">Puchar</span></button>
-    <button class="nb" onclick="go('mundial')" id="n-mundial"><span class="nb-ic">&#127757;</span><span class="nb-lb">Mundial</span></button>
-    <button class="nb" onclick="go('history')" id="n-history"><span class="nb-ic">&#128200;</span><span class="nb-lb">Historia</span></button>
-    <button class="nb" onclick="go('hof')" id="n-hof"><span class="nb-ic">&#11088;</span><span class="nb-lb">Hall of Fame</span></button>
-    <button class="nb" onclick="openGuide()" id="n-guide"><span class="nb-ic">&#128214;</span><span class="nb-lb">Pomoc</span></button>
-
+    <button class="nb" onclick="go('news')" id="n-news"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2h13v12H0z" opacity=".5"/><path d="M2 4h9v2H2zM2 7h9v1.2H2zM2 9.4h9v1.2H2z"/><path d="M14 5h2v7a2 2 0 0 1-2 2z"/></svg></span><span class="nb-lb">News</span></button>
+    <button class="nb" onclick="go('history')" id="n-history"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 14L6 7l3 3 5-8 2 1-6 10-3-3-4 5z"/></svg></span><span class="nb-lb">Historia</span></button>
+    <button class="nb" onclick="go('hof')" id="n-hof"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2.2 5H16l-4.6 3.4 1.8 5.4L8 10.6 2.8 13.8l1.8-5.4L0 5h5.8z"/></svg></span><span class="nb-lb">Hall of Fame</span></button>
+    <button class="nb" onclick="openGuide()" id="n-guide"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h6.2v14H1z" opacity=".55"/><path d="M8.8 1H15v14H8.8z"/></svg></span><span class="nb-lb">Pomoc</span></button>
+    <div class="rfoot" id="rail-foot">&nbsp;</div>
   </div>
   <div id="content"></div>
 </div>
@@ -71,15 +90,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="ov" id="ov" onclick="if(!(window.ui&&(ui.running||ui.autoPlay)))closeModal()"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
-<script charset="UTF-8" src="./src/data/names.js?v=23"></script>
-<script charset="UTF-8" src="./src/data/constants.js?v=23"></script>
-<script charset="UTF-8" src="./src/core/utils.js?v=23"></script>
-<script charset="UTF-8" src="./src/core/state.js?v=23"></script>
-<script charset="UTF-8" src="./src/ui/shell.js?v=23"></script>
-<script charset="UTF-8" src="./src/core/gameplay.js?v=23"></script>
-<script charset="UTF-8" src="./src/core/gameplay.visuals.js?v=23"></script>
-<script charset="UTF-8" src="./src/core/gameplay.club-ui.js?v=23"></script>
-<script charset="UTF-8" src="./src/ui/pages.js?v=23"></script>
-<script charset="UTF-8" src="./src/main.js?v=23"></script>
+<script charset="UTF-8" src="./src/data/names.js?v=25"></script>
+<script charset="UTF-8" src="./src/data/constants.js?v=25"></script>
+<script charset="UTF-8" src="./src/core/utils.js?v=25"></script>
+<script charset="UTF-8" src="./src/core/state.js?v=25"></script>
+<script charset="UTF-8" src="./src/ui/shell.js?v=25"></script>
+<script charset="UTF-8" src="./src/core/gameplay.js?v=25"></script>
+<script charset="UTF-8" src="./src/core/gameplay.visuals.js?v=25"></script>
+<script charset="UTF-8" src="./src/core/gameplay.club-ui.js?v=25"></script>
+<script charset="UTF-8" src="./src/ui/pages.js?v=25"></script>
+<script charset="UTF-8" src="./src/main.js?v=25"></script>
 </body>
 </html>

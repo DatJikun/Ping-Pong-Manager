@@ -36,7 +36,9 @@ window.PPM = window.PPM || {};
 const LOCAL_STORAGE_KEY = 'ppgame';
 const APP_SETTINGS_KEY = 'ppgame_app_settings';
 const DEFAULT_APP_SETTINGS = {
-  theme: 'light',
+  // The locked design language (proto-final "Paddock") is dark carbon. There is
+  // no light variant — see normalizeAppSettings().
+  theme: 'dark',
   matchSpeed: 'normal',
   aiDifficulty: 'hard'
 };
@@ -66,7 +68,7 @@ const ui = {
   squadSearch: '',
   squadStyleFilter: 'all',
   marketSearch: '',
-  marketTypeFilter: 'all',
+  marketTypeFilter: 'player',   // the market is one role at a time (role tabs)
   marketCompare: [],
   _selClub: -1,
   _selCountry: 'PL',
@@ -84,7 +86,10 @@ function setPage(pageId){ui.page=pageId;return ui.page;}
 // These live in a separate localStorage key so they survive between careers.
 function normalizeAppSettings(raw){
   return{
-    theme:['light','dark'].includes(raw?.theme)?raw.theme:DEFAULT_APP_SETTINGS.theme,
+    // Owner call 2026-07-26: the game is dark carbon everywhere, full stop. Any
+    // 'light' left in a returning player's localStorage is coerced back to dark,
+    // otherwise they open the game into a theme that no longer exists.
+    theme:'dark',
     matchSpeed:['slow','normal','fast'].includes(raw?.matchSpeed)?raw.matchSpeed:DEFAULT_APP_SETTINGS.matchSpeed,
     aiDifficulty:['easy','normal','hard','legend'].includes(raw?.aiDifficulty)?raw.aiDifficulty:DEFAULT_APP_SETTINGS.aiDifficulty,
   };

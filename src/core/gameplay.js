@@ -79,7 +79,7 @@ function doLoanOut(pid, toTeamId, share){
   p.loanedOut=true;
   closeModal();
   toast(`${p.name} ${p.isYouth?'z akademii ':''}wypo\u017cyczony do ${teamName(toTeamId)}! Klub pokrywa ${Math.round(loanShare*100)}% pensji.`);
-  pushNews(`\ud83d\udccb ${p.name}${p.isYouth?' (akademia)':''} wypo\u017cyczony do ${teamName(toTeamId)}`,'');
+  pushNews(`${p.name}${p.isYouth?' (akademia)':''} wypo\u017cyczony do ${teamName(toTeamId)}`,'');
   render();updateHeader();
   persistGame();
 }
@@ -96,10 +96,10 @@ function returnLoans(){
       p.loanedOut=false;
       if(l.fromTeamId===store.G.myTeamId){
         toast(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia!`);
-        pushNews(`\u2705 ${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia`,'good');
+        pushNews(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia`,'good');
       }else if(l.toTeamId===store.G.myTeamId){
         toast(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia do ${teamName(l.fromTeamId)}.`);
-        pushNews(`\ud83d\udccb ${p.name} wr\u00f3ci\u0142 po wypo\u017cyczeniu do ${teamName(l.fromTeamId)}`,'');
+        pushNews(`${p.name} wr\u00f3ci\u0142 po wypo\u017cyczeniu do ${teamName(l.fromTeamId)}`,'');
       }
     }
     l.returned=true;
@@ -308,7 +308,7 @@ function selectBoardObjective(choiceId){
   return true;
 }
 function handleManagerFired(reason){
-  pushNews(`❌ Menedżer zwolniony: ${reason}`,'hot');
+  pushNews(`Menedżer zwolniony: ${reason}`,'hot');
   toast('Zarząd zwolnił menedżera.');
   persistGame();
   // Called mid-runMatchday, which returns without clearing ui.running — and
@@ -390,7 +390,7 @@ function generateMatchdayNews(results,myId){
   runByTeam.forEach((streak,tid)=>{
     if(!playedThisRound.has(tid))return;
     const t=teamById(tid);
-    if(t&&streak>=5&&(streak-5)%3===0)pushNews(`🔥 ${t.name} wygrywa ${streak}. mecz z rzędu!`,tid===myId?'good':'');
+    if(t&&streak>=5&&(streak-5)%3===0)pushNews(`${t.name} wygrywa ${streak}. mecz z rzędu!`,tid===myId?'good':'');
   });
   // 4) Standout duel: a player beating a clearly higher-rated opponent 3:0/3:1.
   const pById=new Map();store.G.players.forEach(p=>pById.set(p.id,p));
@@ -403,17 +403,17 @@ function generateMatchdayNews(results,myId){
   });});
   if(duels.length){
     const d=duels.sort((a,b)=>(ovr(b.l)-ovr(b.w))-(ovr(a.l)-ovr(a.w)))[0];
-    pushNews(`🏓 ${d.w.name} (${teamName(d.w.teamId)}, OVR ${ovr(d.w)}) ogrywa wyżej notowanego ${d.l.name} (OVR ${ovr(d.l)}) ${d.score}!`,'');
+    pushNews(`${d.w.name} (${teamName(d.w.teamId)}, OVR ${ovr(d.w)}) ogrywa wyżej notowanego ${d.l.name} (OVR ${ovr(d.l)}) ${d.score}!`,'');
   }
   // 5) Career milestones crossed this round (only players who played this round).
   results.forEach(r=>{(r.matchups||[]).forEach(mu=>{
     [pById.get(mu.homePlayer),pById.get(mu.awayPlayer)].forEach(p=>{
-      if(p&&!p.retired&&[100,250,500].includes(p.careerW||0))pushNews(`🏆 ${p.name} (${teamName(p.teamId)}) ma już ${p.careerW} zwycięstw w karierze!`,'good');
+      if(p&&!p.retired&&[100,250,500].includes(p.careerW||0))pushNews(`${p.name} (${teamName(p.teamId)}) ma już ${p.careerW} zwycięstw w karierze!`,'good');
     });
   });});
   // 6) Mid-season table check every 6th round.
   if(store.G.matchday>0&&store.G.matchday%6===0&&leader){
-    pushNews(`📊 Po ${store.G.matchday} kolejkach liderem I Ligi jest ${leader.name} (${leader.pts} pkt).`,'');
+    pushNews(`Po ${store.G.matchday} kolejkach liderem I Ligi jest ${leader.name} (${leader.pts} pkt).`,'');
   }
 }
 
@@ -755,7 +755,7 @@ function getAllExternalStaffMarket(){
   ];
 }
 function calcTeamMorale(){const mp=myPlayers();if(!mp.length)return 50;return Math.round(mp.reduce((s,p)=>s+(p.morale||50),0)/mp.length);}
-function moraleLabel(m){return m>=80?'\ud83d\udfe2 Znakomite':m>=60?'\ud83d\udfe1 Dobre':m>=40?'\ud83d\udfe0 Przeci\u0119tne':'\ud83d\udd34 Z\u0142e';}
+function moraleLabel(m){return m>=80?'Znakomite':m>=60?'Dobre':m>=40?'Przeci\u0119tne':'Z\u0142e';}
 // v13: Updated league maintenance costs
 function calcLeagueMaint(){const base=myLeague()===1?32000:13000;return base+(store.G.season||1)*800;}
 // Yearly academy upkeep (NEW): scales with level (€2k→€30k). Charged every season-
@@ -1117,7 +1117,7 @@ function acceptClubOffer(clubId){
     store.G.seasonHistory=snapshot.seasonHistory;
     store.G.records=snapshot.records;
     store.G.clubOffers=[];
-    pushNews(`🧳 Menedżer przenosi się do ${offer.clubName} (${offer.countryName}) przed sezonem ${store.G.season}.`,'hot');
+    pushNews(`Menedżer przenosi się do ${offer.clubName} (${offer.countryName}) przed sezonem ${store.G.season}.`,'hot');
     closeModal();render();updateHeader();toast(`Nowy klub: ${offer.clubName} / ${offer.countryName}`);persistGame();
     return;
   }
@@ -1134,16 +1134,16 @@ function acceptClubOffer(clubId){
   store.G.infraAcademy=next.infraAcademy||0;
   store.G.infraMerchandising=next.infraMerchandising||0;
   store.G.clubOffers=[];
-  pushNews(`🧳 Menedżer przenosi się do ${next.name} przed sezonem ${store.G.season+1}.`,'hot');
+  pushNews(`Menedżer przenosi się do ${next.name} przed sezonem ${store.G.season+1}.`,'hot');
   closeModal();render();updateHeader();toast(`Nowy klub: ${next.name}`);persistGame();
 }
 function showPostSeasonGala(payload){
   return new Promise(resolve=>{
     const modal=document.getElementById('modal');modal.className='modal modal-lg';
     const branding=getTeamBranding(myTeam());
-    const awardRows=(payload.awards||[]).length?(payload.awards||[]).map(a=>`<div class="award-card"><div class="award-mark">🏓</div><div><b>${a.label}</b><div class="fs10 ink3">${a.player}${a.club?` (${a.club})`:''}</div></div><div class="history-badge">S${store.G.season}</div></div>`).join(''):'<div class="fs12 ink3">Brak wyróżnień w tej gali.</div>';
+    const awardRows=(payload.awards||[]).length?(payload.awards||[]).map(a=>`<div class="award-card"><div><b>${a.label}</b><div class="fs10 ink3">${a.player}${a.club?` (${a.club})`:''}</div></div><div class="history-badge">S${store.G.season}</div></div>`).join(''):'<div class="fs12 ink3">Brak wyróżnień w tej gali.</div>';
     const offerRows=(payload.clubOffers||[]).length?`<div class="card mt-12"><div class="ct">RYNEK NOWYCH KLUBÓW</div><div id="club-offer-picker">${buildClubOfferPickerHtml(18)}</div><div class="fs10 ink3 mt-8">Najpierw wybierz kraj i ligę, potem klub docelowy. Jeśli nie spełniasz progu prestiżu, musisz jeszcze podbudować nazwisko.</div></div>`:'';
-    modal.innerHTML=`<div class="mt2">🏆 GALA POSEZONOWA S${store.G.season} <button class="close-btn" onclick="window._galaResolved=true;closeModal()">✕</button></div>
+    modal.innerHTML=`<div class="mt2">GALA POSEZONOWA S${store.G.season} <button class="close-btn" onclick="window._galaResolved=true;closeModal()">✕</button></div>
     <div class="gala-hero">
       <img src="${getTeamLogoData(myTeam())}" alt="${myTeam().name}" class="club-logo lg">
       <div>
@@ -1837,7 +1837,7 @@ function doBorrowIn(pid){
   p.role=starterCount<4?'starter':'reserve';
   store.G.transferMarket=store.G.transferMarket.filter(m=>!(m.playerId===pid&&m.type==='loan'));
   toast(`${p.name} wypożyczony na sezon z ${fromName} (pokrywamy ${Math.round(share*100)}% pensji).`);
-  pushNews(`📋 ${p.name} wypożyczony z ${fromName}`,'');
+  pushNews(`${p.name} wypożyczony z ${fromName}`,'');
   render();updateHeader();persistGame();
 }
 function toggleMarketShortlist(pid){
@@ -2208,7 +2208,7 @@ function applySeveranceRelease(p){
   team.budget=(team.budget||0)-severance;
   const finance=store.G.seasonFinance;
   if(finance)finance.other=(finance.other||0)-severance;
-  pushNews(`💥 ${p.name} rozwiązuje kontrakt z ${team.name}. Odprawa: ${severance.toLocaleString('pl')} €`,'hot');
+  pushNews(`${p.name} rozwiązuje kontrakt z ${team.name}. Odprawa: ${severance.toLocaleString('pl')} €`,'hot');
   p.teamId=null;
   p.contractYears=0;
   p.role='reserve';
@@ -2646,7 +2646,7 @@ async function simulateBackgroundSeasons(n,progressCb){
     genSponsorOffers(calcPrestige());
     buildMarket();
     store.G.matchNomination=null;
-    pushNews(`📣 Nowy menedżer przejmuje ${club.name} przed sezonem ${store.G.season}.`,'hot');
+    pushNews(`Nowy menedżer przejmuje ${club.name} przed sezonem ${store.G.season}.`,'hot');
     pushMail({from:'Zarząd klubu',subject:`Witamy w ${club.name}`,body:`Przejmujesz klub z ${n}-letnią historią: liga ma swoje rekordy, gwiazdy i hierarchię (sprawdź Historię i Hall of Fame). ${club.name} gra obecnie w ${club.league===1?'I':'II'} lidze. Powodzenia, trenerze.`});
     ui._bgGen=false;
     updateHeader();
@@ -2799,7 +2799,7 @@ function renderNominationModal(){
   const fiveSlots=nominationSlotCount()===5;
   const slots=fiveSlots?['A — stół 1','B — stół 2','C — stół 3','R1 — od G4','R2 — od G4']:['A — stół 1','B — stół 2','C — stół 3'];
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">📋 NOMINACJA MECZOWA — ${getLeagueFormat().label}</div>
+  modal.innerHTML=`<div class="mt2">NOMINACJA MECZOWA — ${getLeagueFormat().label}</div>
   <div class="fs11 ink3 mb10 lh16">${protocolDescription()} Kliknij zawodnika, aby dodać/usunąć. Kolejność wyboru = ${fiveSlots?'A, B, C, R1, R2':'A, B, C'}.</div>
   <div class="grid gp6 ova" style="max-height:46vh">
   ${pool.map(p=>{const idx=_nomState.sel.indexOf(p.id);const tag=idx>=0?slots[idx]:null;
@@ -2921,7 +2921,7 @@ function tryInjuriesForTeam(teamId){
       p.injuredFor=dur;p.morale=Math.max(10,(p.morale||50)-10);
       p._injMd=store.G.matchday;
       injured.push({name:p.name,dur,teamId});
-      if(ovr(p)>=72)pushNews(`🚑 Kontuzja gwiazdy: ${p.name} (${teamName(p.teamId)}) wypada na ${dur} kolejek.`,'hot');
+      if(ovr(p)>=72)pushNews(`Kontuzja gwiazdy: ${p.name} (${teamName(p.teamId)}) wypada na ${dur} kolejek.`,'hot');
     }
   });
   return injured;
@@ -2938,7 +2938,7 @@ function tryInjuriesAfterMatch(homeId,awayId){
 function tickInjuries(){
   const myId=store.G.myTeamId;const recovered=[];
   store.G.players.forEach(p=>{if(p.injuredFor>0){p.injuredFor--;if(p.injuredFor===0&&p.teamId===myId)recovered.push(p.name);}});
-  if(recovered.length)recovered.forEach(n=>toast(`\u2705 ${n} wr\u00f3ci\u0142 do zdrowia!`));
+  if(recovered.length)recovered.forEach(n=>toast(`${n} wr\u00f3ci\u0142 do zdrowia!`));
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -3154,7 +3154,7 @@ function applyGrowth(){
         const pick=freeAgents[rnd(0,Math.min(2,freeAgents.length-1))];
         pick.teamId=t.id;pick.contractYears=1+rnd(0,2);pick.salary=contractExpect(pick).salary;
         pick.role=roster.filter(p=>p.role==='starter').length<4?'starter':'reserve';
-        if(ovrBase(pick)>=68)pushNews(`📝 ${t.name} pozyskuje z rynku ${pick.name} (OVR ${ovrBase(pick)}).`,'');
+        if(ovrBase(pick)>=68)pushNews(`${t.name} pozyskuje z rynku ${pick.name} (OVR ${ovrBase(pick)}).`,'');
       }
     }
   });
@@ -3231,7 +3231,7 @@ function updateRecords(){
   // Perfect season check
   if(recordTeam&&recordTeam.pts>=66&&!store.G.records.PERFECT_SEASON){
     store.G.records.PERFECT_SEASON={season:store.G.season,club:recordTeam.name,pts:recordTeam.pts};
-    if(mt)toast('\ud83c\udfc6 Perfekcyjny Sezon! Rekord ustanowiony!');
+    if(mt)toast('Perfekcyjny Sezon! Rekord ustanowiony!');
   }
 
   // Fewest sets lost (approximation via ga)
@@ -3304,11 +3304,11 @@ function giveSeasonAwards(){
     if(topImpact>-999){
       awardPool.filter(p=>diffPerMatch(p)===topImpact).forEach(p=>{
         p.awards=p.awards||[];
-        p.awards.push({season:store.G.season,type:'golden_paddle',clubName:teamName(p.teamId),displayLabel:'\ud83c\udfd3 Z\u0142ota Paletka',label:`\ud83c\udfd3 Z\u0142ota Paletka S${store.G.season}`});
+        p.awards.push({season:store.G.season,type:'golden_paddle',clubName:teamName(p.teamId),displayLabel:'Z\u0142ota Paletka',label:`Z\u0142ota Paletka S${store.G.season}`});
         // forLeague awards can go to ANY club's player (incl. one we pre-signed
         // who still plays elsewhere) \u2014 always carry the club so the gala/log
         // can't read as if OUR club's award went to a player who isn't here yet.
-        awards.push({player:p.name,club:teamName(p.teamId),label:'\ud83c\udfd3 Z\u0142ota Paletka',forLeague:true});
+        awards.push({player:p.name,club:teamName(p.teamId),label:'Z\u0142ota Paletka',forLeague:true});
       });
     }
     const defensePool=awardPool;
@@ -3316,8 +3316,8 @@ function giveSeasonAwards(){
       const leastPointsLost=Math.min(...defensePool.map(lostPerMatch));
       defensePool.filter(p=>lostPerMatch(p)===leastPointsLost).forEach(p=>{
         p.awards=p.awards||[];
-        p.awards.push({season:store.G.season,type:'iron_paddle',clubName:teamName(p.teamId),displayLabel:'\ud83d\udee1\ufe0f \u017belazna Paletka',label:`\ud83d\udee1\ufe0f \u017belazna Paletka S${store.G.season}`});
-        awards.push({player:p.name,club:teamName(p.teamId),label:'\ud83d\udee1\ufe0f \u017belazna Paletka',forLeague:true});
+        p.awards.push({season:store.G.season,type:'iron_paddle',clubName:teamName(p.teamId),displayLabel:'\u017belazna Paletka',label:`\u017belazna Paletka S${store.G.season}`});
+        awards.push({player:p.name,club:teamName(p.teamId),label:'\u017belazna Paletka',forLeague:true});
       });
     }
   }
@@ -3326,7 +3326,7 @@ function giveSeasonAwards(){
     const srt=store.G.teams.filter(t=>t.league===league).sort((a,b)=>b.pts-a.pts);
     const champ=srt[0];
     if(league===1){
-      store.G.players.filter(p=>p.teamId===champ.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'league_champion',clubName:champ.name,displayLabel:'\ud83c\udfc6 Mistrz I Ligi',label:`\ud83c\udfc6 Mistrz I Ligi S${store.G.season}`});if(p.teamId===myId)awards.push({player:p.name,club:champ.name,label:'\ud83c\udfc6 Mistrz I Ligi'});});
+      store.G.players.filter(p=>p.teamId===champ.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'league_champion',clubName:champ.name,displayLabel:'Mistrz I Ligi',label:`Mistrz I Ligi S${store.G.season}`});if(p.teamId===myId)awards.push({player:p.name,club:champ.name,label:'Mistrz I Ligi'});});
     }
   });
   return awards;
@@ -3395,7 +3395,7 @@ async function playCupRoundBody(){
   const roundNames=['1/16','1/8','\u0106wier\u0107fina\u0142','P\u00f3\u0142fina\u0142','FINA\u0141'];
   const roundName=roundNames[Math.min(cup.currentRound,roundNames.length-1)];
   
-  modal.innerHTML=`<div class="mt2">\ud83c\udfc5 PUCHAR POLSKI: ${roundName}</div>
+  modal.innerHTML=`<div class="mt2">PUCHAR POLSKI: ${roundName}</div>
     <div id="cup-vme" class="mb10"></div>
     <div id="cup-matches" class="mb12 grid gtcfill240 gp4"></div>
     <div class="log" id="cup-log" style="height:160px"></div>`;
@@ -3508,7 +3508,7 @@ async function playCupRoundBody(){
   
   if(nextRound.length<=1){
     cup.finished=true;cup.winner=nextRound[0];
-    addLog(`\n// \ud83c\udfc6 ZWYCI\u0118ZCA PUCHARU POLSKI: ${cup.winner.name}!`,'hl');
+    addLog(`\n// ZWYCI\u0118ZCA PUCHARU POLSKI: ${cup.winner.name}!`,'hl');
     const cupPrizeTable={winner:35000,finalist:18000,semifinal:9000,quarterfinal:4500};
     const finalRound=cup.rounds[cup.rounds.length-1]||[];
     const semiRound=cup.rounds[cup.rounds.length-2]||[];
@@ -3523,15 +3523,15 @@ async function playCupRoundBody(){
         addLog(`// ${label}: +${amount.toLocaleString('pl')} €`,'gd');
       }
     };
-    if(cup.winner.isReal)rewardCupTeam(cup.winner.id,cupPrizeTable.winner,'\ud83d\udcb0 Premia pucharowa');
-    finalRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.finalist,'\ud83d\udcb0 Premia za finał PP');});
-    semiRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.semifinal,'\ud83d\udcb0 Premia za półfinał PP');});
-    quarterRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.quarterfinal,'\ud83d\udcb0 Premia za ćwierćfinał PP');});
+    if(cup.winner.isReal)rewardCupTeam(cup.winner.id,cupPrizeTable.winner,'Premia pucharowa');
+    finalRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.finalist,'Premia za finał PP');});
+    semiRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.semifinal,'Premia za półfinał PP');});
+    quarterRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.quarterfinal,'Premia za ćwierćfinał PP');});
     if(cup.winner.isReal&&cup.winner.id===myId){
-      pushNews(`\ud83c\udfc6 ${myTeam().name} wygrywa Puchar Polski! Premia +${cupPrizeTable.winner.toLocaleString('pl')} €`,'cup');
+      pushNews(`${myTeam().name} wygrywa Puchar Polski! Premia +${cupPrizeTable.winner.toLocaleString('pl')} €`,'cup');
       store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.role==='starter').forEach(p=>{
         p.awards=p.awards||[];
-        p.awards.push({season:store.G.season,type:'cup_winner',clubName:myTeam().name,displayLabel:'\ud83c\udfc5 Puchar Polski',label:`\ud83c\udfc5 Puchar Polski S${store.G.season}`});
+        p.awards.push({season:store.G.season,type:'cup_winner',clubName:myTeam().name,displayLabel:'Puchar Polski',label:`Puchar Polski S${store.G.season}`});
       });
     }
     await matchPause(1000);
@@ -3652,7 +3652,7 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
           </div>
           <div class="tar">
             <div class="fs10 ink3 up ls1">OVR</div>
-            <div style="font-family:Syne,sans-serif;font-size:28px;line-height:1;font-weight:800;color:${side==='home'?'var(--r)':'var(--g)'}">${ovr(p)}</div>
+            <div style="font-family:'Saira Condensed',sans-serif;font-size:28px;line-height:1;font-weight:800;color:${side==='home'?'var(--r)':'var(--g)'}">${ovr(p)}</div>
           </div>
         </div>
         <div style="padding:10px 12px 12px">
@@ -3717,7 +3717,7 @@ async function runMatchday(){
   // Owner 2026-07-02: unanswered decision mail BLOCKS the matchday — read the
   // inbox and answer before you can press play.
   if(pendingDecisions().length){
-    toast(`\ud83d\udce7 Najpierw odpowiedz na decyzje w Skrzynce (${pendingDecisions().length})!`);
+    toast(`Najpierw odpowiedz na decyzje w Skrzynce (${pendingDecisions().length})!`);
     ui.page='inbox';render();
     return;
   }
@@ -3886,13 +3886,13 @@ async function runMatchday(){
     const totalMerch=store.G._top12Bonus?Math.round(merchInc*1.5):merchInc;
     myTeam().budget+=totalMerch;
     if(finance)finance.merch+=totalMerch;
-    addLog(`// \ud83d\udecd Sklep kibica: +${totalMerch.toLocaleString('pl')} €`,'gd');
+    addLog(`// Sklep kibica: +${totalMerch.toLocaleString('pl')} €`,'gd');
   }
   
   if(store.G.matchday===TOTAL_MATCHDAYS-1){
     [1,2].forEach(leagueId=>{
       if(!store.G.top12MastersDone?.[leagueId]){
-        addLog(`\n// \ud83c\udfbe Top 12 Masters ${leagueId===1?'I Ligi':'II Ligi'} dost\u0119pne!`,'hl');
+        addLog(`\n// Top 12 Masters ${leagueId===1?'I Ligi':'II Ligi'} dost\u0119pne!`,'hl');
       }
     });
   }
@@ -3904,7 +3904,7 @@ async function runMatchday(){
     const ticketIncome=attendance*priceRaw;
     myTeam().budget+=ticketIncome;
     if(finance)finance.tickets+=ticketIncome;
-    addLog(`// \ud83c\udf9f Bilety: ${attendance} kibic\u00f3w x ${priceRaw} € = +${ticketIncome.toLocaleString('pl')} €`,'gd');
+    addLog(`// Bilety: ${attendance} kibic\u00f3w x ${priceRaw} € = +${ticketIncome.toLocaleString('pl')} €`,'gd');
   }
   
   // v15: News feed
@@ -3914,7 +3914,7 @@ async function runMatchday(){
   // Cup check
   if(store.G.matchday>0&&store.G.matchday%4===0&&!store.G.cup?.finished){
     store.G.cupPlayedThisSeason=false;
-    addLog('\n// \ud83c\udfc5 Mecze pucharowe dost\u0119pne!','hl');
+    addLog('\n// Mecze pucharowe dost\u0119pne!','hl');
   }
   
   if(store.G.matchday>=TOTAL_MATCHDAYS){
@@ -3946,10 +3946,10 @@ async function runMatchday(){
       if(checkGoal(boardObjective)){
         myTeam().budget+=boardObjective.reward;
         if(finance)finance.boardReward+=boardObjective.reward;
-        addLog(`// \ud83c\udfaf Zarz\u0105d: wykonano cel (${goalDesc(boardObjective.goal)}) +${boardObjective.reward.toLocaleString('pl')} €`,'gd');
+        addLog(`// Zarz\u0105d: wykonano cel (${goalDesc(boardObjective.goal)}) +${boardObjective.reward.toLocaleString('pl')} €`,'gd');
         store.G.managerPrestige=Math.min(100,(store.G.managerPrestige||0)+6);
       }else{
-        addLog(`// \ud83c\udfaf Zarz\u0105d: niewykonany cel (${goalDesc(boardObjective.goal)})`,'bd');
+        addLog(`// Zarz\u0105d: niewykonany cel (${goalDesc(boardObjective.goal)})`,'bd');
         store.G.managerPrestige=Math.max(0,(store.G.managerPrestige||0)-4);
         if(boardObjective.failure==='fired'){
           handleManagerFired(`niezrealizowany ambitny cel: ${goalDesc(boardObjective.goal)}`);
@@ -3971,7 +3971,7 @@ async function runMatchday(){
       finance.prDirectorWages=wageBreakdown.prDirector;
       finance.maint=maint;
     }
-    addLog(`// \ud83d\udcfa Prawa Telewizyjne: +${tvPay.toLocaleString('pl')} € (poz. #${myPos2}, ${myL===1?'I':'II'} Liga)`,'gd');
+    addLog(`// Prawa Telewizyjne: +${tvPay.toLocaleString('pl')} € (poz. #${myPos2}, ${myL===1?'I':'II'} Liga)`,'gd');
     store.G.budgetLog=store.G.budgetLog||[];
     store.G.budgetLog.push(buildBudgetEntry(wages,prize,sponsorIncome,maint));
     const awardResults=giveSeasonAwards();
@@ -3998,8 +3998,8 @@ async function runMatchday(){
     
     recordClubSeasonHistory();
     store.G.seasonHistory.push({season:store.G.season,position:myPos2,league:myL,w:myTeam().w,d:myTeam().d,l:myTeam().l,pts:myTeam().pts,gf:myTeam().gf,ga:myTeam().ga,pointsWon:myTeam().pointsWon||0,pointsLost:myTeam().pointsLost||0,teamOvr:teamOvr(myTeam().id),matchProg:buildMatchProgression(),budget:myTeam().budget,wages,promoted:promoRele.promoted,relegated:promoRele.relegated,teamsSnapshot:store.G.teams.map(t=>({id:t.id,name:t.name,league:t.league,w:t.w,d:t.d,l:t.l,pts:t.pts,gf:t.gf,ga:t.ga,pointsWon:t.pointsWon||0,pointsLost:t.pointsLost||0}))});
-    if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog('\n// \ud83c\udfc5 OLIMPIADA dost\u0119pna!','hl');}else store.G.olympicYear=false;
-    if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog('\n// \ud83c\udf0d MUNDIAL dost\u0119pny!','hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
+    if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog('\n// OLIMPIADA dost\u0119pna!','hl');}else store.G.olympicYear=false;
+    if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog('\n// MUNDIAL dost\u0119pny!','hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
     buildMarket();genSponsorOffers(calcPrestige());
     const clubOffers=generateClubOffers();
     await showPostSeasonGala({
@@ -4116,7 +4116,7 @@ function aiPoachOutgrownStars(){
       if(!buyer)return;
       buyer.budget-=fee;seller.budget=(seller.budget||0)+fee;
       p.teamId=buyer.id;p.salary=contractExpect(p).salary;p.contractYears=1+rnd(0,2);p.role='reserve';
-      if(ovrBase(p)>=72)pushNews(`💰 ${buyer.name} kupuje ${p.name} (OVR ${ovrBase(p)}) z ${seller.name} za ${fee.toLocaleString('pl')} €.`,'');
+      if(ovrBase(p)>=72)pushNews(`${buyer.name} kupuje ${p.name} (OVR ${ovrBase(p)}) z ${seller.name} za ${fee.toLocaleString('pl')} €.`,'');
     });
   });
 }
@@ -4236,7 +4236,7 @@ function endSeason(){
       if(buyer){
         p.teamId=buyer.id;p.contractYears=1+rnd(0,2);p.salary=contractExpect(p,buyer.id).salary;
         p.role='starter';
-        toast(`\u26a0 ${p.name} podpisa\u0142 z ${buyer.name}!`);
+        toast(`${p.name} podpisa\u0142 z ${buyer.name}!`);
         safeLog(`${p.name} odszed\u0142 do ${buyer.name}`,'bd');
       }
     }
@@ -4557,7 +4557,7 @@ async function runMundialBody(){
   const myId=store.G.myTeamId;
   
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  modal.innerHTML=`<div class="mt2">\ud83c\udf0d MUNDIAL PING PONGA \u2014 Sezon ${store.G.season}</div>
+  modal.innerHTML=`<div class="mt2">MUNDIAL PING PONGA \u2014 Sezon ${store.G.season}</div>
   <div class="grid gtc4 gp4 mb12">
     ${teams.sort((a,b)=>(a.worldRank||99)-(b.worldRank||99)).map((t,i)=>`<div style="padding:6px 8px;background:${t.isPlayer?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.isPlayer?'var(--r)':'var(--b1)'};border-radius:3px">
       <div class="fs9 ink3">#${t.worldRank||'?'}</div>
@@ -4636,10 +4636,10 @@ async function runMundialBody(){
   }
   
   const mundialWinner=curRound[0];
-  addLog(`\n// \ud83c\udf0d MISTRZ \u015aWIATA: ${mundialWinner?.name||'?'}!`,'hl');
+  addLog(`\n// MISTRZ \u015aWIATA: ${mundialWinner?.name||'?'}!`,'hl');
   
   if(mundialWinner?.isPlayer){
-    addLog('// \ud83c\udfc6 TWOJA REPREZENTACJA WYGRA\u0141A MUNDIAL!','gd');
+    addLog('// TWOJA REPREZENTACJA WYGRA\u0141A MUNDIAL!','gd');
     // Big reputation boost
     store.G.managerPrestige=(store.G.managerPrestige||0)+30;
     myTeam().budget+=50000;
@@ -4647,10 +4647,10 @@ async function runMundialBody(){
     // drawn from all clubs) \u2014 not to every senior at the manager's club.
     (myTeamNat?.players||[]).forEach(p=>{
       p.awards=p.awards||[];
-      p.awards.push({season:store.G.season,type:'mundial_gold',displayLabel:'\ud83c\udf0d Z\u0142oto Mundialu',label:`\ud83c\udf0d Z\u0142oto Mundialu S${store.G.season}`});
+      p.awards.push({season:store.G.season,type:'mundial_gold',displayLabel:'Z\u0142oto Mundialu',label:`Z\u0142oto Mundialu S${store.G.season}`});
     });
-    toast('\ud83c\udf0d Mistrzostwo \u015awiata!!! Bonus +50 000 €!');
-    pushNews(`\ud83c\udf0d MUNDIAL: ${mundialWinner.name} zostaje Mistrzem \u015awiata!`,'cup');
+    toast('Mistrzostwo \u015awiata!!! Bonus +50 000 €!');
+    pushNews(`MUNDIAL: ${mundialWinner.name} zostaje Mistrzem \u015awiata!`,'cup');
   }else{
     addLog(`// Wynik: ${mundialWinner?.isPlayer?'Z\u0142oto':'Brak trofeum'}`,'dm');
   }
@@ -4668,7 +4668,7 @@ function checkNatTeamOffer(){
     store.G._natTeamOfferShown=true;
     const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
     const modal=document.getElementById('modal');modal.className='modal';
-    modal.innerHTML=`<div class="mt2">\ud83c\udf0d Oferta: Selekcjoner Reprezentacji <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+    modal.innerHTML=`<div class="mt2">Oferta: Selekcjoner Reprezentacji <button class="close-btn" onclick="closeModal()">\u2715</button></div>
     <div class="r4 mb14" style="padding:16px;background:#f8f0dc;border:1px solid var(--gold)">
       <div class="syne b8 fs18 mb8">${country.flag} ${country.nationalTeam||country.name}</div>
       <div class="fs13 mb8">Tw\u00f3j presti\u017c mened\u017cerski (${pres}/100) przekroczy\u0142 pr\u00f3g. Zosta\u0142e\u015b zaproszony do prowadzenia reprezentacji narodowej.</div>
@@ -4703,7 +4703,7 @@ async function runOlympicsBody(){
   const rankByOvr=store.G.teams.slice().sort((a,b)=>teamOvr(b.id)-teamOvr(a.id));
   const top8=rankByOvr.slice(0,8);const myId=store.G.myTeamId;const myInTop8=top8.find(t=>t.id===myId);
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">\ud83c\udfc5 OLIMPIADA - Sezon ${store.G.season}</div>
+  modal.innerHTML=`<div class="mt2">OLIMPIADA - Sezon ${store.G.season}</div>
   <div class="grid gtc4 gp4 mb12">
     ${top8.map((t,i)=>`<div style="padding:7px 10px;background:${t.id===myId?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.id===myId?'var(--r)':'var(--b1)'}"><div class="fs9 ink3">#${i+1} OVR ${teamOvr(t.id)}</div><div class="syne b7 fs11">${t.name}</div></div>`).join('')}
   </div>
@@ -4721,10 +4721,10 @@ async function runOlympicsBody(){
   addLog('\n// FINA\u0141','hl');await sleep(600);
   const{winner:gold}=await simOlMatch(finTeams[0],finTeams[1]);
   const silver=gold===finTeams[0]?finTeams[1]:finTeams[0];
-  store.G.players.filter(p=>p.teamId===gold.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'olympic_gold',displayLabel:'\ud83e\udd47 Z\u0142oto Olimpijskie',label:`\ud83e\udd47 Z\u0142oto Olimpijskie S${store.G.season}`});});
-  addLog(`\n// \ud83e\udd47 ${gold.name} - MISTRZ OLIMPIJSKI!`,gold.id===myId?'gd':'hl');
+  store.G.players.filter(p=>p.teamId===gold.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'olympic_gold',displayLabel:'Z\u0142oto Olimpijskie',label:`Z\u0142oto Olimpijskie S${store.G.season}`});});
+  addLog(`\n// ${gold.name} - MISTRZ OLIMPIJSKI!`,gold.id===myId?'gd':'hl');
   const budBonus=gold.id===myId?18000:silver.id===myId?12000:myInTop8?6000:0;
-  if(budBonus){myTeam().budget+=budBonus;addLog(`// \ud83d\udcb0 Bonus: +${budBonus.toLocaleString('pl')} €`,'gd');}
+  if(budBonus){myTeam().budget+=budBonus;addLog(`// Bonus: +${budBonus.toLocaleString('pl')} €`,'gd');}
   store.G.olympicYear=false;
   // Persist immediately: awards, budget bonus and olympicYear=false must survive
   // a reload, otherwise the tournament replays with rerolled results.
@@ -4772,7 +4772,7 @@ function signAcademyProspect(idx){
   closeModal();
   render();updateHeader();
   toast(`Junior ${p.name} (${ovrBase(p)} OVR) do\u0142\u0105czy\u0142 do akademii!`);
-  pushNews(`\ud83c\udf93 Akademia: ${p.name} do\u0142\u0105czy\u0142 do klubu (${p.academyProfile?.region||'lokalny talent'})`,'good');
+  pushNews(`Akademia: ${p.name} do\u0142\u0105czy\u0142 do klubu (${p.academyProfile?.region||'lokalny talent'})`,'good');
   persistGame();
 }
 
@@ -4810,7 +4810,7 @@ function signTrialProspect(idx){
   store.G.academyTrial=[]; // the other candidates leave
   clearScoutResult(p.id);
   toast(`${p.name} (${ovrBase(p)} OVR) wybrany z mini-turnieju!`);
-  pushNews(`\ud83c\udfd3 Mini-turniej: ${p.name} do\u0142\u0105czy\u0142 do akademii`,'good');
+  pushNews(`Mini-turniej: ${p.name} do\u0142\u0105czy\u0142 do akademii`,'good');
   render();updateHeader();persistGame();
 }
 
@@ -4847,13 +4847,13 @@ function openPlayerModal(pid){
           <div class="fs11 ink3 mt-4">Marketability: <b class="cgold">${marketability}</b></div>
         </div>
       </div>
-      <div style="margin-top:6px;padding:6px 10px;display:inline-block;border:1px solid ${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--b1)'};border-radius:3px;font-size:11px;font-weight:700;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)'}">${styleLabel(p.playStyle)}${store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?.styleSynergy===p.playStyle?' \u26a1 SYNERGY':''}</div>
+      <div style="margin-top:6px;padding:6px 10px;display:inline-block;border:1px solid ${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--b1)'};border-radius:3px;font-size:11px;font-weight:700;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)'}">${styleLabel(p.playStyle)}${store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?.styleSynergy===p.playStyle?' SYNERGY':''}</div>
       <div class="mt-8 pd8-10 bb1 r10 bgs2 fs12">
         <div class="b7 mb4">${p.profileTag||identity.label}</div>
         <div class="ink3">${p.signatureNote||identity.note}</div>
       </div>
       ${p.equipment?`<div class="mt-8 pd8-10 bb1 r10 bgs1 fs11">
-        <div class="b7 mb3">🏓 Sprzęt</div>
+        <div class="b7 mb3">Sprzęt</div>
         <div class="ink3">${EQUIPMENT.blades[p.equipment.blade]?.label||'?'} + ${EQUIPMENT.sponges[p.equipment.sponge]?.label||'?'} + ${EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.label||'?'}</div>
         <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):'Neutralny setup';})()}</div>
       </div>`:''}
@@ -4985,7 +4985,7 @@ function openNegotiate(pid){
         const modal=document.getElementById('modal');modal.className='modal';
         modal.innerHTML=`<div class="mt2">Odmowa Transferu <button class="close-btn" onclick="closeModal()">\u2715</button></div>
         <div class="bbr r4 mb12" style="padding:16px;background:#fae8e4">
-          <div class="b7 mb6">\u274c ${p.name} odmawia negocjacji</div>
+          <div class="b7 mb6">${p.name} odmawia negocjacji</div>
           <div class="fs12 ink2">"Tw\u00f3j klub ma za ma\u0142y presti\u017c (${myPres}/100), \u017ceby mnie zainteresowa\u0107. Wr\u00f3\u0107 gdy b\u0119dziesz w lepszej formie."</div>
         </div>
         <div class="fs11 ink3">Wymagany presti\u017c: ~40+. Tw\u00f3j presti\u017c: ${myPres}. Popraw pozycj\u0119 ligow\u0105 przez 2-3 sezony.</div>
@@ -5012,7 +5012,7 @@ function openNegotiate(pid){
     <div class="neg-row"><div class="neg-label">Oczekiwana rola</div><div class="neg-val">${roleGuaranteeLabel(exp.role)}</div></div>
     ${marketItem?.type==='transfer'?`<div class="neg-row"><div class="neg-label">Kwota odst\u0119pnego</div><div class="neg-val">${marketItem.fee.toLocaleString('pl')} €</div></div>`:''}
   </div>
-  ${isFutureJoin?'<div class="pd8-12 r3 fs11" style="background:#f8f0dc;border:1px solid var(--gold);color:#8a6000;margin:8px 0">\u26a0 Zawodnik ma wa\u017cny kontrakt. Podpis zadzia\u0142a dopiero od nast\u0119pnego sezonu.</div>':''}
+  ${isFutureJoin?'<div class="pd8-12 r3 fs11" style="background:#f8f0dc;border:1px solid var(--gold);color:#8a6000;margin:8px 0">Zawodnik ma wa\u017cny kontrakt. Podpis zadzia\u0142a dopiero od nast\u0119pnego sezonu.</div>':''}
   <div style="margin:16px 0">
     <div class="fs10 up ls1 ink3 mb4">Pensja: <b id="neg-sal-lbl" class="cr">${sal.toLocaleString('pl')} €/rok</b></div>
     <input type="range" min="1000" max="${maxSal}" step="1000" value="${sal}" class="w100 accr" oninput="window._negSal=+this.value;negUpdate()">
@@ -5192,7 +5192,7 @@ function openStaffNeg(sid){
   const isHiring=s.teamId!==store.G.myTeamId;
   const mt=myTeam();const modal=document.getElementById('modal');modal.className='modal';
   const typeLbl=s.type==='coach'?'Trener':s.type==='scout'?'Skaut':s.type==='physio'?'Fizjoterapeuta':s.type==='pr'?'Dyrektorka PR':'Psycholog';
-  const typeIcon=s.type==='coach'?'\ud83c\udf93':s.type==='scout'?'\ud83d\udd0d':s.type==='physio'?'\ud83c\udfe5':s.type==='pr'?'\ud83c\udfa4':'\ud83e\udde0';
+  const typeIcon=s.type==='coach'?'':s.type==='scout'?'':s.type==='physio'?'':s.type==='pr'?'':'';
   const sOvr=staffOvr(s);
   const defaultYrs=s.contractYears||2;
   const canPreSign=canPreSignStaff(s);
@@ -5205,10 +5205,10 @@ function openStaffNeg(sid){
   window._staffNegYrs=defaultYrs;window._staffNegSid=s.id;window._staffNegSal=s.salary||staffExpSal;window._staffNegBonus=staffDefBonus;
   modal.innerHTML=`<div class="mt2">${typeIcon} ${s.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="flex aic gp16 mb14">
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;color:${staffOvrColor(sOvr)}">${sOvr}</div>
+    <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:40px;color:${staffOvrColor(sOvr)}">${sOvr}</div>
     <div><div class="fs11 ink3">${typeLbl} / OVR ${sOvr} / Wiek: ${s.age||'?'} lat${s.peakAge?' / Peak: '+s.peakAge+'l':''}${s.teamId===store.G.myTeamId?' / Peak OVR: '+staffCeiling(s):''}</div><div class="fs11 ink3 mt-2">${s.salary.toLocaleString('pl')} €/rok</div></div>
   </div>
-  ${s.type==='coach'?`<div class="pd8-12 bgs2 bb1 r6 fs11 mb10">🎓 <b>Rozwój zawodników:</b> młodzież <b class="cg">+${Math.round((coachDevMultiplier(s.training,true)-1)*100)}%</b>, seniorzy <b class="cg">+${Math.round((coachDevMultiplier(s.training,false)-1)*100)}%</b> tempa wzrostu. To główna wartość elitarnego trenera — buduje dynastię.</div>`:''}
+  ${s.type==='coach'?`<div class="pd8-12 bgs2 bb1 r6 fs11 mb10"><b>Rozwój zawodników:</b> młodzież <b class="cg">+${Math.round((coachDevMultiplier(s.training,true)-1)*100)}%</b>, seniorzy <b class="cg">+${Math.round((coachDevMultiplier(s.training,false)-1)*100)}%</b> tempa wzrostu. To główna wartość elitarnego trenera — buduje dynastię.</div>`:''}
   ${(isHiring&&canPreSign)||replaceFee>0?`<div class="neg-block">
     ${isHiring&&canPreSign?`<div class="neg-row"><div class="neg-label">Status kontraktu</div><div class="neg-val">ostatni rok / podpis od nowego sezonu</div></div>`:''}
     ${replaceFee>0?`<div class="neg-row"><div class="neg-label">Koszt wymiany roli</div><div class="neg-val">${replaceFee.toLocaleString('pl')} € za zwolnienie ${currentRoleHolder.name}</div></div>`:''}
@@ -5407,7 +5407,7 @@ function sellPlayer(pid){
   p.teamId=best.team.id;p.role='reserve';p.isYouth=false;p.contractYears=Math.max(2,p.contractYears||0);
   myTeam().budget+=best.fee;
   const finance=ensureSeasonFinance();if(finance)finance.other+=best.fee;
-  pushNews(`💶 ${p.name} sprzedany do ${best.team.name} za ${best.fee.toLocaleString('pl')} €`,'');
+  pushNews(`${p.name} sprzedany do ${best.team.name} za ${best.fee.toLocaleString('pl')} €`,'');
   toast(`${p.name} sprzedany za ${best.fee.toLocaleString('pl')} €`);
   buildMarket();render();updateHeader();persistGame();
 }
@@ -5569,7 +5569,7 @@ function openTop12Picker(leagueId){
     .sort((a,b)=>top12Score(b)-top12Score(a));
   if(!pool.length){runTop12Masters(leagueId);return;}
   const modal=document.getElementById('modal');modal.className='modal';
-  modal.innerHTML=`<div class="mt2">🎾 TOP 12 MASTERS — wybierz reprezentanta <button class="close-btn" onclick="closeModal()">✕</button></div>
+  modal.innerHTML=`<div class="mt2">TOP 12 MASTERS — wybierz reprezentanta <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="fs11 ink3 mb10">Kto zagra dla ${myTeam().name}? Rywale wystawiają zawodników z najlepszym sezonem (wygrane → bilans punktów → OVR).</div>
   <div class="grid gp6">
   ${pool.map((p,i)=>{
@@ -5603,7 +5603,7 @@ async function runTop12MastersBody(leagueId){
   const myEntry=participants.find(e=>e.team.id===myId);
   
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  modal.innerHTML=`<div class="mt2">\ud83c\udfbe TOP 12 MASTERS \u2014 ${leagueId===1?'I Liga':'II Liga'}</div>
+  modal.innerHTML=`<div class="mt2">TOP 12 MASTERS \u2014 ${leagueId===1?'I Liga':'II Liga'}</div>
   <div class="grid gtc4 gp6 mb14">
     ${participants.map((e,i)=>`<div style="padding:8px;background:${e.team.id===myId?'var(--tint-bad)':'var(--s2)'};border:1px solid ${e.team.id===myId?'var(--r)':'var(--b1)'};border-radius:3px">
       <div class="fs9 ink3">#${i+1}</div>
@@ -5668,10 +5668,10 @@ async function runTop12MastersBody(leagueId){
   const champion=current[0];
   if(champion){
     placements[champion.id]='winner';
-    addLog(`\n// \ud83c\udfc6 MISTRZ: ${champion.name} (${teamName(champion.teamId)})!`,'hl');
+    addLog(`\n// MISTRZ: ${champion.name} (${teamName(champion.teamId)})!`,'hl');
     // Award champion
     champion.awards=champion.awards||[];
-    champion.awards.push({season:store.G.season,type:`top12_winner_l${leagueId}`,clubName:teamName(champion.teamId),displayLabel:`\ud83c\udfc6 Top 12 Masters ${leagueId===1?'I':'II'} Liga`,label:`\ud83c\udfc6 Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}`});
+    champion.awards.push({season:store.G.season,type:`top12_winner_l${leagueId}`,clubName:teamName(champion.teamId),displayLabel:`Top 12 Masters ${leagueId===1?'I':'II'} Liga`,label:`Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}`});
     champion.morale=100;
     
     // Update records
@@ -5693,18 +5693,18 @@ async function runTop12MastersBody(leagueId){
       if(team.id===myId){
         const finance=ensureSeasonFinance();
         if(finance)finance.prize+=prize;
-        addLog(`// \ud83d\udcb0 Premia Top 12 (${place}): +${prize.toLocaleString('pl')} €`,'gd');
+        addLog(`// Premia Top 12 (${place}): +${prize.toLocaleString('pl')} €`,'gd');
       }
     });
     if(champion.teamId===myId){
-      addLog('// \ud83c\udf9f Frekwencja na trybunach ro\u015bnie przez reszt\u0119 sezonu!','gd');
+      addLog('// Frekwencja na trybunach ro\u015bnie przez reszt\u0119 sezonu!','gd');
       store.G._top12Bonus=true; // ticket income multiplier rest of season
-      toast(`\ud83c\udfc6 ${champion.name} wygrywa Top 12 Masters!`);
+      toast(`${champion.name} wygrywa Top 12 Masters!`);
     }
     // No else-reset: both leagues' tournaments run the same matchday, and losing
     // the OTHER league's Top 12 must not wipe a bonus earned in ours. The flag is
     // cleared at season start (startSeason) anyway.
-    pushNews(`\ud83c\udfbe ${champion.name} mistrzem Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}!`,'cup');
+    pushNews(`${champion.name} mistrzem Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}!`,'cup');
   }
   
   await sleep(1200);

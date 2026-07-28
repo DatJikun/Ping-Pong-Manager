@@ -13,7 +13,8 @@
 //   - openGuide()      — renders the full in-game guide inside the modal
 //   - openSettings()   — renders theme/speed/difficulty settings inside the modal
 //   - updateHeader()   — refreshes all #hdr stat values from current store.G
-//   - applyTheme()     — toggles theme-light / theme-dark on <body>
+//   - applyTheme()     — pins the single dark-carbon theme on <body>
+//   - applyClubLivery()— recolours --club/--club2 from the club's crest palette
 //   - saveSettings()   — validates, persists, and applies a settings change
 //
 // Exposed as window.PPM.shell and destructured into window by main.js.
@@ -25,16 +26,50 @@ const render = (...args)=>window.PPM.renderApp?.(...args);
 const stateApi = window.PPM.stateApi || {};
 
 function getSettings(){
-  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'light',matchSpeed:'normal',aiDifficulty:'hard'};
+  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'dark',matchSpeed:'normal',aiDifficulty:'hard'};
   return ui.settings;
 }
-function applyTheme(theme){
-  document.body.classList.toggle('theme-dark',theme==='dark');
-  document.body.classList.toggle('theme-light',theme!=='dark');
+// One theme: dark carbon. Kept as a function (rather than deleted) because it is
+// part of the public shell API and is called on boot and after settings changes.
+function applyTheme(){
+  document.body.classList.add('theme-dark');
+  document.body.classList.remove('theme-light');
+}
+
+// ═══════════════════════════════════════════════════════
+// CLUB LIVERY
+// The proto-final language recolours the whole UI in the club's own colours:
+// --club drives the rail highlight, panel accents, primary buttons and the
+// masthead rule. Crest palettes are tuned for a crest, so the accent is lifted
+// toward white to stay legible as a UI colour on carbon.
+// ═══════════════════════════════════════════════════════
+function mixToward(hex,target,amount){
+  const h=String(hex||'').replace('#','');
+  if(h.length!==6)return hex;
+  const t=String(target).replace('#','');
+  const ch=i=>{
+    const a=parseInt(h.substr(i*2,2),16),b=parseInt(t.substr(i*2,2),16);
+    return Math.round(a+(b-a)*amount).toString(16).padStart(2,'0');
+  };
+  return '#'+ch(0)+ch(1)+ch(2);
+}
+function applyClubLivery(team){
+  // Must be set on <body>, not <html>: the theme classes (`body.theme-dark`)
+  // declare --club themselves, and a declaration ON body beats one inherited
+  // from html — so livery written to html would be silently shadowed.
+  const root=document.body;
+  const brand=team&&window.PPM.gameplayVisuals?.getTeamBranding?.(team);
+  if(!brand||!brand.primary){root.style.removeProperty('--club');root.style.removeProperty('--club2');return;}
+  // Crest palettes are mixed for a crest, not for UI on carbon — lift them toward
+  // white so they read as an accent rather than a stain.
+  root.style.setProperty('--club',mixToward(brand.primary,'#ffffff',.16));
+  root.style.setProperty('--club2',mixToward(brand.primary,'#ffffff',.42));
 }
 function saveSettings(nextSettings){
   const saved=stateApi.updateAppSettings?stateApi.updateAppSettings(nextSettings):Object.assign(getSettings(),nextSettings);
   applyTheme(saved.theme);
+  // the livery is mixed against the theme's background, so it must be re-derived
+  try{applyClubLivery(window.PPM.gameplay?.myTeam?.());}catch(e){}
   // Re-render ONLY the settings modal to reflect the change — do NOT render the app,
   // which would navigate into the game (esp. from the main menu).
   if(typeof openSettings==='function'&&document.getElementById('ov')?.classList.contains('on'))openSettings();
@@ -88,14 +123,6 @@ function openSettings(){
   modal.innerHTML=`<div class="mt2">USTAWIENIA <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="settings-stack">
     <div class="settings-card">
-      <div class="settings-label">Motyw interfejsu</div>
-      <div class="settings-desc">Zmienia wygląd całego UI bez wpływu na zapis kariery.</div>
-      <div class="settings-segment">
-        <button class="btn sm ${settings.theme==='light'?'pr':''}" onclick="saveSettings({theme:'light'})">JASNY</button>
-        <button class="btn sm ${settings.theme==='dark'?'pr':''}" onclick="saveSettings({theme:'dark'})">CIEMNY</button>
-      </div>
-    </div>
-    <div class="settings-card">
       <div class="settings-label">Prędkość symulacji meczu</div>
       <div class="settings-desc">Steruje tempem VME i relacji punkt po punkcie.</div>
       <div class="settings-segment">
@@ -108,15 +135,15 @@ function openSettings(){
       <div class="settings-label">Gra i pliki</div>
       <div class="settings-desc">Zapis do pliku, wczytanie kopii zapasowej albo własnej bazy klubów.</div>
       <div class="settings-segment">
-        <button class="btn sm" onclick="saveGame()">💾 ZAPISZ DO PLIKU</button>
-        <button class="btn sm" onclick="document.getElementById('fi').click()">📂 WCZYTAJ ZAPIS</button>
-        <button class="btn sm" onclick="document.getElementById('dbi').click()">🗄 WCZYTAJ DATABASE</button>
+        <button class="btn sm" onclick="saveGame()">ZAPISZ DO PLIKU</button>
+        <button class="btn sm" onclick="document.getElementById('fi').click()">WCZYTAJ ZAPIS</button>
+        <button class="btn sm" onclick="document.getElementById('dbi').click()">WCZYTAJ DATABASE</button>
         <button class="btn sm" onclick="showStartScreen()">NOWA GRA</button>
       </div>
     </div>
   </div>
   <div class="btn-row mt-16 jcb">
-    <button class="btn" onclick="backToMainMenu()">🏠 MENU GŁÓWNE</button>
+    <button class="btn" onclick="backToMainMenu()">MENU GŁÓWNE</button>
     <button class="btn pr" onclick="closeModal()">ZAMKNIJ</button>
   </div>
   <div class="fs10 ink3 mt-6">„Menu główne" nie kasuje kariery — możesz ją wznowić z menu („Wznów ostatni zapis").</div>`;
@@ -167,40 +194,40 @@ function openGuide(){
   const styleLbl=x=>(SI[x]||{}).label||x;
   const styleCard=id=>{const s=SI[id];if(!s)return'';
     return `<div style="border:1px solid var(--b1);border-left:4px solid ${s.color};border-radius:6px;padding:8px 10px;margin:6px 0">
-      <div style="font-family:Syne,sans-serif;font-weight:800;font-size:13px;color:${s.color}">${s.label}</div>
+      <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:13px;color:${s.color}">${s.label}</div>
       <div class="fs10 ink3 mb4">Uchwyt: ${s.grip}</div>
       <div class="mb4">${s.desc}</div>
       <div class="fs12 cg">\u2713 ${s.strengths.join(' \u00b7 ')}</div>
       <div class="fs12 cr">\u2715 ${s.weaknesses.join(' \u00b7 ')}</div>
       <div class="fs12 mt-3">\u25b2 Dobry przeciw: <b>${s.beats.map(styleLbl).join(', ')}</b> &nbsp; \u25bc S\u0142aby przeciw: <b>${s.losesTo.map(styleLbl).join(', ')}</b></div>
     </div>`;};
-  const stylesSection=`<h3 class="h-sub">\ud83c\udfd3 STYLE GRY</h3>
+  const stylesSection=`<h3 class="h-sub">STYLE GRY</h3>
   <p>Ka\u017cdy zawodnik ma jeden z 5 realnych styl\u00f3w tenisa sto\u0142owego. Style tworz\u0105 \u201epi\u0119ciok\u0105t kontr\u201d: ka\u017cdy jest <b>dobry przeciw 2</b> stylom i <b>s\u0142aby przeciw 2</b> innym. Dobieraj sk\u0142ad pod rywala \u2014 trener z pasuj\u0105c\u0105 synergi\u0105 dodatkowo wzmacnia dany styl.</p>
   ${STYLE_IDS.map(styleCard).join('')}`;
-  modal.innerHTML=`<div class="mt2">\ud83d\udcd6 PRZEWODNIK <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+  modal.innerHTML=`<div class="mt2">PRZEWODNIK <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="fs13 ink2" style="line-height:1.8">
   ${stylesSection}
-  <h3 class="h-sub">\u2b50 PRESTI\u017b</h3>
+  <h3 class="h-sub">PRESTI\u017b</h3>
   <p>Presti\u017c (0-100) zale\u017cy od pozycji w tabeli z ostatnich 5 sezon\u00f3w. I Liga daje premi\u0119, II Liga kar\u0119. Wy\u017cszy presti\u017c = lepsze oferty sponsor\u00f3w, lepsze marki sprz\u0119towe i \u0142atwiejsze rozmowy z mocnymi zawodnikami. Dyrektor PR nie podbija ju\u017c presti\u017cu bezpo\u015brednio, tylko lekko poprawia stron\u0119 komercyjn\u0105 klubu.</p>
-  <h3 class="h-sub">\ud83d\ude80 PRESEASON</h3>
+  <h3 class="h-sub">PRESEASON</h3>
   <p>Po wyborze klubu zawsze wchodzisz najpierw w faz\u0119 preseason. Przed 1. kolejk\u0105 musisz domkn\u0105\u0107 3 sponsor\u00f3w oraz partnera technicznego. W tym samym czasie zarz\u0105d wyznacza cel sezonu zale\u017cny od OVR Twojej dru\u017cyny, a realizacja celu daje premi\u0119 finansow\u0105 i chroni reputacj\u0119 trenera.</p>
-  <h3 class="h-sub">\ud83d\ude24 ZM\u0118CZENIE</h3>
+  <h3 class="h-sub">ZM\u0118CZENIE</h3>
   <p>Ro\u015bnie po ka\u017cdym meczu (zale\u017cy od intensywno\u015bci trenera). Zawodnik zm\u0119czony > 70% dostaje kar\u0119 do OVR i ryzykuje kontuzj\u0119. Zm\u0119czenie spada o 8 pkt u zawodnik\u00f3w kt\u00f3rzy nie grali, o 30 pkt mi\u0119dzy sezonami.</p>
-  <h3 class="h-sub">\ud83d\udcb8 KOMERCJA</h3>
+  <h3 class="h-sub">KOMERCJA</h3>
   <p>Strefa kibica i merchandising dzia\u0142aj\u0105 procentowo od aktualnej marketability klubu i zawodnik\u00f3w, wi\u0119c najmocniej korzystaj\u0105 na tym rozpoznawalne sk\u0142ady. Dyrektor PR daje tylko niewielki bonus do sprzeda\u017cy koszulek, bilet\u00f3w i ekspozycji sponsorskiej. Na najwy\u017cszym poziomie centrum medyczne skraca kontuzje o 50%, nie bardziej.</p>
-  <h3 class="h-sub">\ud83c\udfad CECHY CHARAKTERU</h3>
-  <p><b>Wunderkind:</b> Ukryty wysoki peakOVR. Jedyna wskaz\u00f3wka o wybitnym talencie.<br>
+  <h3 class="h-sub">CECHY CHARAKTERU</h3>
+  <p><b>Wunderkind:</b>Ukryty wysoki peakOVR. Jedyna wskaz\u00f3wka o wybitnym talencie.<br>
   <b>Gor\u0105ca G\u0142owa:</b> +ATK gdy wygrywa sety, ale MEN spada za ka\u017cdy przegrany set. Niestabilny pod presj\u0105.<br>
-  <b>Comeback Kid:</b> Bonus w decyduj\u0105cych setach (3:3 lub 4:4).<br>
-  <b>Taktyk:</b> Bonus przy wyr\u00f3wnanym starciu (r\u00f3\u017cnica OVR &lt; 8).<br>
-  <b>D\u0142ugowieczny:</b> Wolniejszy spadek statystyk po szczycie kariery.</p>
-  <h3 class="h-sub">\ud83d\udcb0 EKONOMIA</h3>
+  <b>Comeback Kid:</b>Bonus w decyduj\u0105cych setach (3:3 lub 4:4).<br>
+  <b>Taktyk:</b>Bonus przy wyr\u00f3wnanym starciu (r\u00f3\u017cnica OVR &lt; 8).<br>
+  <b>D\u0142ugowieczny:</b>Wolniejszy spadek statystyk po szczycie kariery.</p>
+  <h3 class="h-sub">EKONOMIA</h3>
   <p>Doch\u00f3d z bilet\u00f3w generowany jest w meczach domowych, a sprzeda\u017c gad\u017cet\u00f3w ro\u015bnie wraz z rozpoznawalno\u015bci\u0105 sk\u0142adu. W sekcji ligi mo\u017cesz te\u017c ju\u017c \u015bledzi\u0107 kontrakty rywali i podpisywa\u0107 pre-kontrakty z zawodnikami, kt\u00f3rym zosta\u0142 tylko rok umowy.</p>
-  <h3 class="h-sub">\ud83c\udf93 SZTAB</h3>
+  <h3 class="h-sub">SZTAB</h3>
   <p>Trenerzy, fizjoterapeuci, psychologowie i skauci pracuj\u0105 na kontraktach z roczn\u0105 pensj\u0105. Mocnych pracownik\u00f3w mo\u017cesz podebra\u0107 z innych klub\u00f3w, ale wymaga to negocjacji i zwykle op\u0142aty za wykupienie ich z obecnej umowy. Skaut nie jest ju\u017c jednorazowym zakupem.</p>
-  <h3 class="h-sub">\ud83d\udd0d WYPO\u017bYCZENIA I DATABASE</h3>
+  <h3 class="h-sub">WYPO\u017bYCZENIA I DATABASE</h3>
   <p>Wypo\u017cyczenia s\u0105 negocjowane z innym klubem: rywal mo\u017ce odrzuci\u0107 ofert\u0119 albo nie by\u0107 zainteresowany czasowym oddaniem gracza. Nie ma ju\u017c prostego arbitra\u017cu na pensjach. Na ekranie startowym mo\u017cesz tak\u017ce wczyta\u0107 plik database JSON z gotowym zestawem klub\u00f3w i zawodnik\u00f3w zamiast generowania losowego \u015bwiata.</p>
-  <h3 class="h-sub">\ud83d\udcca TABELA LIGOWA</h3>
+  <h3 class="h-sub">TABELA LIGOWA</h3>
   <p>22 kolejki, awans/spadek po 2 dru\u017cyny mi\u0119dzy I i II Lig\u0105. II Liga jest w pe\u0142ni symulowana z rozwojem zawodnik\u00f3w, transferami AI i nagrodami. Nazwy klub\u00f3w w lidze s\u0105 klikalne, wi\u0119c mo\u017cesz podejrze\u0107 histori\u0119, sk\u0142ad, sztab i infrastruktur\u0119 rywali.</p>
   </div>
   <div class="mt-14"><button class="btn pr" onclick="closeModal()">ZAMKNIJ</button></div>`;
@@ -223,6 +250,9 @@ function updateHeader(){
   }
   const mt=myTeam();
   if(!mt)return; // caretaker mode (background world generation) — no player club yet
+  applyClubLivery(mt);
+  const crest=document.getElementById('h-crest');
+  if(crest)crest.src=window.PPM.gameplay.getTeamLogoData(mt);
   const myL=myLeague();
   const sorted=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);
   const pos=sorted.findIndex(t=>t.isPlayer)+1;const pres=calcPrestige();
@@ -242,6 +272,10 @@ function updateHeader(){
   set('h-staff-ovr',avgStaffOvr>0?`sztab ${avgStaffOvr} (${myStaff.length})`:'sztab: brak',avgStaffOvr>0?staffOvrColor(avgStaffOvr):'');
   set('h-prestige',`${pres}`);
   set('h-prestige-sub',`MGR ${store.G.managerPrestige||0}`);
+  // rail footer: where you are in the season, always visible under the nav
+  set('rail-foot',store.G.phase==='preseason'
+    ?`Sezon ${store.G.season} · preseason`
+    :`Sezon ${store.G.season} · kolejka ${store.G.matchday}/${rounds}`);
 }
 
 applyTheme(getSettings().theme);

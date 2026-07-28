@@ -10,7 +10,7 @@ const playClick = (...args)=>window.PPM.playClick?.(...args);
 
 function statBar(label,val,color,max){
   color=color||'var(--r)';max=max||100;const pct=Math.round(val/max*100);
-  return `<div class="mb8"><div class="flex jcb aib mb3"><span class="fs9 up ls1 ink3">${label}</span><span style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:${color}">${val}</span></div><div class="bgs3 r3" style="height:7px"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .4s"></div></div></div>`;
+  return `<div class="mb8"><div class="flex jcb aib mb3"><span class="fs9 up ls1 ink3">${label}</span><span style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:20px;color:${color}">${val}</span></div><div class="bgs3 r3" style="height:7px"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .4s"></div></div></div>`;
 }
 function teamPointDiff(t){
   return (t.pointsWon||0)-(t.pointsLost||0);
@@ -34,7 +34,7 @@ function pageDash(){
   const canCup=shouldPlayCup();
   const canTop12L1=shouldPlayTop12(1);
   const canTop12L2=shouldPlayTop12(2);
-  const phaseText=store.G.phase==='pre'?'\u26a1 SEZON W TOKU':store.G.phase==='preseason'?'\ud83d\udccb PRZYGOTOWANIA DO SEZONU':'\ud83d\udd04 FAZA TRANSFEROWA';
+  const phaseText=store.G.phase==='pre'?'SEZON W TOKU':store.G.phase==='preseason'?'PRZYGOTOWANIA DO SEZONU':'FAZA TRANSFEROWA';
   const activeSponsors=store.G.sponsors.filter(s=>s.active).length;
     const clubOffers=store.G.clubOffers||[];
     const eligibleClubOffers=clubOffers.filter(o=>o.eligible);
@@ -43,11 +43,11 @@ function pageDash(){
   let nextActionStyle='btn pr';
   const pendingMail=(window.PPM.gameplay.pendingDecisions?.()||[]).length;
   if(store.G.phase==='pre'&&pendingMail){
-    nextActionLabel=`📧 SKRZYNKA — ${pendingMail} DECYZJE`;
+    nextActionLabel=`SKRZYNKA — ${pendingMail} DECYZJE`;
     nextActionCall="go('inbox')";
     nextActionStyle='btn gl';
   }else if(store.G.phase==='preseason'){
-    nextActionLabel='\ud83d\udccb PRZYGOTOWANIA';
+    nextActionLabel='PRZYGOTOWANIA';
     nextActionCall="go('preseason')";
     nextActionStyle='btn gl';
   }else if(store.G.phase!=='pre'){
@@ -55,19 +55,19 @@ function pageDash(){
     nextActionCall='endSeason()';
     nextActionStyle='btn go';
   }else if(store.G.olympicYear){
-    nextActionLabel='\ud83c\udfc5 OLIMPIADA';
+    nextActionLabel='OLIMPIADA';
     nextActionCall='runOlympics()';
     nextActionStyle='btn gl';
   }else if(store.G.mundialYear){
-    nextActionLabel='\ud83c\udf0d MUNDIAL';
+    nextActionLabel='MUNDIAL';
     nextActionCall='runMundial()';
     nextActionStyle='btn gl';
   }else if(canTop12L1){
-    nextActionLabel='\ud83c\udfbe TOP 12 I LIGA';
+    nextActionLabel='TOP 12 I LIGA';
     nextActionCall='openTop12Picker(1)';
     nextActionStyle='btn gl';
   }else if(canTop12L2){
-    nextActionLabel='\ud83c\udfbe TOP 12 II LIGA';
+    nextActionLabel='TOP 12 II LIGA';
     nextActionCall='openTop12Picker(2)';
     nextActionStyle='btn gl';
   }
@@ -129,7 +129,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
         <div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}${inj?` <span class="cr fs9">\u2695${p.injuredFor}</span>`:''}</div><div class="fs10 ink3">${p.age} lat \u00b7 ${styleLabel(p.playStyle)}</div></div></div>
         <div class="fs10 ink3">MOR ${p.morale||50}%</div>
         <div class="fs10 corange">FAT ${p.fatigue||0}%</div>
-        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${inj?'var(--ink3)':'var(--r)'}">${ovr(p)}</div>
+        <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:24px;color:${inj?'var(--ink3)':'var(--r)'}">${ovr(p)}</div>
       </div>`;}).join('')}
       </div>
       <div class="card"><div class="ct">OSTATNIE MECZE</div>
@@ -142,11 +142,11 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
       ${sorted.slice(0,6).map((t,i)=>`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${t.isPlayer?700:400};font-size:12px">${t.name}</td><td class="syne b8">${t.pts}</td><td class="fs10 ink3">${t.w}-${t.d||0}-${t.l}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="ink3">${teamOvr(t.id)}</td></tr>`).join('')}
       </table>
       </div>
-      ${store.G.cup&&!store.G.cup.finished?`<div class="card"><div class="ct">\ud83c\udfc5 PUCHAR POLSKI</div>
+      ${store.G.cup&&!store.G.cup.finished?`<div class="card"><div class="ct">PUCHAR POLSKI</div>
         <div class="fs12 ink3">Runda ${store.G.cup.currentRound+1} / ${store.G.cup.rounds.length} rozegrane</div>
         ${canCup?`<div class="fs10 cpurple mt-6 b7">Najbli\u017cszy krok sezonu: runda pucharowa.</div>`:`<div class="fs10 ink3 mt-4">Nast\u0119pna runda: po kolejce ${Math.ceil((store.G.matchday+1)/4)*4}</div>`}
       </div>`:''}
-      <div class="card"><div class="ct">\ud83d\udcf0 WIADOMO\u015aCI</div>
+      <div class="card"><div class="ct">WIADOMO\u015aCI</div>
         ${genNewsFeed().length?genNewsFeed().map(n=>`<div class="news-item ${n.type||''}">${n.msg} <span class="fs9 ink3">(S${n.season}/K${n.matchday})</span></div>`).join(''):'<div class="fs11 ink3">Brak wiadomo\u015bci. Zagraj kolejk\u0119!</div>'}
       </div>
     </div>
@@ -184,8 +184,8 @@ function pageSquad(){
   <div class="rtabs">
     <div class="rtab" onclick="ui.squadTab='starter';render()">SK\u0141AD G\u0141\u00d3WNY ${st.length}/4</div>
     <div class="rtab" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab" onclick="ui.squadTab='youth';render()">\ud83c\udf93 AKADEMIA (${youth.length})</div>
-    <div class="rtab on" onclick="ui.squadTab='loans';render()">\ud83d\udccb WYPO\u017bYCZENIA (${_loanedOut.length})</div>
+    <div class="rtab" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
+    <div class="rtab on" onclick="ui.squadTab='loans';render()">WYPO\u017bYCZENIA (${_loanedOut.length})</div>
   </div>
     <div class="grid gp10">
     ${_loanedOut.length?_loanedOut.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bbb bgs1 bl4-blue r4">
@@ -208,85 +208,100 @@ function pageSquad(){
     </div>`;}).join('')}`:'';})()}
     </div>`;
   }
+  const mt0=myTeam();
   const ovrRange=store.G.infraAcademy>0?INFRA_ACADEMY[store.G.infraAcademy].desc:'Brak akademii';
   const academyLevel=store.G.infraAcademy||0;
-  const academyScoutingPower=academyScouts.length?Math.round(academyScouts.reduce((sum,s)=>sum+staffOvr(s),0)/academyScouts.length):0;
   const academyBestPeak=youth.length?Math.max(...youth.map(p=>p.academyProfile?.ceiling||playerCeiling(p))):0;
   const academyCandidates=(store.G.academyProspects||[]);
   const academyTrial=(store.G.academyTrial||[]);
-  return`<div class="ph"><div><div class="pt">SK\u0141AD <span>ZAWODNIK\u00d3W</span></div><div class="ps">Ustaw kolejność stołów 1-4, rotuj zmęczonych, pilnuj kończących się kontraktów</div></div></div>
+  const mtBudgetLow=mt0.budget<10000;
+  // The academy used to be five stacked cards on one scroll. It is now four
+  // sub-steps with exactly one block on screen at a time, in the order you
+  // actually work: who is in the academy -> who wants in -> who is looking ->
+  // what they found.
+  const acaSteps=[
+    ['squad','Juniorzy',youth.length],
+    ['intake','Nabór',academyCandidates.length+academyTrial.length],
+    ['scouts','Skauci',academyScouts.length],
+    ['reports','Raporty',academyReports.length],
+  ];
+  if(!acaSteps.some(s=>s[0]===ui.academyTab))ui.academyTab='squad';
+  const acaTab=ui.academyTab;
+  const prospectCard=(p,i,action,label)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id})">
+    <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l · ${p.academyProfile?.region||'Klubowa akademia'}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
+    <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b class="${ovrBase(p)?'':''}">${p[s]}</b></div>`).join('')}</div>
+    <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Peak: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
+    <button class="btn pr sm w100" onclick="event.stopPropagation();${action}">${label}</button>
+  </div>`;
+
+  return`<div class="ph"><div><div class="pt">SKŁAD <span>ZAWODNIKÓW</span></div><div class="ps">Ustaw kolejność stołów 1-4, rotuj zmęczonych, pilnuj kończących się kontraktów</div></div></div>
   <div class="rtabs">
-    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SK\u0141AD G\u0141\u00d3WNY ${st.length}/4</div>
+    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SKŁAD GŁÓWNY ${st.length}/4</div>
     <div class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">\ud83c\udf93 AKADEMIA (${youth.length})</div>
-    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">\ud83d\udccb WYPO\u017bYCZENIA (${getLoanedOut().length})</div>
+    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
+    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">WYPOŻYCZENIA (${getLoanedOut().length})</div>
   </div>
-  ${ui.squadTab!=='loans'?`<div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="Szukaj zawodnika..." class="pd10-12 bb1 r10 bgs1" style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" class="pd10-12 bb1 r10 bgs1" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>Wszystkie style</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>`:''}
-  ${ui.squadTab==='youth'?`<div class="academy-hero">
-    <div class="academy-hero-copy">
-      <div class="academy-kicker">Akademia klubowa</div>
-      <div class="academy-title">${INFRA_ACADEMY[academyLevel].name}</div>
-      <div class="academy-copy">${ovrRange}. Akademia generuje 1-2 juniorów na sezon; pasmo OVR, peak i tempo rozwoju rosną z poziomem. Roczne utrzymanie: <b>${(INFRA_ACADEMY[academyLevel].upkeep||0).toLocaleString('pl')} €</b>. W wieku 21 lat junior wychodzi z akademii do rezerwy, jeśli ma kontrakt.</div>
-    </div>
-    <div class="academy-hero-metrics">
-      <div class="academy-metric"><div class="k">Poziom</div><div class="v">${academyLevel}/${INFRA_ACADEMY.length-1}</div></div>
-      <div class="academy-metric"><div class="k">Juniorzy</div><div class="v">${youth.length}</div></div>
-      <div class="academy-metric"><div class="k">Peak max</div><div class="v">${academyBestPeak||'-'}</div></div>
-      <div class="academy-metric"><div class="k">Utrzymanie</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div></div>
-    </div>
+  ${ui.squadTab==='youth'?`
+  <div class="g4 mb14">
+    <div class="sb" style="--tone:var(--purple)"><div class="l">Akademia</div><div class="v" style="font-size:20px">${INFRA_ACADEMY[academyLevel].name}</div><div class="sub">poziom ${academyLevel}/${INFRA_ACADEMY.length-1} · ${ovrRange}</div></div>
+    <div class="sb" style="--tone:var(--cyan)"><div class="l">Juniorzy</div><div class="v">${youth.length}</div><div class="sub">w wieku 21 lat wychodzą do rezerwy</div></div>
+    <div class="sb" style="--tone:var(--volt)"><div class="l">Najlepszy peak</div><div class="v">${academyBestPeak||'-'}</div><div class="sub">sufit w tym roczniku</div></div>
+    <div class="sb"><div class="l">Utrzymanie</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div><div class="sub">${(INFRA_ACADEMY[academyLevel].upkeep||0).toLocaleString('pl')} € rocznie</div></div>
   </div>
-  <div class="card mb12">
-    <div class="ct">KLASA ROCZNIKA AKADEMII</div>
-    ${store.G.infraAcademy===0?`<div class="fs11 ink3">Najpierw zbuduj akademię, żeby co sezon dostawać własnego juniora do oceny.</div>`
-      :academyCandidates.length?`<div class="grid gtcfit240 gp12">
-        ${academyCandidates.map((p,i)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id})">
-          <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${p.academyProfile?.region||'Klubowa akademia'}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
-          <div class="grid gtc2 gp6 fs10 ink3 mb8"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Peak OVR: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div><div>Gotowość: <b>${p.academyProfile?.readiness||'projekt'}</b></div><div>Forma: <b>${seasonFormLabel(p)}</b></div></div>
-          <div class="fs10 ink3 mb8">${p.academyProfile?.note||'Profil z akademii klubowej.'}</div>
-          <div class="flex gp6 fwrap mb10">${SK.map(s=>`<span class="fs10"><span class="ink3">${SL[s]}:</span> <b>${p[s]}</b></span>`).join('')}</div>
-          <button class="btn pr sm w100" onclick="event.stopPropagation();signAcademyProspect(${i})">PRZYJMIJ DO AKADEMII</button>
-        </div>`).join('')}
-      </div>`
-      :`<div class="fs11 ink3">Brak aktywnych kandydatów. Kolejna klasa rocznika pojawi się automatycznie wraz z nowym sezonem.</div>`}
+  <div class="substeps">
+    ${acaSteps.map(([id,label,count])=>`<div class="ss ${acaTab===id?'on':''}" onclick="ui.academyTab='${id}';render()">
+      <div class="n">${count}</div>${label}
+    </div>`).join('')}
   </div>
-  ${store.G.infraAcademy>0?`<div class="card mb12">
-    <div class="ct">🏓 MINI-TURNIEJ NABORU</div>
-    <div class="fs11 ink3 mb10">Jednorazowo <b>10 000 €</b> za sezon: 3 kandydatów, z których wybierasz <b>jednego</b> — reszta odchodzi. Jakość tylko nieco wyższa niż zwykły nabór, więc to opcja na wybór z większej puli, nie pewny zysk.</div>
-    ${academyTrial.length?`<div class="grid gtcfit220 gp12">
-      ${academyTrial.map((p,i)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id})">
-        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${p.academyProfile?.region||'Trial'}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
-        <div class="grid gtc2 gp6 fs10 ink3 mb8"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Peak OVR: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
-        <div class="flex gp6 fwrap mb10">${SK.map(s=>`<span class="fs10"><span class="ink3">${SL[s]}:</span> <b>${p[s]}</b></span>`).join('')}</div>
-        <button class="btn pr sm w100" onclick="event.stopPropagation();signTrialProspect(${i})">WYBIERZ TEGO</button>
-      </div>`).join('')}
-    </div>`
-      :store.G.academyTrialUsed?`<div class="fs11 ink3">Mini-turniej w tym sezonie został już rozegrany.</div>`
-      :`<button class="btn bl" onclick="runAcademyMiniTournament()" ${myTeam().budget<10000?'disabled':''}>ZORGANIZUJ MINI-TURNIEJ (10 000 €)</button>`}
-  </div>`:''}
-  <div class="card mb12">
-    <div class="ct">SKAUT AKADEMII</div>
-    <div class="fs11 ink3 mb10">Skauci działają wyłącznie dla akademii. Każda misja trwa 10 kolejek i znajduje dokładnie 1 juniora poniżej 20 roku życia. Im wyższy OVR skauta, tym większa szansa na raport z wyższym peak OVR, ale nawet słabszy skaut może trafić diament.</div>
-    ${academyScouts.length?`<div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+  ${acaTab==='intake'?`<div class="stage">
+    <div class="over">Nabór do akademii</div>
+    <h3>Kogo bierzesz do akademii?</h3>
+    <p class="why">Akademia generuje 1-2 juniorów na sezon; pasmo OVR, peak i tempo rozwoju rosną z jej poziomem. Mini-turniej to jednorazowe <b>10 000 €</b> za sezon: trzech kandydatów, z których wybierasz <b>jednego</b> — reszta odchodzi. Jakość tylko nieco wyższa niż zwykły nabór, więc to opcja na wybór z większej puli, nie pewny zysk.</p>
+    ${academyLevel===0?`<div class="empty-state mt-14">Najpierw zbuduj akademię w zakładce Klub, żeby co sezon dostawać własnego juniora do oceny.</div>`:`
+      <div class="h-sub">Klasa rocznika</div>
+      ${academyCandidates.length?`<div class="grid gtcfit240 gp12">${academyCandidates.map((p,i)=>prospectCard(p,i,`signAcademyProspect(${i})`,'PRZYJMIJ DO AKADEMII')).join('')}</div>`
+        :`<div class="empty-state">Brak aktywnych kandydatów. Kolejna klasa rocznika pojawi się wraz z nowym sezonem.</div>`}
+      <div class="h-sub">Mini-turniej naboru</div>
+      ${academyTrial.length?`<div class="grid gtcfit240 gp12">${academyTrial.map((p,i)=>prospectCard(p,i,`signTrialProspect(${i})`,'WYBIERZ TEGO')).join('')}</div>`
+        :store.G.academyTrialUsed?`<div class="empty-state">Mini-turniej w tym sezonie został już rozegrany.</div>`
+        :`<div class="opt"><div><b>Zorganizuj mini-turniej</b><p>Trzech kandydatów, wybierasz jednego. Raz na sezon.</p></div><div class="m neg">−10 000<s>jednorazowo</s></div><button class="btn pr" onclick="runAcademyMiniTournament()" ${mtBudgetLow?'disabled':''}>ZORGANIZUJ</button></div>`}
+    `}
+  </div>`
+  :acaTab==='scouts'?`<div class="stage">
+    <div class="over">Skauci akademii</div>
+    <h3>Kto szuka w terenie?</h3>
+    <p class="why">Skauci działają wyłącznie dla akademii. Każda misja trwa 10 kolejek i znajduje dokładnie jednego juniora poniżej 20 roku życia. Im wyższy OVR skauta, tym większa szansa na raport z wysokim peak OVR — ale nawet słabszy skaut może trafić diament.</p>
+    ${academyScouts.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const cost=Math.max(2500,Math.round(1800+staffOvr(s)*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
-        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} / Peak OVR ${staffCeiling(s)} / ${s.specialtyLabel||'Skaut akademii'}</div></div></div><div class="b7 cblue">${staffOvr(s)}</div></div>
-        ${mission?`<div class="bgs2 pd8 r3 fs11">W terenie: <b>${mission.region}</b><br>Pozostało: <b>${Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)} kolejek</b><br>Koszt misji: <b>${(mission.cost||cost).toLocaleString('pl')} €</b></div>`:`<div class="grid gtc1a" style="gap:5px" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}" class="bb1 bgs1 fs11" style="padding:5px">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">WYŚLIJ</button></div><div class="fs10 ink3 mt-6">Koszt nowej misji: <b>${cost.toLocaleString('pl')} €</b> / raport: <b>1</b> junior / specjalność: <b>${s.specialtyLabel||'ogólna'}</b></div>`}
+        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${s.specialtyLabel||'skaut akademii'}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
+        ${mission?`<div class="tile fs11">W terenie: <b>${mission.region}</b><br>Pozostało: <b>${Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)} kolejek</b><br>Koszt misji: <b>${(mission.cost||cost).toLocaleString('pl')} €</b></div>`
+          :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">WYŚLIJ</button></div>
+             <div class="fs11 ink3 mt-6">Koszt misji: <b>${cost.toLocaleString('pl')} €</b> · raport: <b>1</b> junior · specjalność: <b>${s.specialtyLabel||'ogólna'}</b></div>`}
       </div>`;}).join('')}
-    </div>`:'<div class="fs11 ink3">Nie masz jeszcze skauta. Podpisz go w zakładce Transfery, a potem zarządzaj nim tutaj.</div>'}
-  </div>
-  <div class="card mb12">
-    <div class="ct">RAPORTY SKAUTA${academyNewReports?` <span class="badge">${academyNewReports}</span>`:''}</div>
-    ${academyReports.length?`<div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+    </div>`:`<div class="empty-state mt-14">Nie masz jeszcze skauta. Podpisz go w zakładce Transfery (rola: Skauci), a potem zarządzaj nim tutaj.</div>`}
+  </div>`
+  :acaTab==='reports'?`<div class="stage">
+    <div class="over">Raporty skautów</div>
+    <h3>Co przywieźli z terenu?</h3>
+    <p class="why">Każdy raport to jeden junior spoza klubu. Pewność mówi, jak bardzo można ufać liczbom — im niższa, tym większy rozrzut między raportem a rzeczywistością.</p>
+    ${academyReports.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyReports.map(res=>{const p=res.reported;const ri=(store.G.scoutResults||[]).findIndex(x=>x.realId===res.realId);const o=ovrBase(p);return`<div class="scout-card result academy-report cur" onclick="openPlayerModal(${res.realId})">
-        ${!res.seen?'<div class="bgr fs9 inlineb mb6" style="color:white;padding:2px 6px;border-radius:2px">NOWY</div>':''}
-        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${res.region||'?'}</div></div></div><div class="syne b8 fs28 cblue">${o}</div></div>
-        <div class="grid gtc2 gp6 fs10 ink3 mb8"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Forma: <b>${p.formHint||'stabilna'}</b></div><div>Peak OVR: <b>${p.ceilingHint||'?'}</b></div><div>Pewność: <b>${p.scoutConfidence||0}%</b></div></div>
-        <div class="flex gp6 fwrap mb8">${SK.map(s=>`<span class="fs10"><span class="ink3">${SL[s]}:</span> <b>${p[s]}</b></span>`).join('')}</div>
+        ${!res.seen?'<span class="pill club mb6">Nowy</span>':''}
+        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l · ${res.region||'?'}</div></div></div><div class="syne b8 fs28 cblue">${o}</div></div>
+        <div class="grid gtc2 gp6 fs11 ink3 mb8"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Forma: <b>${p.formHint||'stabilna'}</b></div><div>Peak: <b>${p.ceilingHint||'?'}</b></div><div>Pewność: <b>${p.scoutConfidence||0}%</b></div></div>
+        <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b>${p[s]}</b></div>`).join('')}</div>
         <button class="btn pr sm w100" onclick="event.stopPropagation();scoutSign(${ri})">NEGOCJUJ</button></div>`;}).join('')}
-    </div>`:'<div class="fs11 ink3">Brak aktywnych raportów juniorów.</div>'}
-  </div>`:''}
+    </div>`:`<div class="empty-state mt-14">Brak aktywnych raportów. Wyślij skauta w teren w zakładce Skauci.</div>`}
+  </div>`
+  :`<div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="Szukaj zawodnika..." style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>Wszystkie style</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
+    <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+      ${list.length?list.map(p=>squadCard(p,boardList)).join(''):'<div class="empty-state">Akademia jest pusta. Zajrzyj do zakładki Nabór.</div>'}
+    </div>`}
+  `:`
+  <div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="Szukaj zawodnika..." style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>Wszystkie style</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
   <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
     ${list.map(p=>squadCard(p,boardList)).join('')}
-  </div>`;
+  </div>`}`;
 }
 
 // Colour a stat bar by its value — six identical red bars carried no information.
@@ -318,7 +333,7 @@ function squadCard(p,boardList){
     </div>
     ${inj||p.role==='youth'||isStarterTab?`<div class="pc-tags">
       ${inj?`<span class="pc-tag bad">⚕ kontuzja ${p.injuredFor} kol.</span>`:''}
-      ${p.role==='youth'?`<span class="pc-tag youth">🎓 akademia · do ${21-p.age>0?21-p.age:0} lat</span>`:''}
+      ${p.role==='youth'?`<span class="pc-tag youth">akademia · do ${21-p.age>0?21-p.age:0} lat</span>`:''}
       ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">stół ${bi+1}
         <button class="mini-btn" ${bi===0?'disabled':''} onclick="moveLineup(${p.id},-1)" title="Wyżej (niższy stół)">▲</button>
         <button class="mini-btn" ${bi>=boardList.length-1?'disabled':''} onclick="moveLineup(${p.id},1)" title="Niżej (wyższy stół)">▼</button></span>`
@@ -372,18 +387,18 @@ function pageLeague(){
     ${players.map((p,i)=>{
       const isMine=p.teamId===myId;
       const val=mode==='won'?(p.leagueSeasonPointsWon||0):(p.leagueSeasonPointsLost||0);
-      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} r.</td><td style="font-family:'Syne',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td class="ink3">${ovr(p)}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">PRE-SIGN</button>`:'-'}</td></tr>`;
+      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} r.</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td class="ink3">${ovr(p)}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">PRE-SIGN</button>`:'-'}</td></tr>`;
     }).join('')}</table>`;
   }
   function teamStatsTable(teams,statLabel,mode){
     return`<table class="t"><tr><th>#</th><th>Drużyna</th><th>OVR</th><th>${statLabel}</th><th>Pkt</th><th>Bilans</th><th>Różnica</th></tr>
-    ${teams.map((t,i)=>`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-family:'Syne',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}</td><td class="ink3">${teamOvr(t.id)}</td><td style="font-family:'Syne',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${mode==='won'?(t.pointsWon||0):(t.pointsLost||0)}</td><td>${t.pts}</td><td class="fs10 ink3">${t.w}W/${t.d||0}R/${t.l}P</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td></tr>`).join('')}</table>`;
+    ${teams.map((t,i)=>`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}</td><td class="ink3">${teamOvr(t.id)}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${mode==='won'?(t.pointsWon||0):(t.pointsLost||0)}</td><td>${t.pts}</td><td class="fs10 ink3">${t.w}W/${t.d||0}R/${t.l}P</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td></tr>`).join('')}</table>`;
   }
   
   return`<div class="ph"><div><div class="pt">LIGA <span>Sezon ${store.G.season}</span></div><div class="ps">Kolejka ${store.G.matchday}/${TOTAL_MATCHDAYS}</div></div></div>
   <div class="rtabs mb10">
-    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">\ud83c\udfc6 I LIGA</div>
-    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">\ud83e\udd48 II LIGA</div>
+    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">I LIGA</div>
+    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">II LIGA</div>
   </div>
   <div class="rtabs mb14">
     <div class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">TABELA</div>
@@ -397,7 +412,7 @@ function pageLeague(){
   ${sorted.map((t,i)=>{
     const isRelegation=league===1&&i>=sorted.length-2;
     const isPromotion=league===2&&i<2;
-    return`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}${isRelegation?' rel':''}${isPromotion?' p1':''}">${i+1}</span></td><td style="font-family:'Syne',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}${isRelegation?' <span class="cr fs9">\u2193</span>':''}${isPromotion?' <span class="cg fs9">\u2191</span>':''}</td><td class="ink3">${teamOvr(t.id)}</td><td>${t.w+(t.d||0)+t.l}</td><td class="cg b7">${t.w}</td><td class="cgold">${t.d||0}</td><td class="cr">${t.l}</td><td class="ink3 fs10">${t.pointsWon||0}:${t.pointsLost||0}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="syne b8 fs14">${t.pts}</td></tr>`;
+    return`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}${isRelegation?' rel':''}${isPromotion?' p1':''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}${isRelegation?' <span class="cr fs9">\u2193</span>':''}${isPromotion?' <span class="cg fs9">\u2191</span>':''}</td><td class="ink3">${teamOvr(t.id)}</td><td>${t.w+(t.d||0)+t.l}</td><td class="cg b7">${t.w}</td><td class="cgold">${t.d||0}</td><td class="cr">${t.l}</td><td class="ink3 fs10">${t.pointsWon||0}:${t.pointsLost||0}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="syne b8 fs14">${t.pts}</td></tr>`;
   }).join('')}
   </table>
   ${league===1?`<div class="mt-8 fs10 ink3">\u2b07 Ostatnie 2 dru\u017cyny spadaj\u0105 do II Ligi</div>`:`<div class="mt-8 fs10 ink3">\u2b06 Pierwsze 2 dru\u017cyny awansuj\u0105 do I Ligi</div>`}
@@ -421,7 +436,7 @@ function pageCup(){
   return`<div class="ph"><div><div class="pt">PUCHAR <span>POLSKI</span></div><div class="ps">Sezon ${store.G.season} ${cup.finished?'/ ZAKO\u0143CZONY':''}</div></div>
   ${canPlay?`<div class="fs11 cpurple b7">Runda pucharowa zostanie rozegrana jako kolejny krok sezonu.</div>`:''}
   </div>
-  ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>\ud83c\udfc6 ZWYCI\u0118ZCA: ${cup.winner.name}</div>`:''}
+  ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>ZWYCI\u0118ZCA: ${cup.winner.name}</div>`:''}
   <div class="cup-bracket">
     ${cup.rounds.map((round,ri)=>`<div class="cup-round">
       <div class="cup-round-title">${roundNames[Math.min(ri,roundNames.length-1)]}</div>
@@ -458,13 +473,13 @@ function pageStaff(){
   ];
   function staffCard(s){
     const sOvr=staffOvr(s);
-    const roleIcon=s.type==='coach'?'\ud83c\udf93':s.type==='physio'?'\ud83c\udfe5':s.type==='psychologist'?'\ud83e\udde0':s.type==='scout'?'\ud83d\udd0d':'\ud83c\udfa4';
+    const roleIcon=s.type==='coach'?'':s.type==='physio'?'':s.type==='psychologist'?'':s.type==='scout'?'':'';
     return`<div class="staff-card hired cur" onclick="openStaffModal(${s.id})">
       <div class="flex jcb aifs mb10">
         <div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="syne b7 fs15">${roleIcon} ${s.name}</div>
         <div class="fs10 ink3 mt-2">${s.salary.toLocaleString('pl')} €/rok / ${s.contractYears||0} lat</div>
         <div class="fs10 mt-2"><span class="ink3">${s.age||'?'}l</span> / Peak: ${s.peakAge||'?'}l / Peak OVR: ${staffCeiling(s)}</div></div></div>
-        <div class="tar"><div style="font-family:Syne,sans-serif;font-weight:800;font-size:28px;color:${staffOvrColor(sOvr)}">${sOvr}</div><div class="fs9 ink3">OVR</div></div>
+        <div class="tar"><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:28px;color:${staffOvrColor(sOvr)}">${sOvr}</div><div class="fs9 ink3">OVR</div></div>
       </div>
       <div class="fs11 ink3">${s.type==='coach'?(s.styleName||'Trener ogólny'):s.type==='scout'?(s.specialtyLabel||'Skaut'):s.type==='pr'?`+${Math.round((s.bonus||0)*100)}% komercji`:'Specjalista klubowy'}</div>
       <div class="btn-row mt-8">
@@ -528,7 +543,7 @@ function pageClub(){
       <div class="history-badge">Poziom obiektu: ${Math.max(store.G.infraHall||0,store.G.infraMed||0,store.G.infraAcademy||0,store.G.infraMerchandising||0)} / 5</div>
     </div>
   </div>
-  <div class="card"><div class="ct">🏓 SPRZĘT — OKŁADZINY KLUBOWE</div>
+  <div class="card"><div class="ct">SPRZĘT — OKŁADZINY KLUBOWE</div>
     <div class="fs11 ink3 mb10">Deska i gąbka to osobisty setup zawodnika (dopasowany do stylu — zobacz kartę zawodnika). Okładziny zużywają się: świeżość to koszt klubu płatny przy każdym rozliczeniu sezonu.</div>
     <div class="grid gtcfit220 gp10">
     ${EQUIPMENT.rubberTiers.map(t=>{const active=(store.G.rubberTier||0)===t.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
@@ -541,19 +556,19 @@ function pageClub(){
     </div>
   </div>
   <div class="g4 mb14">
-    ${infraBlock('hall','HALA TRENINGOWA','\ud83c\udfdf',INFRA_HALL,store.G.infraHall||0)}
-    ${infraBlock('med','CENTRUM MEDYCZNE','\ud83c\udfe5',INFRA_MED,store.G.infraMed||0)}
-    ${infraBlock('academy','AKADEMIA M\u0141ODZIE\u017bOWA','\ud83c\udf93',INFRA_ACADEMY,store.G.infraAcademy||0)}
-    ${infraBlock('merch','SKLEP KIBICA','\ud83d\udecd',INFRA_MERCH,store.G.infraMerchandising||0)}
+    ${infraBlock('hall','HALA TRENINGOWA','',INFRA_HALL,store.G.infraHall||0)}
+    ${infraBlock('med','CENTRUM MEDYCZNE','',INFRA_MED,store.G.infraMed||0)}
+    ${infraBlock('academy','AKADEMIA M\u0141ODZIE\u017bOWA','',INFRA_ACADEMY,store.G.infraAcademy||0)}
+    ${infraBlock('merch','SKLEP KIBICA','',INFRA_MERCH,store.G.infraMerchandising||0)}
   </div>
   <div class="g2 mb14">
-    <div class="card"><div class="ct">\ud83d\udcfa PRAWA TELEWIZYJNE <span class="fs9">Wyp\u0142acane na koniec sezonu</span></div>
+    <div class="card"><div class="ct">PRAWA TELEWIZYJNE <span class="fs9">Wyp\u0142acane na koniec sezonu</span></div>
       <div class="g2">
         <div class="sb"><div class="l">Szacowane (sezon)</div><div class="v gold fs24">${calcTVRights().toLocaleString('pl')}</div><div class="sub">€ (poz. #${sorted.findIndex(t=>t.isPlayer)+1})</div></div>
         <div class="sb"><div class="l">Liga</div><div class="v ${myL===1?'gold':''} fs20">${myL===1?'I Liga (+++)':'II Liga (+)'}</div><div class="sub">Im wy\u017cej, tym wi\u0119cej</div></div>
       </div>
     </div>
-    <div class="card"><div class="ct">\ud83c\udfa4 DYREKTOR PR</div>
+    <div class="card"><div class="ct">DYREKTOR PR</div>
     ${prDir?`<div class="pd12 bg-ok bbg r4">
       <div class="syne b7 fs15">\u2713 ${prDir.name}</div>
       <div class="fs11 ink3 mt-4">+${Math.round(prDir.bonus*100)}% do strony komercyjnej / Cooldown sponsora: -${prDir.cooldownReduce} sezony</div>
@@ -563,7 +578,7 @@ function pageClub(){
     `<div class="fs11 ink3 lh155">Brak aktywnej osoby od PR.</div>`}
     </div>
   </div>
-  <div class="card"><div class="ct">\ud83e\udd1d PARTNERSTWO TECHNICZNE <span class="fs9">Presti\u017c: ${pres}/100</span></div>
+  <div class="card"><div class="ct">PARTNERSTWO TECHNICZNE <span class="fs9">Presti\u017c: ${pres}/100</span></div>
   <div class="panel-muted mb12">Osobny zakup sprz\u0119tu zosta\u0142 wycofany. Sprz\u0119t, pakiet testowy i bonusy meczowe s\u0105 teraz zintegrowane z partnerem technicznym.</div>
   ${techPartnership?`<div class="academy-inline-banner mb12">Aktywny partner: <b>${techPartnership.name}</b> / ${techPartnership.bonusDesc} / ${techPartnership.costPerSeason>0?`+${techPartnership.costPerSeason.toLocaleString('pl')} €`:(techPartnership.costPerSeason||0).toLocaleString('pl')+' €'} za sezon</div>`:''}
   <div class="grid gp10" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
@@ -730,181 +745,229 @@ function pageSponsors(){
   </div>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MARKET — filter panel + one dense sortable table (owner reference: the
+// Motorsport Manager staff market). Everything that used to be a stacked card
+// is either a filter, a column, or folded into the details strip below.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// OVR -> 0..5 stars. The band is 45..95 rather than 0..100: nobody on this
+// market sits below 45, and a 0..100 map squeezed every professional into
+// three-and-a-half stars.
+function ovrStars(o){return Math.max(0,Math.min(5,(o-45)/10));}
+function starsHtml(value){
+  const pct=Math.round(value/5*1000)/10;
+  return `<span class="stars">★★★★★<i style="width:${pct}%">★★★★★</i></span>`;
+}
+// Favourites work for players and staff alike; they live in different pools, so
+// they are stored separately (and the player list keeps its old save key).
+function marketFavIds(kind){
+  if(kind==='staff')return store.G.marketShortlistStaff||(store.G.marketShortlistStaff=[]);
+  return store.G.marketShortlist||(store.G.marketShortlist=[]);
+}
+function toggleMarketFav(kind,id){
+  const list=marketFavIds(kind);
+  const i=list.indexOf(id);
+  if(i>=0)list.splice(i,1);else list.unshift(id);
+  renderApp();
+}
+
 function pageMarket(){
   const mt=myTeam();
   const sortKey=ui.mktSort||'ovr';
   const sortDir=ui.mktSortDir||1;
   const marketSearch=(ui.marketSearch||'').trim().toLowerCase();
-  const marketType=ui.marketTypeFilter||'all';
-  const shortlistIds=store.G.marketShortlist||[];
+  // 'all' is the pre-overhaul default and no longer a valid tab — map it to the
+  // first role rather than showing an empty market to anyone with an old save.
+  const marketType=(ui.marketTypeFilter&&ui.marketTypeFilter!=='all')?ui.marketTypeFilter:'player';
+  const ageBand=ui.mktAge||'all';
+  const minStars=ui.mktStars||0;      // 0 = no minimum
+  const favOnly=ui.mktFav==='fav';
   const compareIds=ui.marketCompare||[];
   const nextSeason=getNextSeasonCommitments();
   const negotiationHistory=(store.G.negotiationHistory||[]).slice(-6).reverse();
   const roleLabel=type=>type==='coach'?'Trener':type==='physio'?'Fizjo':type==='psychologist'?'Psycholog':type==='scout'?'Skaut':type==='pr'?'PR':'Zawodnik';
-  const playerEntries=(store.G.transferMarket||[]).map(item=>{
+  // \u2500\u2500 one normalised row shape for players and staff alike \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  const rows=[];
+  for(const item of (store.G.transferMarket||[])){
     const p=store.G.players.find(x=>x.id===item.playerId);
-    if(!p||p.retired)return null;
-    return{entity:'player',type:'player',item,data:p};
-  }).filter(Boolean);
-  const staffEntries=getAllExternalStaffMarket().map(s=>({entity:'staff',type:s.type,data:s}));
-  let market=[...playerEntries,...staffEntries].filter(entry=>{
-    const obj=entry.data||{};
-    const text=`${obj.name||''} ${teamName(obj.teamId??-1)} ${roleLabel(entry.type)}`.toLowerCase();
-    const matchesText=!marketSearch||text.includes(marketSearch);
-    const matchesType=marketType==='all'||entry.type===marketType;
-    return matchesText&&matchesType;
-  });
-  market.sort((a,b)=>{
-    const getValue=entry=>{
-      const obj=entry.data||{};
-      if(entry.entity==='staff'){
-        if(sortKey==='ovr')return staffOvr(obj);
-        if(sortKey==='age')return obj.age||0;
-        return -1;
-      }
-      if(sortKey==='ovr')return ovr(obj);
-      if(sortKey==='age')return obj.age||0;
-      if(SK.includes(sortKey))return obj[sortKey]||0;
-      return ovr(obj);
-    };
-    return (getValue(b)-getValue(a))*sortDir;
-  });
-  function sortBtn(key,label){
-    const isActive=sortKey===key;
-    return`<button class="btn sm ${isActive?'pr':''} fs9" onclick="ui.mktSort='${key}';ui.mktSortDir=${isActive?-sortDir:1};render()" style="padding:4px 8px">${label}${isActive?(sortDir>0?' \u25bc':' \u25b2'):''}</button>`;
+    if(!p||p.retired)continue;
+    const isFa=item.type==='fa',isPreSign=item.type==='presign',isLoan=item.type==='loan';
+    const o=ovr(p);
+    rows.push({
+      kind:'player',role:'player',id:p.id,data:p,item,
+      name:p.name,nat:(p.nationality||store.G.countryId||'PL'),age:p.age||0,
+      ovr:o,stars:ovrStars(o),
+      teamId:p.teamId,club:p.teamId!==null?teamName(p.teamId):'',
+      series:p.teamId!==null?(teamLeague(p.teamId)===1?'I Liga':'II Liga'):'',
+      salary:isLoan?Math.round((p.salary||0)*(item.share||0.6)):contractExpect(p).salary,
+      fee:isLoan?0:(item.fee||0),
+      until:isFa?0:(p.contractYears||0),
+      deal:isFa?'Wolny agent':isPreSign?'Pre-sign':isLoan?'Wypo\u017cyczenie':'Transfer',
+      dealTone:isFa?'pos':isPreSign?'warn':isLoan?'':'club',
+      action:isLoan
+        ?`<button class="btn sm pr" onclick="event.stopPropagation();doBorrowIn(${p.id})">WYPO\u017bYCZ</button>`
+        :`<button class="btn sm pr" onclick="event.stopPropagation();openNegotiate(${p.id})">${isPreSign?'PRE-SIGN':'PODPISZ'}</button>`,
+      open:`openPlayerModal(${p.id})`,
+    });
   }
+  for(const s of getAllExternalStaffMarket()){
+    const o=staffOvr(s);
+    const mine=s.teamId===store.G.myTeamId;
+    const canPreSign=s.teamId!==null&&!mine&&(s.contractYears||0)===1;
+    const blocked=s.teamId!==null&&!mine&&!canPreSign;
+    rows.push({
+      kind:'staff',role:s.type,id:s.id,data:s,
+      name:s.name,nat:(s.nationality||store.G.countryId||'PL'),age:s.age||0,
+      ovr:o,stars:ovrStars(o),
+      teamId:s.teamId,club:s.teamId!==null?teamName(s.teamId):'',
+      series:s.teamId!==null?(teamLeague(s.teamId)===1?'I Liga':'II Liga'):'',
+      salary:s.salary||0,fee:0,until:s.contractYears||0,
+      deal:mine?'Tw\u00f3j sztab':s.teamId===null?'Wolny agent':canPreSign?'Pre-sign':'Zaj\u0119ty',
+      dealTone:mine?'':s.teamId===null?'pos':canPreSign?'warn':'',
+      action:`<button class="btn sm ${blocked?'':canPreSign?'bl':'pr'}" ${blocked?'disabled':''} onclick="event.stopPropagation();${blocked?'':`openStaffNeg(${s.id})`}">${blocked?'ZAJ\u0118TY':canPreSign?'NA S+1':'NEGOCJUJ'}</button>`,
+      open:`openStaffModal(${s.id})`,
+    });
+  }
+
+  const roleTabs=[['player','Zawodnicy'],['coach','Trenerzy'],['physio','Fizjo'],['psychologist','Psycholodzy'],['scout','Skauci'],['pr','PR']];
+  const inRole=rows.filter(r=>r.role===marketType);
+  const favIdsForRole=marketFavIds(marketType==='player'?'player':'staff');
+  const ageOk=r=>ageBand==='all'
+    ||(ageBand==='16-22'&&r.age<22)
+    ||(ageBand==='22-28'&&r.age>=22&&r.age<28)
+    ||(ageBand==='28-34'&&r.age>=28&&r.age<34)
+    ||(ageBand==='34+'&&r.age>=34);
+  let market=inRole.filter(r=>{
+    const text=`${r.name} ${r.club} ${roleLabel(r.role)}`.toLowerCase();
+    if(marketSearch&&!text.includes(marketSearch))return false;
+    if(favOnly&&!favIdsForRole.includes(r.id))return false;
+    if(!ageOk(r))return false;
+    if(minStars&&r.stars<minStars)return false;
+    return true;
+  });
+  const sortVal=r=>({
+    name:r.name,nat:r.nat,age:r.age,ovr:r.ovr,club:r.club||'\uffff',
+    series:r.series||'\uffff',salary:r.salary,fee:r.fee,until:r.until,
+  })[sortKey]??r.ovr;
+  market.sort((a,b)=>{
+    const x=sortVal(a),y=sortVal(b);
+    const cmp=typeof x==='string'?String(y).localeCompare(String(x),'pl'):(y-x);
+    return cmp*sortDir;
+  });
+  const th=(key,label,cls)=>`<th class="${cls||''} ${sortKey===key?'srt':''}" onclick="ui.mktSort='${key}';ui.mktSortDir=${sortKey===key?-sortDir:1};render()">${label}${sortKey===key?(sortDir>0?' \u2193':' \u2191'):''}</th>`;
+  const seg=(group,current,options)=>`<div class="seg">${options.map(([val,label,badge])=>
+    `<button class="${current===val?'on':''}" onclick="ui.${group}='${val}';render()">${label}${badge!=null?`<span class="cnt">${badge}</span>`:''}</button>`).join('')}</div>`;
+
   const ourExpiring=myPlayers().filter(p=>p.contractYears<=1&&p.role!=='youth');
-  const shortlist=shortlistIds.map(id=>store.G.players.find(p=>p.id===id)).filter(Boolean);
   const compare=compareIds.map(id=>store.G.players.find(p=>p.id===id)).filter(Boolean);
   const playerCommitments=nextSeason.entries.filter(entry=>entry.kind==='player');
   const staffCommitments=nextSeason.entries.filter(entry=>entry.kind==='staff');
-  const compareBlock=compare.length===2?`<div class="card mb12"><div class="ct">PORÓWNANIE 1 NA 1</div>
+  const showDetails=ui.mktDetails===true;
+  const money=n=>n?n.toLocaleString('pl')+' €':'-';
+  const compareBlock=compare.length===2?`<div class="card mb14"><div class="ct">PORÓWNANIE 1 NA 1<div class="card-tools"><button class="btn sm" onclick="ui.marketCompare=[];render()">WYCZYŚĆ</button></div></div>
     <div class="grid gtc2 gp12">
       ${compare.map(p=>`<div class="tile tile-lg">
         <div class="flex jcb gp10 aifs mb8">
           <div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age}l / ${styleLabel(p.playStyle)}</div></div>
           <div class="syne b8 fs28 cr">${ovr(p)}</div>
         </div>
-        <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l r8 tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
+        <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
         <div class="fs11 ink3">Pensja oczekiwana: ${contractExpect(p).salary.toLocaleString('pl')} € / punkty+ ${(p.seasonPointsWon||0)} / punkty- ${(p.seasonPointsLost||0)}</div>
       </div>`).join('')}
     </div>
   </div>`:'';
-  // Players and staff used to render as two unrelated layouts in the same list.
-  // One row component now serves both: portrait, identity, the numbers that
-  // matter for that kind, and the same right-hand OVR + action column.
-  function marketRow({tone,avatar,name,club,badge,meta,facts,note,ovrVal,ovrSub,ovrColor,actions,onclick}){
-    return`<div class="mkt-row" style="--mkt-tone:${tone}" ${onclick?`onclick="${onclick}"`:''}>
-      <img src="${avatar}" alt="" class="avatar">
-      <div class="mkt-main">
-        <div class="mkt-name">${name}${club?` <span class="mkt-club">${club}</span>`:''}${badge?` <span class="mkt-badge">${badge}</span>`:''}</div>
-        <div class="mkt-meta">${meta}</div>
-        ${facts?`<div class="mkt-facts">${facts}</div>`:''}
-        ${note?`<div class="mkt-note">${note}</div>`:''}
-      </div>
-      <div class="mkt-ovr"><div class="v" style="color:${ovrColor||'var(--r)'}">${ovrVal}</div>${ovrSub?`<div class="s">${ovrSub}</div>`:''}</div>
-      <div class="mkt-actions" onclick="event.stopPropagation()">${actions}</div>
-    </div>`;
-  }
-  function staffMarketCard(s){
-    const isPR=s.type==='pr';
-    const joinLabel=s.teamId!==null&&s.teamId!==store.G.myTeamId?'od kolejnego sezonu':'od razu';
-    const detailLine=s.type==='coach'
-      ?`Taktyka ${s.tactics||0} · trening ${s.training||0} · motywacja ${s.motivation||0} · synergia ${s.synergy||0}`
-      :s.type==='physio'
-      ?`Kontuzje ${s.injReduction||0} · regeneracja ${s.recovery||0} · prewencja ${s.prevention||0}`
-      :s.type==='psychologist'
-      ?`Morale ${s.moraleBoost||0} · mental ${s.mentalTraining||0} · presja ${s.pressure||0}`
-      :s.type==='scout'
-      ?`Dokładność ${s.accuracy||0} · siatka ${s.network||0} · specjalizacja ${(s.specialty||'regional')}`
-      :`Bonus ${Math.round((s.bonus||0)*100)}% komercji · cooldown -${s.cooldownReduce||0}`;
-    const canPreSignStaff=s.teamId!==null&&s.teamId!==store.G.myTeamId&&(s.contractYears||0)===1;
-    const mine=s.teamId===store.G.myTeamId;
-    const blocked=s.teamId!==null&&!mine&&!canPreSignStaff;
-    const statusFlag=mine?'już pracuje u ciebie':s.teamId!==null?(canPreSignStaff?'ostatni rok kontraktu — możliwy podpis S+1':'kontrakt zbyt długi na podpis S+1'):'wolny od ręki';
-    return marketRow({
-      tone:mine?'var(--orange)':s.teamId===null?'var(--g)':canPreSignStaff?'var(--gold)':'var(--b1)',
-      avatar:getAvatarData(s,'staff'),
-      name:s.name,
-      club:s.teamId!==null?`(${teamName(s.teamId)})`:'(wolny)',
-      badge:roleLabel(s.type),
-      meta:`${s.age||'?'} lat · ${detailLine}`,
-      facts:`<span>Pensja <b>${((s.salary)||0).toLocaleString('pl')} €</b></span><span>Kontrakt <b>${s.contractYears||0} l.</b></span><span>Dołącza <b>${joinLabel}</b></span>`,
-      note:statusFlag,
-      ovrVal:staffOvr(s),ovrSub:`peak ${staffCeiling(s)}`,ovrColor:staffOvrColor(staffOvr(s)),
-      actions:`<button class="btn sm" onclick="openStaffModal(${s.id})">PROFIL</button>
-        <button class="btn ${blocked?'':canPreSignStaff?'bl':'pr'} sm" ${blocked?'disabled':''} onclick="${blocked?'':`openStaffNeg(${s.id})`}">${blocked?'NIEDOSTĘPNY':canPreSignStaff?'PODPISZ NA S+1':'NEGOCJUJ'}</button>`,
-    });
-  }
-  
-  return`<div class="ph"><div><div class="pt">RYNEK <span>TRANSFEROWY</span></div><div class="ps">Bud\u017cet: ${mt.budget.toLocaleString('pl')} €</div></div></div>
-  <div class="g4">
-    <div class="sb"><div class="l">Do podpisania S+1</div><div class="v ${nextSeason.entries.length?'gold':'g'} fs28">${nextSeason.entries.length}</div><div class="sub">umów</div></div>
-    <div class="sb"><div class="l">Koszt S+1</div><div class="v r fs24">${nextSeason.total.toLocaleString('pl')}</div><div class="sub">€</div></div>
-    <div class="sb"><div class="l">Zawodnicy S+1</div><div class="v fs28">${playerCommitments.length}</div></div>
-    <div class="sb"><div class="l">Sztab S+1</div><div class="v fs28">${staffCommitments.length}</div></div>
+
+  return`<div class="ph">
+    <div><div class="pt">RYNEK <span>TRANSFEROWY</span></div><div class="ps">Budżet ${mt.budget.toLocaleString('pl')} € · wolnych agentów bierzesz od razu, zakontraktowanych podpisujesz na kolejny sezon</div></div>
+    <div class="tools"><button class="btn ${showDetails?'on':''}" onclick="ui.mktDetails=${showDetails?'false':'true'};render()">Umowy S+1 (${nextSeason.entries.length})</button></div>
   </div>
-  ${nextSeason.entries.length?`<div class="card mb12 bt3-blue"><div class="ct">UMOWY ZAKLEPANE NA KOLEJNY SEZON</div>
-    <div class="grid gtcfit240 gp10">
-      ${nextSeason.entries.map(entry=>`<div class="pd10 bb1 r10 bgs1">
-        <div class="row-bet">
-          <div><div class="b7">${entry.name}</div><div class="fs10 ink3">${entry.label}</div><div class="fs10 ink3 mt-2">${entry.kind==='player'?roleGuaranteeLabel(entry.role):roleLabel(entry.role)} / ${entry.years} l.</div></div>
-          <div class="tar fs11"><div class="b7 cr">${(entry.salary||0).toLocaleString('pl')} €</div><div class="ink3">bonus ${(entry.bonus||0).toLocaleString('pl')} €</div></div>
+  ${ourExpiring.length?`<div class="banner" style="border-left-color:var(--volt)"><div class="dot" style="background:var(--volt)"></div>
+    ${ourExpiring.length} ${ourExpiring.length===1?'twój zawodnik kończy kontrakt':'twoich zawodników kończy kontrakt'} — rywale mogą ich podpisać na kolejny sezon: ${ourExpiring.map(p=>p.name).join(', ')}
+  </div>`:''}
+
+  <div class="filters">
+    <div class="filters-h">Filtry</div>
+    <div class="fgrp wide mb14"><i>Rola</i>
+      ${seg('marketTypeFilter',marketType,roleTabs.map(([v,l])=>[v,l]))}
+    </div>
+    <div class="frow">
+      <div class="fgrp"><i>Widok</i>
+        ${seg('mktFav',favOnly?'fav':'all',[['all','Wszyscy',inRole.length],['fav','Obserwowani',favIdsForRole.length||null]])}
+      </div>
+      <div class="fgrp"><i>Wiek</i>
+        ${seg('mktAge',ageBand,[['all','Wszyscy'],['16-22','16-22'],['22-28','22-28'],['28-34','28-34'],['34+','34+']])}
+      </div>
+      <div class="fgrp"><i>Ocena</i>
+        <div class="seg">
+          <button class="${minStars?'':'on'}" onclick="ui.mktStars=0;render()">Wszyscy</button>
+          <button class="${minStars?'on':''}" onclick="ui.mktStars=${minStars?minStars:3};render()">Minimum</button>
+          <button class="step" onclick="ui.mktStars=Math.max(0,(ui.mktStars||0)-0.5);render()" ${minStars?'':'disabled'}>‹</button>
+          <button class="step" style="flex:0 0 auto;padding:8px 10px" onclick="event.preventDefault()">${starsHtml(minStars)}</button>
+          <button class="step" onclick="ui.mktStars=Math.min(5,(ui.mktStars||0)+0.5);render()" ${minStars>=5?'disabled':''}>›</button>
         </div>
-      </div>`).join('')}
+      </div>
     </div>
-  </div>`:''}
-  ${negotiationHistory.length?`<div class="card mb12"><div class="ct">OSTATNIE NEGOCJACJE</div>
-    <div class="pnl-block">
-      ${negotiationHistory.map(entry=>`<div class="pnl-row"><div><b>${entry.targetName}</b> <span class="fs10 ink3">S${entry.season}/K${entry.matchday} / ${entry.promisedRole?roleGuaranteeLabel(entry.promisedRole):''}</span></div><div style="color:${entry.status==='accepted'?'var(--g)':'var(--r)'};font-weight:700">${entry.status==='accepted'?'OK':'ODRZUCONE'}</div></div>`).join('')}
+    <div class="fgrp wide mt-14">
+      <input value="${ui.marketSearch||''}" oninput="ui.marketSearch=this.value;render()" placeholder="Szukaj nazwiska lub klubu..." class="w100">
     </div>
-  </div>`:''}
-  ${ourExpiring.length?`<div class="card mb12" style="border-left:4px solid var(--orange)"><div class="ct corange">\u26a0 WYGASAJ\u0104CE KONTRAKTY</div>
-  <div class="fs11 ink3 mb8">Inne kluby mog\u0105 podpisa\u0107 twoich zawodnik\u00f3w z ostatnim rokiem kontraktu od nast\u0119pnego sezonu!</div>
-  ${ourExpiring.map(p=>`<div class="flex jcb aic pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})">
-    <div><span class="b7">${p.name}</span> <span class="fs10 ink3">${p.age}l / OVR ${ovrBase(p)}</span></div>
-    <div class="fs11 cr b7">${p.contractYears<=0?'Wolny agent':'1 rok'}</div>
-  </div>`).join('')}
-  </div>`:''}
-  ${shortlist.length?`<div class="card mb12 bt3-gold"><div class="ct">SHORTLISTA (${shortlist.length}/12)</div>
-    <div class="grid gtcfit240 gp10">
-      ${shortlist.map(p=>`<div class="pd10 bb1 r10 bgs1 cur" onclick="openPlayerModal(${p.id})">
-        <div class="row-bet"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age}l / ${styleLabel(p.playStyle)}</div></div><div class="syne b8 cr">OVR ${ovr(p)}</div></div>
-        <div class="fs11 ink3 mt-6">${contractExpect(p).salary.toLocaleString('pl')} € / rok</div>
-        <div class="btn-row mt-8"><button class="btn sm ${compareIds.includes(p.id)?'pr':''}" onclick="event.stopPropagation();toggleMarketCompare(${p.id})">${compareIds.includes(p.id)?'USUŃ Z COMPARE':'COMPARE'}</button><button class="btn sm" onclick="event.stopPropagation();toggleMarketShortlist(${p.id})">USUŃ</button></div>
-      </div>`).join('')}
+  </div>
+
+  ${showDetails?`<div class="g2 mb14">
+    <div class="card bt3-blue"><div class="ct">UMOWY NA KOLEJNY SEZON<span class="pill">${nextSeason.total.toLocaleString('pl')} €</span></div>
+      ${nextSeason.entries.length?`<table class="tbl"><thead><tr><th>Kto</th><th>Rola</th><th class="n">Lata</th><th class="n">Pensja</th><th class="n">Bonus</th></tr></thead><tbody>
+        ${nextSeason.entries.map(e=>`<tr><td class="pname">${e.name}</td><td class="dim">${e.kind==='player'?roleGuaranteeLabel(e.role):roleLabel(e.role)}</td><td class="n dim">${e.years}</td><td class="n">${(e.salary||0).toLocaleString('pl')}</td><td class="n dim">${(e.bonus||0).toLocaleString('pl')}</td></tr>`).join('')}
+      </tbody></table>`:'<div class="pad fs12 ink3">Nic jeszcze nie zaklepane na S+1.</div>'}
+      <div class="pad fs11 ink3">Zawodnicy: ${playerCommitments.length} · sztab: ${staffCommitments.length}</div>
+    </div>
+    <div class="card"><div class="ct">OSTATNIE NEGOCJACJE</div>
+      ${negotiationHistory.length?`<table class="tbl"><thead><tr><th>Kto</th><th>Kiedy</th><th>Wynik</th></tr></thead><tbody>
+        ${negotiationHistory.map(e=>`<tr><td class="pname">${e.targetName}</td><td class="dim">S${e.season}/K${e.matchday}</td><td><span class="pill ${e.status==='accepted'?'pos':'club'}">${e.status==='accepted'?'Przyjęte':'Odrzucone'}</span></td></tr>`).join('')}
+      </tbody></table>`:'<div class="pad fs12 ink3">Brak historii negocjacji.</div>'}
     </div>
   </div>`:''}
   ${compareBlock}
-  <div class="card"><div class="ct">DOSTĘPNI (${market.length})
-    <div class="card-tools">${sortBtn('ovr','OVR')} ${sortBtn('age','Wiek')} ${SK.map(s=>sortBtn(s,SL[s])).join(' ')}</div></div>
-  <div class="fs11 ink3 mb10">Cała Polska w jednym miejscu: zawodnicy, trenerzy, fizjo, psycholodzy, skauci i PR. Wolnych agentów bierzesz od razu, osoby z ważnym kontraktem podpisujesz na kolejny sezon.</div>
-  <div class="market-filters"><input value="${ui.marketSearch||''}" oninput="ui.marketSearch=this.value;render()" placeholder="Szukaj nazwiska, klubu albo roli..." class="pd10-12 bb1 r10 bgs1" style="flex:1.2;min-width:160px"><select onchange="ui.marketTypeFilter=this.value;render()" class="pd10-12 bb1 r10 bgs1" style="flex:.9;min-width:120px"><option value="all" ${marketType==='all'?'selected':''}>Wszyscy</option><option value="player" ${marketType==='player'?'selected':''}>Zawodnicy</option><option value="coach" ${marketType==='coach'?'selected':''}>Trenerzy</option><option value="physio" ${marketType==='physio'?'selected':''}>Fizjo</option><option value="psychologist" ${marketType==='psychologist'?'selected':''}>Psycholodzy</option><option value="scout" ${marketType==='scout'?'selected':''}>Skauci</option><option value="pr" ${marketType==='pr'?'selected':''}>PR</option></select></div>
-  ${market.slice(0,100).map(entry=>{
-    if(entry.entity==='staff')return staffMarketCard(entry.data);
-    const item=entry.item,p=entry.data,o=ovr(p);
-    const isFa=item.type==='fa',isPreSign=item.type==='presign',isLoan=item.type==='loan';
-    const exp=contractExpect(p);
-    const kind=isFa?'Wolny agent':isPreSign?'Pre-sign (ostatni rok kontraktu)':isLoan?'Wypożyczenie na sezon':`Transfer za ${item.fee.toLocaleString('pl')} €`;
-    const timing=isLoan?`dołącza OD RAZU · wraca po sezonie`:isFa?'sam kontrakt · od razu':'dołącza po sezonie';
-    return marketRow({
-      tone:isFa?'var(--g)':isPreSign?'var(--gold)':isLoan?'var(--purple)':'var(--blue)',
-      avatar:getAvatarData(p,'player'),
-      name:p.name,
-      club:p.teamId!==null?`(${teamName(p.teamId)})`:'(wolny)',
-      badge:kind,
-      meta:`${p.age} lat · ${styleLabel(p.playStyle)} · forma: ${seasonFormLabel(p)}`,
-      facts:SK.map(s=>`<span>${SL[s]} <b>${p[s]}</b></span>`).join(''),
-      note:isLoan
-        ?`Pokrywasz ${Math.round((item.share||0.6)*100)}% pensji (${Math.round((p.salary||0)*(item.share||0.6)).toLocaleString('pl')} €) · ${timing}`
-        :`Pakiet agenta: ok. ${exp.salary.toLocaleString('pl')} € + bonus ${exp.signingBonus.toLocaleString('pl')} € · agent ${exp.profile.agentType} · oczekuje: ${roleGuaranteeLabel(exp.role)} · ${timing}`,
-      ovrVal:o,ovrSub:`peak ${playerCeiling(p)}`,
-      actions:`<button class="btn sm ${shortlistIds.includes(p.id)?'pr':''}" onclick="toggleMarketShortlist(${p.id})">${shortlistIds.includes(p.id)?'★ SHORTLIST':'SHORTLIST'}</button>
-        <button class="btn sm ${compareIds.includes(p.id)?'pr':''}" onclick="toggleMarketCompare(${p.id})">${compareIds.includes(p.id)?'COMPARE ✓':'COMPARE'}</button>
-        ${isLoan?`<button class="btn pr sm" onclick="doBorrowIn(${p.id})">WYPOŻYCZ</button>`:`<button class="btn pr sm" onclick="openNegotiate(${p.id})">${isPreSign?'PRE-SIGN':'PODPISZ'}</button>`}`,
-      onclick:`openPlayerModal(${p.id})`,
-    });
-  }).join('')||'<div class="empty-state fs12">Brak wyników dla wybranych filtrów.</div>'}
+
+  <div class="panel" style="overflow-x:auto">
+    <header><h4>${(roleTabs.find(t=>t[0]===marketType)||[0,"Rynek"])[1]} — dostępni (${market.length})</h4>
+      <span class="pill">${minStars?`min. ${minStars} ★`:'bez progu'}${ageBand!=='all'?` · ${ageBand} lat`:''}</span>
+    </header>
+    <table class="tbl wide">
+      <thead><tr>
+        <th style="width:30px"></th>
+        ${th('name','Nazwisko')}
+        ${th('nat','Kraj')}
+        ${th('age','Wiek','n')}
+        ${th('ovr','Ocena')}
+        ${th('club','Klub')}
+        ${th('series','Rozgrywki')}
+        ${th('salary','Pensja','n')}
+        ${th('fee','Odstępne','n')}
+        ${th('until','Kontrakt do','n')}
+        <th>Status</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+      ${market.slice(0,150).map(r=>{
+        const fav=favIdsForRole.includes(r.id);
+        const av=r.kind==='player'?getAvatarData(r.data,'player'):getAvatarData(r.data,'staff');
+        return`<tr class="row-link" onclick="${r.open}">
+          <td><button class="fav ${fav?'on':''}" onclick="event.stopPropagation();toggleMarketFav('${r.kind}',${r.id})" title="Obserwuj">${fav?'★':'☆'}</button></td>
+          <td><span class="face" style="background-image:url('${av}');--ring:${fav?'var(--volt)':'var(--line2)'}"></span><span class="pname">${r.name}</span></td>
+          <td><span class="nat">${r.nat}</span></td>
+          <td class="n dim">${r.age||'-'}</td>
+          <td>${starsHtml(r.stars)} <span class="dim fs11">${r.ovr}</span></td>
+          <td class="${r.club?'':'dim'}">${r.club||'-'}</td>
+          <td class="dim">${r.series||'-'}</td>
+          <td class="n">${money(r.salary)}</td>
+          <td class="n ${r.fee?'':'dim'}">${money(r.fee)}</td>
+          <td class="n dim">${r.until?store.G.season+r.until:'-'}</td>
+          <td><span class="pill ${r.dealTone}">${r.deal}</span></td>
+          <td class="n">${r.action}</td>
+        </tr>`;
+      }).join('')||`<tr><td colspan="12"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
+      </tbody>
+    </table>
   </div>`;
 }
 
@@ -937,7 +1000,7 @@ function pageHistory(){
       ${coachHistory.length?[...coachHistory].sort((a,b)=>b.coachOvr-a.coachOvr||b.season-a.season).slice(0,5).map((h,i)=>`<div class="pnl-row"><div><b>#${i+1} ${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${h.style}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):'<div class="fs12 ink3">Ranking pojawi się po pierwszym sezonie.</div>'}
       </div></div>
     <div class="card"><div class="ct">AKTUALNY SZTAB I KRZYWE OVR</div>
-      ${store.G.staff.filter(s=>s.teamId===store.G.myTeamId).length?store.G.staff.filter(s=>s.teamId===store.G.myTeamId).sort((a,b)=>staffOvr(b)-staffOvr(a)).map(s=>{const hist=store.G.staffHistory?.[s.id]||[];const vals=hist.map(h=>h.ovr);const best=Math.max(staffOvr(s),...vals,0);return`<div class="pd10 bb1 bgs2 r10 mb10"><div class="row-bet"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${s.type} / ${s.styleName||'specjalista'} / ${s.age||'?'} l</div></div><div style="font-family:'Syne',sans-serif;font-weight:800;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)}</div></div>${miniChart(vals.length>1?vals:[staffOvr(s),staffOvr(s)])}<div class="fs9 ink3 mt-4">Historia: ${(vals.length?vals:[staffOvr(s)]).join(' → ')} / Peak ${best}</div></div>`;}).join(''):'<div class="fs12 ink3">Brak zatrudnionego sztabu.</div>'}
+      ${store.G.staff.filter(s=>s.teamId===store.G.myTeamId).length?store.G.staff.filter(s=>s.teamId===store.G.myTeamId).sort((a,b)=>staffOvr(b)-staffOvr(a)).map(s=>{const hist=store.G.staffHistory?.[s.id]||[];const vals=hist.map(h=>h.ovr);const best=Math.max(staffOvr(s),...vals,0);return`<div class="pd10 bb1 bgs2 r10 mb10"><div class="row-bet"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${s.type} / ${s.styleName||'specjalista'} / ${s.age||'?'} l</div></div><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)}</div></div>${miniChart(vals.length>1?vals:[staffOvr(s),staffOvr(s)])}<div class="fs9 ink3 mt-4">Historia: ${(vals.length?vals:[staffOvr(s)]).join(' → ')} / Peak ${best}</div></div>`;}).join(''):'<div class="fs12 ink3">Brak zatrudnionego sztabu.</div>'}
     </div>
   </div>`:''}`;
 }
@@ -947,7 +1010,7 @@ function pageInbox(){
   const inbox=(store.G.inbox||[]).slice().reverse();
   const pending=inbox.filter(m=>m.type==='decision'&&!m.answered).length;
   return`<div class="ph"><div><div class="pt">SKRZYNKA <span>KLUBOWA</span></div><div class="ps">${inbox.length} wiadomości${pending?` / <b class="cr">${pending} decyzji do podjęcia</b>`:''}</div></div></div>
-  ${pending?`<div class="banner" style="border-left-color:var(--r)"><div class="dot bgr"></div>📧 Kolejka jest zablokowana do czasu odpowiedzi na wszystkie decyzje poniżej.</div>`:''}
+  ${pending?`<div class="banner" style="border-left-color:var(--r)"><div class="dot bgr"></div>Kolejka jest zablokowana do czasu odpowiedzi na wszystkie decyzje poniżej.</div>`:''}
   <div class="grid gp8">
   ${inbox.length?inbox.map(m=>{
     const isPending=m.type==='decision'&&!m.answered;
@@ -1015,8 +1078,8 @@ function pageHoF(){
   const rec=store.G.records||{};
   
   const tabsHtml=`<div class="rtabs mb14">
-    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">\u2b50 GALERIA EMERYT\u00d3W</div>
-    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">\ud83d\udcca KSI\u0118GA REKORD\u00d3W</div>
+    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">GALERIA EMERYT\u00d3W</div>
+    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">KSI\u0118GA REKORD\u00d3W</div>
   </div>`;
   
   let bodyHtml='';
@@ -1037,7 +1100,7 @@ function pageHoF(){
         <div class="hr-meta">${e.retiredAge}l / ${e.careerW}W/${e.careerL}L / ${e.wrate}%W</div>
         <div class="mt-3">${(e.awards||[]).slice(0,4).map(a=>`<span class="award">${a.displayLabel||a.label}</span>`).join('')}</div>
       </div>
-      <div class="hr-val">${sk==='trophies_gold'?e.goldCount+'\ud83c\udfc6':sk==='ovr'?e.ovr:sk==='w'?e.careerW:e.wrate+'%'}</div>
+      <div class="hr-val">${sk==='trophies_gold'?e.goldCount+'':sk==='ovr'?e.ovr:sk==='w'?e.careerW:e.wrate+'%'}</div>
     </div>`).join(''):'<div class="pd40 tac ink3">Brak zawodnik\u00f3w w Hall of Fame. Poczekaj a\u017c pierwsi zawodnicy przejd\u0105 na emerytur\u0119.</div>';
     
     bodyHtml=filterTabs+'<div class="card" style="padding:0">'+rows+'</div>';
@@ -1099,11 +1162,11 @@ function pageHoF(){
     const winRow=rec.MOST_WINS_PLAYER?`<div class="pnl-row"><div><b>Najwi\u0119cej Wygranych w Sezonie</b><div class="fs10 ink3">${rec.MOST_WINS_PLAYER.playerName} / Sezon ${rec.MOST_WINS_PLAYER.season}</div></div><div class="pnl-pos">${rec.MOST_WINS_PLAYER.wins} W</div></div>`:'<div class="ink3 fs11 pd8-0">Rekord wygranych \u2014 jeszcze nie ustanowiony</div>';
     const ovrRow=rec.HIGHEST_OVR?`<div class="pnl-row"><div><b>Najwy\u017cszy OVR w Historii</b><div class="fs10 ink3">${rec.HIGHEST_OVR.playerName} / Sezon ${rec.HIGHEST_OVR.season}</div></div><div class="pnl-pos syne b8 fs22">${rec.HIGHEST_OVR.ovr}</div></div>`:'<div class="ink3 fs11 pd8-0">Najwy\u017cszy OVR \u2014 jeszcze nie ustanowiony</div>';
     const mvpRow=rec.MOST_MVP?`<div class="pnl-row"><div><b>Najwi\u0119cej tytu\u0142\u00f3w Top 12 Masters</b><div class="fs10 ink3">${rec.MOST_MVP.playerName}</div></div><div class="pnl-pos">${rec.MOST_MVP.count}\u00d7</div></div>`:'<div class="ink3 fs11 pd8-0">Rekordzista Top 12 Masters \u2014 jeszcze nie ustanowiony</div>';
-    const mgrStatus=(store.G.managerPrestige||0)>=75?'\u2705 Kwalifikujesz si\u0119 na Selekcjonera!':(store.G.managerPrestige||0)>=50?'Dobra \u015bcie\u017cka kariery':'Buduj presti\u017c przez wyniki ligowe';
-    const natTeamBadge=store.G.isNatTeamManager?`<div class="mt-8 pd8-12 bg-ok bbg r3 fs12 cg b7">\u2705 Selekcjoner ${COUNTRIES[store.G.countryId]?.nationalTeam||'Reprezentacji'}</div>`:'';
+    const mgrStatus=(store.G.managerPrestige||0)>=75?'Kwalifikujesz si\u0119 na Selekcjonera!':(store.G.managerPrestige||0)>=50?'Dobra \u015bcie\u017cka kariery':'Buduj presti\u017c przez wyniki ligowe';
+    const natTeamBadge=store.G.isNatTeamManager?`<div class="mt-8 pd8-12 bg-ok bbg r3 fs12 cg b7">Selekcjoner ${COUNTRIES[store.G.countryId]?.nationalTeam||'Reprezentacji'}</div>`:'';
     bodyHtml=`<div class="g2">
       <div>
-        <div class="card"><div class="ct cgold">\ud83c\udfc6 REKORDY KLUBOWE</div>
+        <div class="card"><div class="ct cgold">REKORDY KLUBOWE</div>
           ${psRow}${strRow}${setsRow}
         </div>
         <div class="card"><div class="ct">NAJBARDZIEJ UTYTUŁOWANE KLUBY</div>
@@ -1114,7 +1177,7 @@ function pageHoF(){
         </div>
       </div>
       <div>
-        <div class="card"><div class="ct cr">\ud83c\udf96 REKORDY INDYWIDUALNE</div>
+        <div class="card"><div class="ct cr">REKORDY INDYWIDUALNE</div>
           ${winRow}${ovrRow}${mvpRow}
         </div>
         <div class="card"><div class="ct">NAJBARDZIEJ UTYTUŁOWANI ZAWODNICY</div>
@@ -1123,7 +1186,7 @@ function pageHoF(){
         <div class="card"><div class="ct">NAJWIĘCEJ TYTUŁÓW LIGOWYCH ZAWODNIKA</div>
           ${topPlayersByLeague.length?topPlayersByLeague.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b></div><div class="pnl-pos">${p.league}×</div></div>`).join(''):'<div class="fs11 ink3">Jeszcze brak pełnej historii.</div>'}
         </div>
-        <div class="card"><div class="ct">\ud83d\udcca PRESTI\u017b MENED\u017bERA</div>
+        <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
           <div class="sb mb10"><div class="l">Presti\u017c MGR</div><div class="v gold fs40">${store.G.managerPrestige||0}</div><div class="sub">${mgrStatus}</div></div>
           ${natTeamBadge}
         </div>
@@ -1140,25 +1203,25 @@ function pageMundial(){
   const myNationals=store.G.players.filter(p=>!p.retired&&p.nationality===store.G.countryId&&p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a)).slice(0,5);
   
   return`<div class="ph"><div><div class="pt">MUNDIAL <span>& REPREZENTACJA</span></div><div class="ps">${country.flag} ${country.nationalTeam||country.name} / Ranking: #${country.worldRank}</div></div>
-  ${store.G.mundialYear?`<div class="mt-8 fs11 cblue b7">\ud83c\udf0d Mundial zostanie rozegrany jako kolejny krok sezonu.</div>`:''}
+  ${store.G.mundialYear?`<div class="mt-8 fs11 cblue b7">Mundial zostanie rozegrany jako kolejny krok sezonu.</div>`:''}
   </div>
   
   <div class="g2">
     <div>
-      <div class="card"><div class="ct">\ud83c\udf0d STATUS</div>
+      <div class="card"><div class="ct">STATUS</div>
         <div class="g2 mb12">
-          <div class="sb"><div class="l">Mundial</div><div class="v ${store.G.mundialYear?'r gold':''} fs20">${store.G.mundialYear?'\u2705 DOST\u0118PNY':'\u231b Sezon '+(store.G.season%2===0?store.G.season+1:store.G.season+2)}</div></div>
-          <div class="sb"><div class="l">Olimpiada</div><div class="v ${store.G.olympicYear?'r gold':''} fs20">${store.G.olympicYear?'\u2705 DOST\u0118PNA':'\u231b Sezon '+(store.G.season%2===1?store.G.season+1:store.G.season+2)}</div></div>
+          <div class="sb"><div class="l">Mundial</div><div class="v ${store.G.mundialYear?'r gold':''} fs20">${store.G.mundialYear?'DOST\u0118PNY':'\u231b Sezon '+(store.G.season%2===0?store.G.season+1:store.G.season+2)}</div></div>
+          <div class="sb"><div class="l">Olimpiada</div><div class="v ${store.G.olympicYear?'r gold':''} fs20">${store.G.olympicYear?'DOST\u0118PNA':'\u231b Sezon '+(store.G.season%2===1?store.G.season+1:store.G.season+2)}</div></div>
         </div>
         <div class="fs11 ink3">Mundial co 2 sezony od sezonu 3. Olimpiada co 2 sezony od sezonu 2.</div>
       </div>
-      <div class="card"><div class="ct">\ud83c\udfa4 PRESTI\u017b MENED\u017bERA</div>
-        <div class="sb mb10"><div class="l">Tw\u00f3j Presti\u017c</div><div class="v gold fs40">${pres}</div><div class="sub">${pres>=75?'\u2705 Oferta selekcjonera dost\u0119pna!':pres>=50?`Brak oferty (wymagane 75, brakuje ${75-pres} pkt)`:'Buduj presti\u017c przez wyniki'}</div></div>
-        ${store.G.isNatTeamManager?`<div class="pd10 bg-ok bbg r3 b7 cg">\u2705 Jeste\u015b selekcjonerem ${country.nationalTeam||country.name}!</div>`:`<div class="fs11 ink3">Osi\u0105gnij 75 presti\u017cu mened\u017cera, by otrzyma\u0107 ofert\u0119 prowadzenia reprezentacji. Zyski: dobre sezony, awanse i trofea.</div>`}
+      <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
+        <div class="sb mb10"><div class="l">Tw\u00f3j Presti\u017c</div><div class="v gold fs40">${pres}</div><div class="sub">${pres>=75?'Oferta selekcjonera dost\u0119pna!':pres>=50?`Brak oferty (wymagane 75, brakuje ${75-pres} pkt)`:'Buduj presti\u017c przez wyniki'}</div></div>
+        ${store.G.isNatTeamManager?`<div class="pd10 bg-ok bbg r3 b7 cg">Jeste\u015b selekcjonerem ${country.nationalTeam||country.name}!</div>`:`<div class="fs11 ink3">Osi\u0105gnij 75 presti\u017cu mened\u017cera, by otrzyma\u0107 ofert\u0119 prowadzenia reprezentacji. Zyski: dobre sezony, awanse i trofea.</div>`}
       </div>
     </div>
     <div>
-      <div class="card"><div class="ct">\ud83c\udfc5 POWO\u0141ANIA (${country.flag} ${country.name})</div>
+      <div class="card"><div class="ct">POWO\u0141ANIA (${country.flag} ${country.name})</div>
         <div class="fs11 ink3 mb10">5 najlepszych zawodnik\u00f3w z narodowo\u015bci\u0105 ${country.name} w obecnych ligach:</div>
         ${myNationals.length?myNationals.map((p,i)=>`<div class="grid gtca1a gp10 aic pd8-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})">
           <div class="syne b8 fs20 ink3">${i+1}</div>
@@ -1171,7 +1234,12 @@ function pageMundial(){
   </div>`;
 }
 
-// v15: 3-sponsor + tech partnership preseason with lock
+// ═══════════════════════════════════════════════════════════════════════════
+// PRE-SEASON — a flow, not a stack of sections.
+// Four decisions, one at a time, with a step rail that shows what is done and
+// what is left. The season only unlocks on the last step, and only when every
+// step is actually settled — so "am I done?" is never a question.
+// ═══════════════════════════════════════════════════════════════════════════
 function pagePreseason(){
   const mt=myTeam();const offers=store.G.sponsorOffers||[];
   const activeSponsors=store.G.sponsors.filter(s=>s.active);
@@ -1180,100 +1248,101 @@ function pagePreseason(){
   const pres=calcPrestige();
   if(!(store.G.boardObjectiveOptions||[]).length)store.G.boardObjectiveOptions=window.PPM.gameplay.generateBoardObjectiveChoices(store.G.myTeamId);
   const boardObjective=getBoardObjective();
-  const canStart=sponsorCount>=3&&hasTech&&!!boardObjective;
   const boardOptions=store.G.boardObjectiveOptions||[];
   const activeTp=store.G.techPartnership?TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership):null;
-  const readinessItems=[
-    { ok:sponsorCount>=3, label:`Sponsorzy: ${sponsorCount}/3` },
-    { ok:hasTech, label:hasTech?`Partner techniczny: ${activeTp?.name||'wybrany'}`:'Partner techniczny: brak wyboru' },
-    { ok:!!boardObjective, label:boardObjective?`Cel zarządu: ${boardObjective.label}`:'Cel zarządu: brak wyboru' },
-    { ok:true, label:`Cena bilet\u00f3w: ${store.G.ticketPrice||50} €` }
-  ];
-  const readinessCopy=canStart?'Dru\u017cyna jest gotowa do startu sezonu.':'Sezon jest zablokowany do czasu uzupe\u0142nienia wszystkich wymaga\u0144.';
 
-  // Tech partnership options based on prestige
-  const availableTps=TECH_PARTNERSHIPS.filter(tp=>pres>=tp.prestige[0]&&pres<=tp.prestige[1]);
-  const allTps=TECH_PARTNERSHIPS;
+  const steps=[
+    {id:'sponsors',label:'Sponsorzy',done:sponsorCount>=3,status:`${sponsorCount}/3`},
+    {id:'tech',    label:'Partner techniczny',done:hasTech,status:hasTech?(activeTp?.name||'wybrany'):'brak'},
+    {id:'tickets', label:'Cena biletów',done:true,status:`${store.G.ticketPrice||50} €`},
+    {id:'board',   label:'Cel zarządu',done:!!boardObjective,status:boardObjective?boardObjective.label:'brak'},
+  ];
+  // Land on the first unsettled step rather than always on step 1.
+  if(ui.preStep==null||ui.preStep<0||ui.preStep>3){
+    const firstOpen=steps.findIndex(s=>!s.done);
+    ui.preStep=firstOpen<0?3:firstOpen;
+  }
+  const step=ui.preStep;
+  const canStart=steps.every(s=>s.done);
+  const doneCount=steps.filter(s=>s.done).length;
+
+  let body='';
+  if(step===0){
+    body=`<div class="over">Krok 1 z 4</div>
+      <h3>Kto finansuje ten sezon?</h3>
+      <p class="why">Trzy umowy sponsorskie są warunkiem startu. Każda ma własny cel — jeśli go zrealizujesz, premia wpada na koniec sezonu. Dłuższa umowa daje +6% za każdy dodatkowy sezon, ale zamraża miejsce na liście.</p>
+      ${activeSponsors.length?`<div class="mt-14">${activeSponsors.map(s=>`<div class="opt on"><div><b>${s.name}</b><p>${goalDesc(s.goal)}${(s.yearsLeft||1)>1?` · ${s.yearsLeft} sezony`:''}</p></div><div class="m pos">${s.reward.toLocaleString('pl')}<s>za sezon</s></div><span class="pill pos">Podpisany</span></div>`).join('')}</div>`:''}
+      ${sponsorCount<3?`<div class="mt-14">${offers.length?offers.map(s=>`<div class="opt">
+        <div><b>${s.name} <span class="pill">${s.tier}</span></b><p>${goalDesc(s.goal)}</p></div>
+        <div class="m pos">${s.reward.toLocaleString('pl')}<s>za sezon</s></div>
+        <div class="tools" onclick="event.stopPropagation()">
+          ${(s.maxYears||1)>1?`<select id="spy-${s.id}">${Array.from({length:s.maxYears},(_,i)=>i+1).map(y=>`<option value="${y}">${y} sez.</option>`).join('')}</select>`:''}
+          <button class="btn pr" onclick="signSponsorPreseason(${s.id},(document.getElementById('spy-${s.id}')||{}).value||1)">Podpisz</button>
+        </div></div>`).join(''):'<div class="empty-state">Brak ofert w tym oknie.</div>'}</div>`
+      :`<div class="opt on mt-14"><div><b>Komplet sponsorów</b><p>Trzy umowy podpisane — ten krok jest zamknięty.</p></div><span class="pill pos">Gotowe</span></div>`}`;
+  }else if(step===1){
+    body=`<div class="over">Krok 2 z 4</div>
+      <h3>Kto ubiera i wyposaża zespół?</h3>
+      <p class="why">Jedna umowa na sezon: sprzęt dla całego składu plus pakiet marketingowy. Twój prestiż <b class="cgold">${pres}</b> decyduje, którzy partnerzy są w zasięgu. Zablokowane po starcie sezonu.</p>
+      <div class="mt-14">${TECH_PARTNERSHIPS.map(tp=>{
+        const ok=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
+        const active=store.G.techPartnership===tp.id;
+        const cost=tp.costPerSeason;
+        return`<div class="opt ${active?'on':''}" style="${ok?'':'opacity:.45'}" onclick="${ok?`selectTechPartnership('${tp.id}');render()`:''}">
+          <div><b>${tp.name} <span class="pill ${active?'pos':''}">Tier ${tp.tier}</span></b><p>${tp.bonusDesc} · prestiż ${tp.prestige[0]}–${tp.prestige[1]}</p></div>
+          <div class="m ${cost>0?'pos':cost<0?'neg':''}">${cost>0?'+':''}${cost.toLocaleString('pl')}<s>za sezon</s></div>
+          <button class="btn ${active?'acc pr':''}" ${ok?'':'disabled'}>${active?'Wybrany':ok?'Wybierz':'Za niski prestiż'}</button>
+        </div>`;}).join('')}</div>`;
+  }else if(step===2){
+    const gpx=window.PPM.gameplay;
+    const price=store.G.ticketPrice||50;
+    const est=gpx.estimateAttendance(price);
+    const gate=est.attendance*price*11;
+    const cheap=gpx.estimateAttendance(Math.max(10,price-25));
+    const dear=gpx.estimateAttendance(price+25);
+    body=`<div class="over">Krok 3 z 4</div>
+      <h3>Ile kosztuje wejście?</h3>
+      <p class="why">Tańsze bilety = pełniejsza hala i więcej merchu, ale mniejszy utarg z każdego biletu. Ultrasi przyjdą zawsze; casualowi kibice rosną przy dobrych wynikach. Nie ma jednego optimum — to wybór strategii.</p>
+      <div class="ticket-row mt-14">
+        <div class="syne b8 fs28">${price} €</div>
+        <input type="range" min="10" max="200" step="5" value="${price}" class="flx1 accr" oninput="store.G.ticketPrice=+this.value;this.previousElementSibling.textContent=this.value+' €'" onchange="render()">
+      </div>
+      <div class="g3 mt-14">
+        <div class="sb" style="--tone:var(--cyan)"><div class="l">Frekwencja</div><div class="v">${est.attendance}<span class="dim fs18">/${est.capacity}</span></div><div class="sub">${Math.round(est.fill*100)}% hali (${INFRA_HALL[store.G.infraHall||0].name})</div></div>
+        <div class="sb"><div class="l">Utarg z biletów</div><div class="v g">${Math.round(gate/1000)}k</div><div class="sub">${gate.toLocaleString('pl')} € za sezon</div></div>
+        <div class="sb" style="--tone:var(--volt)"><div class="l">Wrażliwość</div><div class="v" style="font-size:20px">${cheap.attendance} / ${dear.attendance}</div><div class="sub">kibiców przy −25 € i +25 €</div></div>
+      </div>`;
+  }else{
+    body=`<div class="over">Krok 4 z 4</div>
+      <h3>Co obiecujesz zarządowi?</h3>
+      <p class="why">OVR twojej drużyny to <b>${teamOvr(mt.id)}</b>. Wyższy cel to wyższa premia i większe ryzyko — ambitny cel niezrealizowany oznacza natychmiastowe zwolnienie. Wybór jest wiążący na cały sezon.</p>
+      <div class="mt-14">${boardOptions.map(opt=>{
+        const active=boardObjective?.id===opt.id;
+        return`<div class="opt ${active?'on':''}" onclick="selectBoardObjective('${opt.id}');render()">
+          <div><b>${opt.label}</b><p>${opt.summary} · ${opt.id==='ambitious'?'brak realizacji = zwolnienie':opt.id==='safe'?'niższa nagroda, bezpieczniejsza ścieżka':'standard oczekiwany przez zarząd'}</p></div>
+          <div class="m ${opt.id==='ambitious'?'neg':'pos'}">${opt.reward.toLocaleString('pl')}<s>premia</s></div>
+          <button class="btn ${active?'pr':''}">${active?'Wybrane':'Wybierz'}</button>
+        </div>`;}).join('')}</div>`;
+  }
 
   return`<div class="ph">
-    <div><div class="pt">PRZYGOTOWANIA <span>DO SEZONU ${store.G.season}</span></div><div class="ps">${myLeague()===1?'I Liga':'II Liga'}</div></div>
-    <button class="btn ${canStart?'go':'pr'} fs13" onclick="startSeason()" style="padding:12px 26px" ${canStart?'':'disabled'}>\u25b6 ROZPOCZNIJ SEZON</button>
+    <div><div class="pt">PRZYGOTOWANIA <span>DO SEZONU ${store.G.season}</span></div>
+      <div class="ps">${myLeague()===1?'I Liga':'II Liga'} · ${doneCount} z 4 decyzji zamkniętych${canStart?' · możesz startować':''}</div></div>
+    <button class="btn ${canStart?'go':''} fs13" onclick="startSeason()" style="padding:12px 26px" ${canStart?'':'disabled'}>▶ ROZPOCZNIJ SEZON</button>
   </div>
-  <div class="card" style="margin-bottom:14px;border-left:4px solid ${canStart?'var(--g)':'var(--orange)'}">
-    <div class="ct">STATUS STARTU SEZONU</div>
-    <div class="fs12 ink2 mb10">${readinessCopy}</div>
-    <div class="grid gp8" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-      ${readinessItems.map(item=>`<div style="padding:10px;border:1px solid ${item.ok?'var(--g)':'var(--orange)'};background:${item.ok?'var(--tint-good)':'var(--tint-warn)'};border-radius:4px;font-size:12px;font-weight:700;color:${item.ok?'var(--g)':'#b46500'}">${item.ok?'\u2713':'!'} ${item.label}</div>`).join('')}
-    </div>
+  <div class="substeps">
+    ${steps.map((s,i)=>`<div class="ss ${s.done?'done':''} ${i===step?'on':''}" onclick="ui.preStep=${i};render()">
+      <div class="n">${s.done?'✓':i+1}</div>${s.label}<span class="dim fs11">${s.status}</span>
+    </div>`).join('')}
   </div>
-  <div class="card mb14 bt3-blue">
-    <div class="ct">\ud83c\udfaf CEL ZARZ\u0104DU</div>
-    <div class="fs12 mb8">OVR dru\u017cyny: <b>${teamOvr(mt.id)}</b>. Wybierz poziom ryzyka przed startem sezonu.</div>
-    <div class="grid gtc3 gp10">
-      ${boardOptions.map(opt=>`<div style="padding:12px;background:${boardObjective?.id===opt.id?'rgba(23,77,153,.08)':'var(--s2)'};border:1px solid ${boardObjective?.id===opt.id?'var(--blue)':'var(--b1)'};border-radius:10px">
-        <div class="syne b7 fs15">${opt.label}</div>
-        <div class="fs12 mt-6"><b>${opt.summary}</b></div>
-        <div class="fs11 ink3 mt-6">Premia: ${opt.reward.toLocaleString('pl')} €</div>
-        <div style="font-size:11px;color:${opt.id==='ambitious'?'var(--r)':'var(--ink3)'};margin-top:4px">${opt.id==='ambitious'?'Brak realizacji = natychmiastowe zwolnienie.':opt.id==='safe'?'Ni\u017csza nagroda, bezpieczniejsza \u015bcie\u017cka.':'Standard oczekiwany przez zarz\u0105d.'}</div>
-        <button class="btn ${boardObjective?.id===opt.id?'bl':'sm'} mt-10 w100" onclick="selectBoardObjective('${opt.id}');render()">${boardObjective?.id===opt.id?'WYBRANE':'WYBIERZ'}</button>
-      </div>`).join('')}
-    </div>
-  </div>
-  <div class="g2">
-    <div>
-      <div class="card bt3-gold"><div class="ct">\ud83e\udd1d SPONSORZY SEZONU <span style="font-size:10px;color:${sponsorCount>=3?'var(--g)':'var(--r)'}">${sponsorCount}/3</span></div>
-      ${activeSponsors.length?`<div class="mb10">${activeSponsors.map(s=>`<div class="pd10 bg-ok bbg r3 fs12 cg mb4">\u2713 ${s.name}: ${goalDesc(s.goal)} / ${s.reward.toLocaleString('pl')} €${(s.yearsLeft||1)>1?` · ${s.yearsLeft} sez.`:''}</div>`).join('')}</div>`:''}
-      ${sponsorCount<3&&offers.length?`<div class="fs11 cr mb8 b7">Podpisz jeszcze ${3-sponsorCount} ${3-sponsorCount===1?'sponsora':'sponsor\u00f3w'} aby rozpocz\u0105\u0107 sezon!</div>
-      <div class="flex fdc gp8">${offers.map(s=>`<div class="grid gtc1a gp10 aic pd10-12 bb1 r10" style="background:var(--panel-3);border-left:4px solid var(--gold)">
-        <div><div class="syne b7">${s.name} <span class="fs10 ink3">[${s.tier}]</span></div><div class="fs11 ink3">${goalDesc(s.goal)}${(s.maxYears||1)>1?` · do ${s.maxYears} sez. (dłuższa umowa = +6%/rok)`:' · 1 sezon'}</div></div>
-        <div class="tar"><div class="syne b8 fs18 cg">${s.reward.toLocaleString('pl')} €<span class="fs10 ink3">/sez.</span></div><div class="flex gp4 aic jce mt-4">${(s.maxYears||1)>1?`<select id="spy-${s.id}" class="bb1 bgs1 fs10" style="padding:3px 4px">${Array.from({length:s.maxYears},(_,i)=>i+1).map(y=>`<option value="${y}">${y} sez.</option>`).join('')}</select>`:''}<button class="btn pr sm" onclick="signSponsorPreseason(${s.id},(document.getElementById('spy-${s.id}')||{}).value||1)">PODPISZ</button></div></div>
-      </div>`).join('')}</div>`:sponsorCount>=3?'<div class="pd10 bg-ok bbg r3 fs12 cg b7">\u2713 Komplet sponsor\u00f3w!</div>':'<div class="ink3 fs12">Brak ofert</div>'}
-      </div>
-      <div class="card bt3-blue">
-        <div class="ct">\u2699 PARTNERSTWO TECHNICZNE <span style="font-size:10px;color:${hasTech?'var(--g)':'var(--r)'}">${hasTech?'\u2713 WYBRANE':'WYMAGANE'}</span></div>
-        <div class="fs11 ink3 mb10">Tw\u00f3j presti\u017c: <b>${pres}/100</b>. Wybierz partnera technicznego na ten sezon. To on zapewnia teraz pakiet sprz\u0119towy zespo\u0142u.</div>
-        <div class="grid gtc3 gp8">
-          ${allTps.map(tp=>{
-            const myPresOk=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
-            const isActive=store.G.techPartnership===tp.id;
-            const tierColors=['var(--ink3)','var(--blue)','var(--gold)','var(--orange)','var(--g)','var(--purple)'];
-            const tierColor=tierColors[tp.tier-1]||'var(--ink3)';
-            return`<div class="tech-card ${isActive?'active':''}" onclick="${myPresOk?'selectTechPartnership(\''+tp.id+'\')':''}" style="opacity:${myPresOk?1:.45}">
-              <div class="fs22 mb4">${tp.icon}</div>
-              <div class="syne b7 fs13">${tp.name}</div>
-              <div style="font-size:10px;color:${tierColor};font-weight:700;margin:2px 0">TIER ${tp.tier} (Presti\u017c ${tp.prestige[0]}-${tp.prestige[1]})</div>
-              <div class="fs11 cg b7" style="margin:4px 0">${tp.bonusDesc}</div>
-              <div class="fs10 ink3">${tp.costPerSeason>0?'+'+tp.costPerSeason.toLocaleString('pl')+' €/sezon (dla Ciebie)':tp.costPerSeason<0?tp.costPerSeason.toLocaleString('pl')+' €/sezon (p\u0142acisz)':'0 €/sezon'}</div>
-              ${!myPresOk?`<div class="fs9 cr mt-4">Wymaga presti\u017cu ${tp.prestige[0]}-${tp.prestige[1]}</div>`:''}
-              ${isActive?'<div class="fs9 cg b7 mt-4">\u2713 WYBRANE</div>':''}
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="card"><div class="ct">\ud83c\udf9f CENA BILET\u00d3W <span class="fs10">Hala: ${INFRA_HALL[store.G.infraHall||0].name} (${INFRA_HALL[store.G.infraHall||0].capacity} miejsc)</span></div>
-        <div class="fs12 ink3 mb8"><b>Ta\u0144sze bilety = pe\u0142niejsza hala i wi\u0119cej merchu, ale mniejszy utarg z ka\u017cdego biletu.</b> Ultrasi przyjd\u0105 zawsze; casualowi kibice i ich merch rosn\u0105 przy dobrych wynikach. Nie ma jednego optimum \u2014 to wyb\u00f3r strategii.</div>
-        <div class="ticket-row">
-          <div class="fs14 b7 ink">${(store.G.ticketPrice||50)} €</div>
-          <input type="range" min="10" max="200" step="5" value="${store.G.ticketPrice||50}" class="flx1 accr" oninput="store.G.ticketPrice=+this.value;this.previousElementSibling.textContent=this.value+' €'">
-        </div>
-        <div class="fs10 ink3 mt-6 lh17">${(()=>{
-          const gpx=window.PPM.gameplay;
-          const price=store.G.ticketPrice||50;
-          const est=gpx.estimateAttendance(price);
-          const gate=est.attendance*price*11; // ~11 home matchdays / sezon
-          const cheap=gpx.estimateAttendance(Math.max(10,price-25));
-          const dear=gpx.estimateAttendance(price+25);
-          return `Frekwencja przy tej cenie: <b>${est.attendance}/${est.capacity}</b> (${Math.round(est.fill*100)}%). Utarg z bilet\u00f3w ~<b class="cg">${gate.toLocaleString('pl')} \u20ac</b>/sezon.<br>Taniej (\u221225 \u20ac): <b>${cheap.attendance}</b> kibic\u00f3w \u2014 wi\u0119cej merchu, mniejszy utarg z biletu. Dro\u017cej (+25 \u20ac): <b>${dear.attendance}</b> kibic\u00f3w. Ultrasi przyjd\u0105 przy uczciwej cenie \u2014 zdzierstwo odstrasza nawet ich.`;
-        })()}</div>
-      </div>
-      <div class="card"><div class="ct">\ud83d\udcca SK\u0141AD</div>
-      ${myStarters().map(p=>`<div class="flex jcb aic pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})">
-        <div><div class="b7 fs12">${p.name}</div><div style="font-size:10px;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)'}">Styl: ${styleLabel(p.playStyle)}</div></div>
-        <div class="syne b8 fs22 cr">${ovr(p)}</div>
-      </div>`).join('')}
-      </div>
+  <div class="stage">
+    ${body}
+    <div class="stage-f">
+      <button class="btn" ${step>0?'':'disabled'} onclick="ui.preStep=${Math.max(0,step-1)};render()">← ${step>0?steps[step-1].label:'Wstecz'}</button>
+      <span class="dim fs12">${canStart?'Wszystkie decyzje zamknięte — sezon czeka.':`Do startu brakuje: ${steps.filter(s=>!s.done).map(s=>s.label.toLowerCase()).join(', ')}`}</span>
+      ${step<3
+        ?`<button class="btn ${steps[step].done?'pr':''}" onclick="ui.preStep=${step+1};render()">${steps[step+1].label} →</button>`
+        :`<button class="btn ${canStart?'go':''}" ${canStart?'':'disabled'} onclick="startSeason()">Rozpocznij sezon →</button>`}
     </div>
   </div>`;
 }
@@ -1326,19 +1395,21 @@ function savedGameName(){try{const p=JSON.parse(localStorage.getItem('ppgame'));
 function renderMainMenu(){
   const savedName=savedGameName();
   const hasCustomDb=!!window.PPM.customDatabase;
-  const menuBtn=(label,onclick,cls,sub,enabled)=>`<button class="btn ${cls||'gl'} w100 fs15 syne b8 ls1 tal flex jcb aic" ${enabled===false?'disabled':''} onclick="${onclick}" style="padding:16px 20px">${label}${sub?`<span class="fs10 b6 ink3" style="letter-spacing:0">${sub}</span>`:''}</button>`;
+  // One accented action only. In this design language the livery marks the thing
+  // you came here to do; a stack of seven solid slabs reads as noise.
+  const menuBtn=(label,onclick,cls,sub,enabled)=>`<button class="btn ${cls||''} w100 fs15 syne b8 ls1 tal flex jcb aic" ${enabled===false?'disabled':''} onclick="${onclick}" style="padding:15px 20px">${label}${sub?`<span class="fs10 b6 ink3" style="letter-spacing:0">${sub}</span>`:''}</button>`;
   return`<div class="flex fdc aic jcc pd20" style="min-height:calc(100vh - 40px);gap:26px">
     <div class="tac">
-      <div class="syne b8" style="font-size:72px;letter-spacing:-5px;line-height:.9"><span class="cr">PING</span><span class="cgold">PONG</span></div>
-      <div class="syne fs14 b7 ink3 up mt-2" style="letter-spacing:12px">MANAGER</div>
+      <div class="syne b8 up" style="font-size:68px;letter-spacing:.01em;line-height:.9"><span class="cr">PING</span><span class="cgold">PONG</span></div>
+      <div class="syne fs14 b7 ink3 up mt-2" style="letter-spacing:.9em">MANAGER</div>
     </div>
-    <div class="flex fdc gp10" style="width:340px;max-width:90vw">
+    <div class="flex fdc gp8" style="width:340px;max-width:90vw">
       ${menuBtn('&#9654; NOWA GRA','startNewGameFlow()','pr')}
-      ${menuBtn('WZN&Oacute;W OSTATNI ZAPIS','menuLoadGame()','go',savedName||'brak zapisu',!!savedName)}
-      ${menuBtn('WCZYTAJ Z PLIKU (.json)','menuFilePicker()','gl','kopia zapasowa')}
-      ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'gl','wkr&oacute;tce')}
-      ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'gl','wkr&oacute;tce')}
-      ${menuBtn('OPCJE','openSettings()','gl')}
+      ${menuBtn('WZN&Oacute;W OSTATNI ZAPIS','menuLoadGame()','',savedName||'brak zapisu',!!savedName)}
+      ${menuBtn('WCZYTAJ Z PLIKU (.json)','menuFilePicker()','','kopia zapasowa')}
+      ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'','wkr&oacute;tce')}
+      ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'','wkr&oacute;tce')}
+      ${menuBtn('OPCJE','openSettings()','')}
       ${menuBtn('WYJD&#377; Z GRY','menuExit()','')}
     </div>
     ${hasCustomDb?`<div class="fs11 cpurple">Za&#322;adowana baza: <b>${window.PPM.customDatabase.name||'Custom DB'}</b> &mdash; <span class="cur" style="text-decoration:underline" onclick="clearDatabaseFile()">wyczy&#347;&#263;</span></div>`:''}
@@ -1457,5 +1528,5 @@ async function startGame(){
   playClick();
 }
 
-window.PPM.pages = { statBar, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
+window.PPM.pages = { statBar, toggleMarketFav, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
 })();

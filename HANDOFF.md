@@ -40,7 +40,44 @@ Design references live in the repo and in the owner's research docs:
 
 ## 2. Current state (updated each session)
 
-**Last updated:** 2026-07-24 (UI direction locked, crests, name realism, base DB started)
+**Last updated:** 2026-07-26 (proto-final design language applied game-wide)
+
+### 2026-07-26 — the design language is now the game's skin
+`prototypes/proto-final.html` has been applied to the whole app: `styles/main.css`
+was rewritten on its token system (carbon surfaces, club livery, Saira Condensed
+figures, flat square panels, colour-coded numbers), and `index.html` + `shell.js`
+were rebuilt into its masthead + rail. Because every legacy token name
+(`--r --g --gold --s1 …`) is now an *alias* onto the new palette, all 15 screens
+converted at once without touching page markup. The club's crest colours drive
+`--club`, so the UI is recoloured per team. 112 tests green.
+
+**There is exactly one theme: dark carbon.** The light theme was removed — a
+stored `theme:'light'` was making the game open into a variant that no longer
+matched the direction, which read as "it still doesn't look like the prototype".
+Stored settings are coerced to dark. **All decorative emoji are gone** (163 of
+them); the prototype has none. Keep it that way: use a pill, a tone bar or a
+colour-coded figure to carry meaning, not a pictogram.
+
+**Also done:** the **transfer market** is rebuilt on the owner's reference (filter
+panel + one dense sortable table with star ratings, role tabs, age/ability
+filters, favourites as a view). **Pre-season** and the **academy** are now step
+flows — one decision on screen at a time with a step rail — instead of scroll
+stacks. `pagePreseason()` and the academy branch of `pageSquad()` are the pattern
+to copy for the remaining flows.
+
+**Watch out for `.pos`.** It is the league *position chip* (fixed 24×22, slanted)
+AND the "positive" modifier on `.pill` / `.opt .m`. Anything that takes a `pos`
+modifier must reset `width/height/clip-path`, or it gets squashed to 24px and
+clipped. Two components were already broken this way. When adding a component,
+measure (`scrollWidth > clientWidth`) rather than eyeballing it — that sweep is
+how both were found.
+
+**What is NOT done (this was the skin plus two flows, not the architecture):**
+the season stage rail and "the season is one flow" (pre/season/post as phases of
+one hub, post-season owning the club change), the season-end flow, the inbox
+rewrite, and i18n. Those are the rest of M1 (see `ROADMAP.md` §M1); the
+components they need (`.stagebar/.stg/.inbox/.fold/.mrow/.quote/.out`) are
+already in the stylesheet.
 
 ### 2026-07-24 (later) — direction locked + content realism
 - **UI direction chosen:** `prototypes/proto-final.html` (D skin + E attribute grid).
