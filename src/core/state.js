@@ -16,7 +16,7 @@
 // Public API exposed on window.PPM.stateApi:
 //   getGame()              — returns store.G
 //   setGame(next)          — replaces store.G, returns it
-//   persistGame()          — serialises store.G to localStorage
+//   persistGame()          — serialises store.G to localStorage, returns success
 //   loadPersistedGame()    — deserialises + migrates from localStorage
 //   loadGameFromText(text) — deserialises + migrates from a JSON string
 //   createNewGame(idx, id) — delegates to gameplay.newGame()
@@ -73,7 +73,8 @@ const ui = {
   _selClub: -1,
   _selCountry: 'PL',
   _newSaveDifficulty: 'hard',
-  settings: null
+  settings: null,
+  _saveFailureNotified: false
 };
 
 // ── State accessors ───────────────────────────────────────────────────────────
@@ -123,7 +124,21 @@ function setNamePools(countryId){
 // ── Persistence ───────────────────────────────────────────────────────────────
 // Keeps the saved _pid in sync with the live ID counter (ui._pid) so a resumed
 // game never re-mints IDs that already belong to existing entities.
-function persistGame(){if(store.G){store.G._pid=ui._pid;localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(store.G));}}
+function persistGame(){
+  if(!store.G)return false;
+  store.G._pid=ui._pid;
+  try{
+    localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(store.G));
+    ui._saveFailureNotified=false;
+    return true;
+  }catch(_error){
+    if(!ui._saveFailureNotified){
+      ui._saveFailureNotified=true;
+      toast('Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.');
+    }
+    return false;
+  }
+}
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
 const SAVE_SCHEMA_VERSION=19;
