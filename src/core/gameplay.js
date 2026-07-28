@@ -462,14 +462,15 @@ function equipmentMods(p){
   return out;
 }
 function setRubberTier(tier){
-  const t=EQUIPMENT.rubberTiers[tier];if(!t)return;
+  const tierData=EQUIPMENT.rubberTiers[tier];if(!tierData)return;
+  const label=t(`equipment.rubber.${tier}`);
   const squad=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth').length;
-  const cost=t.costPerPlayer*squad;
+  const cost=tierData.costPerPlayer*squad;
   if(tier>(store.G.rubberTier||0)&&cost>0){
-    if(!confirm(`${t.label}: ${t.costPerPlayer.toLocaleString('pl')} €/zawodnika × ${squad} = ${cost.toLocaleString('pl')} €/sezon (płatne przy każdym rozliczeniu sezonu). Ustawić?`))return;
+    if(!confirm(t('equipment.rubberConfirm',{label,costPerPlayer:formatCurrency(tierData.costPerPlayer),squad,cost:formatCurrency(cost)})))return;
   }
   store.G.rubberTier=tier;
-  toast(`Okładziny klubowe: ${t.label}`);
+  toast(t('equipment.rubberSet',{label}));
   render();updateHeader();persistGame();
 }
 function getPlayerAdjustedStats(p,teamId){
@@ -1200,7 +1201,7 @@ function styleLabel(id){return t(`style.${id}`)||id||'?';}
 function describePlayerIdentity(p){
   const order=[...SK].sort((a,b)=>(p[b]||0)-(p[a]||0));
   const top=order[0], second=order[1], low=order[order.length-1];
-  const names={fh:'forhend',bh:'bekhend',srv:'serwis',ret:'return',foot:'praca nóg',men:'głowa'};
+  const names={fh:t('stat.fh'),bh:t('stat.bh'),srv:t('stat.srv'),ret:t('stat.ret'),foot:t('stat.foot'),men:t('stat.men')};
   const archetype=(PLAYER_STYLE_INFO[p.playStyle]||{}).archetype||'uniwersalny gracz';
   return{
     topStat:top,
@@ -4945,7 +4946,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
         <div class="ink3">${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)} + ${t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>
         <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):t('player.neutralSetup');})()}</div>
       </div>`:''}
-      <div class="traits mt-8">${p.traits.map(trait=>`<span class="has-tooltip tb ${TRAITS[trait]?.type||'men'}">${TRAITS[trait]?.label||trait}<span class="tip">${TRAITS[trait]?.desc||''}</span></span>`).join('')||`<span class="fs10 ink3">${t('player.noTraits')}</span>`}</div>
+      <div class="traits mt-8">${p.traits.map(trait=>`<span class="has-tooltip tb ${TRAITS[trait]?.type||'men'}">${t(`trait.${trait}.label`)}<span class="tip">${t(`trait.${trait}.desc`)}</span></span>`).join('')||`<span class="fs10 ink3">${t('player.noTraits')}</span>`}</div>
       <div class="grid gtc3 gp8 mt-12">
         <div><div class="fs9 ink3 mb3">${t('player.morale').toUpperCase()}</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.morale||50}%;background:var(--g);border-radius:3px"></div></div><div class="fs11 mt-2">${moraleLabel(p.morale||50)}</div></div>
         <div><div class="fs9 ink3 mb3">${t('player.fatigue').toUpperCase()}</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.fatigue||0}%;background:var(--orange);border-radius:3px"></div></div><div class="fs11 mt-2">${p.fatigue||0}%</div></div>
@@ -5225,8 +5226,9 @@ function openStaffModal(sid){
   const career=(s.careerHistory||[]).slice().reverse();
   const currentTeam=s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):t('staff.freeMarket');
   const roleLabel=t(s.type==='coach'?'staff.coach':s.type==='physio'?'staff.physio':s.type==='psychologist'?'staff.psychologist':s.type==='scout'?'staff.scout':'staff.prDirector');
+  const coachStyle=s.styleId?t(`coachStyle.${s.styleId}`):s.styleName||'?';
   const detail=s.type==='coach'
-    ?t('staff.styleDetail',{style:s.styleName||'?',tactics:s.tactics||0,motivation:s.motivation||0})
+    ?t('staff.styleDetail',{style:coachStyle,tactics:s.tactics||0,motivation:s.motivation||0})
     :s.type==='physio'
     ?t('staff.physioDetail',{injury:s.injReduction||0,recovery:s.recovery||0})
     :s.type==='psychologist'
@@ -5234,7 +5236,7 @@ function openStaffModal(sid){
     :s.type==='scout'
     ?t('staff.scoutDetail',{accuracy:s.accuracy||0,network:s.network||0})
     :t('staff.prDetail',{bonus:Math.round((s.bonus||0)*100),cooldown:s.cooldownReduce||0});
-  const bio=window.PPM.i18n.getLocale()==='pl'?s.bio:t('staff.bioFallback',{name:s.name,role:roleLabel.toLowerCase()});
+  const bio=t('staff.bioFallback',{name:s.name,role:roleLabel.toLowerCase()});
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">${roleLabel}: ${s.name} <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="flex gp16 aic mb14">
@@ -5451,11 +5453,11 @@ const INFRA_FIELDS={
 function downgradeInfra(type){
   const f=INFRA_FIELDS[type];if(!f)return;
   const cur=store.G[f.key]||0;
-  if(cur<=0){toast('To już najniższy poziom.');return;}
+  if(cur<=0){toast(t('infra.minimum'));return;}
   const prev=f.arr[cur-1];
-  if(!confirm(`Cofnąć do: ${prev.name}?\nBez zwrotu kosztu budowy — obniżysz roczne utrzymanie.`))return;
+  if(!confirm(t('infra.downgradeConfirm',{name:prev.name})))return;
   store.G[f.key]=cur-1;
-  toast(`Cofnięto do: ${prev.name}`);
+  toast(t('infra.downgraded',{name:prev.name}));
   syncMyTeamInfra();render();updateHeader();persistGame();
 }
 
@@ -5576,15 +5578,15 @@ function genScoutPlayer(scout,region){
 }
 function sendScout(scoutId,region){
   const scout=getMyScouts().find(s=>s.id===scoutId)||(store.G.scoutPool||[]).find(s=>s.id===scoutId&&s.hired);if(!scout)return;
-  if(store.G.scoutMissions.find(m=>m.scoutId===scoutId&&!m.done)){toast('Skaut jest na misji!');return;}
+  if(store.G.scoutMissions.find(m=>m.scoutId===scoutId&&!m.done)){toast(t('scout.onMission'));return;}
   const cost=scoutMissionCost(scout);
-  if(!confirm(`Wysłać ${scout.name} do regionu ${region}?\nKoszt misji: ${cost.toLocaleString('pl')} €\nCzas trwania: 10 kolejek\nRaport: 1 junior poniżej 20 lat.`))return;
-  if((myTeam().budget||0)<cost){toast(`Brak budżetu na misję skauta (${cost.toLocaleString('pl')} €)!`);return;}
+  if(!confirm(t('scout.missionConfirm',{name:scout.name,region,cost:formatCurrency(cost)})))return;
+  if((myTeam().budget||0)<cost){toast(t('scout.noBudget',{cost:formatCurrency(cost)}));return;}
   myTeam().budget-=cost;
   const finance=ensureSeasonFinance();
   if(finance)finance.other-=cost;
   store.G.scoutMissions.push({scoutId,region,startMatchday:store.G.matchday,duration:10,done:false,cost});
-  toast(`${scout.name} wyruszył na 10 kolejek. Koszt: ${cost.toLocaleString('pl')} €.`);closeModal();render();updateHeader();persistGame();
+  toast(t('scout.departed',{name:scout.name,cost:formatCurrency(cost)}));closeModal();render();updateHeader();persistGame();
 }
 function checkScoutReturns(){
   (store.G.scoutMissions||[]).forEach(m=>{
@@ -5597,7 +5599,7 @@ function checkScoutReturns(){
         results.push({realId:real.id,reported,scoutId:m.scoutId,region:m.region,seen:false,fit:real.playStyle,ceiling:reported.ceilingHint});
       }
       store.G.scoutResults=(store.G.scoutResults||[]).concat(results);
-      toast(`${scout.name} wr\u00f3ci\u0142 z ${numPlayers} raportami juniorów!`);
+      toast(t('scout.returned',{name:scout.name,count:numPlayers}));
     }
   });
 }
