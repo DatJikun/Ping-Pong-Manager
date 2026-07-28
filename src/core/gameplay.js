@@ -359,9 +359,9 @@ function genNewsFeed(){
   const news=store.G.newsFeed||[];
   return news.slice(-8).reverse();
 }
-function pushNews(msg,type=''){
+function pushNews(msg,type='',params=null){
   if(!store.G)return;store.G.newsFeed=store.G.newsFeed||[];
-  store.G.newsFeed.push({msg,type,season:store.G.season,matchday:store.G.matchday});
+  store.G.newsFeed.push(params?{msgKey:msg,msgParams:params,type,season:store.G.season,matchday:store.G.matchday}:{msg,type,season:store.G.season,matchday:store.G.matchday});
   if(store.G.newsFeed.length>180)store.G.newsFeed.shift();
 }
 // Owner note #6: the feed was "team X loses points" and nothing else. Every item
@@ -2655,7 +2655,7 @@ async function simulateBackgroundSeasons(n,progressCb){
     buildMarket();
     store.G.matchNomination=null;
     pushNews(`Nowy menedżer przejmuje ${club.name} przed sezonem ${store.G.season}.`,'hot');
-    pushMail({from:'Zarząd klubu',subject:`Witamy w ${club.name}`,body:`Przejmujesz klub z ${n}-letnią historią: liga ma swoje rekordy, gwiazdy i hierarchię (sprawdź Historię i Hall of Fame). ${club.name} gra obecnie w ${club.league===1?'I':'II'} lidze. Powodzenia, trenerze.`});
+    pushMail({fromKey:'mail.board',subjectKey:'mail.welcomeSubject',subjectParams:{club:club.name},bodyKey:'mail.welcomeBody',bodyParams:{years:n,club:club.name,division:club.league===1?'I':'II'}});
     ui._bgGen=false;
     updateHeader();
     persistGame();

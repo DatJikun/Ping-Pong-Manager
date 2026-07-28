@@ -21,6 +21,8 @@
   including projections, objectives, S+1 commitments and season history.
 - Localized sponsor and board-goal descriptions, progress labels, promised
   contract roles and the full sponsor screen across every consumer.
+- Added language-independent keyed inbox/news entries with legacy text fallback,
+  then localized both archive screens and the club welcome message.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

@@ -196,3 +196,32 @@ test('sponsor goals and the sponsor screen follow the active locale', () => {
   const polish = g.PPM.pages.pageSponsors();
   assert.match(polish, /Aktywne umowy/i);
 });
+
+test('inbox and news entries can store semantic keys and switch language live', () => {
+  const g = boot(3113);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  g.PPM.gameplay.pushMail({
+    fromKey: 'mail.board',
+    subjectKey: 'mail.welcomeSubject',
+    subjectParams: { club: 'Arc Club' },
+    bodyKey: 'mail.welcomeBody',
+    bodyParams: { years: 4, club: 'Arc Club', division: 'I' },
+  });
+  g.PPM.gameplay.pushNews('mail.welcomeSubject', 'good', { club: 'Arc Club' });
+
+  const englishInbox = g.PPM.pages.pageInbox();
+  const englishNews = g.PPM.pages.pageNews();
+  assert.match(englishInbox, /Club inbox/i);
+  assert.match(englishInbox, /Welcome to/i);
+  assert.match(englishNews, /News &amp; media|News & media/i);
+  assert.match(englishNews, /Welcome to Arc Club/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polishInbox = g.PPM.pages.pageInbox();
+  const polishNews = g.PPM.pages.pageNews();
+  assert.match(polishInbox, /Skrzynka klubowa/i);
+  assert.match(polishInbox, /Witamy w/i);
+  assert.match(polishNews, /Newsy i media/i);
+  assert.match(polishNews, /Witamy w Arc Club/i);
+});

@@ -1017,24 +1017,25 @@ function pageHistory(){
 function pageInbox(){
   const inbox=(store.G.inbox||[]).slice().reverse();
   const pending=inbox.filter(m=>m.type==='decision'&&!m.answered).length;
-  return`<div class="ph"><div><div class="pt">SKRZYNKA <span>KLUBOWA</span></div><div class="ps">${inbox.length} wiadomości${pending?` / <b class="cr">${pending} decyzji do podjęcia</b>`:''}</div></div></div>
-  ${pending?`<div class="banner" style="border-left-color:var(--r)"><div class="dot bgr"></div>Kolejka jest zablokowana do czasu odpowiedzi na wszystkie decyzje poniżej.</div>`:''}
+  const text=(m,field)=>m[`${field}Key`]?t(m[`${field}Key`],m[`${field}Params`]||{}):(m[field]||'');
+  return`<div class="ph"><div><div class="pt">${t('inbox.title')}</div><div class="ps">${t('inbox.summary',{count:inbox.length})}${pending?` / <b class="cr">${t('inbox.pending',{count:pending})}</b>`:''}</div></div></div>
+  ${pending?`<div class="banner" style="border-left-color:var(--r)"><div class="dot bgr"></div>${t('inbox.blocked')}</div>`:''}
   <div class="grid gp8">
   ${inbox.length?inbox.map(m=>{
     const isPending=m.type==='decision'&&!m.answered;
     const border=isPending?'var(--r)':m.read?'var(--b1)':'var(--gold)';
     return`<div style="padding:12px 14px;border:1px solid ${border};border-left:4px solid ${border};background:var(--s1);border-radius:6px;${m.read&&!isPending?'opacity:.75;':''}" ${!m.read?`onclick="markMailRead(${m.id});render()"`:''}>
       <div class="flex jcb gp10 aib">
-        <div style="font-weight:${m.read&&!isPending?'400':'800'};font-size:13px">${m.subject}</div>
-        <div class="fs9 ink3 nowrap">S${m.season} / K${m.matchday}${m.read?'':' / <b class="cgold">NOWA</b>'}</div>
+        <div style="font-weight:${m.read&&!isPending?'400':'800'};font-size:13px">${text(m,'subject')}</div>
+        <div class="fs9 ink3 nowrap">S${m.season} / M${m.matchday}${m.read?'':` / <b class="cgold">${t('inbox.new')}</b>`}</div>
       </div>
-      <div class="fs10 ink3" style="margin:2px 0 6px">Od: ${m.from||'Klub'}</div>
-      <div class="fs12 ink2 lh155">${m.body||''}</div>
+      <div class="fs10 ink3" style="margin:2px 0 6px">${t('inbox.from',{name:text(m,'from')||t('inbox.club')})}</div>
+      <div class="fs12 ink2 lh155">${text(m,'body')}</div>
       ${m.type==='decision'?(isPending?`<div class="btn-row mt-10" onclick="event.stopPropagation()">
-        <button class="btn go sm" onclick="answerMail(${m.id},true)">✔ TAK</button>
-        <button class="btn sm bcr cr" onclick="answerMail(${m.id},false)">✘ NIE</button>
-      </div>`:`<div style="margin-top:8px;font-size:11px;font-weight:700;color:${m.answer?'var(--g)':'var(--r)'}">Twoja decyzja: ${m.answer?'TAK':'NIE'}</div>`):''}
-    </div>`;}).join(''):'<div class="card tac ink3 pd40">Skrzynka pusta. Wiadomości pojawią się w trakcie sezonu.</div>'}
+        <button class="btn go sm" onclick="answerMail(${m.id},true)">✔ ${t('inbox.yes')}</button>
+        <button class="btn sm bcr cr" onclick="answerMail(${m.id},false)">✘ ${t('inbox.no')}</button>
+      </div>`:`<div style="margin-top:8px;font-size:11px;font-weight:700;color:${m.answer?'var(--g)':'var(--r)'}">${t('inbox.yourDecision',{answer:t(m.answer?'inbox.yes':'inbox.no')})}</div>`):''}
+    </div>`;}).join(''):`<div class="card tac ink3 pd40">${t('inbox.empty')}</div>`}
   </div>`;
 }
 
@@ -1044,32 +1045,33 @@ function pageNews(){
   if(!ui.newsSeason)ui.newsSeason='all';
   if(!ui.newsType)ui.newsType='all';
   const filtered=allNews.filter(n=>(ui.newsSeason==='all'||String(n.season)===String(ui.newsSeason))&&(ui.newsType==='all'||(n.type||'')===ui.newsType));
-  const typeLabel=t=>t==='cup'?'Puchar / Event':t==='hot'?'Sensacja':t==='good'?'Pozytywne':t||'Neutralne';
-  return`<div class="ph"><div><div class="pt">NEWS <span>& MEDIA</span></div><div class="ps">${allNews.length} wpisów w archiwum</div></div></div>
+  const typeLabel=type=>t(type==='cup'?'news.cupEvent':type==='hot'?'news.sensation':type==='good'?'news.positive':'news.neutral');
+  const newsText=n=>n.msgKey?t(n.msgKey,n.msgParams||{}):(n.msg||'');
+  return`<div class="ph"><div><div class="pt">${t('news.title')}</div><div class="ps">${t('news.archiveCount',{count:allNews.length})}</div></div></div>
   <div class="card mb14">
-    <div class="ct">FILTRY</div>
+    <div class="ct">${t('news.filters')}</div>
     <div class="grid gtc2 gp10">
       <select onchange="ui.newsSeason=this.value;render()" class="tile">
-        <option value="all" ${ui.newsSeason==='all'?'selected':''}>Wszystkie sezony</option>
-        ${seasons.map(s=>`<option value="${s}" ${String(ui.newsSeason)===String(s)?'selected':''}>Sezon ${s}</option>`).join('')}
+        <option value="all" ${ui.newsSeason==='all'?'selected':''}>${t('news.allSeasons')}</option>
+        ${seasons.map(s=>`<option value="${s}" ${String(ui.newsSeason)===String(s)?'selected':''}>${t('common.season')} ${s}</option>`).join('')}
       </select>
       <select onchange="ui.newsType=this.value;render()" class="tile">
-        <option value="all" ${ui.newsType==='all'?'selected':''}>Wszystkie typy</option>
-        <option value="" ${ui.newsType===''?'selected':''}>Neutralne</option>
-        <option value="good" ${ui.newsType==='good'?'selected':''}>Pozytywne</option>
-        <option value="hot" ${ui.newsType==='hot'?'selected':''}>Sensacje</option>
-        <option value="cup" ${ui.newsType==='cup'?'selected':''}>Puchar / event</option>
+        <option value="all" ${ui.newsType==='all'?'selected':''}>${t('news.allTypes')}</option>
+        <option value="" ${ui.newsType===''?'selected':''}>${t('news.neutral')}</option>
+        <option value="good" ${ui.newsType==='good'?'selected':''}>${t('news.positive')}</option>
+        <option value="hot" ${ui.newsType==='hot'?'selected':''}>${t('news.sensation')}</option>
+        <option value="cup" ${ui.newsType==='cup'?'selected':''}>${t('news.cupEvent')}</option>
       </select>
     </div>
   </div>
   <div class="card">
-    <div class="ct">ARCHIWUM NEWSÓW</div>
+    <div class="ct">${t('news.archive')}</div>
     ${filtered.length?filtered.map(n=>`<div class="news-item ${n.type||''} mb8">
       <div class="flex jcb gp12 aifs">
-        <div>${n.msg}</div>
+        <div>${newsText(n)}</div>
         <div class="tar nowrap fs10 ink3">S${n.season}/K${n.matchday}<div>${typeLabel(n.type)}</div></div>
       </div>
-    </div>`).join(''):'<div class="fs12 ink3">Brak newsów dla wybranego filtra.</div>'}
+    </div>`).join(''):`<div class="fs12 ink3">${t('news.empty')}</div>`}
   </div>`;
 }
 
