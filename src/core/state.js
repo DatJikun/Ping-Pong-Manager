@@ -303,8 +303,27 @@ function migrateLoadedGame(parsed){
     repairIds(game.staff);
     repairIds(game.staffPool);
     repairIds(game.scoutPool);
-    repairIds(game.academyProspects);
     repairIds(game.prDirectorPool);
+
+    // Pending academy candidates will later be appended to `players`, so they
+    // share the player lookup domain even though they live in separate arrays
+    // before signing. Reserve repaired live-player IDs first, then make both
+    // pending arrays disjoint from live players and from one another.
+    const claimedPlayerIds=new Set((game.players||[])
+      .filter(p=>p&&Number.isInteger(p.id)&&p.id>=0)
+      .map(p=>p.id));
+    const repairPendingPlayerIds=(arr)=>{
+      (arr||[]).forEach(p=>{
+        if(!p)return;
+        if(!Number.isInteger(p.id)||p.id<0||claimedPlayerIds.has(p.id)){
+          while(claimedPlayerIds.has(nextRepairId))nextRepairId++;
+          p.id=nextRepairId++;
+        }
+        claimedPlayerIds.add(p.id);
+      });
+    };
+    repairPendingPlayerIds(game.academyProspects);
+    repairPendingPlayerIds(game.academyTrial);
   }
   // The player's infra levels are authoritative on game.infra*; mirror them onto
   // the team object so club-strength scoring and the team-overview panel (which
