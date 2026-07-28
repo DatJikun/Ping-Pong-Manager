@@ -881,10 +881,10 @@ function blockForInjuredStarter(teamId,contextLabel){
   closeModal();
   render();
   const injuredNames=issues.injured.map(p=>p.name).join(', ');
-  const reason=issues.injured.length
-    ?`masz tylko ${issues.healthyCount}/3 zdolnych do gry seniorów (kontuzje: ${injuredNames}) — pozyskaj zawodnika`
-    :`masz tylko ${issues.healthyCount}/3 zdolnych do gry seniorów — uzupełnij kadrę`;
-  toast(`${contextLabel}: ${reason}`);
+  const reason=t(issues.injured.length?'match.blockedInjuries':'match.blockedSquad',{
+    count:issues.healthyCount,names:injuredNames,
+  });
+  toast(`${t(contextLabel)}: ${reason}`);
   return true;
 }
 function ensurePlayerMeta(p){
@@ -3434,7 +3434,7 @@ async function playCupRound(){
   // Full gate (incl. cupPlayedThisSeason): one cup round per 4-matchday window —
   // without it a re-click played the ENTIRE bracket in one sitting.
   if(!shouldPlayCup())return;
-  if(blockForInjuredStarter(store.G.myTeamId,'Puchar zablokowany'))return;
+  if(blockForInjuredStarter(store.G.myTeamId,'match.cupBlocked'))return;
   await checkpointCareer('tournament');
   const result=await runSeededEvent('_cupRoundSeed',playCupRoundBody);
   await flushCareerSave();
@@ -3714,7 +3714,7 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
           <div style="margin:0 0 7px 0;min-height:22px">${traitHtml(p)}</div>
           <div class="vme-pcard-stats">${SK.map(s=>`<div class="vme-pcard-stat"><div class="lbl">${SL[s]}</div><div class="val" style="color:${({fh:'var(--r2)',bh:'#c04890',srv:'#d4a830',ret:'#8060c0',foot:'#5090d0',men:'#60c878'}[s]||'var(--ink)')}">${p[s]}</div></div>`).join('')}</div>
           <div class="grid gtc1a gp8 aic mt-8">
-            <div><div class="fs9 mb4" style="color:#555">Zmęczenie</div><div class="vme-pcard-fat"><div class="vme-pcard-fat-fill" style="width:${p.fatigue||0}%;background:${(p.fatigue||0)>70?'var(--r2)':'var(--orange)'}"></div></div></div>
+            <div><div class="fs9 mb4" style="color:#555">${t('player.fatigue')}</div><div class="vme-pcard-fat"><div class="vme-pcard-fat-fill" style="width:${p.fatigue||0}%;background:${(p.fatigue||0)>70?'var(--r2)':'var(--orange)'}"></div></div></div>
             <div class="fs10 ink3">Morale <b>${p.morale||50}</b></div>
           </div>
         </div>
@@ -3776,9 +3776,9 @@ async function runMatchday(){
     ui.page='inbox';render();
     return;
   }
-  if(blockForInjuredStarter(store.G.myTeamId,'Kolejka zablokowana'))return;
+  if(blockForInjuredStarter(store.G.myTeamId,'match.matchdayBlocked'))return;
   if(getEligibleMatchPlayers(store.G.myTeamId).length<3){
-    blockForInjuredStarter(store.G.myTeamId,'Kolejka zablokowana');
+    blockForInjuredStarter(store.G.myTeamId,'match.matchdayBlocked');
     return;
   }
   const myL=myLeague();
@@ -3853,13 +3853,13 @@ async function runMatchday(){
   tickInjuries();
   // Injuries for player + AI are applied inside applyResult via tryInjuriesAfterMatch.
   const newInj=store.G.players.filter(p=>p.teamId===myId&&!p.retired&&(p.injuredFor||0)>0&&p._injMd===store.G.matchday);
-  if(newInj.length){newInj.forEach(p=>addLog(`\u2695 KONTUZJA: ${p.name} pauzuje ${p.injuredFor} kolejki!`,'inj'));await matchPause(600);}
+  if(newInj.length){newInj.forEach(p=>addLog(t('matchLog.injury',{name:p.name,rounds:p.injuredFor}),'inj'));await matchPause(600);}
   if(getEligibleMatchPlayers(myId).length<3){
     ui.running=false;
-    blockForInjuredStarter(myId,'Kolejka zablokowana');
+    blockForInjuredStarter(myId,'match.matchdayBlocked');
     return;
   }
-  renderBracket();addLog(`// Sezon ${store.G.season} / Kolejka ${store.G.matchday+1}/${TOTAL_MATCHDAYS} (${myL===1?'I Liga':'II Liga'})`,'hl');await matchPause(400);
+  renderBracket();addLog(t('matchLog.header',{season:store.G.season,matchday:store.G.matchday+1,total:TOTAL_MATCHDAYS,division:myL===1?'I':'II'}),'hl');await matchPause(400);
 
   // ── ATOMIC COMMIT (results locked before the animation) ─────────────────────
   // Simulate ALL matches, apply them, advance the matchday and PERSIST *now*. The
@@ -3902,7 +3902,7 @@ async function runMatchday(){
         const displayMu=weAreHome?mu:flipMatchup(mu);
         vmeEl.innerHTML=renderVME(displayHome,displayAway,displayMatchups,mi,hScore,aScore,false,{setIndex:0,home:0,away:0});
         await matchPause(250);
-        addLog(`  ${mu.type==='double'?'DEBEL: ':''}${mu.homeName||playerName(mu.homePlayer)} vs ${mu.awayName||playerName(mu.awayPlayer)}`,'hl');
+        addLog(`  ${mu.type==='double'?t('matchLog.doubles')+' ':''}${mu.homeName||playerName(mu.homePlayer)} vs ${mu.awayName||playerName(mu.awayPlayer)}`,'hl');
         for(let si=0;si<(displayMu.setScores||[]).length;si++){
           const timeline=buildSetTimeline(displayMu.setScores[si]);
           for(let pi=0;pi<timeline.length;pi++){
@@ -3917,24 +3917,24 @@ async function runMatchday(){
         if(displayMu.homeWin)hScore++;else aScore++;
         vmeEl.innerHTML=renderVME(displayHome,displayAway,displayMatchups,mi,hScore,aScore,false,{setIndex:(displayMu.setScores||[]).length,home:0,away:0});
         const ww=(m.home===myId&&mu.homeWin)||(m.away===myId&&!mu.homeWin);
-        addLog(`    Wynik pojedynku: ${displayMu.hs}:${displayMu.as}`,ww?'gd':'bd');
-        addLog(`    Mikro: pkt ${displayMu.micro.homePoints}:${displayMu.micro.awayPoints} / asy ${displayMu.micro.homeAces}:${displayMu.micro.awayAces} / b\u0142\u0119dy ${displayMu.micro.homeErrors}:${displayMu.micro.awayErrors} / najd\u0142. wymiana ${displayMu.micro.longestRally}`,'dm');
+        addLog(t('matchLog.duelResult',{score:`${displayMu.hs}:${displayMu.as}`}),ww?'gd':'bd');
+        addLog(t('matchLog.micro',{points:`${displayMu.micro.homePoints}:${displayMu.micro.awayPoints}`,aces:`${displayMu.micro.homeAces}:${displayMu.micro.awayAces}`,errors:`${displayMu.micro.homeErrors}:${displayMu.micro.awayErrors}`,rally:displayMu.micro.longestRally}),'dm');
         await matchPause(1150);
       }
       _revealed=i;renderBracket(i); // reveal this result now (already committed)
       const ww=(m.home===myId&&r.homeWin)||(m.away===myId&&!r.homeWin);const dr=r.isDraw;
-      addLog(`\u2192 ${dr?'REMIS':ww?'WYGRANA':'PRZEGRANA'} ${r.score}`,dr?'hl':ww?'gd':'bd');
+      addLog(t(dr?'matchLog.draw':ww?'matchLog.win':'matchLog.loss',{score:r.score}),dr?'hl':ww?'gd':'bd');
       await matchPause(1200);
     }else{
       await matchPause(180);
       const r=preResults[i];_revealed=i;renderBracket(i);
-      addLog(`  ${r.isDraw?'Remis':r.homeWin?teamName(m.home):teamName(m.away)} ${r.isDraw?r.score:'wygrywa '+r.score}`,'dm');
+      addLog(r.isDraw?t('matchLog.otherDraw',{score:r.score}):t('matchLog.otherWin',{team:r.homeWin?teamName(m.home):teamName(m.away),score:r.score}),'dm');
     }
   }
 
   // Other league was already simulated & applied in the atomic commit above.
   if(otherMatches){
-    addLog(`\n// ${otherL===1?'I Liga':'II Liga'}: ${otherMatches.length} mecz\u00f3w rozegranych`,'dm');
+    addLog(t('matchLog.otherDivision',{division:otherL===1?'I':'II',count:otherMatches.length}),'dm');
   }
 
   // v16: Merchandising income every matchday
@@ -3943,13 +3943,13 @@ async function runMatchday(){
     const totalMerch=store.G._top12Bonus?Math.round(merchInc*1.5):merchInc;
     myTeam().budget+=totalMerch;
     if(finance)finance.merch+=totalMerch;
-    addLog(`// Sklep kibica: +${totalMerch.toLocaleString('pl')} €`,'gd');
+    addLog(t('matchLog.merch',{amount:formatCurrency(totalMerch)}),'gd');
   }
   
   if(store.G.matchday===TOTAL_MATCHDAYS-1){
     [1,2].forEach(leagueId=>{
       if(!store.G.top12MastersDone?.[leagueId]){
-        addLog(`\n// Top 12 Masters ${leagueId===1?'I Ligi':'II Ligi'} dost\u0119pne!`,'hl');
+        addLog(t('matchLog.top12Available',{division:leagueId===1?'I':'II'}),'hl');
       }
     });
   }
@@ -3961,7 +3961,7 @@ async function runMatchday(){
     const ticketIncome=attendance*priceRaw;
     myTeam().budget+=ticketIncome;
     if(finance)finance.tickets+=ticketIncome;
-    addLog(`// Bilety: ${attendance} kibic\u00f3w x ${priceRaw} € = +${ticketIncome.toLocaleString('pl')} €`,'gd');
+    addLog(t('matchLog.tickets',{attendance,price:formatCurrency(priceRaw),income:formatCurrency(ticketIncome)}),'gd');
   }
   
   // v15: News feed
@@ -3971,14 +3971,14 @@ async function runMatchday(){
   // Cup check
   if(store.G.matchday>0&&store.G.matchday%4===0&&!store.G.cup?.finished){
     store.G.cupPlayedThisSeason=false;
-    addLog('\n// Mecze pucharowe dost\u0119pne!','hl');
+    addLog(t('matchLog.cupAvailable'),'hl');
   }
   
   if(store.G.matchday>=TOTAL_MATCHDAYS){
-    addLog('\n// \u2605 SEZON ZAKO\u0143CZONY','hl');store.G.phase='transfer';
+    addLog(t('matchLog.seasonFinished'),'hl');store.G.phase='transfer';
     const wages=totalWages();const acadUp=academyUpkeep();const maint=calcLeagueMaint()+acadUp;
     myTeam().budget=Math.max(0,myTeam().budget-wages-maint);
-    addLog(`// Pensje: -${wages.toLocaleString('pl')} € | Utrzymanie: -${maint.toLocaleString('pl')} €${acadUp?` (w tym akademia -${acadUp.toLocaleString('pl')} €)`:''}`,'bd');
+    addLog(t('matchLog.costs',{wages:formatCurrency(wages),maintenance:formatCurrency(maint),academy:acadUp?t('matchLog.academyCost',{amount:formatCurrency(acadUp)}):''}),'bd');
     const srt=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);
     const myPos2=srt.findIndex(t=>t.isPlayer)+1;
     // v13: 150% buffed prize tables
@@ -3992,8 +3992,8 @@ async function runMatchday(){
     store.G.sponsors.filter(s=>s.active).forEach(s=>{
       // Pay this season if the goal was met; a multi-year deal STAYS active (a missed
       // goal just means no payout that season, not termination).
-      if(checkGoal(s)){myTeam().budget+=s.reward;s.met=true;sponsorIncome+=s.reward;addLog(`// ✓ ${s.name}: +${s.reward.toLocaleString('pl')} €`,'gd');}
-      else{s.failed=true;addLog(`// ✗ ${s.name}: cel nieosiągnięty (bez wypłaty)`,'bd');}
+      if(checkGoal(s)){myTeam().budget+=s.reward;s.met=true;sponsorIncome+=s.reward;addLog(t('matchLog.sponsorMet',{name:s.name,reward:formatCurrency(s.reward)}),'gd');}
+      else{s.failed=true;addLog(t('matchLog.sponsorFailed',{name:s.name}),'bd');}
       s.yearsLeft=(s.yearsLeft||1)-1;
       if(s.yearsLeft<=0){s.active=false;s.endSeason=store.G.season;}
     });
@@ -4003,10 +4003,10 @@ async function runMatchday(){
       if(checkGoal(boardObjective)){
         myTeam().budget+=boardObjective.reward;
         if(finance)finance.boardReward+=boardObjective.reward;
-        addLog(`// Zarz\u0105d: wykonano cel (${goalDesc(boardObjective.goal)}) +${boardObjective.reward.toLocaleString('pl')} €`,'gd');
+        addLog(t('matchLog.boardMet',{goal:goalDesc(boardObjective.goal),reward:formatCurrency(boardObjective.reward)}),'gd');
         store.G.managerPrestige=Math.min(100,(store.G.managerPrestige||0)+6);
       }else{
-        addLog(`// Zarz\u0105d: niewykonany cel (${goalDesc(boardObjective.goal)})`,'bd');
+        addLog(t('matchLog.boardFailed',{goal:goalDesc(boardObjective.goal)}),'bd');
         store.G.managerPrestige=Math.max(0,(store.G.managerPrestige||0)-4);
         if(boardObjective.failure==='fired'){
           handleManagerFired(`niezrealizowany ambitny cel: ${goalDesc(boardObjective.goal)}`);
@@ -4028,17 +4028,17 @@ async function runMatchday(){
       finance.prDirectorWages=wageBreakdown.prDirector;
       finance.maint=maint;
     }
-    addLog(`// Prawa Telewizyjne: +${tvPay.toLocaleString('pl')} € (poz. #${myPos2}, ${myL===1?'I':'II'} Liga)`,'gd');
+    addLog(t('matchLog.tvRights',{amount:formatCurrency(tvPay),position:myPos2,division:myL===1?'I':'II'}),'gd');
     store.G.budgetLog=store.G.budgetLog||[];
     store.G.budgetLog.push(buildBudgetEntry(wages,prize,sponsorIncome,maint));
     const awardResults=giveSeasonAwards();
-    if(awardResults.length){addLog('\n// NAGRODY:','hl');awardResults.forEach(a=>addLog(`  \u2605 ${a.player}${a.club?` (${a.club})`:''}: ${a.label}`,a.forLeague?'hl':'gd'));}
+    if(awardResults.length){addLog(t('matchLog.awards'),'hl');awardResults.forEach(a=>addLog(`  \u2605 ${a.player}${a.club?` (${a.club})`:''}: ${a.type?t(`award.${a.type}`):a.label}`,a.forLeague?'hl':'gd'));}
     
     // Promotion/Relegation
     const promoRele=doPromotionRelegation();
-    addLog('\n// AWANSE I SPADKI:','hl');
-    promoRele.promoted.forEach(n=>addLog(`  \u2191 ${n} awansuje do I Ligi`,'gd'));
-    promoRele.relegated.forEach(n=>addLog(`  \u2193 ${n} spada do II Ligi`,'bd'));
+    addLog(t('matchLog.promotionRelegation'),'hl');
+    promoRele.promoted.forEach(name=>addLog(t('matchLog.promoted',{name}),'gd'));
+    promoRele.relegated.forEach(name=>addLog(t('matchLog.relegated',{name}),'bd'));
     
     safeLog(`S${store.G.season}: Poz #${myPos2} (${myL===1?'I':'II'} Liga)`,'hl');
 
@@ -4055,8 +4055,8 @@ async function runMatchday(){
     
     recordClubSeasonHistory();
     store.G.seasonHistory.push({season:store.G.season,position:myPos2,league:myL,w:myTeam().w,d:myTeam().d,l:myTeam().l,pts:myTeam().pts,gf:myTeam().gf,ga:myTeam().ga,pointsWon:myTeam().pointsWon||0,pointsLost:myTeam().pointsLost||0,teamOvr:teamOvr(myTeam().id),matchProg:buildMatchProgression(),budget:myTeam().budget,wages,promoted:promoRele.promoted,relegated:promoRele.relegated});
-    if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog('\n// OLIMPIADA dost\u0119pna!','hl');}else store.G.olympicYear=false;
-    if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog('\n// MUNDIAL dost\u0119pny!','hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
+    if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog(t('matchLog.olympicsAvailable'),'hl');}else store.G.olympicYear=false;
+    if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog(t('matchLog.worldsAvailable'),'hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
     buildMarket();genSponsorOffers(calcPrestige());
     const clubOffers=generateClubOffers();
     await showPostSeasonGala({
