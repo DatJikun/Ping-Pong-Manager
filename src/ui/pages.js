@@ -517,6 +517,7 @@ function pageClub(){
   function infraBlock(type,label,icon,levels,curLevel){
     const cur=levels[curLevel];const next=levels[curLevel+1];
     const maxLevel=levels.length-1;
+    const dataGroup={hall:'infraHall',med:'infraMed',academy:'infraAcademy',merch:'infraMerch'}[type];
     // One card per facility (was a card wrapping a second bordered card), with the
     // level as a pill and the price/CTA on one row that can't collide.
     return`<div class="infra-card">
@@ -524,86 +525,86 @@ function pageClub(){
         <div class="infra-title">${icon} ${label}</div>
         <div class="infra-pill">${curLevel}/${maxLevel}</div>
       </div>
-      <div class="syne b7 fs15">${cur.name}</div>
-      <div class="fs11 ink3 mb8">${cur.desc}</div>
+      <div class="syne b7 fs15">${gameDataText(dataGroup,curLevel,'name',cur.name)}</div>
+      <div class="fs11 ink3 mb8">${gameDataText(dataGroup,curLevel,'desc',cur.desc)}</div>
       ${levelDots(curLevel,maxLevel)}
       ${next?`<div class="infra-next">
-        <div class="fs10 ink3 up ls1">Następny poziom</div>
-        <div class="b7 fs12 mb2">${next.name}</div>
-        <div class="fs11 ink3 mb10">${next.desc}</div>
+        <div class="fs10 ink3 up ls1">${t('club.nextLevel')}</div>
+        <div class="b7 fs12 mb2">${gameDataText(dataGroup,curLevel+1,'name',next.name)}</div>
+        <div class="fs11 ink3 mb10">${gameDataText(dataGroup,curLevel+1,'desc',next.desc)}</div>
         <div class="infra-buy">
-          <div class="syne b8 fs18 ${mt.budget<next.cost?'ink3':'cr'}">${next.cost.toLocaleString('pl')} €</div>
-          <button class="btn pr sm" onclick="upgradeInfra('${type}')" ${mt.budget<next.cost?'disabled':''}>ULEPSZ</button>
+          <div class="syne b8 fs18 ${mt.budget<next.cost?'ink3':'cr'}">${formatCurrency(next.cost)}</div>
+          <button class="btn pr sm" onclick="upgradeInfra('${type}')" ${mt.budget<next.cost?'disabled':''}>${t('club.upgrade')}</button>
         </div>
-      </div>`:`<div class="infra-next tac cg b7 fs11">✓ POZIOM MAKSYMALNY</div>`}
-      ${curLevel>0?`<div class="tar mt-8"><button class="btn sm fs10 op8" onclick="downgradeInfra('${type}')" title="Cofnij o poziom (za darmo, bez zwrotu) — obniża roczne utrzymanie">↓ Cofnij poziom</button></div>`:''}
+      </div>`:`<div class="infra-next tac cg b7 fs11">✓ ${t('club.maxLevel')}</div>`}
+      ${curLevel>0?`<div class="tar mt-8"><button class="btn sm fs10 op8" onclick="downgradeInfra('${type}')" title="${t('club.downgradeTitle')}">↓ ${t('club.downgrade')}</button></div>`:''}
     </div>`;
   }
   
   const prDir=getPRDirector();
   
-  return`<div class="ph"><div><div class="pt">INFRASTRUKTURA <span>KLUBU</span></div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('club.title')}</div></div></div>
     <div class="card mb14">
     <div class="flex aic jcb gp16 fwrap">
       <div class="flex aic gp16">
       <img src="${getTeamLogoData(mt)}" alt="${mt.name}" class="club-logo lg">
       <div><div class="syne fs28 b8">${mt.name}</div><div class="fs12 ink3">${branding.nickname} / ${branding.motto}</div></div>
       </div>
-      <div class="history-badge">Poziom obiektu: ${Math.max(store.G.infraHall||0,store.G.infraMed||0,store.G.infraAcademy||0,store.G.infraMerchandising||0)} / 5</div>
+      <div class="history-badge">${t('club.facilityLevel',{level:Math.max(store.G.infraHall||0,store.G.infraMed||0,store.G.infraAcademy||0,store.G.infraMerchandising||0)})}</div>
     </div>
   </div>
-  <div class="card"><div class="ct">SPRZĘT — OKŁADZINY KLUBOWE</div>
-    <div class="fs11 ink3 mb10">Deska i gąbka to osobisty setup zawodnika (dopasowany do stylu — zobacz kartę zawodnika). Okładziny zużywają się: świeżość to koszt klubu płatny przy każdym rozliczeniu sezonu.</div>
+  <div class="card"><div class="ct">${t('club.rubbers')}</div>
+    <div class="fs11 ink3 mb10">${t('club.rubberHint')}</div>
     <div class="grid gtcfit220 gp10">
-    ${EQUIPMENT.rubberTiers.map(t=>{const active=(store.G.rubberTier||0)===t.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
-      <div class="b8 fs13">${t.label}${active?' <span class="fs9 cg">AKTYWNE</span>':''}</div>
-      <div class="fs10 ink3" style="margin:4px 0 6px">${t.desc}</div>
-      <div class="fs10 mb8">${Object.keys(t.mods).length?Object.entries(t.mods).map(([k,v])=>`<b>${SL[k]||k} ${v>0?'+':''}${v}</b>`).join(' / '):'Bez bonusu'}</div>
-      <div class="fs10 ink3 mb8">Koszt: <b>${t.costPerPlayer?`${t.costPerPlayer.toLocaleString('pl')} €/zaw. (${(t.costPerPlayer*squad).toLocaleString('pl')} €/sezon)`:'darmowe'}</b></div>
-      ${active?'':`<button class="btn pr sm" onclick="setRubberTier(${t.tier})">USTAW</button>`}
+    ${EQUIPMENT.rubberTiers.map(tier=>{const active=(store.G.rubberTier||0)===tier.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
+      <div class="b8 fs13">${gameDataText('rubber',tier.tier,'label',tier.label)}${active?` <span class="fs9 cg">${t('club.active')}</span>`:''}</div>
+      <div class="fs10 ink3" style="margin:4px 0 6px">${gameDataText('rubber',tier.tier,'desc',tier.desc)}</div>
+      <div class="fs10 mb8">${Object.keys(tier.mods).length?Object.entries(tier.mods).map(([k,v])=>`<b>${SL[k]||k} ${v>0?'+':''}${v}</b>`).join(' / '):t('club.noBonus')}</div>
+      <div class="fs10 ink3 mb8">${t('club.cost',{amount:`<b>${tier.costPerPlayer?t('club.perPlayer',{amount:formatCurrency(tier.costPerPlayer),total:formatCurrency(tier.costPerPlayer*squad)}):t('club.free')}</b>`})}</div>
+      ${active?'':`<button class="btn pr sm" onclick="setRubberTier(${tier.tier})">${t('club.set')}</button>`}
     </div>`;}).join('')}
     </div>
   </div>
   <div class="g4 mb14">
-    ${infraBlock('hall','HALA TRENINGOWA','',INFRA_HALL,store.G.infraHall||0)}
-    ${infraBlock('med','CENTRUM MEDYCZNE','',INFRA_MED,store.G.infraMed||0)}
-    ${infraBlock('academy','AKADEMIA M\u0141ODZIE\u017bOWA','',INFRA_ACADEMY,store.G.infraAcademy||0)}
-    ${infraBlock('merch','SKLEP KIBICA','',INFRA_MERCH,store.G.infraMerchandising||0)}
+    ${infraBlock('hall',t('club.trainingHall'),'',INFRA_HALL,store.G.infraHall||0)}
+    ${infraBlock('med',t('club.medicalCentre'),'',INFRA_MED,store.G.infraMed||0)}
+    ${infraBlock('academy',t('club.youthAcademy'),'',INFRA_ACADEMY,store.G.infraAcademy||0)}
+    ${infraBlock('merch',t('club.fanShop'),'',INFRA_MERCH,store.G.infraMerchandising||0)}
   </div>
   <div class="g2 mb14">
-    <div class="card"><div class="ct">PRAWA TELEWIZYJNE <span class="fs9">Wyp\u0142acane na koniec sezonu</span></div>
+    <div class="card"><div class="ct">${t('club.tvRights')} <span class="fs9">${t('club.paidSeasonEnd')}</span></div>
       <div class="g2">
-        <div class="sb"><div class="l">Szacowane (sezon)</div><div class="v gold fs24">${calcTVRights().toLocaleString('pl')}</div><div class="sub">€ (poz. #${sorted.findIndex(t=>t.isPlayer)+1})</div></div>
-        <div class="sb"><div class="l">Liga</div><div class="v ${myL===1?'gold':''} fs20">${myL===1?'I Liga (+++)':'II Liga (+)'}</div><div class="sub">Im wy\u017cej, tym wi\u0119cej</div></div>
+        <div class="sb"><div class="l">${t('club.estimated')}</div><div class="v gold fs24">${formatCurrency(calcTVRights())}</div><div class="sub">#${sorted.findIndex(team=>team.isPlayer)+1}</div></div>
+        <div class="sb"><div class="l">${t('history.league')}</div><div class="v ${myL===1?'gold':''} fs20">${t(myL===1?'league.divisionOne':'league.divisionTwo')}</div><div class="sub">${t('club.higherPays')}</div></div>
       </div>
     </div>
-    <div class="card"><div class="ct">DYREKTOR PR</div>
+    <div class="card"><div class="ct">${t('club.prDirector')}</div>
     ${prDir?`<div class="pd12 bg-ok bbg r4">
       <div class="syne b7 fs15">\u2713 ${prDir.name}</div>
-      <div class="fs11 ink3 mt-4">+${Math.round(prDir.bonus*100)}% do strony komercyjnej / Cooldown sponsora: -${prDir.cooldownReduce} sezony</div>
-      <div class="fs10 ink3 mt-2">Pensja: ${prDir.salary.toLocaleString('pl')} €/rok / kontrakt ${prDir.contractYears||0} l.</div>
-      <div class="btn-row mt-8"><button class="btn gl sm" onclick="openStaffNeg(${prDir.id})">PRZED\u0141U\u017b</button></div>
+      <div class="fs11 ink3 mt-4">${t('club.commercialBonus',{percent:Math.round(prDir.bonus*100),seasons:prDir.cooldownReduce})}</div>
+      <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(prDir.salary),years:`${prDir.contractYears||0} ${t((prDir.contractYears||0)===1?'common.year':'common.years')}`})}</div>
+      <div class="btn-row mt-8"><button class="btn gl sm" onclick="openStaffNeg(${prDir.id})">${t('staff.extend')}</button></div>
     </div>`:
-    `<div class="fs11 ink3 lh155">Brak aktywnej osoby od PR.</div>`}
+    `<div class="fs11 ink3 lh155">${t('club.noPr')}</div>`}
     </div>
   </div>
-  <div class="card"><div class="ct">PARTNERSTWO TECHNICZNE <span class="fs9">Presti\u017c: ${pres}/100</span></div>
-  <div class="panel-muted mb12">Osobny zakup sprz\u0119tu zosta\u0142 wycofany. Sprz\u0119t, pakiet testowy i bonusy meczowe s\u0105 teraz zintegrowane z partnerem technicznym.</div>
-  ${techPartnership?`<div class="academy-inline-banner mb12">Aktywny partner: <b>${techPartnership.name}</b> / ${techPartnership.bonusDesc} / ${techPartnership.costPerSeason>0?`+${techPartnership.costPerSeason.toLocaleString('pl')} €`:(techPartnership.costPerSeason||0).toLocaleString('pl')+' €'} za sezon</div>`:''}
+  <div class="card"><div class="ct">${t('club.techPartnership')} <span class="fs9">${t('club.prestige',{value:pres})}</span></div>
+  <div class="panel-muted mb12">${t('club.techHint')}</div>
+  ${techPartnership?`<div class="academy-inline-banner mb12">${t('club.activePartner',{name:`<b>${techPartnership.name}</b>`,bonus:gameDataText('tech',TECH_PARTNERSHIPS.findIndex(tp=>tp.id===techPartnership.id),'bonusDesc',techPartnership.bonusDesc),cost:formatCurrency(techPartnership.costPerSeason||0)})}</div>`:''}
   <div class="grid gp10" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
-    ${TECH_PARTNERSHIPS.map(tp=>{
+    ${TECH_PARTNERSHIPS.map((tp,tpIndex)=>{
       const isActive=store.G.techPartnership===tp.id;
       const inRange=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
-      const seasonMoney=tp.costPerSeason>0?`+${tp.costPerSeason.toLocaleString('pl')} € / sezon`:tp.costPerSeason<0?`${tp.costPerSeason.toLocaleString('pl')} € / sezon`:'0 € / sezon';
+      const seasonMoney=formatCurrency(tp.costPerSeason||0);
       return`<div class="tech-card ${isActive?'active':''}" onclick="${isActive?'':'selectTechPartnership(\''+tp.id+'\')'}" style="opacity:${inRange||isActive?1:.6}">
-        ${isActive?'<div class="brand-badge">AKTYWNY</div>':''}
+        ${isActive?`<div class="brand-badge">${t('club.active')}</div>`:''}
         <div class="fs26 mb4">${tp.icon}</div>
         <div class="syne b7 fs16 mb4">${tp.name}</div>
-        <div class="fs11 cg b7 mb6">${tp.bonusDesc}</div>
-        <div class="fs10 ink3 mb6">Presti\u017c: ${tp.prestige[0]}-${tp.prestige[1]} / ${seasonMoney}</div>
-        <div class="fs11 ink2">${tp.desc}</div>
-        ${!inRange&&!isActive?`<div class="mt-8 fs10 cr">Wymaga presti\u017cu w zakresie ${tp.prestige[0]}-${tp.prestige[1]}</div>`:''}
-        ${inRange&&!isActive?`<button class="btn pr sm w100 mt-10">PODPISZ</button>`:''}
+        <div class="fs11 cg b7 mb6">${gameDataText('tech',tpIndex,'bonusDesc',tp.bonusDesc)}</div>
+        <div class="fs10 ink3 mb6">${t('club.prestigeRange',{min:tp.prestige[0],max:tp.prestige[1]})} · ${seasonMoney}</div>
+        <div class="fs11 ink2">${gameDataText('tech',tpIndex,'desc',tp.desc)}</div>
+        ${!inRange&&!isActive?`<div class="mt-8 fs10 cr">${t('club.requiresPrestige',{min:tp.prestige[0],max:tp.prestige[1]})}</div>`:''}
+        ${inRange&&!isActive?`<button class="btn pr sm w100 mt-10">${t('sponsors.sign')}</button>`:''}
       </div>`;}).join('')}
   </div></div>`;
 }

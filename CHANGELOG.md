@@ -31,6 +31,8 @@
   unresolved translation keys across every completed English screen.
 - Localized the capped Hall of Fame gallery and record book while leaving the
   top-20 summaries and compact club ledgers unchanged.
+- Localized club infrastructure, rubber tiers, TV/PR sections and technical
+  partnership data by stable IDs, without touching their economic values.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

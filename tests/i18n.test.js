@@ -289,10 +289,11 @@ test('completed English screens reject common Polish UI regressions and raw keys
     g.PPM.pages.pageInbox(),
     g.PPM.pages.pageNews(),
     g.PPM.pages.pageHoF(),
+    g.PPM.pages.pageClub(),
   ].join('\n');
 
-  assert.doesNotMatch(rendered, /Skład główny|Szukaj w transferach|Zobowiązania S\+1|Aktywne umowy|Historia sezonów|Tabela I Ligi|Puchar krajowy|Skrzynka klubowa|Wszystkie sezony|Galeria emerytów/i);
-  assert.doesNotMatch(rendered, />\s*(?:squad|staff|market|budget|sponsors|history|league|cup|inbox|news|hof)\.[a-zA-Z.]+\s*</);
+  assert.doesNotMatch(rendered, /Skład główny|Szukaj w transferach|Zobowiązania S\+1|Aktywne umowy|Historia sezonów|Tabela I Ligi|Puchar krajowy|Skrzynka klubowa|Wszystkie sezony|Galeria emerytów|Infrastruktura klubu|Treningi na podwórku/i);
+  assert.doesNotMatch(rendered, />\s*(?:squad|staff|market|budget|sponsors|history|league|cup|inbox|news|hof|club)\.[a-zA-Z.]+\s*</);
 });
 
 test('Hall of Fame gallery and record book follow the active locale', () => {
@@ -314,4 +315,23 @@ test('Hall of Fame gallery and record book follow the active locale', () => {
   const polish = g.PPM.pages.pageHoF();
   assert.match(polish, /Księga rekordów/i);
   assert.match(polish, /Rekordy klubowe/i);
+});
+
+test('club facilities and their data descriptions follow the active locale', () => {
+  const g = boot(3118);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageClub();
+  assert.match(english, /Club infrastructure/i);
+  assert.match(english, /Training hall/i);
+  assert.match(english, /Outdoor training|No hall/i);
+  assert.match(english, /Technical partnership/i);
+  assert.doesNotMatch(english, /Treningi na podwórku|Partnerstwo techniczne/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageClub();
+  assert.match(polish, /Infrastruktura klubu/i);
+  assert.match(polish, /Hala treningowa/i);
+  assert.match(polish, /Treningi na podwórku|Brak hali/i);
 });

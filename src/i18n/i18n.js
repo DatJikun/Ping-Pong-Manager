@@ -667,6 +667,38 @@ const dictionaries={
     'hof.managerGoodPath':'A strong career path',
     'hof.managerBuild':'Build prestige through league results',
     'hof.nationalCoach':'National coach: {team}',
+    'club.title':'Club infrastructure',
+    'club.facilityLevel':'Facility level: {level}/5',
+    'club.nextLevel':'Next level',
+    'club.upgrade':'Upgrade',
+    'club.maxLevel':'Maximum level',
+    'club.downgrade':'Downgrade level',
+    'club.downgradeTitle':'Lower by one level for free, without a refund, to reduce yearly upkeep',
+    'club.rubbers':'Equipment · club rubbers',
+    'club.rubberHint':'Blade and sponge are personal player setups. Rubbers wear out and their freshness is a recurring club cost paid after every season.',
+    'club.active':'Active',
+    'club.noBonus':'No bonus',
+    'club.cost':'Cost: {amount}',
+    'club.perPlayer':'{amount} per player ({total} per season)',
+    'club.free':'free',
+    'club.set':'Set',
+    'club.trainingHall':'Training hall',
+    'club.medicalCentre':'Medical centre',
+    'club.youthAcademy':'Youth academy',
+    'club.fanShop':'Fan shop',
+    'club.tvRights':'TV rights',
+    'club.paidSeasonEnd':'Paid after the season',
+    'club.estimated':'Estimated (season)',
+    'club.higherPays':'Higher position means more income',
+    'club.prDirector':'PR director',
+    'club.commercialBonus':'+{percent}% commercial income · sponsor cooldown −{seasons} seasons',
+    'club.noPr':'No active PR director.',
+    'club.techPartnership':'Technical partnership',
+    'club.prestige':'Prestige: {value}/100',
+    'club.techHint':'Equipment, testing packages and match bonuses are integrated into the technical partnership.',
+    'club.activePartner':'Active partner: {name} · {bonus} · {cost} per season',
+    'club.prestigeRange':'Prestige: {min}–{max}',
+    'club.requiresPrestige':'Requires prestige {min}–{max}',
   },
   pl:{
     'common.back':'Wstecz',
@@ -1327,12 +1359,91 @@ const dictionaries={
     'hof.managerGoodPath':'Dobra ścieżka kariery',
     'hof.managerBuild':'Buduj prestiż przez wyniki ligowe',
     'hof.nationalCoach':'Selekcjoner: {team}',
+    'club.title':'Infrastruktura klubu',
+    'club.facilityLevel':'Poziom obiektu: {level}/5',
+    'club.nextLevel':'Następny poziom',
+    'club.upgrade':'Ulepsz',
+    'club.maxLevel':'Poziom maksymalny',
+    'club.downgrade':'Cofnij poziom',
+    'club.downgradeTitle':'Cofnij o poziom za darmo, bez zwrotu, aby obniżyć roczne utrzymanie',
+    'club.rubbers':'Sprzęt · okładziny klubowe',
+    'club.rubberHint':'Deska i gąbka to osobiste setupy zawodników. Okładziny zużywają się, a świeżość jest cyklicznym kosztem klubu płatnym po każdym sezonie.',
+    'club.active':'Aktywne',
+    'club.noBonus':'Bez bonusu',
+    'club.cost':'Koszt: {amount}',
+    'club.perPlayer':'{amount} za zawodnika ({total} za sezon)',
+    'club.free':'darmowe',
+    'club.set':'Ustaw',
+    'club.trainingHall':'Hala treningowa',
+    'club.medicalCentre':'Centrum medyczne',
+    'club.youthAcademy':'Akademia młodzieżowa',
+    'club.fanShop':'Sklep kibica',
+    'club.tvRights':'Prawa telewizyjne',
+    'club.paidSeasonEnd':'Wypłacane po sezonie',
+    'club.estimated':'Szacowane (sezon)',
+    'club.higherPays':'Wyższa pozycja oznacza większy przychód',
+    'club.prDirector':'Dyrektor PR',
+    'club.commercialBonus':'+{percent}% przychodów komercyjnych · cooldown sponsora −{seasons} sez.',
+    'club.noPr':'Brak aktywnego dyrektora PR.',
+    'club.techPartnership':'Partnerstwo techniczne',
+    'club.prestige':'Prestiż: {value}/100',
+    'club.techHint':'Sprzęt, pakiety testowe i bonusy meczowe są zintegrowane z partnerem technicznym.',
+    'club.activePartner':'Aktywny partner: {name} · {bonus} · {cost} za sezon',
+    'club.prestigeRange':'Prestiż: {min}–{max}',
+    'club.requiresPrestige':'Wymaga prestiżu {min}–{max}',
   },
 };
 
 const SUPPORTED_LOCALES=Object.freeze(['en','pl']);
 const DEFAULT_LOCALE='en';
 let currentLocale=DEFAULT_LOCALE;
+const englishGameData={
+  infraHall:[
+    ['No hall','Outdoor training'],
+    ['Sports hall','+10% coach effectiveness'],
+    ['Professional hall','+25% coach effectiveness'],
+    ['Olympic centre','+50% coach effectiveness'],
+    ['National TT campus','+65% coach effectiveness and better match preparation'],
+    ['Hyper Performance Dome','+80% coach effectiveness and elite preparation conditions'],
+  ],
+  infraMed:[
+    ['No medical centre','Standard recovery time'],
+    ['Medical office','−25% injury time'],
+    ['Rehabilitation centre','−50% injury time'],
+    ['Sports medicine centre','−50% injury time and lower recurrence risk'],
+    ['Load-management laboratory','−60% injury time and clearly lower injury risk'],
+    ['Recovery institute','−70% injury time and complete recovery support'],
+  ],
+  infraAcademy:[
+    ['No academy','No youth development'],
+    ['Youth section','Juniors OVR 25–38, ceiling around 66'],
+    ['Youth academy','Juniors OVR 30–45, ceiling around 72'],
+    ['Elite academy','Juniors OVR 35–52, ceiling around 80'],
+    ['Talent development centre','Juniors OVR 38–58, ceiling around 86'],
+    ['National champions forge','Juniors OVR 42–64, ceiling around 92'],
+  ],
+  infraMerch:[
+    ['No shop','No merchandise income'],
+    ['Fan stall','Basic merchandise · +3% of club marketability'],
+    ['Online shop','Shirts and souvenirs · +6% of club marketability'],
+    ['Megastore','Full range · +10% of club marketability'],
+    ['Lifestyle platform','Club collections · +14% of club marketability'],
+    ['Global fan store','International premium shop · +18% of club marketability'],
+  ],
+  rubber:[
+    ['Stock rubbers','Worn, multi-season rubbers with no bonus'],
+    ['Tournament rubbers','Fresh tournament-grade rubbers'],
+    ['PRO rubbers','Top-grade rubbers replaced as often as professional equipment'],
+  ],
+  tech:[
+    ['+1 to all ratings','Entry-level equipment package available to every club, with slight budget relief'],
+    ['+1 to all · +6% marketability','The same base equipment plus growing brand promotion'],
+    ['+1 to all · +12% marketability','A national co-branding contract that drives commercial income'],
+    ['+1 to all, +1 ATK/SRV · +18% marketability','A small offensive edge plus strong paid promotion'],
+    ['+1 to all, +1 ATK/SRV · +26% marketability','Elite promotion with only a marginal equipment advantage'],
+    ['+1 to all, +1 ATK/SRV · +35% marketability','Premium global marketing; the on-table advantage remains minimal'],
+  ],
+};
 
 function normalizeLocale(locale){
   const short=String(locale||'').toLowerCase().split('-')[0];
@@ -1345,6 +1456,11 @@ function interpolate(template,params){
 function t(key,params={}){
   const template=dictionaries[currentLocale][key]??dictionaries.en[key]??key;
   return interpolate(template,params);
+}
+function gameDataText(group,index,field,polishFallback=''){
+  if(currentLocale==='pl')return polishFallback;
+  const row=englishGameData[group]?.[index];
+  return row?.[field==='name'||field==='label'||field==='bonusDesc'?0:1]??polishFallback;
 }
 function setLocale(locale){
   currentLocale=normalizeLocale(locale);
@@ -1375,8 +1491,9 @@ window.PPM.i18n={
   formatNumber,
   formatCurrency,
   formatDateTime,
+  gameDataText,
   localizeStatic,
 };
-Object.assign(window,{t,formatNumber,formatCurrency,formatDateTime});
+Object.assign(window,{t,formatNumber,formatCurrency,formatDateTime,gameDataText});
 setLocale(DEFAULT_LOCALE);
 })();
