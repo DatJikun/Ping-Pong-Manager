@@ -4760,9 +4760,21 @@ function pullYouth(){
   </div>`;
   openModal();
 }
+function ensurePendingPlayerIdAvailable(p){
+  const occupied=new Set((store.G.players||[])
+    .filter(x=>x&&Number.isInteger(x.id)&&x.id>=0)
+    .map(x=>x.id));
+  if(Number.isInteger(p.id)&&p.id>=0&&!occupied.has(p.id))return p.id;
+  let next=Number.isInteger(ui._pid)&&ui._pid>=0?ui._pid:0;
+  while(occupied.has(next))next++;
+  p.id=next;
+  ui._pid=next+1;
+  return p.id;
+}
 function signAcademyProspect(idx){
   const p=(store.G.academyProspects||[])[idx];
   if(!p)return;
+  ensurePendingPlayerIdAvailable(p);
   p.teamId=store.G.myTeamId;
   store.G.players.push(p);
   store.G.playerHistory[p.id]=[snap(p)];
@@ -4804,6 +4816,7 @@ function runAcademyMiniTournament(){
 function signTrialProspect(idx){
   const trial=store.G.academyTrial||[];const p=trial[idx];
   if(!p)return;
+  ensurePendingPlayerIdAvailable(p);
   p.teamId=store.G.myTeamId;
   store.G.players.push(p);
   store.G.playerHistory[p.id]=[snap(p)];

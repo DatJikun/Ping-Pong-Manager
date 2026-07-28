@@ -68,3 +68,59 @@ test('migration preserves intentional ID sharing outside the pending-player doma
   assert.equal(loaded.teams.find((t) => t.name === teamWithSameId.name).id, real.id,
     'team/player namespace overlap is not renumbered');
 });
+
+test('academy signing guard preserves the established player and his history', () => {
+  const g = boot(803);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const established = G.players.find((p) => (G.playerHistory[p.id] || []).length > 0);
+  const occupiedId = established.id;
+  const establishedName = established.name;
+  const historyBefore = JSON.stringify(G.playerHistory[occupiedId]);
+  const candidate = makePendingCandidate(g, occupiedId, 'Runtime Academy Collision');
+  G.academyProspects = [candidate];
+  G.scoutResults = [{
+    realId: occupiedId,
+    reported: { ...established },
+    scoutId: -1,
+    region: 'Existing player report',
+    seen: false,
+  }];
+
+  g.PPM.gameplay.signAcademyProspect(0);
+
+  const signed = G.players.find((p) => p.name === 'Runtime Academy Collision');
+  assert.ok(signed, 'the intended academy candidate was signed');
+  assert.notEqual(signed.id, occupiedId, 'colliding academy candidate receives a fresh ID');
+  assert.equal(G.players.find((p) => p.id === occupiedId).name, establishedName,
+    'the established player still owns the occupied ID');
+  assert.equal(JSON.stringify(G.playerHistory[occupiedId]), historyBefore,
+    'the established player history is not overwritten');
+  assert.equal(G.playerHistory[signed.id].length, 1, 'candidate receives a separate history entry');
+  assert.equal(new Set(G.players.map((p) => p.id)).size, G.players.length,
+    'signing does not create duplicate live-player IDs');
+  assert.ok(G.scoutResults.some((r) => r.realId === occupiedId),
+    'a scout result owned by the established player is not deleted');
+});
+
+test('trial signing guard also allocates a fresh live-player ID', () => {
+  const g = boot(804);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const established = G.players.find((p) => (G.playerHistory[p.id] || []).length > 0);
+  const occupiedId = established.id;
+  const historyBefore = JSON.stringify(G.playerHistory[occupiedId]);
+  G.academyTrial = [
+    makePendingCandidate(g, occupiedId, 'Runtime Trial Collision'),
+  ];
+
+  g.PPM.gameplay.signTrialProspect(0);
+
+  const signed = G.players.find((p) => p.name === 'Runtime Trial Collision');
+  assert.ok(signed, 'the intended trial candidate was signed');
+  assert.notEqual(signed.id, occupiedId, 'colliding trial candidate receives a fresh ID');
+  assert.equal(JSON.stringify(G.playerHistory[occupiedId]), historyBefore,
+    'trial signing does not overwrite established history');
+  assert.equal(new Set(G.players.map((p) => p.id)).size, G.players.length,
+    'trial signing keeps live-player IDs unique');
+});
