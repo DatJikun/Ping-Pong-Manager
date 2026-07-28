@@ -396,6 +396,24 @@ test('academy intake and Top 12 selection follow the active locale', () => {
   assert.match(g.document.getElementById('modal').innerHTML, /Klasa rocznika|Gotowość|Sufit|Przyjmij do akademii/i);
 });
 
+test('international career screen and national-team offer follow the active locale', () => {
+  const g = boot(3128);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageMundial();
+  assert.match(english, /World Championship|national team|Manager prestige|Call-ups/i);
+  assert.doesNotMatch(english, /Reprezentacja|Prestiż menedżera|Powołania|Dostępny/i);
+
+  g.PPM.state.G.managerPrestige = 80;
+  g.PPM.state.G.phase = 'transfer';
+  g.PPM.gameplay.checkNatTeamOffer();
+  assert.match(g.document.getElementById('modal').innerHTML, /National-team manager offer|Accept offer|Decline/i);
+
+  g.PPM.i18n.setLocale('pl');
+  assert.match(g.PPM.pages.pageMundial(), /Mundial|reprezentacja|Prestiż menedżera|Powołania/i);
+});
+
 test('player and staff profile modals follow the active locale', () => {
   const g = boot(3119);
   g.PPM.gameplay.newGame(0, 'PL');

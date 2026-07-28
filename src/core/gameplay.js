@@ -3732,11 +3732,11 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
       <div class="vme-center">
         <div class="vme-match-index">MECZ ${currentIdx+1}/4</div>
         <div class="vme-match-style">${mu?.styleEdge||'Pojedynek neutralny'}</div>
-        <div class="vme-setline">${setLine||'<span class="fs10" style="color:#8f8a80">Sety pojawi\u0105 si\u0119 po rozstrzygni\u0119ciu pojedynku</span>'}</div>
+        <div class="vme-setline">${setLine||`<span class="fs10" style="color:#8f8a80">${t('vme.setsPending')}</span>`}</div>
         <div class="mt-10">
           <div class="fs10 ink3 up ls1">Set ${currentSetNo}</div>
           <div class="syne fs30 b8"><span style="color:${liveHome>liveAway?'var(--g)':liveHome<liveAway?'var(--r)':'var(--ink2)'}">${liveHome}</span><span class="ink3">:</span><span style="color:${liveAway>liveHome?'var(--g)':liveAway<liveHome?'var(--r)':'var(--ink2)'}">${liveAway}</span></div>
-          <div class="fs10 ink3">punkty na \u017cywo (zielony = prowadzi)</div>
+          <div class="fs10 ink3">${t('vme.livePoints')}</div>
         </div>
       </div>
       ${playerHud(ap,'away',!!(mu&&!mu.homeWin&&matchupFinished))}
@@ -3744,14 +3744,14 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
     ${mu?`<div class="mt-10 pd10-12 bb1 r10" style="background:rgba(255,255,255,.5)">
       <div class="flex jcb gp8 aic fwrap mb8">
         <div class="fs11 b7 ink2">Mikrostatystyki pojedynku</div>
-        <div class="fs10 ink3">Pe\u0142ne liczby po zamkni\u0119ciu pojedynku</div>
+        <div class="fs10 ink3">${t('vme.fullStatsAfter')}</div>
       </div>
       ${(micro&&matchupFinished)?`<div class="grid gp8 fs10" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">
         <div><div class="ink3">Punkty</div><div class="b7">${micro.homePoints}:${micro.awayPoints}</div></div>
         <div><div class="ink3">Asy</div><div class="b7">${micro.homeAces}:${micro.awayAces}</div></div>
         <div><div class="ink3">Winnery</div><div class="b7">${micro.homeWinners}:${micro.awayWinners}</div></div>
-        <div><div class="ink3">B\u0142\u0119dy</div><div class="b7">${micro.homeErrors}:${micro.awayErrors}</div></div>
-        <div><div class="ink3">D\u0142. wymiana</div><div class="b7">${micro.longestRally}</div></div>
+        <div><div class="ink3">${t('vme.errors')}</div><div class="b7">${micro.homeErrors}:${micro.awayErrors}</div></div>
+        <div><div class="ink3">${t('vme.longestRally')}</div><div class="b7">${micro.longestRally}</div></div>
         <div><div class="ink3">Sety na styku</div><div class="b7">${micro.closestSets}</div></div>
       </div>`:''}
     </div>`:''}
@@ -4563,7 +4563,7 @@ function getMundialNationalTeams(){
   
   // My country first
   const myNationals=store.G.players.filter(p=>!p.retired&&p.nationality===store.G.countryId&&p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a)).slice(0,4);
-  nationalTeams.push({id:'nat_'+store.G.countryId, name:country.nationalTeam||country.name, countryId:store.G.countryId, players:myNationals, isPlayer:true, worldRank:country.worldRank||8});
+  nationalTeams.push({id:'nat_'+store.G.countryId, name:t(`country.${store.G.countryId}`), countryId:store.G.countryId, players:myNationals, isPlayer:true, worldRank:country.worldRank||8});
   
   // Other countries (simulated)
   const otherCountries=COUNTRY_IDS.filter(c=>c!==store.G.countryId);
@@ -4571,20 +4571,20 @@ function getMundialNationalTeams(){
     const c=COUNTRIES[cid];
     if(!c)return;
     const ovr_base=50+Math.round((7-c.worldRank)*4)+rnd(-5,5);
-    nationalTeams.push({id:'nat_'+cid, name:c.nationalTeam||c.name, countryId:cid, isPlayer:false, simOvr:ovr_base, worldRank:c.worldRank});
+    nationalTeams.push({id:'nat_'+cid, name:t(`country.${cid}`), countryId:cid, isPlayer:false, simOvr:ovr_base, worldRank:c.worldRank});
   });
   
   // Fill to 16 with fictional teams
   const fictional=[
-    {name:'Francja',simOvr:62},{name:'Rosja',simOvr:68},{name:'Brazylia',simOvr:50},
-    {name:'USA',simOvr:55},{name:'Tajwan',simOvr:70},{name:'W\u0119gry',simOvr:58},
-    {name:'Chorwacja',simOvr:53},{name:'Singapur',simOvr:65},{name:'Egipt',simOvr:45},
-    {name:'Nigeria',simOvr:43},{name:'Argentyna',simOvr:48}
+    {id:'FR',simOvr:62},{id:'RU',simOvr:68},{id:'BR',simOvr:50},
+    {id:'US',simOvr:55},{id:'TW',simOvr:70},{id:'HU',simOvr:58},
+    {id:'HR',simOvr:53},{id:'SG',simOvr:65},{id:'EG',simOvr:45},
+    {id:'NG',simOvr:43},{id:'AR',simOvr:48}
   ];
   let fi=0;
   while(nationalTeams.length<16&&fi<fictional.length){
     const f=fictional[fi++];
-    nationalTeams.push({id:'nat_fic_'+fi,name:f.name,isPlayer:false,simOvr:f.simOvr,worldRank:10+fi});
+    nationalTeams.push({id:'nat_fic_'+fi,name:t(`international.country.${f.id}`),isPlayer:false,simOvr:f.simOvr,worldRank:10+fi});
   }
   
   return nationalTeams.slice(0,16);
@@ -4725,16 +4725,18 @@ function checkNatTeamOffer(){
   if(pres>=75&&!store.G._natTeamOfferShown&&store.G.phase==='transfer'){
     store.G._natTeamOfferShown=true;
     const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
+    const countryName=t(`country.${store.G.countryId}`);
+    const nationalName=t('international.nationalTeamName',{country:countryName});
     const modal=document.getElementById('modal');modal.className='modal';
-    modal.innerHTML=`<div class="mt2">Oferta: Selekcjoner Reprezentacji <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+    modal.innerHTML=`<div class="mt2">${t('international.offerTitle')} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
     <div class="r4 mb14" style="padding:16px;background:#f8f0dc;border:1px solid var(--gold)">
-      <div class="syne b8 fs18 mb8">${country.flag} ${country.nationalTeam||country.name}</div>
-      <div class="fs13 mb8">Tw\u00f3j presti\u017c mened\u017cerski (${pres}/100) przekroczy\u0142 pr\u00f3g. Zosta\u0142e\u015b zaproszony do prowadzenia reprezentacji narodowej.</div>
-      <div class="fs11 ink3">Jako selekcjoner: powo\u0142ujesz 4-5 najlepszych zawodnik\u00f3w z ${country.name} przed ka\u017cdym Mundialem i Olimpiad\u0105. Z\u0142oto w turnieju = ogromny zastrzyk reputacji i nagroda ${(50000).toLocaleString('pl')} €.</div>
+      <div class="syne b8 fs18 mb8">${country.flag} ${nationalName}</div>
+      <div class="fs13 mb8">${t('international.offerBody',{prestige:pres})}</div>
+      <div class="fs11 ink3">${t('international.offerDetails',{country:countryName,reward:formatCurrency(50000)})}</div>
     </div>
     <div class="btn-row">
-      <button class="btn go" onclick="acceptNatTeam()">PRZYJMIJ OFERT\u0118</button>
-      <button class="btn" onclick="closeModal()">ODRZU\u0106</button>
+      <button class="btn go" onclick="acceptNatTeam()">${t('international.acceptOffer').toUpperCase()}</button>
+      <button class="btn" onclick="closeModal()">${t('international.rejectOffer').toUpperCase()}</button>
     </div>`;
     openModal();
   }
@@ -4743,7 +4745,7 @@ function checkNatTeamOffer(){
 function acceptNatTeam(){
   store.G.isNatTeamManager=true;
   const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-  toast(t('international.namedCoach',{country:country.nationalTeam||country.name}));
+  toast(t('international.namedCoach',{country:t('international.nationalTeamName',{country:t(`country.${store.G.countryId}`)})}));
   closeModal();
   store.G.managerPrestige=(store.G.managerPrestige||0)+10;
   render();

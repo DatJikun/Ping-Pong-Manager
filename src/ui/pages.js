@@ -1213,35 +1213,37 @@ function pageHoF(){
 function pageMundial(){
   const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
   const pres=store.G.managerPrestige||0;
+  const countryName=t(`country.${store.G.countryId}`);
+  const nationalName=t('international.nationalTeamName',{country:countryName});
   const myNationals=store.G.players.filter(p=>!p.retired&&p.nationality===store.G.countryId&&p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a)).slice(0,5);
   
-  return`<div class="ph"><div><div class="pt">MUNDIAL <span>& REPREZENTACJA</span></div><div class="ps">${country.flag} ${country.nationalTeam||country.name} / Ranking: #${country.worldRank}</div></div>
-  ${store.G.mundialYear?`<div class="mt-8 fs11 cblue b7">Mundial zostanie rozegrany jako kolejny krok sezonu.</div>`:''}
+  return`<div class="ph"><div><div class="pt">${t('international.pageTitle')} <span>${t('international.pageSubtitle')}</span></div><div class="ps">${country.flag} ${nationalName} / ${t('international.ranking')}: #${country.worldRank}</div></div>
+  ${store.G.mundialYear?`<div class="mt-8 fs11 cblue b7">${t('international.nextStep')}</div>`:''}
   </div>
   
   <div class="g2">
     <div>
-      <div class="card"><div class="ct">STATUS</div>
+      <div class="card"><div class="ct">${t('international.status').toUpperCase()}</div>
         <div class="g2 mb12">
-          <div class="sb"><div class="l">Mundial</div><div class="v ${store.G.mundialYear?'r gold':''} fs20">${store.G.mundialYear?'DOST\u0118PNY':'\u231b Sezon '+(store.G.season%2===0?store.G.season+1:store.G.season+2)}</div></div>
-          <div class="sb"><div class="l">Olimpiada</div><div class="v ${store.G.olympicYear?'r gold':''} fs20">${store.G.olympicYear?'DOST\u0118PNA':'\u231b Sezon '+(store.G.season%2===1?store.G.season+1:store.G.season+2)}</div></div>
+          <div class="sb"><div class="l">${t('international.worlds')}</div><div class="v ${store.G.mundialYear?'r gold':''} fs20">${store.G.mundialYear?t('international.available').toUpperCase():t('international.futureSeason',{season:store.G.season%2===0?store.G.season+1:store.G.season+2})}</div></div>
+          <div class="sb"><div class="l">${t('international.olympics')}</div><div class="v ${store.G.olympicYear?'r gold':''} fs20">${store.G.olympicYear?t('international.available').toUpperCase():t('international.futureSeason',{season:store.G.season%2===1?store.G.season+1:store.G.season+2})}</div></div>
         </div>
-        <div class="fs11 ink3">Mundial co 2 sezony od sezonu 3. Olimpiada co 2 sezony od sezonu 2.</div>
+        <div class="fs11 ink3">${t('international.cycleHint')}</div>
       </div>
-      <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
-        <div class="sb mb10"><div class="l">Tw\u00f3j Presti\u017c</div><div class="v gold fs40">${pres}</div><div class="sub">${pres>=75?'Oferta selekcjonera dost\u0119pna!':pres>=50?`Brak oferty (wymagane 75, brakuje ${75-pres} pkt)`:'Buduj presti\u017c przez wyniki'}</div></div>
-        ${store.G.isNatTeamManager?`<div class="pd10 bg-ok bbg r3 b7 cg">Jeste\u015b selekcjonerem ${country.nationalTeam||country.name}!</div>`:`<div class="fs11 ink3">Osi\u0105gnij 75 presti\u017cu mened\u017cera, by otrzyma\u0107 ofert\u0119 prowadzenia reprezentacji. Zyski: dobre sezony, awanse i trofea.</div>`}
+      <div class="card"><div class="ct">${t('international.managerPrestige').toUpperCase()}</div>
+        <div class="sb mb10"><div class="l">${t('international.yourPrestige')}</div><div class="v gold fs40">${pres}</div><div class="sub">${pres>=75?t('international.offerAvailable'):pres>=50?t('international.offerMissing',{points:75-pres}):t('international.buildPrestige')}</div></div>
+        ${store.G.isNatTeamManager?`<div class="pd10 bg-ok bbg r3 b7 cg">${t('international.currentCoach',{country:nationalName})}</div>`:`<div class="fs11 ink3">${t('international.prestigeHint')}</div>`}
       </div>
     </div>
     <div>
-      <div class="card"><div class="ct">POWO\u0141ANIA (${country.flag} ${country.name})</div>
-        <div class="fs11 ink3 mb10">5 najlepszych zawodnik\u00f3w z narodowo\u015bci\u0105 ${country.name} w obecnych ligach:</div>
+      <div class="card"><div class="ct">${t('international.callups').toUpperCase()} (${country.flag} ${countryName})</div>
+        <div class="fs11 ink3 mb10">${t('international.topNationals',{country:countryName})}</div>
         ${myNationals.length?myNationals.map((p,i)=>`<div class="grid gtca1a gp10 aic pd8-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})">
           <div class="syne b8 fs20 ink3">${i+1}</div>
-          <div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${teamName(p.teamId)}</div></div>
+          <div><div class="b7">${p.name}</div><div class="fs10 ink3">${t('international.playerLine',{age:p.age,club:teamName(p.teamId)})}</div></div>
           <div class="syne b8 fs24 cr">${ovr(p)}</div>
-        </div>`).join(''):'<div class="ink3 fs12">Brak zawodnik\u00f3w z tej narodowo\u015bci w lidze. Zawodnicy dostaj\u0105 narodowo\u015b\u0107 przy nowej grze.</div>'}
-        <div class="mt-10 fs10 ink3">W Mundialu bierze udzia\u0142 16 reprezentacji. Ranking \u015bwiatowy wp\u0142ywa na rozstawienie grup.</div>
+        </div>`).join(''):`<div class="ink3 fs12">${t('international.noNationals')}</div>`}
+        <div class="mt-10 fs10 ink3">${t('international.formatHint')}</div>
       </div>
     </div>
   </div>`;
@@ -1590,5 +1592,5 @@ async function startGame(){
   playClick();
 }
 
-window.PPM.pages = { statBar, toggleMarketFav, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
+window.PPM.pages = { statBar, toggleMarketFav, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pageMundial, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
 })();
