@@ -6,6 +6,8 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 const { boot } = require('./harness');
 
 test('nomination: the manager\'s A/B/C order is used for boards 1-3', () => {
@@ -117,4 +119,14 @@ test('[slow] uncancellable: a seeded event replays identically after a "reload"'
   // Reconstruct the pre-event save: fresh newGame from the same world seed.
   const second = await runOnce(null);
   assert.equal(first.scores, second.scores, 'identical seeds + state → identical cup results');
+});
+
+test('matchday durability is awaited before committed results are replayed', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '../src/core/gameplay.js'), 'utf8');
+  const start = source.indexOf('async function runMatchday()');
+  const atomic = source.indexOf('// ── ATOMIC COMMIT', start);
+  const persist = source.indexOf('persistGame();', atomic);
+  const flush = source.indexOf('await flushCareerSave();', persist);
+  const replay = source.indexOf('for(let i=0;i<matches.length;i++)', flush);
+  assert.ok(start >= 0 && atomic > start && persist > atomic && flush > persist && replay > flush);
 });

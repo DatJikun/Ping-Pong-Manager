@@ -3,6 +3,15 @@ window.PPM = window.PPM || {};
 const render = (...args)=>window.PPM.renderApp?.(...args);
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 
+function checkpointCareer(kind){
+  const manager=window.PPM.saveManager;
+  if(!manager?.isInitialized?.()||!manager.getActiveCareerId?.())return Promise.resolve(null);
+  return manager.createCheckpoint(kind,window.PPM.stateApi.serializeGame());
+}
+function flushCareerSave(){
+  return window.PPM.stateApi.flushPersistence?.()||Promise.resolve(true);
+}
+
 function getLoanedOut(){
   if(!store.G)return[];
   return (store.G.loans||[]).filter(l=>l.fromTeamId===store.G.myTeamId&&!l.returned);
@@ -2627,7 +2636,7 @@ async function simulateBackgroundSeasons(n,progressCb){
       updateRecords();
       doPromotionRelegation();
       recordClubSeasonHistory();
-      endSeason();
+      await endSeason();
       if(progressCb)progressCb(i+1,n);
       await sleep(20); // let the progress modal repaint
     }
@@ -3417,7 +3426,10 @@ async function playCupRound(){
   // without it a re-click played the ENTIRE bracket in one sitting.
   if(!shouldPlayCup())return;
   if(blockForInjuredStarter(store.G.myTeamId,'Puchar zablokowany'))return;
-  await runSeededEvent('_cupRoundSeed',playCupRoundBody);
+  await checkpointCareer('tournament');
+  const result=await runSeededEvent('_cupRoundSeed',playCupRoundBody);
+  await flushCareerSave();
+  return result;
 }
 async function playCupRoundBody(){
   const cup=store.G.cup;
@@ -3773,6 +3785,7 @@ async function runMatchday(){
   // Owner note #3: a due cup round plays itself before the league matchday —
   // no separate button press per round.
   if(shouldPlayCup()){await playCupRound();}
+  await checkpointCareer('matchday');
   ui.running=true;
   const myId=store.G.myTeamId;
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
@@ -3856,6 +3869,7 @@ async function runMatchday(){
   }
   generateInboxForMatchday(); // fresh mail (incl. decisions) before the NEXT round
   persistGame();
+  await flushCareerSave();
 
   for(let i=0;i<matches.length;i++){
     const m=matches[i],isO=m.home===myId||m.away===myId;
@@ -4159,6 +4173,7 @@ function maintainAiRosters(){
   store.G.teams.filter(t=>!t.isPlayer).forEach(team=>tuneGeneratedLeagueRoster(team.id));
 }
 function endSeason(){
+  const checkpointPromise=checkpointCareer('season');
   applyAiClubFinances();
   principalLifecycle();
   applyGrowth();
@@ -4346,7 +4361,9 @@ function endSeason(){
   // During background world-generation there is no player club — skip the page
   // render (pages assume myTeam()) and let the generator drive the UI.
   if(!ui._bgGen){ui.page='preseason';render();}
-  persistGame();
+  return Promise.resolve(checkpointPromise)
+    .catch(()=>null)
+    .then(()=>{persistGame();return flushCareerSave();});
 }
 
 // v13: Require exactly 3 sponsors to start season
@@ -4583,7 +4600,10 @@ function simNatMatch(t1,t2){
 
 async function runMundial(){
   if(!store.G||!store.G.mundialYear)return;
-  await runSeededEvent('_mundialSeed',runMundialBody);
+  await checkpointCareer('tournament');
+  const result=await runSeededEvent('_mundialSeed',runMundialBody);
+  await flushCareerSave();
+  return result;
 }
 async function runMundialBody(){
   const teams=getMundialNationalTeams();
@@ -4731,7 +4751,10 @@ function acceptNatTeam(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 async function runOlympics(){
   if(!store.G||!store.G.olympicYear)return;
-  await runSeededEvent('_olympicSeed',runOlympicsBody);
+  await checkpointCareer('tournament');
+  const result=await runSeededEvent('_olympicSeed',runOlympicsBody);
+  await flushCareerSave();
+  return result;
 }
 async function runOlympicsBody(){
   const rankByOvr=store.G.teams.slice().sort((a,b)=>teamOvr(b.id)-teamOvr(a.id));
