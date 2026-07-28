@@ -227,7 +227,7 @@ function pageSquad(){
   ];
   if(!acaSteps.some(s=>s[0]===ui.academyTab))ui.academyTab='squad';
   const acaTab=ui.academyTab;
-  const prospectCard=(p,i,action,label)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id})">
+  const prospectCard=(p,i,action,label,pendingSource)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id},'${pendingSource}',${i})">
     <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l · ${p.academyProfile?.region||'Klubowa akademia'}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
     <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b class="${ovrBase(p)?'':''}">${p[s]}</b></div>`).join('')}</div>
     <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Peak: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
@@ -259,10 +259,10 @@ function pageSquad(){
     <p class="why">Akademia generuje 1-2 juniorów na sezon; pasmo OVR, peak i tempo rozwoju rosną z jej poziomem. Mini-turniej to jednorazowe <b>10 000 €</b> za sezon: trzech kandydatów, z których wybierasz <b>jednego</b> — reszta odchodzi. Jakość tylko nieco wyższa niż zwykły nabór, więc to opcja na wybór z większej puli, nie pewny zysk.</p>
     ${academyLevel===0?`<div class="empty-state mt-14">Najpierw zbuduj akademię w zakładce Klub, żeby co sezon dostawać własnego juniora do oceny.</div>`:`
       <div class="h-sub">Klasa rocznika</div>
-      ${academyCandidates.length?`<div class="grid gtcfit240 gp12">${academyCandidates.map((p,i)=>prospectCard(p,i,`signAcademyProspect(${i})`,'PRZYJMIJ DO AKADEMII')).join('')}</div>`
+      ${academyCandidates.length?`<div class="grid gtcfit240 gp12">${academyCandidates.map((p,i)=>prospectCard(p,i,`signAcademyProspect(${i})`,'PRZYJMIJ DO AKADEMII','academyProspects')).join('')}</div>`
         :`<div class="empty-state">Brak aktywnych kandydatów. Kolejna klasa rocznika pojawi się wraz z nowym sezonem.</div>`}
       <div class="h-sub">Mini-turniej naboru</div>
-      ${academyTrial.length?`<div class="grid gtcfit240 gp12">${academyTrial.map((p,i)=>prospectCard(p,i,`signTrialProspect(${i})`,'WYBIERZ TEGO')).join('')}</div>`
+      ${academyTrial.length?`<div class="grid gtcfit240 gp12">${academyTrial.map((p,i)=>prospectCard(p,i,`signTrialProspect(${i})`,'WYBIERZ TEGO','academyTrial')).join('')}</div>`
         :store.G.academyTrialUsed?`<div class="empty-state">Mini-turniej w tym sezonie został już rozegrany.</div>`
         :`<div class="opt"><div><b>Zorganizuj mini-turniej</b><p>Trzech kandydatów, wybierasz jednego. Raz na sezon.</p></div><div class="m neg">−10 000<s>jednorazowo</s></div><button class="btn pr" onclick="runAcademyMiniTournament()" ${mtBudgetLow?'disabled':''}>ZORGANIZUJ</button></div>`}
     `}

@@ -1,5 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 const { boot } = require('./harness');
 
 function makePendingCandidate(g, id, name) {
@@ -123,4 +125,52 @@ test('trial signing guard also allocates a fresh live-player ID', () => {
     'trial signing does not overwrite established history');
   assert.equal(new Set(G.players.map((p) => p.id)).size, G.players.length,
     'trial signing keeps live-player IDs unique');
+});
+
+test('pending profile resolver uses the explicit academy source and index', () => {
+  const g = boot(805);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const established = G.players[0];
+  const academy = makePendingCandidate(g, established.id, 'Pending Academy Profile');
+  const trial = makePendingCandidate(g, established.id, 'Pending Trial Profile');
+  G.academyProspects = [academy];
+  G.academyTrial = [trial];
+
+  assert.equal(typeof g.PPM.gameplay.resolvePlayerProfile, 'function',
+    'gameplay exports the explicit profile resolver');
+  assert.equal(g.PPM.gameplay.resolvePlayerProfile(established.id).name, established.name,
+    'ordinary player lookup keeps the established live-player behavior');
+  assert.equal(
+    g.PPM.gameplay.resolvePlayerProfile(established.id, 'academyProspects', 0).name,
+    academy.name,
+    'academy card resolves the exact pending candidate',
+  );
+  assert.equal(
+    g.PPM.gameplay.resolvePlayerProfile(established.id, 'academyTrial', 0).name,
+    trial.name,
+    'trial card resolves the exact pending candidate',
+  );
+  assert.equal(
+    g.PPM.gameplay.resolvePlayerProfile(established.id, 'unknown', 0).name,
+    established.name,
+    'unknown source safely falls back to the live-player lookup',
+  );
+  assert.equal(
+    g.PPM.gameplay.resolvePlayerProfile(established.id, 'academyProspects', 9).name,
+    established.name,
+    'stale pending index safely falls back to the live-player lookup',
+  );
+});
+
+test('academy and trial cards pass explicit pending sources to the profile modal', () => {
+  const pagesPath = path.resolve(__dirname, '..', 'src', 'ui', 'pages.js');
+  const source = fs.readFileSync(pagesPath, 'utf8');
+
+  assert.ok(source.includes("openPlayerModal(${p.id},'${pendingSource}',${i})"),
+    'prospect card forwards its pending source and index');
+  assert.match(source, /signAcademyProspect\(\$\{i\}\).*'academyProspects'/,
+    'normal academy cards identify the academyProspects source');
+  assert.match(source, /signTrialProspect\(\$\{i\}\).*'academyTrial'/,
+    'mini-tournament cards identify the academyTrial source');
 });
