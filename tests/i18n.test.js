@@ -57,3 +57,35 @@ test('the start screen renders in English and switches to Polish without reload'
   assert.match(content.innerHTML, /NOWA GRA/i);
   assert.match(content.innerHTML, /Twoje kariery/i);
 });
+
+test('the pre-season decision flow follows the active locale', () => {
+  const g = boot(3105);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pagePreseason();
+  assert.match(english, /SEASON PREPARATION/i);
+  assert.match(english, /Who funds this season/i);
+  assert.doesNotMatch(english, /Kto finansuje ten sezon/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pagePreseason();
+  assert.match(polish, /PRZYGOTOWANIA DO SEZONU/i);
+  assert.match(polish, /Kto finansuje ten sezon/i);
+});
+
+test('the dashboard shell follows the active locale', () => {
+  const g = boot(3106);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageDash();
+  assert.match(english, /PROJECT PULSE/i);
+  assert.match(english, /SEASON STORY/i);
+  assert.doesNotMatch(english, /PULS PROJEKTU/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageDash();
+  assert.match(polish, /PULS PROJEKTU/i);
+  assert.match(polish, /NARRACJA SEZONU/i);
+});
