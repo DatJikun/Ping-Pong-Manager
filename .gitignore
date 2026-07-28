@@ -2,6 +2,7 @@ node_modules/
 *.log
 .DS_Store
 saves/
+.worktrees/
 
 # machine-local Claude Code settings (per-developer, not shared)
 .claude/settings.local.json
