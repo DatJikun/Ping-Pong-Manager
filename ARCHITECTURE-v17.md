@@ -131,7 +131,7 @@ Responsibilities:
 - injuries, growth, morale, fatigue
 - season transitions
 - historical records
-- cups, Top 12, Olympics, Mundial
+- cups, Top 12 Masters (Olympics/Mundial removed 2026-07-28 — unreachable)
 - helper functions used by UI pages
 
 Important note:
@@ -476,8 +476,6 @@ Examples:
 - domestic league scheduling
 - cup logic
 - Top 12 Masters
-- Olympics
-- Mundial
 
 These systems are event-driven and mostly hang off season progression.
 
@@ -520,7 +518,6 @@ The main tabs/pages include:
 - news
 - history
 - hall of fame
-- mundial
 
 To add a new page:
 1. create `pageX()` in `pages.js`

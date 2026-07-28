@@ -1,5 +1,77 @@
 # HANDOFF — PingPong Manager engineering work
 
+## Update 2026-07-28 — long-career stability
+
+**Read this before touching the season loop or the save migration.**
+
+### What competitions actually exist
+League (22 matchdays, two divisions, promotion/relegation), the domestic cup
+(a due round auto-plays before the next matchday), and the **Top 12 Masters**
+(offered before the last league round, separately per division). That is all.
+
+**Mundial and the Olympics never worked and have been removed.** Their flags
+were set at the very end of a season — inside the block that moves the career
+into the `transfer` phase — and `endSeason()` cleared them again before the
+phase could return to `pre`. Both dashboard entry points sat behind
+`else if(store.G.olympicYear)` / `else if(store.G.mundialYear)`, only reachable
+while the phase IS `pre`, so no button ever rendered. The Mundial page had no
+play button at all. Do not restore them; if the owner ever wants international
+competition, design the calendar slot first. Old saves keep their
+`olympic_gold` / `mundial_gold` trophies in the Hall of Fame.
+
+### The long-career safety net
+```
+npm run test:soak            # 30 seasons, PL, seed 1234 (~5 min)
+npm run test:soak:formats    # 8 seasons each on JP (T.League) and CN (CTTSL)
+node tests/soak.js --seasons=10 --seed=7 --country=DE --club=3
+```
+`tests/lib/career-driver.js` plays the REAL game headlessly — preseason gates,
+every `runMatchday()` (cup auto-plays inside), the Top 12 Masters, the
+post-season gala, `endSeason()` — with a deliberately boring auto-manager. Only
+`sleep()` and the gala's close button are stubbed; no result changes.
+
+`tests/lib/invariants.js` is the reusable integrity check. Call `checkWorld(G)`
+on any save object and `checkLiveLookups(sandbox)` on a booted game. It covers
+id domains (players, pending academy pools, staff), club/market/loan references,
+squad legality, schedules, the league table against stored results, career-history
+ownership, the club register, finances, a deep NaN/Infinity sweep, and whether the
+game's own resolvers open the person a card names. **Add new checks here, not as
+another one-off test.**
+
+`tests/real-saves.test.js` runs the owner's exported S4/S8/S11 careers through
+migrate → invariants → two more seasons → save → load → invariants. It reads
+`C:/Users/mwojn/Downloads` **read-only** (override with `PPM_REAL_SAVES_DIR`) and
+skips itself when the files are absent. Never write to those paths.
+
+### Fixed here (all confirmed in the owner's real saves or by the soak)
+1. A `youthOnly` club is barred from the transfer market by design but nothing
+   renewed its own contracts, so it dissolved — Akademia Orłów had ONE senior in
+   the S11 save. Such clubs now renew their own people
+   (`clubMustRetainOwnPlayers` in `gameplay.js`).
+2. `playerHistory` buckets merged two players while ids were duplicated, so a
+   career chart plotted a stranger. Migration now keeps only the rows on the
+   owner's own timeline.
+3. Migration kept stale market rows offering the manager his own squad members.
+4. `findStaffById()` searched the market pools before the employed record, so a
+   scout renewal wrote to the throwaway scoutPool mirror and the real contract
+   expired anyway.
+5. The signing-bonus slider could not be set to zero: `window._negBonus||exp.signingBonus`
+   treated 0 as "unset" and charged the club the agent's full expected bonus while
+   the modal displayed 0 €.
+6. A club in the red could not sign even a FREE agent on a zero-cost package, so a
+   severance payout (a starter benched three rounds walks out) could leave a career
+   permanently unable to field three players.
+
+### Known limits (measured, not fixed)
+- `results` grows ~264 rows/season forever; per-duel detail is stripped after two
+  seasons, so 30 seasons is ~3.9 MB of save. Fine for now, worth a cap eventually.
+- ~75% of every AI academy's intake lapses before the age-21 graduation gate
+  (juniors get a flat 3-year deal at 16–19). Ordinary clubs paper over it with
+  free-agent signings; changing it would move the AI talent balance, so it was
+  left alone deliberately.
+
+---
+
 ## Update 2026-07-28 — reliable career saves
 
 The single `localStorage` slot has been replaced by an IndexedDB career library.
@@ -229,7 +301,8 @@ All tests must be green before claiming done.
 This is the agreed roadmap. Status: `[x]` done, `[~]` in progress, `[ ]` todo.
 
 1. `[x]` **Tests around the match engine.** Safety net so balance/feature changes
-   can't silently break the game. → `tests/harness.js`, suite ~112 tests.
+   can't silently break the game. → `tests/harness.js` (unit-level) plus
+   `tests/lib/career-driver.js` + `tests/lib/invariants.js` (whole careers).
 2. `[ ]` **Split `gameplay.js`** (~5.5k lines) by domain: `matches`, `economy`,
    `market`, `ai`, `season`, `staff`, `academy`. Do market+negotiations first.
 3. `[ ]` **Separate simulation from state mutation.** `simTeamMatch` should
@@ -263,8 +336,9 @@ with tests + a guide/UX note.
 - `endSeason()`, `applyGrowth()`, `aiSignPlayers()` are the most sensitive
   functions. Any new save field → default in `migrateLoadedGame()` + bump
   `SAVE_SCHEMA_VERSION` if the migration is not purely additive.
-- `runMatchday`/`playCupRound`/`runMundial`/`runOlympics` are async + DOM-bound;
-  tests use `simTeamMatch` + `applyResult` (+ unit helpers).
+- `runMatchday`/`playCupRound`/`runTop12Masters` are async + DOM-bound. Unit tests
+  use `simTeamMatch` + `applyResult`; the soak runner drives the real thing (see
+  `tests/lib/career-driver.js`).
 
 ---
 
@@ -402,8 +476,8 @@ WSZECHSTRONNY→TWO_SIDED, CIERPLIWY→DEFENDER, TECHNICZNY→BLOCKER.
 `autoPlaySeason()` + a ▶▶ AUTO-SEZON button by the season/round header. Plays
 matchdays back-to-back with no animation (`matchPause` is instant under `ui.autoPlay`
 and the per-point VME loop is skipped), reusing `runMatchday` so economy/news/
-standings match manual play. STOPS on: injury / <4 healthy starters, a cup/Top12/
-Mundial/Olympics round due, the season-end gala, or toggling off (■ STOP). The match
+standings match manual play. STOPS on: injury / <4 healthy starters, a cup/Top 12
+round due, the season-end gala, or toggling off (■ STOP). The match
 modal stays open across matchdays; the overlay backdrop ignores clicks while
 auto-playing. Smoke-tested headlessly.
 

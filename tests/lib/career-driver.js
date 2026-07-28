@@ -202,16 +202,30 @@ class AutoManager {
 
   balanceBooks() {
     const gp = this.gp;
-    if ((this.me.budget || 0) >= 0 && this.wageBill() <= this.wageCeiling()) return;
-    // Sell from the back of the queue, never below a fieldable squad.
+    const red = () => (this.me.budget || 0) < 0;
+    if (!red() && this.wageBill() <= this.wageCeiling()) return;
+    // Sell from the back of the queue. An overdrawn club sells down further than
+    // one that is merely over its wage ceiling, but never past a legal squad.
     const surplus = this.seniors()
       .filter((p) => p.role !== 'starter')
       .sort((a, b) => gp.ovrBase(a) - gp.ovrBase(b));
     for (const p of surplus) {
-      if (this.seniors().length <= 6) break;
-      if ((this.me.budget || 0) >= 0 && this.wageBill() <= this.wageCeiling()) break;
+      const floor = red() ? 4 : 6;
+      if (this.seniors().length <= floor) break;
+      if (!red() && this.wageBill() <= this.wageCeiling()) break;
       gp.sellPlayer(p.id);
     }
+  }
+
+  // Rotate who takes board A/B/C. Only three of the four starters play each
+  // round, and a starter benched three rounds running loses 25 morale — at
+  // morale 15 he tears up his contract and the club pays severance. A manager
+  // who never looks at his lineup bleeds players and money; this one rotates.
+  rotateBoardOrder() {
+    const starters = this.seniors().filter((p) => p.role === 'starter')
+      .sort((a, b) => (a.boardOrder ?? 99) - (b.boardOrder ?? 99));
+    if (starters.length < 4) return;
+    starters.forEach((p, i) => { p.boardOrder = (i + this.G.matchday) % starters.length; });
   }
 
   // Signs free agents until the squad can survive a season of injuries. Walks the
@@ -376,6 +390,7 @@ async function playSeasons(g, seasons, options = {}) {
       }
 
       ctx.stage = `squad check before matchday ${G().matchday + 1}`;
+      manager.rotateBoardOrder();
       if (!manager.ensureFieldable()) fail(`cannot field 3 players at matchday ${G().matchday + 1} — ${manager.describeSquad()}`);
       ctx.stage = `matchday ${G().matchday + 1}`;
 

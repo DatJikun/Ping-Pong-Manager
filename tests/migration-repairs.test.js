@@ -133,3 +133,50 @@ test('a club that fell below the protocol minimum graduates its own juniors on l
   assert.ok(seniors.length >= 3,
     `the club must be able to field a team again — has ${seniors.length} senior(s)`);
 });
+
+// Not migration, but the same family of long-career dead-ends: a club that goes
+// into the red mid-season must still be able to rebuild a legal squad.
+test('an overdrawn club can still sign a free agent on a zero-cost package', () => {
+  const g = boot(17);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const me = G.teams.find((t) => t.isPlayer);
+
+  // A benched starter walking out on severance (applySeveranceRelease) charges
+  // the club with no floor, so this is a state real careers reach.
+  me.budget = -25000;
+
+  const target = G.players.find((p) => p.teamId === null && !p.retired && p.role !== 'youth');
+  assert.ok(target, 'the world has a free agent');
+  const exp = gp.contractExpect(target, G.myTeamId);
+  g._negSal = exp.salary;
+  g._negYrs = exp.years;
+  g._negBonus = 0;      // the manager drags the bonus slider to zero
+  g._negRole = exp.role;
+  gp.doNegotiate(target.id);
+
+  assert.equal(target.teamId, G.myTeamId,
+    'a package that costs nothing must not be refused for lack of budget');
+  assert.equal(me.budget, -25000, 'and it must not move the balance');
+});
+
+test('an overdrawn club is still refused a package it cannot pay for', () => {
+  const g = boot(18);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const me = G.teams.find((t) => t.isPlayer);
+  me.budget = -25000;
+
+  const target = G.players.find((p) => p.teamId === null && !p.retired && p.role !== 'youth');
+  const exp = gp.contractExpect(target, G.myTeamId);
+  g._negSal = exp.salary;
+  g._negYrs = exp.years;
+  g._negBonus = 40000;  // a bonus the club plainly cannot fund
+  g._negRole = exp.role;
+  gp.doNegotiate(target.id);
+
+  assert.notEqual(target.teamId, G.myTeamId, 'the club cannot buy what it cannot afford');
+  assert.equal(me.budget, -25000, 'and the balance is untouched');
+});

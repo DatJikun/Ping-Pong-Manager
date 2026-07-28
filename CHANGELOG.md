@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-07-28 — Stabilność długiej kariery (30 sezonów)
+
+**Testy.** Nowy `npm run test:soak` rozgrywa całą karierę bez przeglądarki:
+przygotowania do sezonu, wszystkie 22 kolejki (puchar rozgrywa się sam w środku),
+Top 12 Masters, galę i zmianę sezonu. Po każdym sezonie sprawdza komplet
+invariantów świata i wykonuje pełny zapis → walidację → wczytanie. 30 sezonów
+przechodzi zielono; krótszy wariant chodzi w zwykłym `npm test`.
+Prawdziwe zapisy właściciela (S4, S8, S11) są testowane tylko do odczytu:
+migracja, invarianty, dwa kolejne sezony, zapis, wczytanie, invarianty.
+
+**Naprawione (wszystko potwierdzone w prawdziwych zapisach):**
+
+- Klub `youthOnly` (Akademia Orłów) nie miał prawa kupować z rynku, ale nikt nie
+  przedłużał mu kontraktów — rozpadał się. W zapisie z S11 miał JEDNEGO seniora,
+  czyli mniej niż trzech wymaganych do rozegrania meczu. Teraz taki klub
+  przedłuża umowy własnym zawodnikom; pozostałe kluby nadal wypuszczają ludzi po
+  wygasłym kontrakcie.
+- Historie karier były sklejone z dwóch zawodników (spadek po starym błędzie
+  duplikatów ID) — wykres pokazywał wiek i statystyki kogoś innego. Migracja
+  zostawia tylko wiersze leżące na osi czasu właściciela; zdrowa historia nie
+  jest ruszana.
+- Rynek transferowy potrafił oferować zawodnika z własnego składu.
+- `findStaffById` trafiał w nieaktualną kopię skauta z puli rynkowej, więc
+  przedłużenie kontraktu zapisywało się w kopii, a prawdziwa umowa wygasała.
+- Suwak premii za podpis ustawiony na 0 był traktowany jak "nie ustawiony" i klub
+  płacił pełną oczekiwaną premię, mimo że okno negocjacji pokazywało 0 €.
+- Klub na minusie nie mógł podpisać nawet darmowego wolnego agenta, więc po
+  odprawie dla zawodnika z niskim morale kariera potrafiła utknąć bez możliwości
+  wystawienia składu.
+
+**Wydajność.** Zmiana sezonu potrafiła zawiesić interfejs na 3–5 sekund
+(`ovr()` liczone miliony razy w oknie transferowym AI). Indeks klubów po ID i
+jednoprzebiegowe `calcLeagueAvgOvr` skróciły to o ~30% przy identycznych
+wynikach (zweryfikowane odciskiem palca całej kariery).
+
+**Usunięte.** Mundial i Olimpiada nigdy nie były osiągalne — flagi ustawiały się
+na koniec sezonu i były kasowane przez `endSeason()`, zanim gra wróciła do fazy,
+w której pokazywał się przycisk. Kod, strona i oferta selekcjonera zostały
+usunięte. Zostają liga, puchar i Top 12 Masters. Stare zapisy zachowują zdobyte
+wcześniej medale w Hall of Fame.
+
 ## 2026-07-28 — Biblioteka karier i bezpieczne zapisy
 
 - Zastąpiono pojedynczy zapis `ppgame` biblioteką dowolnej liczby nazwanych

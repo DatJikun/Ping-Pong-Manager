@@ -36,7 +36,7 @@ function ageWorld(g, seasons) {
 const seniorsOf = (G, teamId) => G.players.filter(
   (p) => p.teamId === teamId && !p.retired && p.role !== 'youth' && !p.loanedOut);
 
-test('every AI club can still field a legal team after 12 offseasons', () => {
+test('[slow] every AI club can still field a legal team after 12 offseasons', () => {
   const g = boot(31337);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = () => g.PPM.state.G;
@@ -52,7 +52,7 @@ test('every AI club can still field a legal team after 12 offseasons', () => {
     `clubs below the 3-player protocol minimum: ${broken.map((b) => `${b.name} (${b.seniors})`).join(', ')}`);
 });
 
-test('the youth-only club keeps a squad it grew itself', () => {
+test('[slow] the youth-only club keeps a squad it grew itself', () => {
   const g = boot(20260728);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = () => g.PPM.state.G;
@@ -86,4 +86,25 @@ test('ordinary AI clubs still release players when contracts expire', () => {
 
   assert.notEqual(victim.teamId, ordinary.id,
     'an expired contract at an ordinary club must still free the player up');
+});
+
+// Fast version of the same rule, for every-commit CI: one offseason is enough to
+// show that a market-barred club renews instead of emptying out.
+test('a market-barred club renews its own expiring contracts in one offseason', () => {
+  const g = boot(777);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = () => g.PPM.state.G;
+  const club = G().teams.find((t) => (t.traits || []).includes('youthOnly'));
+  const squad = G().players.filter((p) => p.teamId === club.id && !p.retired);
+  assert.ok(squad.length >= 3, 'the club starts with a squad');
+  squad.forEach((p) => { p.contractYears = 0; });
+
+  g.PPM.gameplay.aiSignPlayers();
+
+  // (the club also takes on new juniors in the same pass — what matters is that
+  // nobody it already had was released)
+  const left = squad.filter((p) => p.teamId !== club.id);
+  assert.deepEqual(left.map((p) => p.name), [],
+    'a club that may not use the transfer market keeps everyone it has');
+  assert.ok(squad.every((p) => (p.contractYears || 0) > 0), 'on live contracts');
 });

@@ -14,8 +14,8 @@
 
 | | |
 |---|---|
-| Engine | Works. 112 regression tests, headless harness, long-career + academy probes |
-| Systems | League + cup + Top 12 + Mundial/Olympics, 5 playing styles with counters, EUR economy, staff, academy, equipment, principals, inbox (thin), AI transfers |
+| Engine | Works. Regression tests, headless harness, long-career soak runner (`npm run test:soak`, 30 seasons with world invariants + save/load every season) |
+| Systems | League + cup + Top 12 Masters (Mundial/Olympics removed 2026-07-28 — never reachable), 5 playing styles with counters, EUR economy, staff, academy, equipment, principals, inbox (thin), AI transfers |
 | Content | 6 countries × 2 divisions × 12 clubs, procedural players/staff, procedural portraits |
 | UI | Just rebuilt (2026-07-24): theme tokens, working dark theme, decluttered screens. Still Polish-only, still "sections stacked on a page" in the long flows |
 | Language | Polish only |

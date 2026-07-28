@@ -65,15 +65,21 @@ Current world setup supports multiple national ecosystems with their own leagues
 - 22 league matchdays
 - promotion and relegation between divisions
 
-### Competitions
-- Domestic league
-- Domestic cup with real clubs and amateur entries
-- Top 12 Masters played before the last league round, with a separate event for I Liga and II Liga
-- Olympics on the long-term calendar
-- Mundial on the long-term calendar
+### Competitions (verified against the code, 2026-07-28)
+- Domestic league — 22 matchdays, two divisions, promotion and relegation
+- Domestic cup with real clubs and amateur entries; a due round plays itself
+  before the next league matchday
+- Top 12 Masters, offered before the last league round, separately for I Liga
+  and II Liga
 
-### National Team Path
-Manager prestige can unlock national-team offers and international career progression.
+That is the complete list. Mundial and the Olympics were designed but never
+became reachable — their flags were set as a season ended and cleared again
+before the phase returned to "in season", so no button ever appeared. The code
+was removed on 2026-07-28. Do not reintroduce them without designing the
+calendar slot they would actually occupy.
+
+There is no national-team path. Manager prestige feeds club offers and the
+board's patience, nothing else.
 
 ## Club Identity Layer
 Each club now has a richer identity package:
@@ -679,7 +685,7 @@ This keeps each release coherent:
 
 ### Event Scheduling
 - the player does not manually choose whether to play a special event or a league round
-- when a cup round, Top 12, Mundial, or Olympics is scheduled, it replaces the normal next-step button in the season flow
+- when Top 12 is scheduled it replaces the normal next-step button in the season flow
 - domestic cup is part of the season cadence rather than a side button
 
 ### Live Match Presentation

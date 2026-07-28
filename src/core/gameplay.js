@@ -4939,13 +4939,24 @@ function doNegotiate(pid){
   }
   if(alreadyNegotiated('player',pid)){toast(`Oferta dla ${p.name} zosta\u0142a ju\u017c z\u0142o\u017cona w tej kolejce.`);return;}
   const exp=contractExpect(p,store.G.myTeamId);
-  const sal=window._negSal||exp.salary;
-  const yrs=window._negYrs||exp.years;
-  const bonus=window._negBonus||exp.signingBonus;
+  // `||` treated a slider dragged to ZERO as "not set" and quietly substituted the
+  // agent's full expectation — so offering no signing bonus charged the club the
+  // whole bonus anyway, while the modal displayed 0. Fall back only when the value
+  // is genuinely absent.
+  const num=(v,fallback)=>Number.isFinite(v)?v:fallback;
+  const sal=num(window._negSal,exp.salary);
+  const yrs=num(window._negYrs,exp.years);
+  const bonus=num(window._negBonus,exp.signingBonus);
   const promisedRole=window._negRole||exp.role;
   const marketItem=(store.G.transferMarket||[]).find(m=>m.playerId===pid)||null;
   const upfront=(marketItem?.type==='transfer'?(marketItem.fee||0):0)+bonus;
-  if(myTeam().budget<upfront){toast('Brak bud\u017cetu na ten pakiet!');return;}
+  // Only an offer that actually COSTS something can be blocked by the balance.
+  // A club in the red still has to be able to sign a free agent on a zero-cost
+  // package, or it soft-locks: a benched starter walking out on severance
+  // (applySeveranceRelease) can push the account negative mid-season, and if
+  // that also blocked free signings the squad could never be rebuilt back to the
+  // three players the match protocol needs.
+  if(upfront>0&&myTeam().budget<upfront){toast('Brak bud\u017cetu na ten pakiet!');return;}
   const feedback=negResponse(p,sal,yrs,bonus,promisedRole,store.G.myTeamId);
   markNegotiated('player',pid);
   pushNegotiationHistory({kind:'player',targetId:p.id,targetName:p.name,status:feedback.score<0?'rejected':'accepted',salary:sal,years:yrs,bonus,promisedRole,reasons:feedback.reasons});

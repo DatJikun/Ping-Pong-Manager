@@ -3,8 +3,10 @@
 Map of every doc, what it's for, and how fresh it is. Read in this order.
 
 ## Quick facts — what is ACTUALLY shipped right now (2026-07-24)
-- **Headless test harness + 112 passing tests** (`npm test`) + long-career probe
-  (`node tests/stress.js`) + academy balance probe (`node tests/stress.js youth`).
+- **Headless test harness + regression suite** (`npm test`, `npm run test:full`),
+  a **30-season soak runner** (`npm run test:soak`) that plays real careers and
+  checks world invariants + a save/load round trip after every season, plus the
+  academy balance probe (`node tests/stress.js youth`).
 - **Academy** (vertical slice): 6 levels, age-curve dev, youth sales/loans, challenge
   club Akademia Orłów. See `DESIGN-academy.md`.
 - **5 playing styles** with **live counter-pentagon** (equal-stat counters ~57–65%;
@@ -62,8 +64,9 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 **On conflict:** `HANDOFF` + `DESIGN-*` + `AUDIT` + **code/tests** win.
 
 ## How we work
-- **`npm test` (112 tests)** after every change; `npm run check` for syntax;
-  `node tests/stress.js 100` for long careers.
+- **`npm test`** after every change; `npm run check` for syntax;
+  **`npm run test:soak`** before anything that touches the season loop, the save
+  migration or entity ids.
 - Balance/feel: agree with owner before coding when numbers change feel.
 - One logical change per commit when using git.
 

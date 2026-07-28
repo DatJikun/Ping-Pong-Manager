@@ -71,8 +71,13 @@ for (const fixture of realSaves.FIXTURES) {
       const after = describeWorld(reloaded);
       assert.equal(after.retiredEntities, 0, 'no retired player survives as a full entity');
       assert.ok(after.hallOfFame <= 20, `Hall of Fame stays at 20 (was ${after.hallOfFame})`);
-      assert.ok(after.players <= before.players,
-        `population must not keep growing: ${before.players} → ${after.players}`);
+      // Season-to-season churn moves the headcount a little either way; what must
+      // not happen is the runaway growth these careers used to show (S11 shipped
+      // 1256 players, most of them retired entities and duplicates).
+      assert.ok(after.players < before.players * 1.1,
+        `population must stay bounded across two seasons: ${before.players} → ${after.players}`);
+      assert.ok(after.players < 600,
+        `a healthy world is a few hundred players, not ${after.players}`);
     } finally {
       g.__stopGalaClicker();
     }
