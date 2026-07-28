@@ -19,6 +19,8 @@
   language-independent.
 - Migrated the full budget screen and its locale-aware financial formatting,
   including projections, objectives, S+1 commitments and season history.
+- Localized sponsor and board-goal descriptions, progress labels, promised
+  contract roles and the full sponsor screen across every consumer.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

@@ -619,10 +619,9 @@ function goalDiff(g){
   return 1;
 }
 function goalDesc(g){
-  const map={none:'Bez wymagań (gwarancja)',top2:'Top 2 w lidze',top3:'Top 3 w lidze',top4:'Top 4 w lidze',top6:'Top 6 w lidze',top8:'Top 8 w lidze',win2:'Min. 2 wygrane',win4:'Min. 4 wygrane',win6:'Min. 6 wygranych',win8:'Min. 8 wygranych',win10:'Min. 10 wygranych',win12:'Min. 12 wygranych',win14:'Min. 14 wygranych',win16:'Min. 16 wygranych'};
-  if(map[g])return map[g];
-  if(/^top\d+$/.test(g))return'Miejsce w Top '+g.slice(3);
-  if(/^win\d+$/.test(g))return'Min. '+g.slice(3)+' wygranych';
+  if(g==='none')return t('goal.none');
+  if(/^top\d+$/.test(g))return t('goal.top',{count:g.slice(3)});
+  if(/^win\d+$/.test(g))return t('goal.wins',{count:g.slice(3)});
   return g;
 }
 const BOARD_GOAL_ORDER=['top2','top3','top4','top6','top8','win16','win14','win12','win10','win8','win6','win4'];
@@ -631,7 +630,7 @@ function boardGoalIndex(goal){
   return idx>=0?idx:BOARD_GOAL_ORDER.length-1;
 }
 function checkGoal(s){if(s.goal==='none')return true;const mt=myTeam();const myL=myLeague();const srt=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);const pos=srt.findIndex(t=>t.isPlayer)+1;if(s.goal.startsWith('top'))return pos<=(+s.goal.replace('top',''));if(s.goal.startsWith('win'))return mt.w>=(+s.goal.replace('win',''));return false;}
-function sponsorProg(s){if(s.goal==='none')return{label:'Bez wymagań',pct:100};const mt=myTeam();const myL=myLeague();const srt=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);const pos=srt.findIndex(t=>t.isPlayer)+1;if(s.goal.startsWith('top')){const t=+s.goal.replace('top','');return{label:`Poz: ${pos} (cel: Top ${t})`,pct:Math.max(0,Math.min(100,100-(pos-1)*(100/t)))};}const t=+s.goal.replace('win','');return{label:`Wygrane: ${mt.w}/${t}`,pct:Math.min(100,Math.round(mt.w/t*100))};}
+function sponsorProg(s){if(s.goal==='none')return{label:t('goal.progressNone'),pct:100};const mt=myTeam();const myL=myLeague();const srt=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);const pos=srt.findIndex(t=>t.isPlayer)+1;if(s.goal.startsWith('top')){const target=+s.goal.replace('top','');return{label:t('goal.positionProgress',{position:pos,target}),pct:Math.max(0,Math.min(100,100-(pos-1)*(100/target)))};}const target=+s.goal.replace('win','');return{label:t('goal.winsProgress',{wins:mt.w,target}),pct:Math.min(100,Math.round(mt.w/target*100))};}
 function randName(){
   const fn = window._FN || FN;
   const ln = window._LN || LN;
@@ -1276,7 +1275,7 @@ function rollWeightedPeak(baseFloor,baseCeil,quality){
   return clamp(baseFloor+Math.round((baseCeil-baseFloor)*(0.18+Math.random()*0.34))+rnd(-2,2),58,97);
 }
 function roleGuaranteeLabel(role){
-  return role==='starter'?'Gwarancja pierwszego składu':role==='rotation'?'Rola w rotacji':'Projekt / ławka';
+  return t(role==='starter'?'role.starter':role==='rotation'?'role.rotation':'role.prospect');
 }
 function getContractProfile(p){
   ensurePlayerMeta(p);

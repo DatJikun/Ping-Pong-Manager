@@ -741,14 +741,14 @@ function pageBudget(){
 
 function pageSponsors(){
   const pres=calcPrestige();const offers=store.G.sponsorOffers||[];const active=store.G.sponsors.filter(s=>s.active);
-  return`<div class="ph"><div><div class="pt">SPONSORZY</div><div class="ps">Presti\u017c: ${pres}/100 ${myLeague()===2?' (II Liga: ni\u017csze nagrody)':''}</div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('sponsors.title')}</div><div class="ps">${t('sponsors.prestige',{value:pres})}${myLeague()===2?` (${t('sponsors.lowerRewards')})`:''}</div></div></div>
   <div class="g2">
-    <div class="card"><div class="ct">AKTYWNE UMOWY</div>
-    ${active.length?active.map(s=>{const p=sponsorProg(s);return`<div class="spon active"><div class="flex jcb"><div><div class="spon-name">${s.name}</div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${s.reward.toLocaleString('pl')} €${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${s.yearsLeft} sez.)</span>`:''}</div></div><div class="spbar"><div class="spfill" style="width:${p.pct}%"></div></div></div>`;}).join(''):'<div class="ink3 fs12">Brak aktywnych um\u00f3w</div>'}
+    <div class="card"><div class="ct">${t('sponsors.active')}</div>
+    ${active.length?active.map(s=>{const p=sponsorProg(s);return`<div class="spon active"><div class="flex jcb"><div><div class="spon-name">${s.name}</div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${formatCurrency(s.reward)}${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${t('sponsors.seasons',{count:s.yearsLeft})})</span>`:''}</div></div><div class="spbar"><div class="spfill" style="width:${p.pct}%"></div></div></div>`;}).join(''):`<div class="ink3 fs12">${t('sponsors.noActive')}</div>`}
     </div>
-    <div class="card"><div class="ct">OFERTY <span class="cgold">${pres}/100</span></div>
-    ${active.length>=3?'<div class="ink3 fs12">Masz ju\u017c 3 aktywne umowy (maksimum).</div>':
-      offers.length?offers.map(s=>`<div class="spon"><div class="flex jcb"><div><div class="spon-name">${s.name} <span class="fs10 ink3">[${s.tier}]</span></div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${s.reward.toLocaleString('pl')} €${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${s.yearsLeft} sez.)</span>`:''}</div></div><button class="btn pr sm mt-6" onclick="signSponsor(${s.id})">PODPISZ</button></div>`).join(''):'<div class="ink3 fs12">Brak ofert</div>'}
+    <div class="card"><div class="ct">${t('sponsors.offers')} <span class="cgold">${pres}/100</span></div>
+    ${active.length>=3?`<div class="ink3 fs12">${t('sponsors.maximum')}</div>`:
+      offers.length?offers.map(s=>`<div class="spon"><div class="flex jcb"><div><div class="spon-name">${s.name} <span class="fs10 ink3">[${s.tier}]</span></div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${formatCurrency(s.reward)}${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${t('sponsors.seasons',{count:s.yearsLeft})})</span>`:''}</div></div><button class="btn pr sm mt-6" onclick="signSponsor(${s.id})">${t('sponsors.sign')}</button></div>`).join(''):`<div class="ink3 fs12">${t('sponsors.noOffers')}</div>`}
     </div>
   </div>`;
 }

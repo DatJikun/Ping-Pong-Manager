@@ -177,3 +177,22 @@ test('the budget screen follows the active locale and locale-aware money formatt
   assert.match(polish, /Prognoza końca sezonu/i);
   assert.match(polish, /Planowanie kolejnego sezonu/i);
 });
+
+test('sponsor goals and the sponsor screen follow the active locale', () => {
+  const g = boot(3112);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  assert.equal(g.PPM.gameplay.goalDesc('top4'), 'Top 4 in the league');
+  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Rotation role');
+  const english = g.PPM.pages.pageSponsors();
+  assert.match(english, /Sponsors/i);
+  assert.match(english, /Active deals/i);
+  assert.doesNotMatch(english, /Aktywne umowy/i);
+
+  g.PPM.i18n.setLocale('pl');
+  assert.equal(g.PPM.gameplay.goalDesc('top4'), 'Top 4 w lidze');
+  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Rola w rotacji');
+  const polish = g.PPM.pages.pageSponsors();
+  assert.match(polish, /Aktywne umowy/i);
+});
