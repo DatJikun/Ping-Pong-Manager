@@ -64,12 +64,20 @@ test('the repair lists every eligible free agent once and does not re-roll negot
   const G = g.PPM.state.G;
 
   // A negotiated row carries randomised data — migration must preserve it as-is.
-  const listed = G.players.find((p) => p.teamId !== null && p.teamId !== G.myTeamId && !p.retired);
+  const contracted = G.players.filter((p) => p.teamId !== null && p.teamId !== G.myTeamId
+    && !p.retired && p.contractYears > 0);
+  const listed = contracted[0];
   const negotiated = { playerId: listed.id, type: 'transfer', fee: 123456, tier: 'hot' };
+  // buildMarket() guards every negotiated shelf with find(m => m.playerId === p.id),
+  // so one person is never offered two ways at once. A migrated save must not be
+  // able to sit in a state the generator cannot produce.
+  const twoWays = contracted[1];
   // A row whose player no longer exists, plus a duplicated free-agent row.
   const agents = G.players.filter((p) => isFreeAgent(G, p));
   G.transferMarket = [
     negotiated,
+    { playerId: twoWays.id, type: 'transfer', fee: 777, tier: 'standard' },
+    { playerId: twoWays.id, type: 'loan', fee: 0, share: 0.6, tier: 'loan' },
     { playerId: agents[0].id, type: 'fa', fee: 0 },
     { playerId: agents[0].id, type: 'fa', fee: 0 },
     { playerId: 999999, type: 'fa', fee: 0 },
@@ -92,6 +100,12 @@ test('the repair lists every eligible free agent once and does not re-roll negot
   assert.ok(kept, 'the transfer listing survived migration');
   assert.equal(kept.fee, 123456, 'fee is preserved, not re-rolled');
   assert.equal(kept.tier, 'hot', 'tier is preserved, not re-rolled');
+
+  // One person is offered exactly one way, and it is the first row's terms.
+  const bothWays = market.filter((m) => m.playerId === twoWays.id);
+  assert.equal(bothWays.length, 1, 'a player offered as transfer AND loan keeps one row');
+  assert.equal(bothWays[0].type, 'transfer', 'the first row wins');
+  assert.equal(bothWays[0].fee, 777, 'the surviving row keeps its own terms');
 
   // The dangling row is gone.
   assert.ok(!market.some((m) => m.playerId === 999999), 'row for a non-existent player is dropped');

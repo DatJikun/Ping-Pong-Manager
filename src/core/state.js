@@ -381,9 +381,11 @@ function migrateLoadedGame(parsed){
         // A stale fee/pre-sign row for someone whose contract has since expired
         // contradicts his current state; buildMarket() would never pair the two.
         if(freeAgentIds.has(row.playerId))return false;
-        const key=row.playerId+'|'+row.type;
-        if(seenNegotiated.has(key))return false;
-        seenNegotiated.add(key);
+        // Keyed by player alone, not by player+type: buildMarket() guards each
+        // negotiated shelf with find(m=>m.playerId===p.id), so nobody is ever
+        // offered two ways at once. The first row wins and keeps its own terms.
+        if(seenNegotiated.has(row.playerId))return false;
+        seenNegotiated.add(row.playerId);
         return true;
       });
       game.transferMarket=[
