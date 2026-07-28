@@ -29,6 +29,17 @@ test('locale dictionaries have identical keys and interpolate parameters', () =>
   assert.equal(t('missing.key'), 'missing.key');
 });
 
+test('player styles, traits and career state use semantic translation keys', () => {
+  const g = boot(3110);
+  assert.equal(g.PPM.i18n.t('style.DEFENDER'), 'Modern defender');
+  assert.equal(g.PPM.i18n.t('trait.MENTOR.label'), 'Mentor');
+  assert.equal(g.PPM.i18n.t('form.deepSlump'), 'deep slump');
+  g.PPM.i18n.setLocale('pl');
+  assert.equal(g.PPM.i18n.t('style.DEFENDER'), 'Nowoczesny defensor');
+  assert.equal(g.PPM.i18n.t('trait.MENTOR.desc'), 'Przyspiesza rozwój młodszych kolegów z rezerwy.');
+  assert.equal(g.PPM.i18n.t('form.deepSlump'), 'głęboki dołek');
+});
+
 test('i18n loads before state and app settings persist the selected language', () => {
   assert.ok(LOAD_ORDER.indexOf('src/i18n/i18n.js') < LOAD_ORDER.indexOf('src/core/state.js'));
   const g = boot(3103);

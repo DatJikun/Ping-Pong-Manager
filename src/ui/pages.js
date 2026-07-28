@@ -1,7 +1,15 @@
 ﻿(function(){
 window.PPM = window.PPM || {};
 const { COUNTRIES, COUNTRY_IDS, MUNDIAL_PARTICIPANTS, MUNDIAL_INTERVAL, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
-const styleLabel=id=>(PLAYER_STYLE_INFO[id]||{}).label||id||'?';
+const styleLabel=id=>t(`style.${id}`)||id||'?';
+const coachStyleLabel=s=>{
+  const id=s.styleId||Object.values(COACH_STYLES).find(style=>style.label===s.styleName)?.id;
+  return id?t(`coachStyle.${id}`):t('staff.generalCoach');
+};
+const scoutSpecialtyLabel=s=>{
+  const id=s.specialty||SCOUT_SPECIALTIES.find(spec=>spec.label===s.specialtyLabel)?.id;
+  return id?t(`scoutSpecialty.${id}`):t('squad.general');
+};
 const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
@@ -273,10 +281,10 @@ function pageSquad(){
     <p class="why">${t('squad.scoutWhy')}</p>
     ${academyScouts.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const cost=Math.max(2500,Math.round(1800+staffOvr(s)*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
-        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${s.specialtyLabel||t('squad.academyScout')}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
+        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${scoutSpecialtyLabel(s)}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
         ${mission?`<div class="tile fs11">${t('squad.inField',{region:mission.region})}<br>${t('squad.remaining',{count:Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)})}<br>${t('squad.missionCost',{amount:formatCurrency(mission.cost||cost)})}</div>`
           :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">${t('squad.send')}</button></div>
-             <div class="fs11 ink3 mt-6">${t('squad.missionCost',{amount:formatCurrency(cost)})} · ${t('squad.reportCount')} · ${t('squad.specialty',{name:s.specialtyLabel||t('squad.general')})}</div>`}
+             <div class="fs11 ink3 mt-6">${t('squad.missionCost',{amount:formatCurrency(cost)})} · ${t('squad.reportCount')} · ${t('squad.specialty',{name:scoutSpecialtyLabel(s)})}</div>`}
       </div>`;}).join('')}
     </div>`:`<div class="empty-state mt-14">${t('squad.noScout')}</div>`}
   </div>`
@@ -340,7 +348,7 @@ function squadCard(p,boardList){
       :isStarterTab?`<span class="pc-tag bad">${t('squad.outRotation')}</span>`:''}
     </div>`:''}
     <div class="pc-stats">${SK.map(s=>`<div class="pcs"><span class="l">${SL[s]}</span><span class="bar"><span class="fill" style="width:${p[s]}%;background:${statTone(p[s])}"></span></span><span class="v">${p[s]}</span></div>`).join('')}</div>
-    ${p.traits.length?`<div class="traits">${p.traits.map(t=>`<span class="has-tooltip tb ${TRAITS[t]?.type||'men'}">${TRAITS[t]?.label||t}<span class="tip">${TRAITS[t]?.desc||''}</span></span>`).join('')}</div>`:''}
+    ${p.traits.length?`<div class="traits">${p.traits.map(id=>`<span class="has-tooltip tb ${TRAITS[id]?.type||'men'}">${t(`trait.${id}.label`)}<span class="tip">${t(`trait.${id}.desc`)}</span></span>`).join('')}</div>`:''}
     <div class="pc-cond ${mor>=80?'energy-active':''}">
       <div><div class="pc-cond-l">${t('squad.morale')} <b>${mor}%</b></div><div class="morale-bar"><div class="morale-fill" style="width:${mor}%"></div></div></div>
       <div><div class="pc-cond-l">${t('squad.fatigue')} <b class="${fat>=70?'cr':''}">${fat}%</b></div><div class="fatigue-bar"><div class="fatigue-fill" style="width:${fat}%"></div></div></div>
@@ -481,7 +489,7 @@ function pageStaff(){
         <div class="fs10 mt-2">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?',ovr:staffCeiling(s)})}</div></div></div>
         <div class="tar"><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:28px;color:${staffOvrColor(sOvr)}">${sOvr}</div><div class="fs9 ink3">OVR</div></div>
       </div>
-      <div class="fs11 ink3">${s.type==='coach'?(s.styleName||t('staff.generalCoach')):s.type==='scout'?(s.specialtyLabel||t('staff.scout')):s.type==='pr'?t('staff.commerceBonus',{percent:Math.round((s.bonus||0)*100)}):t('staff.clubSpecialist')}</div>
+      <div class="fs11 ink3">${s.type==='coach'?coachStyleLabel(s):s.type==='scout'?scoutSpecialtyLabel(s):s.type==='pr'?t('staff.commerceBonus',{percent:Math.round((s.bonus||0)*100)}):t('staff.clubSpecialist')}</div>
       <div class="btn-row mt-8">
         <button class="btn gl sm" onclick="event.stopPropagation();openStaffNeg(${s.id})">${t('staff.extend')}</button>
         ${s.type!=='pr'?`<button class="btn sm bcr cr" onclick="event.stopPropagation();fireStaff(${s.id})">${t('staff.fire')}</button>`:''}

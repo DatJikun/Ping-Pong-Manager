@@ -14,6 +14,9 @@
   intake, scout missions and reports, to the same live language switch.
 - Migrated the club staff and transfer market screens, including filters,
   comparisons, shortlists and next-season commitments.
+- Moved player styles, career phases, season form, traits, coaching styles and
+  scouting specialities behind semantic translation keys so saved IDs remain
+  language-independent.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

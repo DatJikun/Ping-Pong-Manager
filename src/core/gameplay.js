@@ -544,7 +544,7 @@ function getMax(p,s){
   // OVR needs per-stat headroom above it).
   return clamp(playerCeiling(p)+3,84,96);
 }
-function phaseLabel(p){return p.age<p.peakAge?'\u2191 Wzrost':p.age<=p.peakAge+2?'- Plateau':'\u2193 Spadek';}
+function phaseLabel(p){return t(p.age<p.peakAge?'phase.growth':p.age<=p.peakAge+2?'phase.plateau':'phase.decline');}
 function phaseColor(p){return p.age<p.peakAge?'var(--g)':p.age<=p.peakAge+2?'var(--gold)':'var(--r)';}
 // Staff OVR instead of stars
 function staffOvr(s){
@@ -1191,15 +1191,15 @@ function seasonFormImpact(p){
 }
 function seasonFormLabel(val){
   const v=typeof val==='number'?val:seasonFormImpact(val);
-  if(v>=8)return'gor\u0105cy sezon';
-  if(v>=3)return'dobra dyspozycja';
-  if(v<=-8)return'g\u0142\u0119boki do\u0142ek';
-  if(v<=-3)return'spadek formy';
-  return'stabilna dyspozycja';
+  if(v>=8)return t('form.hot');
+  if(v>=3)return t('form.good');
+  if(v<=-8)return t('form.deepSlump');
+  if(v<=-3)return t('form.slump');
+  return t('form.stable');
 }
 // Removed dead pre-point-sim odds path (duelWinProbability, matchupProfileSwing) —
 // live matches use simulateRallyPoint / simIndividual only (2026-07 cleanup).
-function styleLabel(id){return (PLAYER_STYLE_INFO[id]||{}).label||id||'?';}
+function styleLabel(id){return t(`style.${id}`)||id||'?';}
 function describePlayerIdentity(p){
   const order=[...SK].sort((a,b)=>(p[b]||0)-(p[a]||0));
   const top=order[0], second=order[1], low=order[order.length-1];
