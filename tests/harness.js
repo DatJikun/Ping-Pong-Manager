@@ -31,6 +31,7 @@ const LOAD_ORDER = [
   'src/core/utils.js',
   'src/core/save-storage.js',
   'src/core/state.js',
+  'src/core/save-manager.js',
   'src/core/gameplay.js',
   'src/core/gameplay.visuals.js',
   'src/core/gameplay.club-ui.js',
