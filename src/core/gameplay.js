@@ -317,8 +317,8 @@ function selectBoardObjective(choiceId){
   return true;
 }
 function handleManagerFired(reason){
-  pushNews(`Menedżer zwolniony: ${reason}`,'hot');
-  toast('Zarząd zwolnił menedżera.');
+  pushNews('news.managerFired','hot',{reason});
+  toast(t('news.managerFiredToast'));
   persistGame();
   // Called mid-runMatchday, which returns without clearing ui.running — and
   // showStartScreen() refuses to render while ui.running is set, so without this
@@ -375,7 +375,7 @@ function generateMatchdayNews(results,myId){
     const lr=results.find(r=>r.homeId===leader.id||r.awayId===leader.id);
     if(lr&&!lr.isDraw){
       const leaderWon=(lr.homeId===leader.id)===lr.homeWin;
-      if(!leaderWon)pushNews(`Sensacja kolejki! Lider ${leader.name} traci punkty (${lr.score})!`,'hot');
+      if(!leaderWon)pushNews('news.leaderDropsPoints','hot',{team:leader.name,score:lr.score});
     }
   }
   // 2) Genuine upsets (weaker side wins against a much stronger one).
@@ -383,8 +383,8 @@ function generateMatchdayNews(results,myId){
     const ht=teamById(r.homeId),at=teamById(r.awayId);
     if(!ht||!at)return;
     const hOvr=teamOvr(r.homeId),aOvr=teamOvr(r.awayId);
-    if(!r.isDraw&&!r.homeWin&&hOvr-aOvr>12)pushNews(`Niespodzianka! ${at.name} (OVR ${aOvr}) pokonuje faworyta ${ht.name} (OVR ${hOvr}) ${r.score}!`,'hot');
-    if(!r.isDraw&&r.homeWin&&aOvr-hOvr>12)pushNews(`Niespodzianka! ${ht.name} (OVR ${hOvr}) ogrywa mocniejszy ${at.name} (OVR ${aOvr}) ${r.score}!`,'hot');
+    if(!r.isDraw&&!r.homeWin&&hOvr-aOvr>12)pushNews('news.underdogWins','hot',{winner:at.name,winnerOvr:aOvr,loser:ht.name,loserOvr:hOvr,score:r.score});
+    if(!r.isDraw&&r.homeWin&&aOvr-hOvr>12)pushNews('news.underdogWins','hot',{winner:ht.name,winnerOvr:hOvr,loser:at.name,loserOvr:aOvr,score:r.score});
   });
   // 3) Win streaks: a club on a 5+ win run (announced at 5, 8, 11…).
   // One pass over this season's results (perf: no per-team re-filtering).
@@ -399,7 +399,7 @@ function generateMatchdayNews(results,myId){
   runByTeam.forEach((streak,tid)=>{
     if(!playedThisRound.has(tid))return;
     const t=teamById(tid);
-    if(t&&streak>=5&&(streak-5)%3===0)pushNews(`${t.name} wygrywa ${streak}. mecz z rzędu!`,tid===myId?'good':'');
+    if(t&&streak>=5&&(streak-5)%3===0)pushNews('news.winStreak',tid===myId?'good':'',{team:t.name,streak});
   });
   // 4) Standout duel: a player beating a clearly higher-rated opponent 3:0/3:1.
   const pById=new Map();store.G.players.forEach(p=>pById.set(p.id,p));
@@ -412,17 +412,17 @@ function generateMatchdayNews(results,myId){
   });});
   if(duels.length){
     const d=duels.sort((a,b)=>(ovr(b.l)-ovr(b.w))-(ovr(a.l)-ovr(a.w)))[0];
-    pushNews(`${d.w.name} (${teamName(d.w.teamId)}, OVR ${ovr(d.w)}) ogrywa wyżej notowanego ${d.l.name} (OVR ${ovr(d.l)}) ${d.score}!`,'');
+    pushNews('news.standoutDuel','',{winner:d.w.name,club:teamName(d.w.teamId),winnerOvr:ovr(d.w),loser:d.l.name,loserOvr:ovr(d.l),score:d.score});
   }
   // 5) Career milestones crossed this round (only players who played this round).
   results.forEach(r=>{(r.matchups||[]).forEach(mu=>{
     [pById.get(mu.homePlayer),pById.get(mu.awayPlayer)].forEach(p=>{
-      if(p&&!p.retired&&[100,250,500].includes(p.careerW||0))pushNews(`${p.name} (${teamName(p.teamId)}) ma już ${p.careerW} zwycięstw w karierze!`,'good');
+      if(p&&!p.retired&&[100,250,500].includes(p.careerW||0))pushNews('news.careerMilestone','good',{player:p.name,club:teamName(p.teamId),wins:p.careerW});
     });
   });});
   // 6) Mid-season table check every 6th round.
   if(store.G.matchday>0&&store.G.matchday%6===0&&leader){
-    pushNews(`Po ${store.G.matchday} kolejkach liderem I Ligi jest ${leader.name} (${leader.pts} pkt).`,'');
+    pushNews('news.tableLeader','',{matchday:store.G.matchday,team:leader.name,points:leader.pts});
   }
 }
 
@@ -2705,7 +2705,7 @@ function applyMailDecision(m,yes){
     if(yes){
       p.morale=Math.min(100,(p.morale||50)+8);
       p._promisedMatch={season:store.G.season};
-      toast(`${p.name} dostaje obietnicę gry w najbliższym meczu.`);
+      toast(t('mail.promiseMade',{name:p.name}));
     }else{
       const hit=(p.seasonForm||0)>=7?10:6; // snubbing a player on FIRE hurts more
       p.morale=Math.max(10,(p.morale||50)-hit);
@@ -2722,21 +2722,21 @@ function generateInboxForMatchday(){
   const fresh=cands.filter(p=>!alreadyAsked.has(p.id));
   if(fresh.length&&Math.random()<0.5){
     const p=fresh[rnd(0,fresh.length-1)];
-    pushMail({type:'decision',from:p.name,subject:`${p.name} prosi o szansę w najbliższym meczu`,
-      body:`Trenerze, czuję dziś świetną rękę (forma: ${seasonFormLabel(p)}, OVR ${ovr(p)}). Wystaw mnie w najbliższym meczu — nie zawiodę. Jeśli odmówisz, zrozumiem, ale trochę mnie to podłamie.`,
+    pushMail({type:'decision',from:p.name,subjectKey:'mail.reserveRequestSubject',subjectParams:{name:p.name},
+      bodyKey:'mail.reserveRequestBody',bodyParams:{form:seasonFormLabel(p),ovr:ovr(p)},
       decision:{kind:'reserveRequest',playerId:p.id}});
   }
   // Expiring contracts warning (info, once per player per season).
   const expiring=store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.contractYears===1&&p.role!=='youth');
   expiring.forEach(p=>{
     const already=(store.G.inbox||[]).find(m=>m.season===store.G.season&&m._tag===`exp_${p.id}`);
-    if(!already&&store.G.matchday===0)pushMail({from:'Dyrektor sportowy',subject:`Ostatni rok kontraktu: ${p.name}`,body:`${p.name} (OVR ${ovr(p)}) wchodzi w ostatni rok umowy. Przedłuż kontrakt albo licz się z odejściem za darmo — rywale mogą go już podkupywać (pre-sign).`,_tag:`exp_${p.id}`});
+    if(!already&&store.G.matchday===0)pushMail({fromKey:'mail.sportingDirector',subjectKey:'mail.expiringSubject',subjectParams:{name:p.name},bodyKey:'mail.expiringBody',bodyParams:{name:p.name,ovr:ovr(p)},_tag:`exp_${p.id}`});
   });
   // Fatigue warning before the round (info).
   const tired=store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.role==='starter'&&(p.fatigue||0)>75);
   if(tired.length&&store.G.matchday>0){
     const already=(store.G.inbox||[]).find(m=>m.season===store.G.season&&m.matchday===store.G.matchday&&m._tag==='fatigue');
-    if(!already)pushMail({from:'Sztab medyczny',subject:'Raport zmęczenia przed kolejką',body:`Wysokie zmęczenie: ${tired.map(p=>`${p.name} (${p.fatigue}%)`).join(', ')}. Rozważ rotację w nominacji meczowej — zmęczeni grają wyraźnie słabiej i łatwiej o kontuzję.`,_tag:'fatigue'});
+    if(!already)pushMail({fromKey:'mail.medicalTeam',subjectKey:'mail.fatigueSubject',bodyKey:'mail.fatigueBody',bodyParams:{players:tired.map(p=>`${p.name} (${p.fatigue}%)`).join(', ')},_tag:'fatigue'});
   }
 }
 // After my match: settle reserve promises (kept = bonus, broken = real resentment).
@@ -2748,7 +2748,7 @@ function settleMatchPromises(playedIds){
     }else{
       p.morale=Math.max(10,(p.morale||50)-12);
       p.loyalty=Math.max(0,(p.loyalty||0)-1);
-      pushMail({from:p.name,subject:`${p.name} jest rozczarowany`,body:`Obiecałeś mi szansę w tym meczu i nie zagrałem ani minuty. Następnym razem dotrzymaj słowa, trenerze.`});
+      pushMail({from:p.name,subjectKey:'mail.disappointedSubject',subjectParams:{name:p.name},bodyKey:'mail.disappointedBody'});
     }
     p._promisedMatch=null;
   });

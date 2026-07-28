@@ -81,7 +81,7 @@ test('inbox: reserve request YES promises a match; playing him settles it, bench
   gp.settleMatchPromises(new Set());
   assert.equal(res._promisedMatch, null, 'promise settled');
   assert.ok((res.morale || 50) < moraleBefore + 8, 'broken promise cost morale');
-  assert.ok(G.inbox.some((m) => m.from === res.name && m.subject.includes('rozczarowany')), 'complaint mail arrived');
+  assert.ok(G.inbox.some((m) => m.from === res.name && m.subjectKey === 'mail.disappointedSubject'), 'complaint mail arrived');
 });
 
 test('staff market: pools hold at least 3x-clubs-per-league candidates and regenerate', () => {

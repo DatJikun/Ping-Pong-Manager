@@ -455,3 +455,27 @@ test('loan and squad replacement modals follow the active locale', () => {
   g.PPM.gameplay.openSwapModal(reserve.id);
   assert.match(g.document.getElementById('modal').innerHTML, /Skład pełny|Wybierz kogo zastąpić/i);
 });
+
+test('new matchday mail and news store semantic localisation keys', () => {
+  const g = boot(3124);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  G.inbox = [];
+  G.newsFeed = [];
+  const reserve = G.players.find(p => p.teamId === G.myTeamId && p.role === 'reserve');
+  reserve.seasonForm = 10;
+  g.Math.random = () => 0;
+
+  g.PPM.gameplay.generateInboxForMatchday();
+  const request = G.inbox.find(m => m.decision?.kind === 'reserveRequest');
+  assert.equal(request.subjectKey, 'mail.reserveRequestSubject');
+  assert.equal(request.bodyKey, 'mail.reserveRequestBody');
+
+  const leader = G.teams.filter(t => t.league === 1).sort((a, b) => b.pts - a.pts)[0];
+  const opponent = G.teams.find(t => t.league === 1 && t.id !== leader.id);
+  g.PPM.gameplay.generateMatchdayNews([{
+    homeId: leader.id, awayId: opponent.id, homeWin: false,
+    isDraw: false, score: '1:3', matchups: [],
+  }], G.myTeamId);
+  assert.ok(G.newsFeed.some(n => n.msgKey === 'news.leaderDropsPoints'));
+});
