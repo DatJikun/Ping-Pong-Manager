@@ -1502,7 +1502,7 @@ function genYouthPlayer(ownerTeamId=null,countryId=null){
   const youthCountryId=countryId||store.G?.countryId||'PL';
   const p=genPlayer(null,16+rnd(0,3),youthCountryId);
   const region=pick(POLISH_REGIONS);
-  const readinessRoll=['surowy projekt','do szybkiego szlifowania','prawie gotowy','b\u0142yskawiczny talent'][clamp(academyLv-1+rnd(0,1),0,3)];
+  const readinessRoll=['raw','quick','polished','instant'][clamp(academyLv-1+rnd(0,1),0,3)];
   // Wunderkind chance grows with academy level. (Owner 2026-07-02: halved — top
   // academies minted wonderkids ~35% of the time; a wonderkid should be rare.)
   if(Math.random()<(0.06+cfg.devBonus*0.3+academyLv*0.01)*playerPotentialMult)p.traits.push('WUNDERKIND');
@@ -1553,6 +1553,21 @@ function genYouthPlayer(ownerTeamId=null,countryId=null){
 function genAcademyIntake(teamId,countryId){
   const n=1+(Math.random()<0.5?1:0);
   return Array.from({length:n},()=>genYouthPlayer(teamId,countryId));
+}
+function academyReadinessLabel(value){
+  const legacy={
+    'surowy projekt':'raw','do szybkiego szlifowania':'quick',
+    'prawie gotowy':'polished','błyskawiczny talent':'instant',
+    'obserwacja terenowa':'field','projekt':'raw',
+  };
+  const id=legacy[value]||value||'raw';
+  return t(`academy.readiness.${id}`);
+}
+function academyProfileNote(p){
+  const profile=p.academyProfile||{};
+  return t(profile.source==='scout'?'academy.scoutProfile':'academy.intakeProfile',{
+    style:styleLabel(p.playStyle),region:profile.region||t('academy.clubRegion'),
+  });
 }
 function myYouth(){return store.G.players.filter(p=>p.teamId===myTeam().id&&!p.retired&&p.role==='youth');}
 function promoteYouth(pid){
@@ -4786,26 +4801,26 @@ async function runOlympicsBody(){
 // YOUTH ACADEMY
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function pullYouth(){
-  if(!store.G||store.G.infraAcademy===0){toast('Zbuduj akademi\u0119 m\u0142odzie\u017cow\u0105!');return;}
-  if(!store.G.academyProspects?.length){toast('Brak kandydat\u00f3w \u2014 kolejna klasa pojawi si\u0119 w nowym sezonie.');return;}
+  if(!store.G||store.G.infraAcademy===0){toast(t('academy.buildFirst'));return;}
+  if(!store.G.academyProspects?.length){toast(t('academy.noCandidates'));return;}
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">Klasa rocznika akademii <button class="close-btn" onclick="closeModal()">\u2715</button></div>
-  <div class="fs12 ink3 mb12">Akademia daje 1-2 juniorów na sezon (liczba stała). Pasmo OVR i peak zależą od poziomu akademii.</div>
+  modal.innerHTML=`<div class="mt2">${t('academy.intakeTitle')} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+  <div class="fs12 ink3 mb12">${t('academy.intakeHint')}</div>
   <div class="grid gtcfit220 gp10">
     ${store.G.academyProspects.map((p,i)=>`<div class="pd14 bb1 bt3-purple r12 bgs1">
       <div class="flex jcb gp10 aifs mb8">
-        <div><div class="syne b7 fs15">${p.name}</div><div class="fs10 ink3">${p.age} lat / ${styleLabel(p.playStyle)}</div></div>
+        <div><div class="syne b7 fs15">${p.name}</div><div class="fs10 ink3">${t('academy.ageStyle',{age:p.age,style:styleLabel(p.playStyle)})}</div></div>
         <div class="syne b8 fs28 cpurple">${ovrBase(p)}</div>
       </div>
-      <div class="fs10 ink3 mb8">${p.academyProfile?.note||''}</div>
+      <div class="fs10 ink3 mb8">${academyProfileNote(p)}</div>
       <div class="grid gtc2 gp6 fs10 mb10">
-        <div><div class="ink3">Region</div><div class="b7">${p.academyProfile?.region||'Klub'}</div></div>
-        <div><div class="ink3">Gotowo\u015b\u0107</div><div class="b7">${p.academyProfile?.readiness||'projekt'}</div></div>
-        <div><div class="ink3">Sufit</div><div class="b7">${p.academyProfile?.ceiling||'?'}</div></div>
-        <div><div class="ink3">Forma</div><div class="b7">${seasonFormLabel(p)}</div></div>
+        <div><div class="ink3">${t('academy.region')}</div><div class="b7">${p.academyProfile?.region||t('academy.clubRegion')}</div></div>
+        <div><div class="ink3">${t('academy.readiness')}</div><div class="b7">${academyReadinessLabel(p.academyProfile?.readiness)}</div></div>
+        <div><div class="ink3">${t('academy.ceiling')}</div><div class="b7">${p.academyProfile?.ceiling||'?'}</div></div>
+        <div><div class="ink3">${t('academy.form')}</div><div class="b7">${seasonFormLabel(p)}</div></div>
       </div>
       <div class="flex gp6 fwrap mb10">${SK.map(s=>`<span class="fs10"><span class="ink3">${SL[s]}</span> <b>${p[s]}</b></span>`).join('')}</div>
-      <button class="btn pr sm w100" onclick="signAcademyProspect(${i})">PRZYJMIJ DO AKADEMII</button>
+      <button class="btn pr sm w100" onclick="signAcademyProspect(${i})">${t('academy.accept').toUpperCase()}</button>
     </div>`).join('')}
   </div>`;
   openModal();
@@ -4833,7 +4848,7 @@ function signAcademyProspect(idx){
   clearScoutResult(p.id);
   closeModal();
   render();updateHeader();
-  toast(`Junior ${p.name} (${ovrBase(p)} OVR) do\u0142\u0105czy\u0142 do akademii!`);
+  toast(t('academy.joined',{name:p.name,ovr:ovrBase(p)}));
   pushNews('news.academyJoined','good',{name:p.name,region:p.academyProfile?.region||t('academy.localTalent')});
   persistGame();
 }
@@ -4844,11 +4859,11 @@ function signAcademyProspect(idx){
 // convenience/gamble (pick the best of three) rather than a clear upgrade path.
 const ACADEMY_MINI_TOURNAMENT_COST=10000;
 function runAcademyMiniTournament(){
-  if(!store.G||(store.G.infraAcademy||0)<1){toast('Najpierw zbuduj akademi\u0119.');return;}
-  if(store.G.academyTrialUsed){toast('Mini-turniej ju\u017c rozegrany w tym sezonie.');return;}
+  if(!store.G||(store.G.infraAcademy||0)<1){toast(t('academy.buildFirst'));return;}
+  if(store.G.academyTrialUsed){toast(t('academy.trialUsed'));return;}
   const cost=ACADEMY_MINI_TOURNAMENT_COST;
-  if((myTeam().budget||0)<cost){toast(`Brak bud\u017cetu na mini-turniej (${cost.toLocaleString('pl')} \u20ac).`);return;}
-  if(!confirm(`Zorganizowa\u0107 mini-turniej naboru za ${cost.toLocaleString('pl')} \u20ac?\n3 kandydat\u00f3w \u2014 podpiszesz 1, reszta odejdzie. Jako\u015b\u0107 tylko nieco wy\u017csza ni\u017c zwyk\u0142y nab\u00f3r.`))return;
+  if((myTeam().budget||0)<cost){toast(t('academy.trialNoBudget',{cost:formatCurrency(cost)}));return;}
+  if(!confirm(t('academy.trialConfirm',{cost:formatCurrency(cost)})))return;
   myTeam().budget-=cost;
   const finance=ensureSeasonFinance();if(finance)finance.other-=cost;
   const trial=[];
@@ -4860,7 +4875,7 @@ function runAcademyMiniTournament(){
   }
   store.G.academyTrial=trial;
   store.G.academyTrialUsed=true;
-  toast('Mini-turniej rozegrany \u2014 wybierz jednego juniora.');
+  toast(t('academy.trialComplete'));
   render();updateHeader();persistGame();
 }
 function signTrialProspect(idx){
@@ -4872,7 +4887,7 @@ function signTrialProspect(idx){
   store.G.playerHistory[p.id]=[snap(p)];
   store.G.academyTrial=[]; // the other candidates leave
   clearScoutResult(p.id);
-  toast(`${p.name} (${ovrBase(p)} OVR) wybrany z mini-turnieju!`);
+  toast(t('academy.trialChosen',{name:p.name,ovr:ovrBase(p)}));
   pushNews('news.trialJoined','good',{name:p.name});
   render();updateHeader();persistGame();
 }
@@ -4991,8 +5006,8 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
   </div>
   ${p.academyProfile?`<div class="mb14 pd10-12 r10 fs12" style="border:1px solid var(--purple);background:rgba(104,40,160,.08)">
     <div class="b7 cpurple mb6">${t('player.academyReport')}</div>
-    <div>${t('player.region')}: <b>${p.academyProfile.region||t('player.clubAcademy')}</b> / ${t('player.readiness')}: <b>${p.academyProfile.readiness||t('player.project')}</b> / Peak OVR: <b>${p.academyProfile.ceiling||'?'}</b></div>
-    <div class="mt-4 ink3">${p.academyProfile.note||''}</div>
+    <div>${t('player.region')}: <b>${p.academyProfile.region||t('player.clubAcademy')}</b> / ${t('player.readiness')}: <b>${academyReadinessLabel(p.academyProfile.readiness)}</b> / Peak OVR: <b>${p.academyProfile.ceiling||'?'}</b></div>
+    <div class="mt-4 ink3">${academyProfileNote(p)}</div>
   </div>`:''}
   ${p.awards?.length?`<div class="mb14"><div class="fs10 ink3 mb6 up ls1">${t('player.seasonTrophies')}</div><div>${p.awards.map(a=>`<span class="award">${a.displayLabel||a.label}</span>`).join('')}</div></div>`:''}
   <div class="btn-row">
@@ -5549,7 +5564,7 @@ function genScoutPlayer(scout,region){
   const targetCeiling=Math.round(rollWeightedPeak(scoutPeakFloor,Math.max(scoutPeakFloor+6,scoutPeakCeil),quality)*scoutPotentialMult);
   p.ceiling=Math.max(p.ceiling||0,targetCeiling);
   p.scoutedRegion=region||'Polska';
-  p.academyProfile={...(p.academyProfile||{}),region:region||p.academyProfile?.region||'Polska',source:'scout',ceiling:p.ceiling,readiness:p.academyProfile?.readiness||'obserwacja terenowa',note:`Raport skauta: profil ${p.playStyle.toLowerCase()} / region ${region||'Polska'} / peak zależny od klasy skauta`};
+  p.academyProfile={...(p.academyProfile||{}),region:region||p.academyProfile?.region||t('country.PL'),source:'scout',ceiling:p.ceiling,readiness:p.academyProfile?.readiness||'field'};
   const noise=1-acc;const reported={...p};
   SK.forEach(s=>{reported[s]=Math.max(10,Math.min(96,p[s]+Math.round((Math.random()-.5)*30*noise)));});
   reported.scoutConfidence=Math.round(acc*100);
@@ -5629,23 +5644,23 @@ function getTop12Participants(leagueId){
 }
 // Pre-tournament picker: the manager selects their club's entrant.
 function openTop12Picker(leagueId){
-  if(!shouldPlayTop12(leagueId)){toast('Top 12 Masters nie jest teraz dostępny.');return;}
+  if(!shouldPlayTop12(leagueId)){toast(t('top12.unavailable'));return;}
   if(myLeague()!==leagueId){runTop12Masters(leagueId);return;}
   const pool=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth')
     .sort((a,b)=>top12Score(b)-top12Score(a));
   if(!pool.length){runTop12Masters(leagueId);return;}
   const modal=document.getElementById('modal');modal.className='modal';
-  modal.innerHTML=`<div class="mt2">TOP 12 MASTERS — wybierz reprezentanta <button class="close-btn" onclick="closeModal()">✕</button></div>
-  <div class="fs11 ink3 mb10">Kto zagra dla ${myTeam().name}? Rywale wystawiają zawodników z najlepszym sezonem (wygrane → bilans punktów → OVR).</div>
+  modal.innerHTML=`<div class="mt2">${t('top12.chooseTitle').toUpperCase()} <button class="close-btn" onclick="closeModal()">✕</button></div>
+  <div class="fs11 ink3 mb10">${t('top12.chooseHint',{club:myTeam().name})}</div>
   <div class="grid gp6">
   ${pool.map((p,i)=>{
     const apps=(p.leagueSeasonW||0)+(p.leagueSeasonL||0)+(p.leagueSeasonD||0);
     const diff=(p.leagueSeasonPointsWon||0)-(p.leagueSeasonPointsLost||0);
     return`<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid ${i===0?'var(--gold)':'var(--b1)'};background:var(--s1);border-radius:3px">
-      <div><div class="b7 fs13">${p.name}${i===0?' <span class="fs9 cgold">REKOMENDACJA</span>':''}${p.injuredFor>0?' <span class="fs9 cr">KONTUZJA</span>':''}</div>
-      <div class="fs10 ink3">${p.leagueSeasonW||0}W/${p.leagueSeasonL||0}P w sezonie / bilans pkt ${diff>=0?'+':''}${diff} / ${apps} występów</div></div>
+      <div><div class="b7 fs13">${p.name}${i===0?` <span class="fs9 cgold">${t('top12.recommendation').toUpperCase()}</span>`:''}${p.injuredFor>0?` <span class="fs9 cr">${t('top12.injury').toUpperCase()}</span>`:''}</div>
+      <div class="fs10 ink3">${t('top12.seasonLine',{wins:p.leagueSeasonW||0,losses:p.leagueSeasonL||0,diff:(diff>=0?'+':'')+diff,apps})}</div></div>
       <div class="syne b8 fs22 cr">${ovr(p)}</div>
-      <button class="btn pr sm" onclick="store.G.top12Entrant=${p.id};closeModal();runTop12Masters(${leagueId})">WYSTAW</button>
+      <button class="btn pr sm" onclick="store.G.top12Entrant=${p.id};closeModal();runTop12Masters(${leagueId})">${t('top12.enter').toUpperCase()}</button>
     </div>`;}).join('')}
   </div>`;
   openModal();
@@ -5662,7 +5677,7 @@ async function runTop12Masters(leagueId){
 }
 async function runTop12MastersBody(leagueId){
   const participants=getTop12Participants(leagueId);
-  if(participants.length<8){toast('Za ma\u0142o dru\u017cyn w lidze!');return;}
+  if(participants.length<8){toast(t('top12.tooFewTeams'));return;}
   
   store.G.top12MastersDone[leagueId]=true;
   const myId=store.G.myTeamId;

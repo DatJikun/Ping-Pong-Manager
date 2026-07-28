@@ -354,6 +354,31 @@ test('club overview and difficulty details follow the active locale', () => {
   assert.match(g.PPM.gameplay.difficultyEffectsSummary('hard').join(' '), /Kluby AI|Wolni zawodnicy|Negocjacje/i);
 });
 
+test('academy intake and Top 12 selection follow the active locale', () => {
+  const g = boot(3126);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  G.infraAcademy = 1;
+  G.academyProspects = g.PPM.gameplay.genAcademyIntake(G.myTeamId, G.countryId);
+
+  g.PPM.gameplay.pullYouth();
+  const academyEnglish = g.document.getElementById('modal').innerHTML;
+  assert.match(academyEnglish, /Academy intake|Readiness|Ceiling|Accept into academy/i);
+  assert.doesNotMatch(academyEnglish, /Klasa rocznika|Gotowość|Sufit|Przyjmij do akademii/i);
+
+  G.phase = 'pre';
+  G.matchday = 21;
+  G.top12MastersDone = { 1: false, 2: false };
+  g.PPM.gameplay.openTop12Picker(G.teams.find(team => team.id === G.myTeamId).league);
+  const top12English = g.document.getElementById('modal').innerHTML;
+  assert.match(top12English, /Choose your representative|Recommendation|Appearances|Enter/i);
+  assert.doesNotMatch(top12English, /wybierz reprezentanta|Rekomendacja|występów|Wystaw/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.pullYouth();
+  assert.match(g.document.getElementById('modal').innerHTML, /Klasa rocznika|Gotowość|Sufit|Przyjmij do akademii/i);
+});
+
 test('player and staff profile modals follow the active locale', () => {
   const g = boot(3119);
   g.PPM.gameplay.newGame(0, 'PL');

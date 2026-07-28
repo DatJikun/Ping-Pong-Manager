@@ -1563,16 +1563,16 @@ async function startGame(){
     // while the league plays its seasons; the save persists only at handover.
     ui.running=true;
     const modal=document.getElementById('modal');modal.className='modal';
-    modal.innerHTML=`<div class="mt2">⏳ GENEROWANIE HISTORII ŚWIATA</div>
-      <div id="bg-gen-status" class="fs13" style="margin:14px 0 6px">Sezon 1/${historyN}…</div>
+    modal.innerHTML=`<div class="mt2">⏳ ${t('wizard.generatingHistory').toUpperCase()}</div>
+      <div id="bg-gen-status" class="fs13" style="margin:14px 0 6px">${t('wizard.generatingSeason',{done:1,total:historyN})}</div>
       <div class="h10 bgs3 rpill ovh"><div id="bg-gen-bar" class="bgr" style="height:100%;width:0%;transition:width .3s"></div></div>
-      <div class="fs10 ink3 mt-10">Liga gra bez Ciebie: wyniki, rekordy, transfery, emerytury, awanse i spadki.</div>`;
+      <div class="fs10 ink3 mt-10">${t('wizard.generatingHint')}</div>`;
     openModal();
     try{
       await window.PPM.gameplay.simulateBackgroundSeasons(historyN,(done,total)=>{
         const st=document.getElementById('bg-gen-status');
         const bar=document.getElementById('bg-gen-bar');
-        if(st)st.textContent=`Sezon ${done}/${total} rozegrany…`;
+        if(st)st.textContent=t('wizard.generatingProgress',{done,total});
         if(bar)bar.style.width=`${Math.round(done/total*100)}%`;
       });
     }finally{
