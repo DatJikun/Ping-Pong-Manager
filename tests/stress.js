@@ -143,6 +143,9 @@ function playSeasonLeagues() {
       }
     }
   }
+  // The browser records the completed table before the offseason resets it.
+  // Keep the probe faithful so club-history growth is measured too.
+  g.PPM.gameplayClubUI.recordClubSeasonHistory();
   G().phase = 'transfer';
   // The real game computes promotion/relegation in the season-finale (before
   // endSeason applies it). The probe must do the same or leagues never churn.
@@ -158,11 +161,15 @@ const t0 = Date.now();
 let lastMark = t0;
 const sizes = (label) => {
   const G_ = G();
+  const freeAgents=G_.players.filter(p=>!p.retired&&!p.loanedOut
+    &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==G_.myTeamId).length;
+  const clubRows=Object.values(G_.clubHistory||{}).reduce((sum,rows)=>sum+(rows?.length||0),0);
+  const saveKB=Math.round(JSON.stringify(G_).length/1024);
   console.log(
-    `  [${label}] season=${G_.season} players=${G_.players.length} ` +
+    `  [${label}] season=${G_.season} players=${G_.players.length} freeAgents=${freeAgents} ` +
     `(retired=${G_.players.filter(p => p.retired).length}) results=${(G_.results || []).length} ` +
     `news=${(G_.newsFeed || []).length} log=${(G_.gameLog || []).length} ` +
-    `seasonHistory=${(G_.seasonHistory || []).length} ` +
+    `seasonHistory=${(G_.seasonHistory || []).length} clubRows=${clubRows} save=${saveKB}KB ` +
     `L1ovr=${leagueOvr(1)} L2ovr=${leagueOvr(2)} ` +
     `mem=${Math.round(process.memoryUsage().heapUsed / 1048576)}MB`);
 };

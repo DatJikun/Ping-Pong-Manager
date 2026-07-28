@@ -141,7 +141,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=19;
+const SAVE_SCHEMA_VERSION=20;
 // ── Save migration ────────────────────────────────────────────────────────────
 // migrateLoadedGame() upgrades any loaded save object to the current field
 // layout. Every if(!field) block here is a guard for a missing field that was
@@ -267,6 +267,25 @@ function migrateLoadedGame(parsed){
   if(!game.boardObjective)game.boardObjective=null;
   if(!Array.isArray(game.boardObjectiveOptions))game.boardObjectiveOptions=[];
   if(!game.clubHistory)game.clubHistory={};
+  // v20: clubHistory is the permanent, compact source for season/lifetime club
+  // comparisons. Older saves duplicated the league table inside the player's
+  // seasonHistory; use that copy once to enrich the club rows, then discard it.
+  const teamSnapshotsBySeason=new Map((game.seasonHistory||[])
+    .filter(entry=>entry&&Array.isArray(entry.teamsSnapshot))
+    .map(entry=>[entry.season,new Map(entry.teamsSnapshot.map(team=>[team.id,team]))]));
+  Object.entries(game.clubHistory).forEach(([teamId,entries])=>{
+    if(!Array.isArray(entries)){game.clubHistory[teamId]=[];return;}
+    entries.forEach(row=>{
+      const snapshot=teamSnapshotsBySeason.get(row.season)?.get(Number(teamId));
+      if(typeof row.played!=='number')row.played=(row.w||0)+(row.d||0)+(row.l||0);
+      for(const key of ['gf','ga','pointsWon','pointsLost']){
+        if(typeof row[key]!=='number')row[key]=typeof snapshot?.[key]==='number'?snapshot[key]:0;
+      }
+      if(!Array.isArray(row.topPlayers))row.topPlayers=[];
+      if(row.cupStage===undefined)row.cupStage=null;
+    });
+  });
+  (game.seasonHistory||[]).forEach(entry=>{if(entry)delete entry.teamsSnapshot;});
   if(!game.customDatabase)game.customDatabase=null;
   if(!game._negotiationLog)game._negotiationLog={};
   if(!Array.isArray(game.negotiationHistory))game.negotiationHistory=[];
@@ -454,6 +473,10 @@ function loadGameFromText(text){
   // Floor AFTER migration — the duplicate-id repair inside migrateLoadedGame can
   // mint ids above the save's original maximum.
   ui._pid = Math.max(parsed._pid || 0, maxEntityId(store.G) + 1);
+  // Legacy careers may contain hundreds of free agents accumulated before the
+  // bounded population lifecycle existed. Clean them on first load rather than
+  // forcing the player to complete another season with the bloated state.
+  window.PPM.gameplay?.pruneCareerData?.();
   return store.G;
 }
 function loadPersistedGame(){

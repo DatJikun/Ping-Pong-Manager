@@ -7,9 +7,28 @@ function getClubHistory(tid){
   return store.G.clubHistory?.[tid]||[];
 }
 
+function cupStageForTeam(teamId){
+  const cup=store.G?.cup;
+  if(!cup)return null;
+  if(cup.finished&&cup.winner?.isReal&&cup.winner.id===teamId)return'winner';
+  const rounds=cup.rounds||[];
+  for(let roundIndex=rounds.length-1;roundIndex>=0;roundIndex--){
+    const match=(rounds[roundIndex]||[]).find(m=>
+      (m.home?.isReal&&m.home.id===teamId)||(m.away?.isReal&&m.away.id===teamId));
+    if(!match)continue;
+    const distanceFromFinal=rounds.length-1-roundIndex;
+    if(distanceFromFinal===0)return'finalist';
+    if(distanceFromFinal===1)return'semifinal';
+    if(distanceFromFinal===2)return'quarterfinal';
+    if(distanceFromFinal===3)return'round16';
+    return'round32';
+  }
+  return null;
+}
+
 function recordClubSeasonHistory(){
   if(!store.G)return;
-  const { teamOvr } = window.PPM.gameplay;
+  const { ovr, teamOvr } = window.PPM.gameplay;
   store.G.clubHistory=store.G.clubHistory||{};
   [1,2].forEach(league=>{
     // pts-only, like every engine decision (champion, promotion, prizes) — a
@@ -17,9 +36,76 @@ function recordClubSeasonHistory(){
     const sorted=store.G.teams.filter(t=>t.league===league).sort((a,b)=>b.pts-a.pts);
     sorted.forEach((t,idx)=>{
       store.G.clubHistory[t.id]=store.G.clubHistory[t.id]||[];
-      store.G.clubHistory[t.id].push({season:store.G.season,league,position:idx+1,pts:t.pts,w:t.w,d:t.d,l:t.l,ovr:teamOvr(t.id),budget:t.budget});
+      const topPlayers=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&p.role!=='youth')
+        .sort((a,b)=>(b.leagueSeasonW||0)-(a.leagueSeasonW||0)
+          ||((b.leagueSeasonPointsWon||0)-(b.leagueSeasonPointsLost||0))-((a.leagueSeasonPointsWon||0)-(a.leagueSeasonPointsLost||0))
+          ||ovr(b)-ovr(a))
+        .slice(0,3)
+        .map(p=>({
+          id:p.id,name:p.name,age:p.age,ovr:ovr(p),
+          w:p.leagueSeasonW||0,l:p.leagueSeasonL||0,
+          points:(p.leagueSeasonPointsWon||0)-(p.leagueSeasonPointsLost||0),
+          winPoints:p.leagueSeasonPointsWon||0,lossPoints:p.leagueSeasonPointsLost||0,
+        }));
+      const row={
+        season:store.G.season,league,position:idx+1,
+        played:(t.w||0)+(t.d||0)+(t.l||0),pts:t.pts||0,
+        w:t.w||0,d:t.d||0,l:t.l||0,gf:t.gf||0,ga:t.ga||0,
+        pointsWon:t.pointsWon||0,pointsLost:t.pointsLost||0,
+        ovr:teamOvr(t.id),budget:t.budget||0,cupStage:cupStageForTeam(t.id),topPlayers,
+      };
+      store.G.clubHistory[t.id]=store.G.clubHistory[t.id].filter(entry=>entry.season!==store.G.season);
+      store.G.clubHistory[t.id].push(row);
     });
   });
+}
+
+function getClubCareerStats(tid){
+  const history=getClubHistory(tid);
+  const stats={
+    seasons:history.length,games:0,points:0,pointsPerGame:0,
+    wins:0,draws:0,losses:0,gf:0,ga:0,pointsWon:0,pointsLost:0,
+    leagueTitles:0,cupTitles:0,podiums:0,bestLeague:null,bestPosition:null,bestPoints:0,
+    averageOvr:0,peakOvr:0,topPlayers:[],
+  };
+  let ovrTotal=0;
+  const playerPerformances=[];
+  history.forEach(row=>{
+    const games=typeof row.played==='number'?row.played:(row.w||0)+(row.d||0)+(row.l||0);
+    stats.games+=games;stats.points+=row.pts||0;
+    stats.wins+=row.w||0;stats.draws+=row.d||0;stats.losses+=row.l||0;
+    stats.gf+=row.gf||0;stats.ga+=row.ga||0;
+    stats.pointsWon+=row.pointsWon||0;stats.pointsLost+=row.pointsLost||0;
+    if(row.league===1&&row.position===1)stats.leagueTitles++;
+    if(row.cupStage==='winner')stats.cupTitles++;
+    if(row.league===1&&(row.position||99)<=3)stats.podiums++;
+    if(stats.bestLeague===null||(row.league||99)<stats.bestLeague
+      ||((row.league||99)===stats.bestLeague&&(row.position||99)<stats.bestPosition)){
+      stats.bestLeague=row.league||null;
+      stats.bestPosition=row.position||null;
+    }
+    stats.bestPoints=Math.max(stats.bestPoints,row.pts||0);
+    stats.peakOvr=Math.max(stats.peakOvr,row.ovr||0);
+    ovrTotal+=row.ovr||0;
+    playerPerformances.push(...(row.topPlayers||[]).map(player=>({...player,season:row.season})));
+  });
+  stats.pointsPerGame=stats.games?Math.round((stats.points/stats.games)*1000)/1000:0;
+  stats.averageOvr=stats.seasons?Math.round((ovrTotal/stats.seasons)*10)/10:0;
+  stats.topPlayers=playerPerformances
+    .sort((a,b)=>(b.w||0)-(a.w||0)||(b.points||0)-(a.points||0)||(b.ovr||0)-(a.ovr||0))
+    .slice(0,10);
+  return stats;
+}
+
+function getClubHallOfFame(limit=20){
+  return (store.G?.teams||[]).map(team=>{
+    const stats=getClubCareerStats(team.id);
+    const legacyScore=stats.leagueTitles*1000+stats.cupTitles*700+stats.podiums*120
+      +stats.pointsPerGame*100+stats.wins;
+    return{teamId:team.id,name:team.name,legacyScore,...stats};
+  }).filter(row=>row.seasons>0)
+    .sort((a,b)=>b.legacyScore-a.legacyScore||b.points-a.points)
+    .slice(0,limit);
 }
 
 function openTeamOverview(tid){
@@ -106,5 +192,5 @@ function openTeamOverview(tid){
   openModal();
 }
 
-window.PPM.gameplayClubUI = { getClubHistory, recordClubSeasonHistory, openTeamOverview };
+window.PPM.gameplayClubUI = { getClubHistory, recordClubSeasonHistory, getClubCareerStats, getClubHallOfFame, openTeamOverview };
 })();

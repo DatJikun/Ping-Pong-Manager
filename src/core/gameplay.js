@@ -3185,24 +3185,58 @@ function hofRankScore(e){
 }
 function pruneCareerData(){
   if(!store.G)return;
-  // 1) Hall of Fame holds only the 20 greatest careers; displaced ones are deleted
-  //    permanently (owner rule). Each kept entry is a full inspectable profile.
+  // 1) Keep a broad but bounded transfer shelf. Five candidates per active club
+  //    gives the player plenty of choice (120 in the current 24-club world) while
+  //    stopping unused free agents from accumulating forever.
+  const isFreeAgent=p=>p&&!p.retired&&!p.loanedOut
+    &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId;
+  const freeAgents=(store.G.players||[]).filter(isFreeAgent);
+  freeAgents.forEach(p=>{p.teamId=null;p.contractYears=0;});
+  const freeAgentLimit=Math.max(60,(store.G.teams||[]).length*5);
+  if(freeAgents.length>freeAgentLimit){
+    const retentionScore=p=>{
+      const current=ovrBase(p);
+      const upside=Math.max(0,playerCeiling(p)-current);
+      const youthBonus=Math.max(0,27-(p.age||27))*0.4;
+      return current+upside*0.18+youthBonus;
+    };
+    const keepIds=new Set([...freeAgents]
+      .sort((a,b)=>retentionScore(b)-retentionScore(a)||(a.id||0)-(b.id||0))
+      .slice(0,freeAgentLimit)
+      .map(p=>p.id));
+    freeAgents.filter(p=>!keepIds.has(p.id)).forEach(p=>{
+      const hasCareer=((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
+      if(hasCareer)retirePlayer(p);
+      else p.retired=true;
+    });
+  }
+  // 2) Retired players survive only as HoF summaries — drop the heavy objects so
+  //    the active roster array can't balloon to thousands over a long career.
+  if(Array.isArray(store.G.players)){
+    store.G.players=store.G.players.filter(p=>!p.retired);
+    const live=new Set(store.G.players.map(p=>p.id));
+    if(store.G.playerHistory)Object.keys(store.G.playerHistory).forEach(k=>{if(!live.has(Number(k)))delete store.G.playerHistory[k];});
+    if(Array.isArray(store.G.transferMarket))store.G.transferMarket=store.G.transferMarket.filter(row=>live.has(row.playerId));
+    if(Array.isArray(store.G.marketShortlist))store.G.marketShortlist=store.G.marketShortlist.filter(id=>live.has(id));
+    if(Array.isArray(store.G.marketCompare))store.G.marketCompare=store.G.marketCompare.filter(id=>live.has(id));
+    if(Array.isArray(ui.marketCompare))ui.marketCompare=ui.marketCompare.filter(id=>live.has(id));
+  }
+  // 3) Staff history exists to chart people who can still be inspected. Once a
+  //    staff member has retired from every role and pool, the snapshots go too.
+  if(store.G.staffHistory){
+    const liveStaffIds=new Set([
+      ...(store.G.staff||[]),...(store.G.staffPool||[]),...(store.G.scoutPool||[]),
+      ...(store.G.prDirectorPool||[]),store.G.prDirector,
+      ...(store.G.teams||[]).map(t=>t.prDirector),
+    ].filter(Boolean).map(s=>s.id));
+    Object.keys(store.G.staffHistory).forEach(k=>{if(!liveStaffIds.has(Number(k)))delete store.G.staffHistory[k];});
+  }
+  // 4) Hall of Fame holds only the 20 greatest lightweight career summaries.
   if(Array.isArray(store.G.hallOfFame)&&store.G.hallOfFame.length>20){
     store.G.hallOfFame.sort((a,b)=>hofRankScore(b)-hofRankScore(a));
     store.G.hallOfFame.length=20;
   }
-  // 2) Retired players survive only as HoF summaries \u2014 drop the heavy objects so
-  //    the active roster array can't balloon to thousands over a long career.
-  if(Array.isArray(store.G.players)){
-    const before=store.G.players.length;
-    store.G.players=store.G.players.filter(p=>!p.retired);
-    const removed=before-store.G.players.length;
-    if(removed>0){
-      // Drop now-dangling per-player history for removed players.
-      if(store.G.playerHistory){const live=new Set(store.G.players.map(p=>p.id));Object.keys(store.G.playerHistory).forEach(k=>{if(!live.has(Number(k)))delete store.G.playerHistory[k];});}
-    }
-  }
-  // 3) Heavy per-duel detail (matchups/tiebreak) is only needed for recent seasons.
+  // 5) Heavy per-duel detail (matchups/tiebreak) is only needed for recent seasons.
   //    Keep the current + previous season full; strip the detail from older results.
   const keepFrom=(store.G.season||1)-1;
   (store.G.results||[]).forEach(r=>{
@@ -3997,7 +4031,7 @@ async function runMatchday(){
     if(store.G.managerPrestige>=75)setTimeout(checkNatTeamOffer,2000);
     
     recordClubSeasonHistory();
-    store.G.seasonHistory.push({season:store.G.season,position:myPos2,league:myL,w:myTeam().w,d:myTeam().d,l:myTeam().l,pts:myTeam().pts,gf:myTeam().gf,ga:myTeam().ga,pointsWon:myTeam().pointsWon||0,pointsLost:myTeam().pointsLost||0,teamOvr:teamOvr(myTeam().id),matchProg:buildMatchProgression(),budget:myTeam().budget,wages,promoted:promoRele.promoted,relegated:promoRele.relegated,teamsSnapshot:store.G.teams.map(t=>({id:t.id,name:t.name,league:t.league,w:t.w,d:t.d,l:t.l,pts:t.pts,gf:t.gf,ga:t.ga,pointsWon:t.pointsWon||0,pointsLost:t.pointsLost||0}))});
+    store.G.seasonHistory.push({season:store.G.season,position:myPos2,league:myL,w:myTeam().w,d:myTeam().d,l:myTeam().l,pts:myTeam().pts,gf:myTeam().gf,ga:myTeam().ga,pointsWon:myTeam().pointsWon||0,pointsLost:myTeam().pointsLost||0,teamOvr:teamOvr(myTeam().id),matchProg:buildMatchProgression(),budget:myTeam().budget,wages,promoted:promoRele.promoted,relegated:promoRele.relegated});
     if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog('\n// OLIMPIADA dost\u0119pna!','hl');}else store.G.olympicYear=false;
     if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog('\n// MUNDIAL dost\u0119pny!','hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
     buildMarket();genSponsorOffers(calcPrestige());
