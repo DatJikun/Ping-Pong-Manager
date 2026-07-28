@@ -267,8 +267,8 @@ function getBoardObjective(){
   return store.G?.boardObjective||null;
 }
 function boardObjectiveLabel(obj){
-  if(!obj)return'Brak celu zarz\u0105du';
-  return`${goalDesc(obj.goal)} / premia ${obj.reward.toLocaleString('pl')} €`;
+  if(!obj)return t('board.noObjective');
+  return t('board.objectiveLabel',{goal:goalDesc(obj.goal),reward:formatCurrency(obj.reward)});
 }
 // A club's expected strength relative to its league: squad OVR + (dampened) budget +
 // infrastructure. Drives the board's league-POSITION target (owner request).
@@ -1203,14 +1203,14 @@ function describePlayerIdentity(p){
     topStat:top,
     weakStat:low,
     label:archetype,
-    note:`Mocna strona: ${names[top]}${second?` + ${names[second]}`:''}. S\u0142abszy punkt: ${names[low]}.`
+    note:t('player.identityNote',{top:names[top],second:second?` + ${names[second]}`:'',weak:names[low]})
   };
 }
 function getStyleEdge(homeStyle,awayStyle){
   // Extra nudge on top of engine mults. Tuned so equal-stat counters land
   // ~57–65% and a large OVR gap still usually beats a style underdog.
   const delta=((STYLE_EDGE[homeStyle]||{})[awayStyle]||0)*0.65;
-  return{delta,label:delta>0?`${styleLabel(homeStyle)} ma przewag\u0119 nad ${styleLabel(awayStyle)}`:delta<0?`${styleLabel(awayStyle)} dobrze kontruje ${styleLabel(homeStyle)}`:'style neutralizuj\u0105 si\u0119'};
+  return{delta,label:delta>0?t('vme.styleAdvantage',{style:styleLabel(homeStyle),opponent:styleLabel(awayStyle)}):delta<0?t('vme.styleCounter',{style:styleLabel(awayStyle),opponent:styleLabel(homeStyle)}):t('vme.styleNeutral')};
 }
 // Team psychologist: morale floor + clutch MEN boost (staff impact goal batch).
 function getTeamPsychologist(teamId){
@@ -3731,7 +3731,7 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
       ${playerHud(hp,'home',!!(mu&&mu.homeWin&&matchupFinished))}
       <div class="vme-center">
         <div class="vme-match-index">MECZ ${currentIdx+1}/4</div>
-        <div class="vme-match-style">${mu?.styleEdge||'Pojedynek neutralny'}</div>
+        <div class="vme-match-style">${mu?.styleEdge||t('vme.neutralDuel')}</div>
         <div class="vme-setline">${setLine||`<span class="fs10" style="color:#8f8a80">${t('vme.setsPending')}</span>`}</div>
         <div class="mt-10">
           <div class="fs10 ink3 up ls1">Set ${currentSetNo}</div>
@@ -4005,7 +4005,7 @@ async function runMatchday(){
         addLog(t('matchLog.boardFailed',{goal:goalDesc(boardObjective.goal)}),'bd');
         store.G.managerPrestige=Math.max(0,(store.G.managerPrestige||0)-4);
         if(boardObjective.failure==='fired'){
-          handleManagerFired(`niezrealizowany ambitny cel: ${goalDesc(boardObjective.goal)}`);
+          handleManagerFired(t('board.firedAmbitious',{goal:goalDesc(boardObjective.goal)}));
           return;
         }
       }
