@@ -779,11 +779,7 @@ function ensureStaffMeta(s){
     const peakVersion={...s,age:Math.min(s.age||45,s.peakAge||52)};
     s.ceiling=clamp(staffOvr(peakVersion)+(s.type==='coach'?4:2),Math.max(staffOvr(s),30),99);
   }
-  if(typeof s.bio!=='string'||!s.bio){
-    const roleLabel=s.type==='coach'?'trenerem':s.type==='physio'?'fizjoterapeutą':s.type==='psychologist'?'psychologiem':s.type==='scout'?'skautem':'specjalistką PR';
-    const ageText=s.age?`${s.age}-letnim `:'';
-    s.bio=`${s.name} jest ${ageText}${roleLabel}, którego profil budują doświadczenie, reputacja i ostatnie wyniki pracy w klubach.`;
-  }
+  if(!s.bioKey)s.bioKey='staff.bioFallback';
   if(s.teamId!==undefined&&s.teamId!==null){
     const openTenure=s.careerHistory.find(h=>h.teamId===s.teamId&&!h.endSeason);
     if(!openTenure)s.careerHistory.push({teamId:s.teamId,startSeason:store.G?.season||1,endSeason:null,role:s.type});
@@ -1615,10 +1611,10 @@ function genStaff(type,countryId=null){
   let extra={};
   if(type==='coach'){
     const coachTraitPool=[
-      {id:'TACTIC_GURU',label:'Guru Taktyki',desc:'+ większy bonus z taktyki dla zgodnych stylów',bonus:'tactics'},
-      {id:'YOUTH_DEVELOPER',label:'Developer Juniorów',desc:'+ lepszy rozwój akademii',bonus:'youth'},
-      {id:'MORALE_MONSTER',label:'Motywator',desc:'+ większy wpływ na morale',bonus:'morale'},
-      {id:'DISCIPLINARIAN',label:'Dyscyplina',desc:'+ boost dla cierpliwych, kara dla agresywnych',bonus:'discipline'},
+      {id:'TACTIC_GURU',bonus:'tactics'},
+      {id:'YOUTH_DEVELOPER',bonus:'youth'},
+      {id:'MORALE_MONSTER',bonus:'morale'},
+      {id:'DISCIPLINARIAN',bonus:'discipline'},
     ];
     const styleKeys=Object.keys(COACH_STYLES);
     const styleId=styleKeys[rnd(0,styleKeys.length-1)];
@@ -1657,12 +1653,12 @@ function genStaff(type,countryId=null){
 // agent pool after being fired and may be re-hired). The player IS their own
 // principal. Strategy effects are intentionally conservative for now (tune later).
 const PRINCIPAL_STRATEGIES={
-  youth:{label:'Inwestor w młodzież',fit:['youthOnly','academy','frugal']},
-  winnow:{label:'Wynik teraz',fit:['bigspender','ambitious']},
-  frugal:{label:'Oszczędny',fit:['frugal','academy','community']},
-  gambler:{label:'Hazardzista',fit:['bigspender','ambitious']},
-  builder:{label:'Budowniczy',fit:['youthOnly','academy','community']},
-  dealer:{label:'Wheeler-dealer',fit:['frugal','bigspender']},
+  youth:{fit:['youthOnly','academy','frugal']},
+  winnow:{fit:['bigspender','ambitious']},
+  frugal:{fit:['frugal','academy','community']},
+  gambler:{fit:['bigspender','ambitious']},
+  builder:{fit:['youthOnly','academy','community']},
+  dealer:{fit:['frugal','bigspender']},
 };
 function principalStrategyLabel(s){return PRINCIPAL_STRATEGIES[s]?t(`principal.strategy.${s}`):s||'—';}
 function genPrincipal(countryId,forceStrategy){
@@ -1671,7 +1667,7 @@ function genPrincipal(countryId,forceStrategy){
   const strategy=forceStrategy||keys[rnd(0,keys.length-1)];
   return {id:ui._pid++,kind:'principal',name:randNameForCountry(cid),nationality:cid,
     age:36+rnd(0,22),peakAge:58+rnd(0,8),strategy,competence:clamp(35+rnd(0,55),30,95),
-    ambition:pick(['spokojny','wyważony','ambitny']),teamId:null,retired:false,idle:0,careerHistory:[]};
+    ambition:pick(['calm','balanced','ambitious']),teamId:null,retired:false,idle:0,careerHistory:[]};
 }
 // Pick a principal whose strategy fits the club's traits (small chance of a
 // contrarian for variety); prefer re-hiring a compatible free agent from the pool.
@@ -3447,10 +3443,10 @@ async function playCupRoundBody(){
   
   store.G.cupPlayedThisSeason=true;
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  const roundNames=['1/16','1/8','\u0106wier\u0107fina\u0142','P\u00f3\u0142fina\u0142','FINA\u0141'];
+  const roundNames=['1/16','1/8',t('cup.quarterfinal'),t('cup.semifinal'),t('cup.final')];
   const roundName=roundNames[Math.min(cup.currentRound,roundNames.length-1)];
   
-  modal.innerHTML=`<div class="mt2">PUCHAR POLSKI: ${roundName}</div>
+  modal.innerHTML=`<div class="mt2">${t('cup.title').toUpperCase()}: ${roundName}</div>
     <div id="cup-vme" class="mb10"></div>
     <div id="cup-matches" class="mb12 grid gtcfill240 gp4"></div>
     <div class="log" id="cup-log" style="height:160px"></div>`;
@@ -3464,7 +3460,7 @@ async function playCupRoundBody(){
   const myId=store.G.myTeamId;
   const nextRound=[];
   
-  addLog(`// PUCHAR POLSKI: ${roundName} (${round.length} mecz\u00f3w)`,'hl');
+  addLog(t('cupLog.header',{round:roundName,count:round.length}),'hl');
   await matchPause(500);
   
   // Render all matches bracket
@@ -3519,7 +3515,7 @@ async function playCupRoundBody(){
         if(displayMu.homeWin)hScore++;else aScore++;
         vmeEl.innerHTML=renderVME(displayHome,displayAway,displayMatchups,mi,hScore,aScore,true,{setIndex:(displayMu.setScores||[]).length,home:0,away:0});
         const ww=displayMu.homeWin;
-        addLog(`  ${displayMu.type==='double'?'DEBEL: ':''}${displayMu.homeName||playerName(displayMu.homePlayer)} vs ${displayMu.awayName||playerName(displayMu.awayPlayer)}: ${displayMu.hs}:${displayMu.as}`,ww?'gd':'bd');
+        addLog(`  ${displayMu.type==='double'?t('matchLog.doubles')+' ':''}${displayMu.homeName||playerName(displayMu.homePlayer)} vs ${displayMu.awayName||playerName(displayMu.awayPlayer)}: ${displayMu.hs}:${displayMu.as}`,ww?'gd':'bd');
         await matchPause(1000);
       }
       
@@ -3530,7 +3526,7 @@ async function playCupRoundBody(){
       renderCupBracket(i);
       
       const myWon=(winner.isReal&&winner.id===myId);
-      addLog(`\u2192 ${myWon?'WYGRANA':'PRZEGRANA'} ${r.score}`,myWon?'gd':'bd');
+      addLog(t(myWon?'matchLog.win':'matchLog.loss',{score:r.score}),myWon?'gd':'bd');
       await matchPause(800);
       vmeEl.innerHTML='';
     }else if(isMyMatch){
@@ -3542,7 +3538,7 @@ async function playCupRoundBody(){
       m.result={score:r.score,winner,loser,matchups:r.matchups};
       nextRound.push(winner);
       const myWon=(winner.isReal&&winner.id===myId);
-      addLog(`\u2605 ${m.home.name} vs ${m.away.name}: ${r.score}${r.tiebreak?' (dogrywka)':''}`,myWon?'gd':'bd');
+      addLog(`\u2605 ${m.home.name} vs ${m.away.name}: ${r.score}${r.tiebreak?` (${t('cupLog.tiebreak')})`:''}`,myWon?'gd':'bd');
       renderCupBracket(i);
       await matchPause(1200);
     }else{
@@ -3563,7 +3559,7 @@ async function playCupRoundBody(){
   
   if(nextRound.length<=1){
     cup.finished=true;cup.winner=nextRound[0];
-    addLog(`\n// ZWYCI\u0118ZCA PUCHARU POLSKI: ${cup.winner.name}!`,'hl');
+    addLog(t('cupLog.winner',{name:cup.winner.name}),'hl');
     const cupPrizeTable={winner:35000,finalist:18000,semifinal:9000,quarterfinal:4500};
     const finalRound=cup.rounds[cup.rounds.length-1]||[];
     const semiRound=cup.rounds[cup.rounds.length-2]||[];
@@ -3575,13 +3571,13 @@ async function playCupRoundBody(){
       if(teamId===myId){
         const finance=ensureSeasonFinance();
         if(finance)finance.prize+=amount;
-        addLog(`// ${label}: +${amount.toLocaleString('pl')} €`,'gd');
+        addLog(t('cupLog.prize',{label:t(label),amount:formatCurrency(amount)}),'gd');
       }
     };
-    if(cup.winner.isReal)rewardCupTeam(cup.winner.id,cupPrizeTable.winner,'Premia pucharowa');
-    finalRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.finalist,'Premia za finał PP');});
-    semiRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.semifinal,'Premia za półfinał PP');});
-    quarterRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.quarterfinal,'Premia za ćwierćfinał PP');});
+    if(cup.winner.isReal)rewardCupTeam(cup.winner.id,cupPrizeTable.winner,'cupLog.prizeWinner');
+    finalRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.finalist,'cupLog.prizeFinalist');});
+    semiRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.semifinal,'cupLog.prizeSemifinal');});
+    quarterRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.quarterfinal,'cupLog.prizeQuarterfinal');});
     if(cup.winner.isReal&&cup.winner.id===myId){
       pushNews('news.cupWinner','cup',{club:myTeam().name,prize:formatCurrency(cupPrizeTable.winner)});
       store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.role==='starter').forEach(p=>{
@@ -3596,7 +3592,7 @@ async function playCupRoundBody(){
       newRoundMatches.push({home:nextRound[i],away:nextRound[i+1]||{id:'bye',name:'BYE',isBye:true},result:null});
     }
     cup.rounds.push(newRoundMatches);
-    addLog(`\n// Nast\u0119pna runda: ${nextRound.length} dru\u017cyn`,'hl');
+    addLog(t('cupLog.nextRound',{count:nextRound.length}),'hl');
   }
   
   await matchPause(1200);
@@ -4432,7 +4428,7 @@ function aiSignPlayers(){
       closeStaffTenure(s,store.G.season);
       if(s.teamId===store.G.myTeamId){
         toast(t('season.staffContractExpired',{name:s.name,role:t(s.type==='coach'?'staff.coach':s.type==='physio'?'staff.physio':s.type==='psychologist'?'staff.psychologist':s.type==='scout'?'staff.scout':'staff.prDirector')}));
-        safeLog(`${s.name} odszedł po wygaśnięciu kontraktu`,'bd');
+        safeLog(t('season.staffContractExpiredLog',{name:s.name}),'bd');
       }
       s.teamId=null;
       if(s.type==='scout'){s.hired=false;(store.G.scoutPool=store.G.scoutPool||[]).push(s);}
@@ -4623,7 +4619,7 @@ async function runMundialBody(){
   const myId=store.G.myTeamId;
   
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  modal.innerHTML=`<div class="mt2">MUNDIAL PING PONGA \u2014 Sezon ${store.G.season}</div>
+  modal.innerHTML=`<div class="mt2">${t('international.worldsTitle',{season:store.G.season}).toUpperCase()}</div>
   <div class="grid gtc4 gp4 mb12">
     ${teams.sort((a,b)=>(a.worldRank||99)-(b.worldRank||99)).map((t,i)=>`<div style="padding:6px 8px;background:${t.isPlayer?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.isPlayer?'var(--r)':'var(--b1)'};border-radius:3px">
       <div class="fs9 ink3">#${t.worldRank||'?'}</div>
@@ -4638,7 +4634,7 @@ async function runMundialBody(){
   function addLog(t,c=''){const d=document.createElement('div');d.className=c;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
   
   // Group stage (4 groups of 4)
-  addLog('// FAZA GRUPOWA (4 grupy po 4 dru\u017cyny)','hl');
+  addLog(t('international.groupStage'),'hl');
   await sleep(500);
   
   const shuffled=[...teams].sort(()=>Math.random()-.5);
@@ -4647,14 +4643,14 @@ async function runMundialBody(){
   
   // Make sure my team is in a group
   const myGroup=groups.findIndex(g=>g.find(t=>t.isPlayer));
-  addLog(`// Moja reprezentacja: Grupa ${String.fromCharCode(65+myGroup)}`);
+  addLog(t('international.myGroup',{group:String.fromCharCode(65+myGroup)}));
   
   const qualifiers=[];
   
   for(let gi=0;gi<4;gi++){
     const g=groups[gi];
     const pts={};g.forEach(t=>pts[t.id]=0);
-    addLog(`\n// Grupa ${String.fromCharCode(65+gi)}`,'hl');
+    addLog(t('international.group',{group:String.fromCharCode(65+gi)}),'hl');
     await sleep(300);
     
     for(let i=0;i<g.length;i++){
@@ -4671,16 +4667,12 @@ async function runMundialBody(){
     const sorted=[...g].sort((a,b)=>pts[b.id]-pts[a.id]);
     const q=sorted.slice(0,2);
     qualifiers.push(...q);
-    addLog(`  Awansuj\u0105: ${q.map(t=>t.name).join(', ')}`,'gd');
+    addLog(t('international.qualify',{teams:q.map(team=>team.name).join(', ')}),'gd');
   }
   
   // Knockout
-  const rounds=[
-    {name:'\u0106WIER\u0106FINA\u0141Y', teams:qualifiers},
-  ];
-  
   let curRound=[...qualifiers];
-  const roundNames=['\u0106WIER\u0106FINA\u0141Y','P\u00d3\u0141FINA\u0141Y','FINA\u0141'];
+  const roundNames=[t('cup.quarterfinal').toUpperCase(),t('cup.semifinal').toUpperCase(),t('cup.final').toUpperCase()];
   let roundIdx=0;
   
   while(curRound.length>1){
@@ -4702,10 +4694,10 @@ async function runMundialBody(){
   }
   
   const mundialWinner=curRound[0];
-  addLog(`\n// MISTRZ \u015aWIATA: ${mundialWinner?.name||'?'}!`,'hl');
+  addLog(t('international.worldChampion',{country:mundialWinner?.name||'?'}),'hl');
   
   if(mundialWinner?.isPlayer){
-    addLog('// TWOJA REPREZENTACJA WYGRA\u0141A MUNDIAL!','gd');
+    addLog(t('international.yourWorldTitle'),'gd');
     // Big reputation boost
     store.G.managerPrestige=(store.G.managerPrestige||0)+30;
     myTeam().budget+=50000;
@@ -4715,10 +4707,10 @@ async function runMundialBody(){
       p.awards=p.awards||[];
       p.awards.push({season:store.G.season,type:'mundial_gold',displayLabel:'Z\u0142oto Mundialu',label:`Z\u0142oto Mundialu S${store.G.season}`});
     });
-    toast('Mistrzostwo \u015awiata!!! Bonus +50 000 €!');
+    toast(t('international.worldTitle',{bonus:formatCurrency(50000)}));
     pushNews('news.worldChampion','cup',{country:mundialWinner.name});
   }else{
-    addLog(`// Wynik: ${mundialWinner?.isPlayer?'Z\u0142oto':'Brak trofeum'}`,'dm');
+    addLog(t('international.result',{result:mundialWinner?.isPlayer?t('international.gold'):t('international.noTrophy')}),'dm');
   }
   
   store.G.mundialYear=false;
@@ -4751,7 +4743,7 @@ function checkNatTeamOffer(){
 function acceptNatTeam(){
   store.G.isNatTeamManager=true;
   const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-  toast(`Zosta\u0142e\u015b selekcjonerem ${country.nationalTeam||country.name}!`);
+  toast(t('international.namedCoach',{country:country.nationalTeam||country.name}));
   closeModal();
   store.G.managerPrestige=(store.G.managerPrestige||0)+10;
   render();
@@ -4772,7 +4764,7 @@ async function runOlympicsBody(){
   const rankByOvr=store.G.teams.slice().sort((a,b)=>teamOvr(b.id)-teamOvr(a.id));
   const top8=rankByOvr.slice(0,8);const myId=store.G.myTeamId;const myInTop8=top8.find(t=>t.id===myId);
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">OLIMPIADA - Sezon ${store.G.season}</div>
+  modal.innerHTML=`<div class="mt2">${t('international.olympicsTitle',{season:store.G.season}).toUpperCase()}</div>
   <div class="grid gtc4 gp4 mb12">
     ${top8.map((t,i)=>`<div style="padding:7px 10px;background:${t.id===myId?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.id===myId?'var(--r)':'var(--b1)'}"><div class="fs9 ink3">#${i+1} OVR ${teamOvr(t.id)}</div><div class="syne b7 fs11">${t.name}</div></div>`).join('')}
   </div>
@@ -4781,19 +4773,19 @@ async function runOlympicsBody(){
   const logEl=document.getElementById('ollog');
   function addLog(t,c=''){const d=document.createElement('div');d.className=c;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
   const bracket=[[top8[0],top8[7]],[top8[1],top8[6]],[top8[2],top8[5]],[top8[3],top8[4]]];
-  async function simOlMatch(a,b){addLog(`  ${a.name} vs ${b.name}`);await sleep(500);const r=simTeamMatch(a.id,b.id,true);const winner=r.isDraw?(Math.random()<.5?a:b):(r.homeWin?a:b);const isMyMatch=a.id===myId||b.id===myId;if(isMyMatch)addLog(`  \u2192 ${r.score} - ${winner.name} awansuje`,winner.id===myId?'gd':'bd');else addLog(`  \u2192 ${winner.name} wygrywa ${r.score}`,'dm');return{winner};}
-  addLog('// \u0106WIER\u0106FINA\u0141Y','hl');await sleep(400);
+  async function simOlMatch(a,b){addLog(`  ${a.name} vs ${b.name}`);await sleep(500);const r=simTeamMatch(a.id,b.id,true);const winner=r.isDraw?(Math.random()<.5?a:b):(r.homeWin?a:b);const isMyMatch=a.id===myId||b.id===myId;if(isMyMatch)addLog(t('international.advances',{score:r.score,name:winner.name}),winner.id===myId?'gd':'bd');else addLog(t('international.wins',{name:winner.name,score:r.score}),'dm');return{winner};}
+  addLog(`// ${t('cup.quarterfinal').toUpperCase()}`,'hl');await sleep(400);
   const sfTeams=[];for(const[a,b] of bracket){const{winner}=await simOlMatch(a,b);sfTeams.push(winner);}
-  addLog('\n// P\u00d3\u0141FINA\u0141Y','hl');await sleep(400);
+  addLog(`// ${t('cup.semifinal').toUpperCase()}`,'hl');await sleep(400);
   const sfBracket=[[sfTeams[0],sfTeams[3]],[sfTeams[1],sfTeams[2]]];const finTeams=[];
   for(const[a,b] of sfBracket){const{winner}=await simOlMatch(a,b);finTeams.push(winner);}
-  addLog('\n// FINA\u0141','hl');await sleep(600);
+  addLog(`// ${t('cup.final').toUpperCase()}`,'hl');await sleep(600);
   const{winner:gold}=await simOlMatch(finTeams[0],finTeams[1]);
   const silver=gold===finTeams[0]?finTeams[1]:finTeams[0];
   store.G.players.filter(p=>p.teamId===gold.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'olympic_gold',displayLabel:'Z\u0142oto Olimpijskie',label:`Z\u0142oto Olimpijskie S${store.G.season}`});});
-  addLog(`\n// ${gold.name} - MISTRZ OLIMPIJSKI!`,gold.id===myId?'gd':'hl');
+  addLog(t('international.olympicChampion',{name:gold.name}),gold.id===myId?'gd':'hl');
   const budBonus=gold.id===myId?18000:silver.id===myId?12000:myInTop8?6000:0;
-  if(budBonus){myTeam().budget+=budBonus;addLog(`// Bonus: +${budBonus.toLocaleString('pl')} €`,'gd');}
+  if(budBonus){myTeam().budget+=budBonus;addLog(t('international.bonus',{amount:formatCurrency(budBonus)}),'gd');}
   store.G.olympicYear=false;
   // Persist immediately: awards, budget bonus and olympicYear=false must survive
   // a reload, otherwise the tournament replays with rerolled results.
@@ -5689,7 +5681,7 @@ async function runTop12MastersBody(leagueId){
   const myEntry=participants.find(e=>e.team.id===myId);
   
   const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  modal.innerHTML=`<div class="mt2">TOP 12 MASTERS \u2014 ${leagueId===1?'I Liga':'II Liga'}</div>
+  modal.innerHTML=`<div class="mt2">${t('top12.eventTitle',{division:leagueId===1?'I':'II'}).toUpperCase()}</div>
   <div class="grid gtc4 gp6 mb14">
     ${participants.map((e,i)=>`<div style="padding:8px;background:${e.team.id===myId?'var(--tint-bad)':'var(--s2)'};border:1px solid ${e.team.id===myId?'var(--r)':'var(--b1)'};border-radius:3px">
       <div class="fs9 ink3">#${i+1}</div>
@@ -5706,8 +5698,8 @@ async function runTop12MastersBody(leagueId){
   const brackEl=document.getElementById('t12-bracket');
   function addLog(t,c=''){const d=document.createElement('div');d.className=c;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
   
-  addLog(`// TOP 12 MASTERS \u2014 ${leagueId===1?'I Liga':'II Liga'}`,'hl');
-  addLog(`// ${participants.length} zawodnik\u00f3w / Format: drabinka pucharowa`)
+  addLog(t('top12.eventTitle',{division:leagueId===1?'I':'II'}),'hl');
+  addLog(t('top12.format',{count:participants.length}));
   await sleep(600);
   
   let current=[...participants.map(e=>e.player)];
@@ -5721,7 +5713,9 @@ async function runTop12MastersBody(leagueId){
   
   while(current.filter(x=>x).length>1){
     const next=[];
-    const roundName=current.filter(x=>x).length<=2?'FINA\u0141':current.filter(x=>x).length<=4?'P\u00d3\u0141FINA\u0141':current.filter(x=>x).length<=8?'\u0106WIER\u0106FINA\u0141':`Runda ${round}`;
+    const alive=current.filter(x=>x).length;
+    const roundId=alive<=2?'final':alive<=4?'semifinal':alive<=8?'quarterfinal':'round';
+    const roundName=roundId==='round'?t('top12.round',{round}):t(`cup.${roundId}`).toUpperCase();
     addLog(`\n// ${roundName}`,'hl');
     await sleep(400);
     
@@ -5738,9 +5732,9 @@ async function runTop12MastersBody(leagueId){
       
       const cls=isMyMatch?(r.winner.id===myPlayer.id?'gd':'bd'):'dm';
       addLog(`  ${p1.name} vs ${p2.name}: ${r.score} \u2192 ${r.winner.name}`,cls);
-      if(roundName==='FINA\u0141')placements[r.loser.id]='finalist';
-      else if(roundName==='P\u00d3\u0141FINA\u0141')placements[r.loser.id]='semifinal';
-      else if(roundName==='\u0106WIER\u0106FINA\u0141')placements[r.loser.id]='quarterfinal';
+      if(roundId==='final')placements[r.loser.id]='finalist';
+      else if(roundId==='semifinal')placements[r.loser.id]='semifinal';
+      else if(roundId==='quarterfinal')placements[r.loser.id]='quarterfinal';
       
       if(isMyMatch&&r.loser.id===myPlayer.id){
         myEliminated=true;
@@ -5754,7 +5748,7 @@ async function runTop12MastersBody(leagueId){
   const champion=current[0];
   if(champion){
     placements[champion.id]='winner';
-    addLog(`\n// MISTRZ: ${champion.name} (${teamName(champion.teamId)})!`,'hl');
+    addLog(t('top12.championLog',{name:champion.name,club:teamName(champion.teamId)}),'hl');
     // Award champion
     champion.awards=champion.awards||[];
     champion.awards.push({season:store.G.season,type:`top12_winner_l${leagueId}`,clubName:teamName(champion.teamId),displayLabel:`Top 12 Masters ${leagueId===1?'I':'II'} Liga`,label:`Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}`});
@@ -5779,13 +5773,13 @@ async function runTop12MastersBody(leagueId){
       if(team.id===myId){
         const finance=ensureSeasonFinance();
         if(finance)finance.prize+=prize;
-        addLog(`// Premia Top 12 (${place}): +${prize.toLocaleString('pl')} €`,'gd');
+        addLog(t('top12.prize',{place:t(`top12.place.${place}`),amount:formatCurrency(prize)}),'gd');
       }
     });
     if(champion.teamId===myId){
-      addLog('// Frekwencja na trybunach ro\u015bnie przez reszt\u0119 sezonu!','gd');
+      addLog(t('top12.attendanceBonus'),'gd');
       store.G._top12Bonus=true; // ticket income multiplier rest of season
-      toast(`${champion.name} wygrywa Top 12 Masters!`);
+      toast(t('top12.winner',{name:champion.name}));
     }
     // No else-reset: both leagues' tournaments run the same matchday, and losing
     // the OTHER league's Top 12 must not wipe a bonus earned in ours. The flag is
