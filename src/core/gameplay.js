@@ -3200,7 +3200,7 @@ function retirePlayer(p){
 // Keeps a long career lightweight (memory + per-match loop cost). Called once per
 // season at the end of endSeason(). Bounds the three things that otherwise grow
 // forever (see tests/stress.js): retired player objects, the Hall of Fame, and
-// per-duel match detail in old results.
+// old match rows whose permanent season summaries already live in clubHistory.
 function hofRankScore(e){
   if(typeof e.goatScore==='number')return e.goatScore;
   const titles=Object.values(e.trophyMap||{}).reduce((s,t)=>s+(t.count||0),0);
@@ -3259,12 +3259,13 @@ function pruneCareerData(){
     store.G.hallOfFame.sort((a,b)=>hofRankScore(b)-hofRankScore(a));
     store.G.hallOfFame.length=20;
   }
-  // 5) Heavy per-duel detail (matchups/tiebreak) is only needed for recent seasons.
-  //    Keep the current + previous season full; strip the detail from older results.
+  // 5) Full match rows are only needed for the current and previous season.
+  //    Permanent club statistics and top performers live in the compact
+  //    clubHistory ledger, so retaining every old fixture only bloats saves.
   const keepFrom=(store.G.season||1)-1;
-  (store.G.results||[]).forEach(r=>{
-    if((r.season||0)<keepFrom){delete r.matchups;delete r.tiebreak;}
-  });
+  if(Array.isArray(store.G.results)){
+    store.G.results=store.G.results.filter(r=>(r.season||0)>=keepFrom);
+  }
 }
 
 
