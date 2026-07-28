@@ -2000,7 +2000,7 @@ function newGame(clubIdx, countryId){
     marketShortlist:[],
     hallOfFame:[],transferMarket:[],staff:[],staffPool,
     sponsors:[],sponsorOffers:[],scoutMissions:[],scoutResults:[],scoutPool:genScoutPool(SCOUT_POOL_FLOOR),
-    gameLog:[],olympicYear:false,mundialYear:false,
+    gameLog:[],
     equipBrand:null,infraHall:0,infraMed:0,infraAcademy:0,infraMerchandising:0,
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
     academyUsedThisSeason:false,academyProspects:[],_pid:ui._pid,
@@ -4042,12 +4042,9 @@ async function runMatchday(){
     returnLoans();
     
     // v16: Check nat team offer
-    if(store.G.managerPrestige>=75)setTimeout(checkNatTeamOffer,2000);
     
     recordClubSeasonHistory();
     store.G.seasonHistory.push({season:store.G.season,position:myPos2,league:myL,w:myTeam().w,d:myTeam().d,l:myTeam().l,pts:myTeam().pts,gf:myTeam().gf,ga:myTeam().ga,pointsWon:myTeam().pointsWon||0,pointsLost:myTeam().pointsLost||0,teamOvr:teamOvr(myTeam().id),matchProg:buildMatchProgression(),budget:myTeam().budget,wages,promoted:promoRele.promoted,relegated:promoRele.relegated});
-    if(store.G.season>=2&&store.G.season%2===0){store.G.olympicYear=true;addLog('\n// OLIMPIADA dost\u0119pna!','hl');}else store.G.olympicYear=false;
-    if(store.G.season>=3&&store.G.season%2===1){store.G.mundialYear=true;addLog('\n// MUNDIAL dost\u0119pny!','hl');}else if(store.G.season%2!==1)store.G.mundialYear=false;
     buildMarket();genSponsorOffers(calcPrestige());
     const clubOffers=generateClubOffers();
     await showPostSeasonGala({
@@ -4064,7 +4061,7 @@ async function runMatchday(){
 function safeCloseMatchday(){ui.running=false;stopCanvasVME();closeModal();updateHeader();render();}
 // Auto-play the rest of the season: plays matchdays back-to-back with no animation,
 // and STOPS for anything that needs the manager — an injury / too few healthy
-// starters (needs a sub), a cup/Top12/Mundial/Olympics round that's due, the season-
+// starters (needs a sub), a cup or Top 12 Masters round that's due, the season-
 // end gala, or the user toggling it off. Reuses runMatchday's fast path, so economy,
 // news and standings stay identical to manual play. Clicking the button again stops.
 async function autoPlaySeason(){
@@ -4075,7 +4072,6 @@ async function autoPlaySeason(){
   try{
     while(ui.autoPlay){
       if(store.G.phase!=='pre')break;                                   // season over / transfer
-      if(store.G.olympicYear||store.G.mundialYear)break;                // big events to play manually
       if(shouldPlayTop12(1)||shouldPlayTop12(2))break;                  // Top 12 Masters due
       if(shouldPlayCup())await playCupRound();                          // cup rounds auto-play (owner #3)
       if(getEligibleMatchPlayers(store.G.myTeamId).length<3)break; // cannot field a legal squad
@@ -4290,7 +4286,7 @@ function endSeason(){
       }
     }
   });
-  store.G.season++;store.G.matchday=0;store.G.phase='preseason';store.G.olympicYear=false;store.G.mundialYear=false;store.G.top12MastersDone={1:false,2:false};store.G._top12Bonus=false;store.G.top12Entrant=null;
+  store.G.season++;store.G.matchday=0;store.G.phase='preseason';store.G.top12MastersDone={1:false,2:false};store.G._top12Bonus=false;store.G.top12Entrant=null;
   store.G.techPartnership=null;// reset - must choose new one each season
   store.G.teams.forEach(t=>{t.w=0;t.d=0;t.l=0;t.pts=0;t.gf=0;t.ga=0;t.pointsWon=0;t.pointsLost=0;});
   const l1Ids=store.G.teams.filter(t=>t.league===1).map(t=>t.id);
@@ -4544,250 +4540,6 @@ function aiSignPlayers(){
   });
 }
 
-
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-// v16: MUNDIAL (Pingpong World Championship)
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-function getMundialNationalTeams(){
-  // Pick best players from each country nationality
-  const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-  const nationalTeams=[];
-  
-  // My country first
-  const myNationals=store.G.players.filter(p=>!p.retired&&p.nationality===store.G.countryId&&p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a)).slice(0,4);
-  nationalTeams.push({id:'nat_'+store.G.countryId, name:country.nationalTeam||country.name, countryId:store.G.countryId, players:myNationals, isPlayer:true, worldRank:country.worldRank||8});
-  
-  // Other countries (simulated)
-  const otherCountries=COUNTRY_IDS.filter(c=>c!==store.G.countryId);
-  otherCountries.forEach(cid=>{
-    const c=COUNTRIES[cid];
-    if(!c)return;
-    const ovr_base=50+Math.round((7-c.worldRank)*4)+rnd(-5,5);
-    nationalTeams.push({id:'nat_'+cid, name:c.nationalTeam||c.name, countryId:cid, isPlayer:false, simOvr:ovr_base, worldRank:c.worldRank});
-  });
-  
-  // Fill to 16 with fictional teams
-  const fictional=[
-    {name:'Francja',simOvr:62},{name:'Rosja',simOvr:68},{name:'Brazylia',simOvr:50},
-    {name:'USA',simOvr:55},{name:'Tajwan',simOvr:70},{name:'W\u0119gry',simOvr:58},
-    {name:'Chorwacja',simOvr:53},{name:'Singapur',simOvr:65},{name:'Egipt',simOvr:45},
-    {name:'Nigeria',simOvr:43},{name:'Argentyna',simOvr:48}
-  ];
-  let fi=0;
-  while(nationalTeams.length<16&&fi<fictional.length){
-    const f=fictional[fi++];
-    nationalTeams.push({id:'nat_fic_'+fi,name:f.name,isPlayer:false,simOvr:f.simOvr,worldRank:10+fi});
-  }
-  
-  return nationalTeams.slice(0,16);
-}
-
-function getNatTeamOvr(nt){
-  if(nt.isPlayer&&nt.players&&nt.players.length){
-    return Math.round(nt.players.reduce((s,p)=>s+ovr(p),0)/nt.players.length);
-  }
-  return nt.simOvr||50;
-}
-
-function simNatMatch(t1,t2){
-  const o1=getNatTeamOvr(t1)+(Math.random()-.5)*20;
-  const o2=getNatTeamOvr(t2)+(Math.random()-.5)*20;
-  const t1wins=o1>o2;
-  const s1=t1wins?rnd(2,4):rnd(0,1);
-  const s2=t1wins?rnd(0,1):rnd(2,4);
-  return{winner:t1wins?t1:t2, loser:t1wins?t2:t1, score:`${s1}:${s2}`};
-}
-
-async function runMundial(){
-  if(!store.G||!store.G.mundialYear)return;
-  await checkpointCareer('tournament');
-  const result=await runSeededEvent('_mundialSeed',runMundialBody);
-  await flushCareerSave();
-  return result;
-}
-async function runMundialBody(){
-  const teams=getMundialNationalTeams();
-  const myTeamNat=teams.find(t=>t.isPlayer);
-  const myId=store.G.myTeamId;
-  
-  const modal=document.getElementById('modal');modal.className='modal modal-xl';
-  modal.innerHTML=`<div class="mt2">MUNDIAL PING PONGA \u2014 Sezon ${store.G.season}</div>
-  <div class="grid gtc4 gp4 mb12">
-    ${teams.sort((a,b)=>(a.worldRank||99)-(b.worldRank||99)).map((t,i)=>`<div style="padding:6px 8px;background:${t.isPlayer?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.isPlayer?'var(--r)':'var(--b1)'};border-radius:3px">
-      <div class="fs9 ink3">#${t.worldRank||'?'}</div>
-      <div class="b7 fs11">${t.name}</div>
-      <div class="fs10 cr">${getNatTeamOvr(t)} OVR</div>
-    </div>`).join('')}
-  </div>
-  <div class="log" id="mw-log" style="height:260px"></div>`;
-  openModal();
-  
-  const logEl=document.getElementById('mw-log');
-  function addLog(t,c=''){const d=document.createElement('div');d.className=c;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
-  
-  // Group stage (4 groups of 4)
-  addLog('// FAZA GRUPOWA (4 grupy po 4 dru\u017cyny)','hl');
-  await sleep(500);
-  
-  const shuffled=[...teams].sort(()=>Math.random()-.5);
-  const groups=[[],[],[],[]];
-  shuffled.forEach((t,i)=>groups[i%4].push(t));
-  
-  // Make sure my team is in a group
-  const myGroup=groups.findIndex(g=>g.find(t=>t.isPlayer));
-  addLog(`// Moja reprezentacja: Grupa ${String.fromCharCode(65+myGroup)}`);
-  
-  const qualifiers=[];
-  
-  for(let gi=0;gi<4;gi++){
-    const g=groups[gi];
-    const pts={};g.forEach(t=>pts[t.id]=0);
-    addLog(`\n// Grupa ${String.fromCharCode(65+gi)}`,'hl');
-    await sleep(300);
-    
-    for(let i=0;i<g.length;i++){
-      for(let j=i+1;j<g.length;j++){
-        const r=simNatMatch(g[i],g[j]);
-        pts[r.winner.id]+=3;
-        const isMy=g[i].isPlayer||g[j].isPlayer;
-        const cls=isMy?(r.winner.isPlayer?'gd':'bd'):'dm';
-        addLog(`  ${g[i].name} vs ${g[j].name}: ${r.score} \u2192 ${r.winner.name}`,cls);
-        await sleep(isMy?500:100);
-      }
-    }
-    
-    const sorted=[...g].sort((a,b)=>pts[b.id]-pts[a.id]);
-    const q=sorted.slice(0,2);
-    qualifiers.push(...q);
-    addLog(`  Awansuj\u0105: ${q.map(t=>t.name).join(', ')}`,'gd');
-  }
-  
-  // Knockout
-  const rounds=[
-    {name:'\u0106WIER\u0106FINA\u0141Y', teams:qualifiers},
-  ];
-  
-  let curRound=[...qualifiers];
-  const roundNames=['\u0106WIER\u0106FINA\u0141Y','P\u00d3\u0141FINA\u0141Y','FINA\u0141'];
-  let roundIdx=0;
-  
-  while(curRound.length>1){
-    const rname=roundNames[Math.min(roundIdx,roundNames.length-1)];
-    addLog(`\n// ${rname}`,'hl');
-    await sleep(400);
-    const nextRound=[];
-    for(let i=0;i<curRound.length;i+=2){
-      if(!curRound[i+1]){nextRound.push(curRound[i]);continue;}
-      const isMy=curRound[i].isPlayer||curRound[i+1].isPlayer;
-      await sleep(isMy?700:200);
-      const r=simNatMatch(curRound[i],curRound[i+1]);
-      nextRound.push(r.winner);
-      const cls=isMy?(r.winner.isPlayer?'gd':'bd'):'dm';
-      addLog(`  ${curRound[i].name} vs ${curRound[i+1].name}: ${r.score} \u2192 ${r.winner.name}`,cls);
-    }
-    curRound=nextRound;
-    roundIdx++;
-  }
-  
-  const mundialWinner=curRound[0];
-  addLog(`\n// MISTRZ \u015aWIATA: ${mundialWinner?.name||'?'}!`,'hl');
-  
-  if(mundialWinner?.isPlayer){
-    addLog('// TWOJA REPREZENTACJA WYGRA\u0141A MUNDIAL!','gd');
-    // Big reputation boost
-    store.G.managerPrestige=(store.G.managerPrestige||0)+30;
-    myTeam().budget+=50000;
-    // Gold medals go to the ACTUAL national-team roster (best 4 of the country,
-    // drawn from all clubs) \u2014 not to every senior at the manager's club.
-    (myTeamNat?.players||[]).forEach(p=>{
-      p.awards=p.awards||[];
-      p.awards.push({season:store.G.season,type:'mundial_gold',displayLabel:'Z\u0142oto Mundialu',label:`Z\u0142oto Mundialu S${store.G.season}`});
-    });
-    toast('Mistrzostwo \u015awiata!!! Bonus +50 000 €!');
-    pushNews(`MUNDIAL: ${mundialWinner.name} zostaje Mistrzem \u015awiata!`,'cup');
-  }else{
-    addLog(`// Wynik: ${mundialWinner?.isPlayer?'Z\u0142oto':'Brak trofeum'}`,'dm');
-  }
-  
-  store.G.mundialYear=false;
-  await sleep(1200);
-  closeModal();render();updateHeader();
-  persistGame();
-}
-
-// National team manager offer (prestige > 75)
-function checkNatTeamOffer(){
-  const pres=store.G.managerPrestige||0;
-  if(pres>=75&&!store.G._natTeamOfferShown&&store.G.phase==='transfer'){
-    store.G._natTeamOfferShown=true;
-    const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-    const modal=document.getElementById('modal');modal.className='modal';
-    modal.innerHTML=`<div class="mt2">Oferta: Selekcjoner Reprezentacji <button class="close-btn" onclick="closeModal()">\u2715</button></div>
-    <div class="r4 mb14" style="padding:16px;background:#f8f0dc;border:1px solid var(--gold)">
-      <div class="syne b8 fs18 mb8">${country.flag} ${country.nationalTeam||country.name}</div>
-      <div class="fs13 mb8">Tw\u00f3j presti\u017c mened\u017cerski (${pres}/100) przekroczy\u0142 pr\u00f3g. Zosta\u0142e\u015b zaproszony do prowadzenia reprezentacji narodowej.</div>
-      <div class="fs11 ink3">Jako selekcjoner: powo\u0142ujesz 4-5 najlepszych zawodnik\u00f3w z ${country.name} przed ka\u017cdym Mundialem i Olimpiad\u0105. Z\u0142oto w turnieju = ogromny zastrzyk reputacji i nagroda ${(50000).toLocaleString('pl')} €.</div>
-    </div>
-    <div class="btn-row">
-      <button class="btn go" onclick="acceptNatTeam()">PRZYJMIJ OFERT\u0118</button>
-      <button class="btn" onclick="closeModal()">ODRZU\u0106</button>
-    </div>`;
-    openModal();
-  }
-}
-
-function acceptNatTeam(){
-  store.G.isNatTeamManager=true;
-  const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-  toast(`Zosta\u0142e\u015b selekcjonerem ${country.nationalTeam||country.name}!`);
-  closeModal();
-  store.G.managerPrestige=(store.G.managerPrestige||0)+10;
-  render();
-  persistGame();
-}
-
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-// OLYMPICS
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-async function runOlympics(){
-  if(!store.G||!store.G.olympicYear)return;
-  await checkpointCareer('tournament');
-  const result=await runSeededEvent('_olympicSeed',runOlympicsBody);
-  await flushCareerSave();
-  return result;
-}
-async function runOlympicsBody(){
-  const rankByOvr=store.G.teams.slice().sort((a,b)=>teamOvr(b.id)-teamOvr(a.id));
-  const top8=rankByOvr.slice(0,8);const myId=store.G.myTeamId;const myInTop8=top8.find(t=>t.id===myId);
-  const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">OLIMPIADA - Sezon ${store.G.season}</div>
-  <div class="grid gtc4 gp4 mb12">
-    ${top8.map((t,i)=>`<div style="padding:7px 10px;background:${t.id===myId?'var(--tint-bad)':'var(--s2)'};border:1px solid ${t.id===myId?'var(--r)':'var(--b1)'}"><div class="fs9 ink3">#${i+1} OVR ${teamOvr(t.id)}</div><div class="syne b7 fs11">${t.name}</div></div>`).join('')}
-  </div>
-  <div id="ollog" class="log" style="height:260px"></div>`;
-  openModal();
-  const logEl=document.getElementById('ollog');
-  function addLog(t,c=''){const d=document.createElement('div');d.className=c;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
-  const bracket=[[top8[0],top8[7]],[top8[1],top8[6]],[top8[2],top8[5]],[top8[3],top8[4]]];
-  async function simOlMatch(a,b){addLog(`  ${a.name} vs ${b.name}`);await sleep(500);const r=simTeamMatch(a.id,b.id,true);const winner=r.isDraw?(Math.random()<.5?a:b):(r.homeWin?a:b);const isMyMatch=a.id===myId||b.id===myId;if(isMyMatch)addLog(`  \u2192 ${r.score} - ${winner.name} awansuje`,winner.id===myId?'gd':'bd');else addLog(`  \u2192 ${winner.name} wygrywa ${r.score}`,'dm');return{winner};}
-  addLog('// \u0106WIER\u0106FINA\u0141Y','hl');await sleep(400);
-  const sfTeams=[];for(const[a,b] of bracket){const{winner}=await simOlMatch(a,b);sfTeams.push(winner);}
-  addLog('\n// P\u00d3\u0141FINA\u0141Y','hl');await sleep(400);
-  const sfBracket=[[sfTeams[0],sfTeams[3]],[sfTeams[1],sfTeams[2]]];const finTeams=[];
-  for(const[a,b] of sfBracket){const{winner}=await simOlMatch(a,b);finTeams.push(winner);}
-  addLog('\n// FINA\u0141','hl');await sleep(600);
-  const{winner:gold}=await simOlMatch(finTeams[0],finTeams[1]);
-  const silver=gold===finTeams[0]?finTeams[1]:finTeams[0];
-  store.G.players.filter(p=>p.teamId===gold.id&&!p.retired&&p.role==='starter').forEach(p=>{p.awards=p.awards||[];p.awards.push({season:store.G.season,type:'olympic_gold',displayLabel:'Z\u0142oto Olimpijskie',label:`Z\u0142oto Olimpijskie S${store.G.season}`});});
-  addLog(`\n// ${gold.name} - MISTRZ OLIMPIJSKI!`,gold.id===myId?'gd':'hl');
-  const budBonus=gold.id===myId?18000:silver.id===myId?12000:myInTop8?6000:0;
-  if(budBonus){myTeam().budget+=budBonus;addLog(`// Bonus: +${budBonus.toLocaleString('pl')} €`,'gd');}
-  store.G.olympicYear=false;
-  // Persist immediately: awards, budget bonus and olympicYear=false must survive
-  // a reload, otherwise the tournament replays with rerolled results.
-  persistGame();
-  await sleep(900);render();updateHeader();
-}
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // YOUTH ACADEMY
@@ -5815,5 +5567,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, runMundial, runOlympics, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons };
+window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons };
 })();

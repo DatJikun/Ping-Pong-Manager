@@ -1,8 +1,8 @@
 ﻿(function(){
 window.PPM = window.PPM || {};
-const { COUNTRIES, COUNTRY_IDS, MUNDIAL_PARTICIPANTS, MUNDIAL_INTERVAL, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, EQUIPMENT_BRANDS, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
+const { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, EQUIPMENT_BRANDS, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
 const styleLabel=id=>(PLAYER_STYLE_INFO[id]||{}).label||id||'?';
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -54,14 +54,6 @@ function pageDash(){
     nextActionLabel='\u27a1 NOWY SEZON';
     nextActionCall='endSeason()';
     nextActionStyle='btn go';
-  }else if(store.G.olympicYear){
-    nextActionLabel='OLIMPIADA';
-    nextActionCall='runOlympics()';
-    nextActionStyle='btn gl';
-  }else if(store.G.mundialYear){
-    nextActionLabel='MUNDIAL';
-    nextActionCall='runMundial()';
-    nextActionStyle='btn gl';
   }else if(canTop12L1){
     nextActionLabel='TOP 12 I LIGA';
     nextActionCall='openTop12Picker(1)';
@@ -90,7 +82,7 @@ function pageDash(){
     <div><div class="pt">${mt.name} <span class="league-badge ${myL===1?'l1':'l2'}">${myL===1?'I LIGA':'II LIGA'}</span></div><div class="ps">Sezon ${store.G.season} / Kolejka ${store.G.matchday}/${TOTAL_MATCHDAYS} / ${phaseText}</div></div>
     <div class="btn-row">
       <button class="${nextActionStyle} fs12" onclick="${nextActionCall}" style="padding:10px 20px">${nextActionLabel}</button>
-      ${store.G.phase==='pre'?`<button class="btn ${ui.autoPlay?'r':'gl'} fs12" onclick="autoPlaySeason()" style="padding:10px 16px" title="Gra kolejne kolejki automatycznie; zatrzyma się przy kontuzji, pucharze/Top12/Mundialu/Olimpiadzie i końcu sezonu">${ui.autoPlay?'■ STOP AUTO':'▶▶ AUTO-SEZON'}</button>`:''}
+      ${store.G.phase==='pre'?`<button class="btn ${ui.autoPlay?'r':'gl'} fs12" onclick="autoPlaySeason()" style="padding:10px 16px" title="Gra kolejne kolejki automatycznie; zatrzyma się przy kontuzji, pucharze/Top 12 i końcu sezonu">${ui.autoPlay?'■ STOP AUTO':'▶▶ AUTO-SEZON'}</button>`:''}
     </div>
   </div>
   ${store.G.phase==='preseason'?`<div class="banner" style="margin-bottom:14px;border-left-color:${preseasonMissing.length?'var(--orange)':'var(--g)'}"><div class="dot" style="background:${preseasonMissing.length?'var(--orange)':'var(--g)'}"></div>${preseasonMissing.length?`Aby rozpocz\u0105\u0107 sezon, doko\u0144cz: ${preseasonMissing.join(', ')}.`:'Sk\u0142ad sezonu gotowy. Mo\u017cesz rozpocz\u0105\u0107 rozgrywki.'}</div>`:''}
@@ -1163,7 +1155,6 @@ function pageHoF(){
     const ovrRow=rec.HIGHEST_OVR?`<div class="pnl-row"><div><b>Najwy\u017cszy OVR w Historii</b><div class="fs10 ink3">${rec.HIGHEST_OVR.playerName} / Sezon ${rec.HIGHEST_OVR.season}</div></div><div class="pnl-pos syne b8 fs22">${rec.HIGHEST_OVR.ovr}</div></div>`:'<div class="ink3 fs11 pd8-0">Najwy\u017cszy OVR \u2014 jeszcze nie ustanowiony</div>';
     const mvpRow=rec.MOST_MVP?`<div class="pnl-row"><div><b>Najwi\u0119cej tytu\u0142\u00f3w Top 12 Masters</b><div class="fs10 ink3">${rec.MOST_MVP.playerName}</div></div><div class="pnl-pos">${rec.MOST_MVP.count}\u00d7</div></div>`:'<div class="ink3 fs11 pd8-0">Rekordzista Top 12 Masters \u2014 jeszcze nie ustanowiony</div>';
     const mgrStatus=(store.G.managerPrestige||0)>=75?'Kwalifikujesz si\u0119 na Selekcjonera!':(store.G.managerPrestige||0)>=50?'Dobra \u015bcie\u017cka kariery':'Buduj presti\u017c przez wyniki ligowe';
-    const natTeamBadge=store.G.isNatTeamManager?`<div class="mt-8 pd8-12 bg-ok bbg r3 fs12 cg b7">Selekcjoner ${COUNTRIES[store.G.countryId]?.nationalTeam||'Reprezentacji'}</div>`:'';
     bodyHtml=`<div class="g2">
       <div>
         <div class="card"><div class="ct cgold">REKORDY KLUBOWE</div>
@@ -1188,50 +1179,12 @@ function pageHoF(){
         </div>
         <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
           <div class="sb mb10"><div class="l">Presti\u017c MGR</div><div class="v gold fs40">${store.G.managerPrestige||0}</div><div class="sub">${mgrStatus}</div></div>
-          ${natTeamBadge}
-        </div>
+                  </div>
       </div>
     </div>`;
   }
   
   return`<div class="ph"><div><div class="pt">HALL <span>OF FAME</span></div></div></div>${tabsHtml}${bodyHtml}`;
-}
-
-function pageMundial(){
-  const country=COUNTRIES[store.G.countryId]||COUNTRIES['PL'];
-  const pres=store.G.managerPrestige||0;
-  const myNationals=store.G.players.filter(p=>!p.retired&&p.nationality===store.G.countryId&&p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a)).slice(0,5);
-  
-  return`<div class="ph"><div><div class="pt">MUNDIAL <span>& REPREZENTACJA</span></div><div class="ps">${country.flag} ${country.nationalTeam||country.name} / Ranking: #${country.worldRank}</div></div>
-  ${store.G.mundialYear?`<div class="mt-8 fs11 cblue b7">Mundial zostanie rozegrany jako kolejny krok sezonu.</div>`:''}
-  </div>
-  
-  <div class="g2">
-    <div>
-      <div class="card"><div class="ct">STATUS</div>
-        <div class="g2 mb12">
-          <div class="sb"><div class="l">Mundial</div><div class="v ${store.G.mundialYear?'r gold':''} fs20">${store.G.mundialYear?'DOST\u0118PNY':'\u231b Sezon '+(store.G.season%2===0?store.G.season+1:store.G.season+2)}</div></div>
-          <div class="sb"><div class="l">Olimpiada</div><div class="v ${store.G.olympicYear?'r gold':''} fs20">${store.G.olympicYear?'DOST\u0118PNA':'\u231b Sezon '+(store.G.season%2===1?store.G.season+1:store.G.season+2)}</div></div>
-        </div>
-        <div class="fs11 ink3">Mundial co 2 sezony od sezonu 3. Olimpiada co 2 sezony od sezonu 2.</div>
-      </div>
-      <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
-        <div class="sb mb10"><div class="l">Tw\u00f3j Presti\u017c</div><div class="v gold fs40">${pres}</div><div class="sub">${pres>=75?'Oferta selekcjonera dost\u0119pna!':pres>=50?`Brak oferty (wymagane 75, brakuje ${75-pres} pkt)`:'Buduj presti\u017c przez wyniki'}</div></div>
-        ${store.G.isNatTeamManager?`<div class="pd10 bg-ok bbg r3 b7 cg">Jeste\u015b selekcjonerem ${country.nationalTeam||country.name}!</div>`:`<div class="fs11 ink3">Osi\u0105gnij 75 presti\u017cu mened\u017cera, by otrzyma\u0107 ofert\u0119 prowadzenia reprezentacji. Zyski: dobre sezony, awanse i trofea.</div>`}
-      </div>
-    </div>
-    <div>
-      <div class="card"><div class="ct">POWO\u0141ANIA (${country.flag} ${country.name})</div>
-        <div class="fs11 ink3 mb10">5 najlepszych zawodnik\u00f3w z narodowo\u015bci\u0105 ${country.name} w obecnych ligach:</div>
-        ${myNationals.length?myNationals.map((p,i)=>`<div class="grid gtca1a gp10 aic pd8-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})">
-          <div class="syne b8 fs20 ink3">${i+1}</div>
-          <div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${teamName(p.teamId)}</div></div>
-          <div class="syne b8 fs24 cr">${ovr(p)}</div>
-        </div>`).join(''):'<div class="ink3 fs12">Brak zawodnik\u00f3w z tej narodowo\u015bci w lidze. Zawodnicy dostaj\u0105 narodowo\u015b\u0107 przy nowej grze.</div>'}
-        <div class="mt-10 fs10 ink3">W Mundialu bierze udzia\u0142 16 reprezentacji. Ranking \u015bwiatowy wp\u0142ywa na rozstawienie grup.</div>
-      </div>
-    </div>
-  </div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1370,7 +1323,6 @@ function renderApp(){
   else if(ui.page==='inbox')el.innerHTML=pageInbox();
   else if(ui.page==='history')el.innerHTML=pageHistory();
   else if(ui.page==='hof')el.innerHTML=pageHoF();
-  else if(ui.page==='mundial')el.innerHTML=pageMundial();
   updateHeader();
   syncNavState();
 }
