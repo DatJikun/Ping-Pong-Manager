@@ -136,3 +136,56 @@ test('storage estimation warns by used space rather than career count', async ()
     low: true,
   });
 });
+
+test('loading an old career migrates it and removes the temporary recovery copy', async () => {
+  const g = boot(2306);
+  const adapter = g.PPM.saveStorage.createMemoryAdapter();
+  let current = null;
+  const manager = g.PPM.saveManagerApi.createSaveManager({
+    adapter,
+    currentSchemaVersion: 20,
+    validateText: text => JSON.parse(text),
+    loadText: text => {
+      const parsed = JSON.parse(text);
+      parsed.schemaVersion = 20;
+      current = JSON.stringify(parsed);
+    },
+    serializeCurrent: () => current,
+    now: (() => { let tick = 2000; return () => ++tick; })(),
+    newId: (() => { let id = 0; return prefix => `${prefix}-migration-${++id}`; })(),
+  });
+  await manager.initialize();
+  const old = gameText(8).replace('"schemaVersion":20', '"schemaVersion":17');
+  const career = await manager.createCareer(old, 'Old career');
+
+  await manager.loadCareer(career.id);
+
+  assert.equal(JSON.parse((await manager.getCareer(career.id)).data).schemaVersion, 20);
+  assert.equal((await manager.listBackups(career.id)).filter(x => x.kind === 'migration').length, 0);
+});
+
+test('failed autosave keeps the previous career and reports the failure once', async () => {
+  const g = boot(2307);
+  const base = g.PPM.saveStorage.createMemoryAdapter();
+  let failWrites = false;
+  let errors = 0;
+  const adapter = {
+    ...base,
+    async commit(payload) {
+      if(failWrites && payload.career)throw new Error('disk full');
+      return base.commit(payload);
+    },
+  };
+  const { manager } = makeManager(g, { adapter, onError: () => { errors++; } });
+  await manager.initialize();
+  const career = await manager.createCareer(gameText(1), 'Safe');
+  failWrites = true;
+
+  manager.requestAutosave(gameText(2));
+  await manager.flush();
+  manager.requestAutosave(gameText(3));
+  await manager.flush();
+
+  assert.equal(JSON.parse((await base.getCareer(career.id)).data).season, 1);
+  assert.equal(errors, 1);
+});

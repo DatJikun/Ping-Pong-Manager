@@ -151,6 +151,9 @@ function validateSaveObject(parsed){
   if(!Number.isFinite(parsed.season))throw new Error('Zapis nie ma poprawnego numeru sezonu.');
   if(!Array.isArray(parsed.teams))throw new Error('Zapis nie zawiera listy klubów.');
   if(!Array.isArray(parsed.players))throw new Error('Zapis nie zawiera listy zawodników.');
+  if(parsed.schemaVersion!==undefined&&!Number.isFinite(parsed.schemaVersion)){
+    throw new Error('Zapis ma niepoprawną wersję formatu.');
+  }
   if(Number.isFinite(parsed.schemaVersion)&&parsed.schemaVersion>SAVE_SCHEMA_VERSION){
     throw new Error('Ten zapis pochodzi z nowszej wersji gry.');
   }

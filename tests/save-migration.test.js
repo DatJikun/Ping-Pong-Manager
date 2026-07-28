@@ -26,6 +26,7 @@ test('save validation rejects malformed and future career files before migration
     JSON.stringify({ season: 1, teams: [] }),
     JSON.stringify({ season: 1, players: [] }),
     JSON.stringify({ season: 'one', teams: [], players: [] }),
+    validSave({ schemaVersion: '999' }),
     validSave({ schemaVersion: api.SAVE_SCHEMA_VERSION + 1 }),
   ]) {
     assert.throws(() => api.validateSaveText(text));

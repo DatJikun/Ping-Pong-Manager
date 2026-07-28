@@ -1,5 +1,24 @@
 # HANDOFF — PingPong Manager engineering work
 
+## Update 2026-07-28 — reliable career saves
+
+The single `localStorage` slot has been replaced by an IndexedDB career library.
+It supports an unlimited practical number of named careers, queued autosaves,
+three rotating recovery checkpoints per career, safe schema migration, import,
+export, rename, delete and restore. The old `ppgame` save is imported only with
+read-back verification and remains available if IndexedDB cannot start.
+
+Durability boundaries now cover matchdays, cups and season transitions. Returning
+to the main menu flushes pending writes. The save manager lives in
+`src/core/save-manager.js`; the IndexedDB/memory adapters live in
+`src/core/save-storage.js`. Design and implementation notes are in
+`docs/superpowers/specs/2026-07-28-career-save-system-design.md` and
+`docs/superpowers/plans/2026-07-28-career-save-system.md`.
+
+Seven owner-provided real saves from seasons 4–11 were imported, migrated,
+serialized and read back successfully. Keep JSON export as the portable/manual
+backup route even though normal play now uses IndexedDB.
+
 > **Purpose of this file:** if the AI assistant loses context (new session), READ THIS
 > FIRST. It explains where the project is, what has been done, what comes next, and
 > how to verify nothing is broken. It is the single source of truth for the

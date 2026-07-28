@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-28 — Biblioteka karier i bezpieczne zapisy
+
+- Zastąpiono pojedynczy zapis `ppgame` biblioteką dowolnej liczby nazwanych
+  karier w IndexedDB. Nie ma sztucznego limitu pięciu karier; ostrzeżenie pojawia
+  się dopiero, gdy przeglądarka faktycznie zbliża się do limitu miejsca.
+- Autosave jest kolejkowany, więc wolniejszy starszy zapis nie może nadpisać
+  nowszego. Powrót do menu oraz przejścia przez kolejkę, turniej i koniec sezonu
+  czekają na trwałe zapisanie danych.
+- Każda kariera utrzymuje trzy automatycznie rotowane punkty odzyskiwania.
+  Migracja starego formatu dostaje osobną kopię bezpieczeństwa na czas operacji.
+- Stary zapis z `localStorage` jest automatycznie importowany i usuwany dopiero
+  po poprawnym odczycie kopii z nowego magazynu. Awaria IndexedDB pozostawia
+  stary zapis nietknięty i oferuje jego awaryjne wznowienie.
+- Menu kariery pozwala kontynuować, zmienić nazwę, wyeksportować, przywrócić
+  kopię i usunąć karierę. Import JSON zawsze tworzy osobną karierę.
+- Wszystkie siedem dostarczonych zapisów (sezony 4–11) przeszło import,
+  migrację, ponowny zapis i odczyt; biblioteka zachowała siedem unikalnych karier.
+
 All notable changes to the engineering/codebase. Gameplay-feel changes are noted
 separately where relevant. Newest first.
 

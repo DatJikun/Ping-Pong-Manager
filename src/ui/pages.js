@@ -1396,7 +1396,9 @@ function menuEscape(value){
 }
 function renderCareerLibrary(){
   if(ui._saveStorageError){
-    return`<div class="card bt3-red"><div class="b8 cr">MAGAZYN ZAPISÓW NIEDOSTĘPNY</div><div class="fs11 ink3 mt-4">${menuEscape(ui._saveStorageError)}</div><div class="fs10 mt-6">Twój stary zapis nie został usunięty. Możesz nadal wczytać lub wyeksportować plik JSON.</div></div>`;
+    let hasLegacySave=false;
+    try{hasLegacySave=!!localStorage.getItem(window.PPM.stateApi.LOCAL_STORAGE_KEY);}catch{}
+    return`<div class="card bt3-red"><div class="b8 cr">MAGAZYN ZAPISÓW NIEDOSTĘPNY</div><div class="fs11 ink3 mt-4">${menuEscape(ui._saveStorageError)}</div><div class="fs10 mt-6">${hasLegacySave?'Twój stary zapis nie został usunięty i można go bezpiecznie wznowić.':'Nie rozpoczynaj nowej kariery, dopóki pamięć zapisów nie będzie dostępna.'}</div>${hasLegacySave?'<button class="btn mt-10" onclick="resumeSavedGame()">WZNÓW STARY ZAPIS</button>':''}</div>`;
   }
   const careers=Array.isArray(ui._careers)?ui._careers:[];
   if(!careers.length){
