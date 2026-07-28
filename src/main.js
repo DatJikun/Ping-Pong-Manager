@@ -50,7 +50,7 @@ function buildSaveFilename(){
 function saveGame(){
   if(!store.G)return;
   const blob=new Blob([JSON.stringify({...store.G,_pid:ui._pid},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=buildSaveFilename();a.click();shell.toast(`Gra zapisana jako ${a.download}`);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=buildSaveFilename();a.click();shell.toast(t('career.fileSaved',{filename:a.download}));
 }
 
 function downloadCareerText(text,filename){
@@ -84,18 +84,18 @@ async function continueCareer(id){
   try{
     await window.PPM.saveManager.loadCareer(id);
     await refreshCareerList(false);
-    enterLoadedCareer('Wznowiono karierę.');
+    enterLoadedCareer(t('career.resumedGeneric'));
   }catch(error){
-    shell.toast(error?.message||'Nie udało się wczytać kariery.');
+    shell.toast(error?.message||t('career.loadFailed'));
   }
 }
 
 async function renameCareer(id){
   const career=await window.PPM.saveManager.getCareer(id);
   if(!career)return;
-  const name=prompt('Nazwa kariery:',career.name);
+  const name=prompt(t('career.namePrompt'),career.name);
   if(name===null)return;
-  if(!String(name).trim()){shell.toast('Nazwa nie może być pusta.');return;}
+  if(!String(name).trim()){shell.toast(t('career.nameEmpty'));return;}
   await window.PPM.saveManager.renameCareer(id,name);
   await refreshCareerList();
 }
@@ -103,11 +103,11 @@ async function renameCareer(id){
 async function deleteCareer(id){
   const career=await window.PPM.saveManager.getCareer(id);
   if(!career)return;
-  if(!confirm(`Usunąć karierę „${career.name}” wraz z kopiami bezpieczeństwa?`))return;
+  if(!confirm(t('career.deleteConfirm',{name:career.name})))return;
   await window.PPM.saveManager.deleteCareer(id);
   if(!window.PPM.saveManager.getActiveCareerId())window.PPM.stateApi.setGame(null);
   await refreshCareerList();
-  shell.toast('Kariera została usunięta.');
+  shell.toast(t('career.deleted'));
 }
 
 async function exportCareer(id){
@@ -116,7 +116,7 @@ async function exportCareer(id){
   const s=career.summary||{};
   const filename=`ppm-v17-${slugifySavePart(s.clubName||career.name)}-s${s.season||1}-k${s.matchday||0}.json`;
   downloadCareerText(career.data,filename);
-  shell.toast(`Wyeksportowano ${career.name}.`);
+  shell.toast(t('career.exported',{name:career.name}));
 }
 
 function escapeModal(value){
@@ -128,27 +128,27 @@ async function showCareerBackups(id){
   const backups=await window.PPM.saveManager.listBackups(id);
   const modal=document.getElementById('modal');
   modal.className='modal';
-  modal.innerHTML=`<div class="mt2">KOPIE — ${escapeModal(career?.name||'Kariera')} <button class="close-btn" onclick="closeModal()">✕</button></div>
-    <div class="flex fdc gp6 mt-12">${backups.length?backups.map(b=>`<div class="flex jcb aic bgs1 bb1 r8 pd10-12"><div><div class="b7 fs12">${escapeModal(b.label)}</div><div class="fs9 ink3 mt-2">${new Date(b.createdAt).toLocaleString('pl-PL')}</div></div><button class="btn sm" onclick="restoreCareerBackup('${escapeModal(id)}','${escapeModal(b.id)}')">PRZYWRÓĆ</button></div>`).join(''):'<div class="fs11 ink3">Brak punktów odzyskiwania.</div>'}</div>`;
+  modal.innerHTML=`<div class="mt2">${t('career.backupsTitle',{name:escapeModal(career?.name||'Career')}).toUpperCase()} <button class="close-btn" onclick="closeModal()">✕</button></div>
+    <div class="flex fdc gp6 mt-12">${backups.length?backups.map(b=>`<div class="flex jcb aic bgs1 bb1 r8 pd10-12"><div><div class="b7 fs12">${escapeModal(b.label)}</div><div class="fs9 ink3 mt-2">${formatDateTime(b.createdAt)}</div></div><button class="btn sm" onclick="restoreCareerBackup('${escapeModal(id)}','${escapeModal(b.id)}')">${t('career.restore').toUpperCase()}</button></div>`).join(''):`<div class="fs11 ink3">${t('career.noBackups')}</div>`}</div>`;
   shell.openModal();
 }
 
 async function restoreCareerBackup(id,backupId){
-  if(!confirm('Przywrócić tę kopię? Obecny stan kariery również zostanie zabezpieczony.'))return;
+  if(!confirm(t('career.restoreConfirm')))return;
   try{
     await window.PPM.saveManager.restoreBackup(id,backupId);
     shell.closeModal();
     await refreshCareerList(false);
-    enterLoadedCareer('Przywrócono kopię kariery.');
+    enterLoadedCareer(t('career.restored'));
   }catch(error){
-    shell.toast(error?.message||'Nie udało się przywrócić kopii.');
+    shell.toast(error?.message||t('career.restoreFailed'));
   }
 }
 
 function showStartScreen(force){
   if(ui.running)return;
   if(store.G&&!force){
-    const ok=confirm('Przej\u015b\u0107 do ekranu nowej gry? Obecna rozgrywka pozostanie zapisana lokalnie i b\u0119dzie mo\u017cna j\u0105 wznowi\u0107.');
+    const ok=confirm(t('career.newGameConfirm'));
     if(!ok)return;
   }
   shell.closeModal?.();
@@ -166,10 +166,10 @@ async function resumeSavedGame(){
       saved=loadPersistedGame();
     }
   }catch(error){
-    shell.toast(error?.message||'Nie udało się wczytać kariery.');
+    shell.toast(error?.message||t('career.loadFailed'));
   }
   if(!saved){
-    shell.toast('Brak lokalnego zapisu do wznowienia.');
+    shell.toast(t('career.noLocalSave'));
     pages.renderStart();
     return;
   }
@@ -177,7 +177,7 @@ async function resumeSavedGame(){
   const targetPage=store.G&&store.G.phase==='preseason'?'preseason':'dash';
   ui.page=targetPage;
   shell.go(targetPage);
-  shell.toast('Wznowiono ostatni zapis.');
+  shell.toast(t('career.lastSaveResumed'));
 }
 
 function loadGame(ev){
@@ -186,12 +186,12 @@ function loadGame(ev){
     const text=e.target.result;
     window.PPM.stateApi.validateSaveText(text);
     const estimate=await window.PPM.saveManager.estimateStorage();
-    if(estimate?.low&&!confirm('Pamięć na zapisy jest prawie pełna. Kontynuować import?'))return;
+    if(estimate?.low&&!confirm(t('career.importStorageLow')))return;
     const career=await window.PPM.saveManager.importCareer(text,f.name.replace(/\.json$/i,''));
     await window.PPM.saveManager.loadCareer(career.id);
     await refreshCareerList(false);
-    enterLoadedCareer('Zaimportowano zapis jako osobną karierę.');
-  }catch(error){shell.toast(error?.message||'Błąd pliku!');}};
+    enterLoadedCareer(t('career.imported'));
+  }catch(error){shell.toast(error?.message||t('career.badFile'));}};
   r.readAsText(f);ev.target.value='';
 }
 function loadDatabaseFile(ev){
@@ -201,17 +201,17 @@ function loadDatabaseFile(ev){
       const parsed=JSON.parse(e.target.result);
       if(!Array.isArray(parsed.teams)||!Array.isArray(parsed.players))throw new Error('bad-db');
       window.PPM.customDatabase=parsed;
-      shell.toast(`Za\u0142adowano database: ${parsed.name||f.name}`);
+      shell.toast(t('database.loaded',{name:parsed.name||f.name}));
       pages.renderStart();
     }catch{
-      shell.toast('Niepoprawny plik database.');
+      shell.toast(t('database.invalid'));
     }
   };
   r.readAsText(f);ev.target.value='';
 }
 function clearDatabaseFile(){
   window.PPM.customDatabase=null;
-  shell.toast('Wyczyszczono custom database.');
+  shell.toast(t('database.cleared'));
   pages.renderStart();
 }
 
@@ -228,13 +228,13 @@ window.PPM.updateHeader = shell.updateHeader;
 setNamePools(ui._selCountry);
 async function initializeApplication(){
   const content=document.getElementById('content');
-  if(content)content.innerHTML='<div class="flex aic jcc" style="min-height:70vh">Wczytywanie karier…</div>';
+  if(content)content.innerHTML=`<div class="flex aic jcc" style="min-height:70vh">${t('common.loading')}</div>`;
   try{
     await window.PPM.saveManager.initialize();
     ui._careers=await window.PPM.saveManager.listCareers();
     ui._saveStorageError=null;
   }catch(error){
-    ui._saveStorageError=error?.message||'Magazyn zapisów jest niedostępny.';
+    ui._saveStorageError=error?.message||t('storage.unavailable');
   }
   pages.renderStart();
 }

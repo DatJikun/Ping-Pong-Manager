@@ -24,9 +24,11 @@
 window.PPM = window.PPM || {};
 const render = (...args)=>window.PPM.renderApp?.(...args);
 const stateApi = window.PPM.stateApi || {};
+const i18n = window.PPM.i18n;
 
 function getSettings(){
-  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'dark',matchSpeed:'normal',aiDifficulty:'hard'};
+  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'dark',locale:'en',matchSpeed:'normal',aiDifficulty:'hard'};
+  i18n?.setLocale(ui.settings.locale);
   return ui.settings;
 }
 // One theme: dark carbon. Kept as a function (rather than deleted) because it is
@@ -66,12 +68,16 @@ function applyClubLivery(team){
   root.style.setProperty('--club2',mixToward(brand.primary,'#ffffff',.42));
 }
 function saveSettings(nextSettings){
+  const previousLocale=getSettings().locale;
   const saved=stateApi.updateAppSettings?stateApi.updateAppSettings(nextSettings):Object.assign(getSettings(),nextSettings);
+  i18n?.setLocale(saved.locale);
   applyTheme(saved.theme);
   // the livery is mixed against the theme's background, so it must be re-derived
   try{applyClubLivery(window.PPM.gameplay?.myTeam?.());}catch(e){}
-  // Re-render ONLY the settings modal to reflect the change — do NOT render the app,
-  // which would navigate into the game (esp. from the main menu).
+  if(previousLocale!==saved.locale){
+    if(store.G)render();
+    else window.PPM?.pages?.renderStart?.();
+  }
   if(typeof openSettings==='function'&&document.getElementById('ov')?.classList.contains('on'))openSettings();
   return saved;
 }
@@ -132,33 +138,41 @@ function openSettings(){
   const settings=getSettings();
   const modal=document.getElementById('modal');
   modal.className='modal';
-  modal.innerHTML=`<div class="mt2">USTAWIENIA <button class="close-btn" onclick="closeModal()">✕</button></div>
+  modal.innerHTML=`<div class="mt2">${t('settings.title').toUpperCase()} <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="settings-stack">
     <div class="settings-card">
-      <div class="settings-label">Prędkość symulacji meczu</div>
-      <div class="settings-desc">Steruje tempem VME i relacji punkt po punkcie.</div>
+      <div class="settings-label">${t('settings.language')}</div>
+      <div class="settings-desc">${t('settings.languageDesc')}</div>
       <div class="settings-segment">
-        <button class="btn sm ${settings.matchSpeed==='slow'?'pr':''}" onclick="saveSettings({matchSpeed:'slow'})">WOLNO</button>
-        <button class="btn sm ${settings.matchSpeed==='normal'?'pr':''}" onclick="saveSettings({matchSpeed:'normal'})">NORMALNIE</button>
-        <button class="btn sm ${settings.matchSpeed==='fast'?'pr':''}" onclick="saveSettings({matchSpeed:'fast'})">SZYBKO</button>
+        <button class="btn sm ${settings.locale==='en'?'pr':''}" onclick="saveSettings({locale:'en'})">${t('settings.english').toUpperCase()}</button>
+        <button class="btn sm ${settings.locale==='pl'?'pr':''}" onclick="saveSettings({locale:'pl'})">${t('settings.polish').toUpperCase()}</button>
       </div>
     </div>
     <div class="settings-card">
-      <div class="settings-label">Gra i pliki</div>
-      <div class="settings-desc">Zapis do pliku, wczytanie kopii zapasowej albo własnej bazy klubów.</div>
+      <div class="settings-label">${t('settings.matchSpeed')}</div>
+      <div class="settings-desc">${t('settings.matchSpeedDesc')}</div>
       <div class="settings-segment">
-        <button class="btn sm" onclick="saveGame()">ZAPISZ DO PLIKU</button>
-        <button class="btn sm" onclick="document.getElementById('fi').click()">WCZYTAJ ZAPIS</button>
-        <button class="btn sm" onclick="document.getElementById('dbi').click()">WCZYTAJ DATABASE</button>
-        <button class="btn sm" onclick="showStartScreen()">NOWA GRA</button>
+        <button class="btn sm ${settings.matchSpeed==='slow'?'pr':''}" onclick="saveSettings({matchSpeed:'slow'})">${t('settings.slow').toUpperCase()}</button>
+        <button class="btn sm ${settings.matchSpeed==='normal'?'pr':''}" onclick="saveSettings({matchSpeed:'normal'})">${t('settings.normal').toUpperCase()}</button>
+        <button class="btn sm ${settings.matchSpeed==='fast'?'pr':''}" onclick="saveSettings({matchSpeed:'fast'})">${t('settings.fast').toUpperCase()}</button>
+      </div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-label">${t('settings.gameFiles')}</div>
+      <div class="settings-desc">${t('settings.gameFilesDesc')}</div>
+      <div class="settings-segment">
+        <button class="btn sm" onclick="saveGame()">${t('settings.export').toUpperCase()}</button>
+        <button class="btn sm" onclick="document.getElementById('fi').click()">${t('settings.import').toUpperCase()}</button>
+        <button class="btn sm" onclick="document.getElementById('dbi').click()">${t('settings.database').toUpperCase()}</button>
+        <button class="btn sm" onclick="showStartScreen()">${t('settings.newGame').toUpperCase()}</button>
       </div>
     </div>
   </div>
   <div class="btn-row mt-16 jcb">
-    <button class="btn" onclick="backToMainMenu()">MENU GŁÓWNE</button>
-    <button class="btn pr" onclick="closeModal()">ZAMKNIJ</button>
+    <button class="btn" onclick="backToMainMenu()">${t('settings.mainMenu').toUpperCase()}</button>
+    <button class="btn pr" onclick="closeModal()">${t('common.close').toUpperCase()}</button>
   </div>
-  <div class="fs10 ink3 mt-6">„Menu główne" nie kasuje kariery — możesz ją wznowić z menu („Wznów ostatni zapis").</div>`;
+  <div class="fs10 ink3 mt-6">${t('settings.menuHint')}</div>`;
   openModal();
 }
 // Return to the main menu without destroying the current career (it stays saved and
@@ -279,19 +293,19 @@ function updateHeader(){
   // Five grouped blocks (was eight single stats that truncated at any real width):
   // headline value on top, its context on the sub-line underneath.
   set('h-club',mt.name);
-  set('h-club-sub',`${myL===1?'I Liga':'II Liga'} \u00b7 #${pos||'-'}`);
-  set('h-budget',mt.budget.toLocaleString('pl')+' \u20ac');
-  set('h-budget-sub',store.G.phase==='preseason'?'preseason':`sezon ${store.G.season}`);
+  set('h-club-sub',`${t(myL===1?'league.divisionOne':'league.divisionTwo')} \u00b7 #${pos||'-'}`);
+  set('h-budget',formatCurrency(mt.budget));
+  set('h-budget-sub',store.G.phase==='preseason'?'preseason':`${t('common.season').toLowerCase()} ${store.G.season}`);
   set('h-season',`S${store.G.season} \u00b7 K${store.G.matchday}`);
-  set('h-season-sub',`z ${rounds} kolejek`);
+  set('h-season-sub',i18n?.getLocale()==='pl'?`z ${rounds} kolejek`:`of ${rounds} matchdays`);
   set('h-ovr',`${teamOvr(mt.id)}`);
-  set('h-staff-ovr',avgStaffOvr>0?`sztab ${avgStaffOvr} (${myStaff.length})`:'sztab: brak',avgStaffOvr>0?staffOvrColor(avgStaffOvr):'');
+  set('h-staff-ovr',avgStaffOvr>0?`${t('nav.staff').toLowerCase()} ${avgStaffOvr} (${myStaff.length})`:`${t('nav.staff').toLowerCase()}: ${t('common.none').toLowerCase()}`,avgStaffOvr>0?staffOvrColor(avgStaffOvr):'');
   set('h-prestige',`${pres}`);
   set('h-prestige-sub',`MGR ${store.G.managerPrestige||0}`);
   // rail footer: where you are in the season, always visible under the nav
   set('rail-foot',store.G.phase==='preseason'
-    ?`Sezon ${store.G.season} · preseason`
-    :`Sezon ${store.G.season} · kolejka ${store.G.matchday}/${rounds}`);
+    ?`${t('common.season')} ${store.G.season} · preseason`
+    :`${t('common.season')} ${store.G.season} · ${t('library.matchday',{number:`${store.G.matchday}/${rounds}`})}`);
 }
 
 applyTheme(getSettings().theme);

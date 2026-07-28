@@ -1398,29 +1398,29 @@ function renderCareerLibrary(){
   if(ui._saveStorageError){
     let hasLegacySave=false;
     try{hasLegacySave=!!localStorage.getItem(window.PPM.stateApi.LOCAL_STORAGE_KEY);}catch{}
-    return`<div class="card bt3-red"><div class="b8 cr">MAGAZYN ZAPISÓW NIEDOSTĘPNY</div><div class="fs11 ink3 mt-4">${menuEscape(ui._saveStorageError)}</div><div class="fs10 mt-6">${hasLegacySave?'Twój stary zapis nie został usunięty i można go bezpiecznie wznowić.':'Nie rozpoczynaj nowej kariery, dopóki pamięć zapisów nie będzie dostępna.'}</div>${hasLegacySave?'<button class="btn mt-10" onclick="resumeSavedGame()">WZNÓW STARY ZAPIS</button>':''}</div>`;
+    return`<div class="card bt3-red"><div class="b8 cr">${t('library.unavailable').toUpperCase()}</div><div class="fs11 ink3 mt-4">${menuEscape(ui._saveStorageError)}</div><div class="fs10 mt-6">${t(hasLegacySave?'library.legacySafe':'library.doNotStart')}</div>${hasLegacySave?`<button class="btn mt-10" onclick="resumeSavedGame()">${t('library.resumeLegacy').toUpperCase()}</button>`:''}</div>`;
   }
   const careers=Array.isArray(ui._careers)?ui._careers:[];
   if(!careers.length){
-    return`<div class="tac pd16 bgs1 bb1 r8"><div class="b7">Brak zapisanych karier</div><div class="fs10 ink3 mt-4">Rozpocznij nową grę albo zaimportuj zapis JSON.</div></div>`;
+    return`<div class="tac pd16 bgs1 bb1 r8"><div class="b7">${t('library.empty')}</div><div class="fs10 ink3 mt-4">${t('library.emptyHint')}</div></div>`;
   }
   return careers.map(c=>{
     const s=c.summary||{};
-    const phase=s.phase==='preseason'?'preseason':`kolejka ${s.matchday||0}`;
-    const updated=c.updatedAt?new Date(c.updatedAt).toLocaleString('pl-PL'):'—';
+    const phase=s.phase==='preseason'?'preseason':t('library.matchday',{number:s.matchday||0});
+    const updated=c.updatedAt?formatDateTime(c.updatedAt):'—';
     const id=menuEscape(c.id);
     return`<div class="bgs1 bb1 r8 pd10-12">
       <div class="flex jcb aic gp10">
         <button class="btn flx1 tal" onclick="continueCareer('${id}')" style="padding:10px 12px">
           <span class="block syne b8 fs13">${menuEscape(c.name)}</span>
-          <span class="block fs10 ink3 mt-2">${menuEscape(s.clubName||'Nieznany klub')} · sezon ${s.season||1}, ${phase} · ${menuEscape(s.countryId||'PL')}</span>
-          <span class="block fs9 ink3 mt-2">Ostatni zapis: ${menuEscape(updated)}</span>
+          <span class="block fs10 ink3 mt-2">${menuEscape(s.clubName||t('library.unknownClub'))} · ${t('common.season').toLowerCase()} ${s.season||1}, ${phase} · ${t(`country.${s.countryId||'PL'}`)}</span>
+          <span class="block fs9 ink3 mt-2">${t('library.lastSave',{date:menuEscape(updated)})}</span>
         </button>
         <div class="flex gp4">
-          <button class="btn sm" onclick="renameCareer('${id}')">NAZWA</button>
-          <button class="btn sm" onclick="showCareerBackups('${id}')">KOPIE</button>
+          <button class="btn sm" onclick="renameCareer('${id}')">${t('library.rename').toUpperCase()}</button>
+          <button class="btn sm" onclick="showCareerBackups('${id}')">${t('library.backups').toUpperCase()}</button>
           <button class="btn sm" onclick="exportCareer('${id}')">JSON</button>
-          <button class="btn sm r" onclick="deleteCareer('${id}')">USUŃ</button>
+          <button class="btn sm r" onclick="deleteCareer('${id}')">${t('common.delete').toUpperCase()}</button>
         </div>
       </div>
     </div>`;
@@ -1437,26 +1437,26 @@ function renderMainMenu(){
       <div class="syne fs14 b7 ink3 up mt-2" style="letter-spacing:.9em">MANAGER</div>
     </div>
     <div class="flex fdc gp8" style="width:680px;max-width:94vw">
-      ${menuBtn('&#9654; NOWA GRA','startNewGameFlow()','pr')}
-      <div class="fs10 ink3 up ls1 mt-6">Twoje kariery</div>
+      ${menuBtn(t('menu.newGame'),'startNewGameFlow()','pr')}
+      <div class="fs10 ink3 up ls1 mt-6">${t('menu.careers')}</div>
       <div class="flex fdc gp6" style="max-height:44vh;overflow:auto">${renderCareerLibrary()}</div>
-      ${menuBtn('IMPORTUJ KARIERĘ (.json)','menuFilePicker()','','tworzy osobną karierę')}
-      ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'','wkr&oacute;tce')}
-      ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'','wkr&oacute;tce')}
-      ${menuBtn('OPCJE','openSettings()','')}
-      ${menuBtn('WYJD&#377; Z GRY','menuExit()','')}
+      ${menuBtn(t('menu.importCareer').toUpperCase(),'menuFilePicker()','',t('menu.importHint'))}
+      ${menuBtn(t('menu.databaseEditor').toUpperCase(),"menuTbd(t('menu.databaseEditor'))",'',t('menu.comingSoon'))}
+      ${menuBtn(t('menu.challenges').toUpperCase(),"menuTbd(t('menu.challenges'))",'',t('menu.comingSoon'))}
+      ${menuBtn(t('menu.options').toUpperCase(),'openSettings()','')}
+      ${menuBtn(t('menu.exit').toUpperCase(),'menuExit()','')}
     </div>
-    ${hasCustomDb?`<div class="fs11 cpurple">Za&#322;adowana baza: <b>${window.PPM.customDatabase.name||'Custom DB'}</b> &mdash; <span class="cur" style="text-decoration:underline" onclick="clearDatabaseFile()">wyczy&#347;&#263;</span></div>`:''}
-    <div class="fs10 ink3">Domy&#347;lna baza danych: dru&#380;yny i zawodnicy s&#261; takie same przy ka&#380;dej nowej grze (per kraj).</div>
+    ${hasCustomDb?`<div class="fs11 cpurple">${t('menu.customDb',{name:`<b>${menuEscape(window.PPM.customDatabase.name||'Custom DB')}</b>`})} &mdash; <span class="cur" style="text-decoration:underline" onclick="clearDatabaseFile()">${t('menu.clear')}</span></div>`:''}
+    <div class="fs10 ink3">${t('menu.defaultDb')}</div>
   </div>`;
 }
 function ngCountryCard(cid){
   const c=COUNTRIES[cid];const sel=ui._selCountry===cid;
   return`<div onclick="ngSelectCountry('${cid}')" style="padding:14px 10px;border:2px solid ${sel?'var(--r)':'var(--line)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:14px;text-align:center">
     <div class="fs30 mb6">${c.flag}</div>
-    <div class="syne b7 fs13">${c.name}</div>
-    <div class="fs9 ink3 mt-2">Ranking #${c.worldRank}</div>
-    <div class="fs9 cr b7">OVR &times;${c.ovrMult} / Bud&#380;et &times;${c.budgetMult}</div>
+    <div class="syne b7 fs13">${t(`country.${cid}`)}</div>
+    <div class="fs9 ink3 mt-2">${t('wizard.ranking',{rank:c.worldRank})}</div>
+    <div class="fs9 cr b7">OVR &times;${c.ovrMult} / ${t('wizard.budget')} &times;${c.budgetMult}</div>
   </div>`;
 }
 function ngTeamCard(n,idx,league){
@@ -1464,52 +1464,52 @@ function ngTeamCard(n,idx,league){
   const sel=ui._selClub===idx;const budget=clubBudget(n,league===1?idx:idx-12,league);
   return`<div onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:12px">
     <div class="flex aic" style="gap:9px;margin-bottom:5px"><img src="${getTeamLogoData({id:idx,name:n})}" alt="${n}" class="club-logo"><div class="syne b7 fs12" style="line-height:1.15">${n}</div></div>
-    <div class="fs12 b7 cg">${budget.toLocaleString('pl')} &euro;</div>
-    ${CI[n]?`<div class="mt-4 fs9 cr b8">&#127942; KLUB-WYZWANIE</div>`:''}
+    <div class="fs12 b7 cg">${formatCurrency(budget)}</div>
+    ${CI[n]?`<div class="mt-4 fs9 cr b8">&#127942; ${t('wizard.challengeClub').toUpperCase()}</div>`:''}
   </div>`;
 }
 function renderNewGameWizard(){
   const step=ui._ngStep||0;
   const country=COUNTRIES[ui._selCountry]||COUNTRIES['PL'];
   const l1=(country.l1Names||TNAMES_L1),l2=(country.l2Names||TNAMES_L2);
-  const stepNames=['Kraj','Liga','Dru&#380;yna','Trudno&#347;&#263;'];
+  const stepNames=['wizard.country','wizard.league','wizard.team','wizard.difficulty'].map(t);
   const stepper=stepNames.map((nm,i)=>`<div style="display:flex;align-items:center;gap:6px;opacity:${i<=step?1:.4}"><div style="width:22px;height:22px;border-radius:50%;background:${i<step?'var(--g)':i===step?'var(--r)':'var(--b1)'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">${i<step?'&#10003;':i+1}</div><span class="fs11 b7">${nm}</span></div>`).join('<div class="flx1" style="height:1px;background:var(--b1);min-width:16px"></div>');
   let body='',hint='';
   if(step===0){
-    hint='Wybierz kraj &mdash; ka&#380;dy ma w&#322;asn&#261; I i II Lig&#281; (12 dru&#380;yn). Bud&#380;et i poziom zawodnik&oacute;w zale&#380;&#261; od kraju.';
+    hint=t('wizard.countryHint');
     body=`<div class="country-grid">${COUNTRY_IDS.map(ngCountryCard).join('')}</div>`;
   }else if(step===1){
-    hint=`${country.flag} ${country.name}. Wybierz poziom rozgrywek, na kt&oacute;rym zaczniesz.`;
+    hint=`${country.flag} ${t(`country.${country.id}`)}. ${t('wizard.chooseLeague')}.`;
     const lbtn=(l,name,desc)=>`<div onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};border-radius:16px;cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
       <span class="league-badge ${l===1?'l1':'l2'} fs14" style="padding:6px 14px">${name}</span>
       <div class="fs12 ink3 mt-12">${desc}</div></div>`;
-    body=`<div class="flex gp16 mxauto" style="max-width:560px">${lbtn(1,'I LIGA','Silniejsze, bogatsze kluby. Trudniejszy start, wi&#281;kszy presti&#380;.')}${lbtn(2,'II LIGA','Skromniejsze bud&#380;ety. Zbuduj klub od do&#322;u i awansuj.')}</div>`;
+    body=`<div class="flex gp16 mxauto" style="max-width:560px">${lbtn(1,t('league.divisionOne').toUpperCase(),t('wizard.topLeagueDesc'))}${lbtn(2,t('league.divisionTwo').toUpperCase(),t('wizard.secondLeagueDesc'))}</div>`;
   }else if(step===2){
     const league=ui._ngLeague||1;const names=league===1?l1:l2;
-    hint=`${league===1?'I':'II'} Liga ${country.name}. Wybierz klub, kt&oacute;rym pokierujesz.`;
+    hint=`${t(league===1?'league.divisionOne':'league.divisionTwo')} · ${t(`country.${country.id}`)}. ${t('wizard.teamHint')}`;
     body=`<div class="grid gtc3 gp10">${names.map((n,i)=>ngTeamCard(n,league===1?i:i+12,league)).join('')}</div>`;
   }else{
-    hint='Poziom AI zapisuje si&#281; w karierze i nie zmienia si&#281; p&oacute;&#378;niej z ustawie&#324;.';
+    hint=t('wizard.difficultyHint');
     const chosenName=(ui._ngLeague===1?l1:l2)[(ui._ngLeague===1?ui._selClub:ui._selClub-12)]||'&mdash;';
-    body=`<div class="tac mb14 fs13">Klub: <b>${chosenName}</b> (${ui._ngLeague===1?'I':'II'} Liga, ${country.name})</div>
+    body=`<div class="tac mb14 fs13">${t('nav.club')}: <b>${chosenName}</b> (${t(ui._ngLeague===1?'league.divisionOne':'league.divisionTwo')}, ${t(`country.${country.id}`)})</div>
       <div class="grid gtc4 gp8 maxw520" style="margin:0 auto 10px">${[['easy','Easy'],['normal','Normal'],['hard','Hard'],['legend','Legend']].map(([id,label])=>`<button class="btn ${ui._newSaveDifficulty===id?'pr':'sm'} w100" onclick="selectNewSaveDifficulty('${id}')">${label}</button>`).join('')}</div>
       <div class="maxw520" style="margin:0 auto 10px">
-        <div class="fs10 ink3 up ls1 mb6 tac">Historia świata przed startem</div>
-        <div class="grid gtc4 gp8">${[[0,'Świeży świat'],[3,'3 sezony'],[5,'5 sezonów'],[10,'10 sezonów']].map(([n,label])=>`<button class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="ui._ngHistory=${n};renderStart();playClick()">${label}</button>`).join('')}</div>
-        <div class="fs10 ink3 mt-6 tac">Liga rozegra te sezony zanim przejmiesz klub: rekordy, gwiazdy, awanse i spadki będą już istnieć (generowanie ~2 s/sezon).</div>
+        <div class="fs10 ink3 up ls1 mb6 tac">${t('wizard.worldHistory')}</div>
+        <div class="grid gtc4 gp8">${[[0,t('wizard.freshWorld')],[3,t('wizard.seasons',{count:3})],[5,t('wizard.seasons',{count:5})],[10,t('wizard.seasons',{count:10})]].map(([n,label])=>`<button class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="ui._ngHistory=${n};renderStart();playClick()">${label}</button>`).join('')}</div>
+        <div class="fs10 ink3 mt-6 tac">${t('wizard.historyHint')}</div>
       </div>
       <div class="maxw520 mxauto fs11 ink2 lh17 pd10-12 bgs1 bb1 r8">${(window.PPM.gameplay.difficultyEffectsSummary(ui._newSaveDifficulty||'hard')).map(e=>`&bull; ${e}`).join('<br>')}</div>`;
   }
   const canNext=step===0?!!ui._selCountry:step===1?!!ui._ngLeague:step===2?ui._selClub>=0:true;
   const nav=step<3
-    ?`<button class="btn pr" ${canNext?'':'disabled'} onclick="ngNext()" style="padding:11px 30px">DALEJ &rarr;</button>`
-    :`<button class="btn pr fs14" onclick="startGame()" style="padding:11px 34px">ROZPOCZNIJ GR&#280;</button>`;
+    ?`<button class="btn pr" ${canNext?'':'disabled'} onclick="ngNext()" style="padding:11px 30px">${t('wizard.next').toUpperCase()}</button>`
+    :`<button class="btn pr fs14" onclick="startGame()" style="padding:11px 34px">${t('wizard.start').toUpperCase()}</button>`;
   return`<div class="mxauto flex fdc" style="max-width:820px;min-height:calc(100vh - 40px);padding:18px 16px">
     <div class="flex aic gp10 mb16">
-      <button class="btn sm" onclick="ngBack()">&larr; ${step===0?'Menu':'Wstecz'}</button>
+      <button class="btn sm" onclick="ngBack()">&larr; ${step===0?'Menu':t('common.back')}</button>
       <div class="flx1 flex aic gp8">${stepper}</div>
     </div>
-    <div class="tac syne fs26 b8 mb4">${['Wybierz kraj','Wybierz lig&#281;','Wybierz dru&#380;yn&#281;','Poziom trudno&#347;ci'][step]}</div>
+    <div class="tac syne fs26 b8 mb4">${['wizard.chooseCountry','wizard.chooseLeague','wizard.chooseTeam','wizard.chooseDifficulty'].map(t)[step]}</div>
     <div class="tac fs11 ink3 mb18">${hint}</div>
     <div class="flx1">${body}</div>
     <div class="flex jcc" style="margin-top:18px">${nav}</div>
@@ -1523,8 +1523,8 @@ function ngSelectLeague(l){ui._ngLeague=l;ui._selClub=-1;ui._ngStep=2;renderStar
 function ngSelectTeam(idx){ui._selClub=idx;ui._ngStep=3;renderStart();playClick();}
 function menuLoadGame(){if(typeof resumeSavedGame==='function')resumeSavedGame();}
 function menuFilePicker(){const fi=document.getElementById('fi');if(fi)fi.click();}
-function menuTbd(name){toast(name+' &mdash; wkrótce (w przygotowaniu).');}
-function menuExit(){if(confirm('Zamknąć grę? Niezapisane postępy przepadną.')){try{window.close();}catch(e){}toast('Zamknij kartę przeglądarki, aby wyjść.');}}
+function menuTbd(name){toast(`${name} — ${t('menu.comingSoon')}.`);}
+function menuExit(){if(confirm(t('menu.exitConfirm'))){try{window.close();}catch(e){}toast(t('menu.exitHint'));}}
 function selCountry(cid){ui._selCountry=cid;ui._selClub=-1;renderStart();playClick();}
 function selClub(i){ui._selClub=i;renderStart();}
 function selectNewSaveDifficulty(level){ui._newSaveDifficulty=level;renderStart();playClick();}
@@ -1533,7 +1533,7 @@ async function startGame(){
   const manager=window.PPM.saveManager;
   if(manager?.isInitialized?.()){
     const estimate=await manager.estimateStorage();
-    if(estimate?.low&&!confirm('Pamięć na zapisy jest prawie pełna. Kontynuować tworzenie kariery?'))return;
+    if(estimate?.low&&!confirm(t('wizard.storageLow')))return;
     persistGame();
     await manager.flush();
     await manager.deactivate();

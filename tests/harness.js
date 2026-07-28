@@ -27,6 +27,7 @@ const ROOT = path.resolve(__dirname, '..');
 // Load order mirrors index.html (UI-only files excluded).
 const LOAD_ORDER = [
   'src/data/names.js', // optional 10x name pools (skipped if absent)
+  'src/i18n/i18n.js',
   'src/data/constants.js',
   'src/core/utils.js',
   'src/core/save-storage.js',
@@ -40,10 +41,11 @@ const LOAD_ORDER = [
 // Minimal DOM/browser stubs. The simulation never renders, so these only need
 // to exist (not behave) so that load-time code and incidental lookups succeed.
 function makeStubElement() {
+  let html = '';
   const el = {
     style: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     children: [], dataset: {},
-    set innerHTML(_) {}, get innerHTML() { return ''; },
+    set innerHTML(value) { html = String(value); }, get innerHTML() { return html; },
     setAttribute() {}, getAttribute() { return null; }, removeAttribute() {},
     appendChild() {}, removeChild() {}, querySelector() { return null; },
     querySelectorAll() { return []; }, addEventListener() {}, removeEventListener() {},
@@ -76,8 +78,13 @@ function mulberry32(seed) {
 // Builds a fresh sandbox, loads the game, and returns the global object.
 // Pass a numeric `seed` to make Math.random() deterministic for that boot.
 function boot(seed) {
+  const elements = new Map();
   const documentStub = {
-    getElementById() { return makeStubElement(); },
+    __elements: elements,
+    getElementById(id) {
+      if(!elements.has(id))elements.set(id,makeStubElement());
+      return elements.get(id);
+    },
     querySelector() { return makeStubElement(); },
     querySelectorAll() { return []; },
     createElement() { return makeStubElement(); },

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-28 — English localisation foundation
+
+- Added a dependency-free i18n boundary with parameter interpolation,
+  locale-aware numbers, currency and dates, and key-parity tests.
+- English is now the release default; Polish remains selectable and persists in
+  app settings.
+- Migrated the application shell, navigation, settings, career library and new
+  game wizard to translation keys. Language changes apply without a restart.
+- Added a rendered-HTML test for switching the start screen between EN and PL.
+
 ## 2026-07-28 — Fictional official database
 
 - Replaced shipped real-world club, sponsor and technical-partner identities

@@ -39,6 +39,7 @@ const DEFAULT_APP_SETTINGS = {
   // The locked design language (proto-final "Paddock") is dark carbon. There is
   // no light variant — see normalizeAppSettings().
   theme: 'dark',
+  locale: 'en',
   matchSpeed: 'normal',
   aiDifficulty: 'hard'
 };
@@ -91,6 +92,7 @@ function normalizeAppSettings(raw){
     // 'light' left in a returning player's localStorage is coerced back to dark,
     // otherwise they open the game into a theme that no longer exists.
     theme:'dark',
+    locale:['en','pl'].includes(raw?.locale)?raw.locale:DEFAULT_APP_SETTINGS.locale,
     matchSpeed:['slow','normal','fast'].includes(raw?.matchSpeed)?raw.matchSpeed:DEFAULT_APP_SETTINGS.matchSpeed,
     aiDifficulty:['easy','normal','hard','legend'].includes(raw?.aiDifficulty)?raw.aiDifficulty:DEFAULT_APP_SETTINGS.aiDifficulty,
   };
