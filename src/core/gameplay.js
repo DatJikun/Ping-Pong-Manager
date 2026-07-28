@@ -1574,7 +1574,7 @@ function myYouth(){return store.G.players.filter(p=>p.teamId===myTeam().id&&!p.r
 function promoteYouth(pid){
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
   p.role='reserve';p.isYouth=false;
-  toast(p.name+' przeniesiony z akademii do rezerwy!');
+  toast(t('season.academyPromoted',{name:p.name}));
   render();updateHeader();persistGame();
 }
 
@@ -2247,7 +2247,7 @@ function processStarterUsageForTeam(teamId,playedIds){
     if(p.starterBenchStreak>=3){
       p.morale=Math.max(0,(p.morale||50)-25);
       p.starterBenchStreak=0;
-      if(teamId===store.G.myTeamId)toast(`${p.name} traci morale za 3 mecze bez gry.`);
+      if(teamId===store.G.myTeamId)toast(t('season.noPlayingTime',{name:p.name}));
     }
     if((p.morale||0)<15)applySeveranceRelease(p);
   });
@@ -2956,7 +2956,7 @@ function tryInjuriesAfterMatch(homeId,awayId){
 function tickInjuries(){
   const myId=store.G.myTeamId;const recovered=[];
   store.G.players.forEach(p=>{if(p.injuredFor>0){p.injuredFor--;if(p.injuredFor===0&&p.teamId===myId)recovered.push(p.name);}});
-  if(recovered.length)recovered.forEach(n=>toast(`${n} wr\u00f3ci\u0142 do zdrowia!`));
+  if(recovered.length)recovered.forEach(name=>toast(t('season.recovered',{name})));
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -3119,10 +3119,10 @@ function applyGrowth(){
       const wasMine=p.teamId===myId;
       if(p.contractYears>0){
         p.role='reserve';p.isYouth=false;
-        if(wasMine)toast(`${p.name} (${ovrBase(p)} OVR) uko\u0144czy\u0142 akademi\u0119 i do\u0142\u0105czy\u0142 do rezerwy!`);
+        if(wasMine)toast(t('season.academyGraduated',{name:p.name,ovr:ovrBase(p)}));
       }else{
         p.teamId=null;p.role='reserve';p.isYouth=false;
-        if(wasMine)toast(`${p.name} odszed\u0142 z akademii (brak kontraktu)`);
+        if(wasMine)toast(t('season.academyReleased',{name:p.name}));
       }
     }
     // AI-club players develop in the dedicated AI loop below — running them here
@@ -3189,7 +3189,7 @@ function retirePlayer(p){
     retiredAge:p.age,wasMyPlayer:wm,awards:p.awards||[],trophyMap,goatScore:calcGoat(p),
     fh:p.fh,bh:p.bh,srv:p.srv,ret:p.ret,foot:p.foot,men:p.men,nationality:p.nationality,clubHistory:[...(p.clubHistory||[])],
     wrate:(p.careerW||0)+(p.careerL||0)>0?Math.round((p.careerW||0)/((p.careerW||0)+(p.careerL||0))*100):0});
-  if(wm)toast(`${p.name} przeszed\u0142 na emerytur\u0119 (${p.age} lat)`);
+  if(wm)toast(t('season.playerRetired',{name:p.name,age:p.age}));
 }
 
 // Keeps a long career lightweight (memory + per-match loop cost). Called once per
@@ -3283,7 +3283,7 @@ function updateRecords(){
   // Perfect season check
   if(recordTeam&&recordTeam.pts>=66&&!store.G.records.PERFECT_SEASON){
     store.G.records.PERFECT_SEASON={season:store.G.season,club:recordTeam.name,pts:recordTeam.pts};
-    if(mt)toast('Perfekcyjny Sezon! Rekord ustanowiony!');
+    if(mt)toast(t('season.perfectRecord'));
   }
 
   // Fewest sets lost (approximation via ga)
@@ -3768,11 +3768,11 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 async function runMatchday(){
   if(ui.running)return;
-  if(!store.G||store.G.phase!=='pre'){toast('Najpierw zako\u0144cz poprzedni sezon!');return;}
+  if(!store.G||store.G.phase!=='pre'){toast(t('season.finishPrevious'));return;}
   // Owner 2026-07-02: unanswered decision mail BLOCKS the matchday — read the
   // inbox and answer before you can press play.
   if(pendingDecisions().length){
-    toast(`Najpierw odpowiedz na decyzje w Skrzynce (${pendingDecisions().length})!`);
+    toast(t('season.answerInbox',{count:pendingDecisions().length}));
     ui.page='inbox';render();
     return;
   }
@@ -4078,8 +4078,8 @@ function safeCloseMatchday(){ui.running=false;stopCanvasVME();closeModal();updat
 // news and standings stay identical to manual play. Clicking the button again stops.
 async function autoPlaySeason(){
   if(ui.autoPlay){ui.autoPlay=false;return;} // toggle OFF
-  if(ui.running){toast('Poczekaj na koniec bieżącej kolejki.');return;}
-  if(!store.G||store.G.phase!=='pre'){toast('Auto-gra działa tylko w trwającym sezonie.');return;}
+  if(ui.running){toast(t('season.waitForMatchday'));return;}
+  if(!store.G||store.G.phase!=='pre'){toast(t('season.autoPlayOnly'));return;}
   ui.autoPlay=true;updateHeader();
   try{
     while(ui.autoPlay){
@@ -4221,7 +4221,7 @@ function endSeason(){
   });
   retiringStaff.forEach(s=>{
     store.G.staff=store.G.staff.filter(x=>x.id!==s.id);
-    if(s.teamId===myId)toast(`${s.name} (${s.age}l) przeszed\u0142 na emerytur\u0119!`);
+    if(s.teamId===myId)toast(t('season.staffRetired',{name:s.name,age:s.age}));
     safeLog(`${s.name} na emeryturze (${s.age}l)`,'dm');
   });
   store.G.teams.forEach(t=>{
@@ -4231,7 +4231,7 @@ function endSeason(){
     }
   });
   if(store.G.prDirector&&(store.G.prDirector.age||40)>75){
-    toast(`${store.G.prDirector.name} kończy karierę w PR.`);
+    toast(t('season.prRetired',{name:store.G.prDirector.name}));
     store.G.prDirector=null;
   }
   // Process pre-signed players (both ours and AI)
@@ -4243,7 +4243,7 @@ function endSeason(){
         p.joinedSeason=store.G.season;p.joinedViaTransfer=true;
         p.promisedRole=ps.promisedRole||p.preferredRole||'starter';
         p.role='reserve';
-        if(p.teamId===store.G.myTeamId)toast(`${p.name} do\u0142\u0105czy\u0142 do dru\u017cyny od nowego sezonu!`);
+        if(p.teamId===store.G.myTeamId)toast(t('season.playerArrived',{name:p.name}));
       }
     });
     store.G.preSignedPlayers=[];
@@ -4263,7 +4263,7 @@ function endSeason(){
         pr.contractYears=entry.years;
         if(entry.destinationTeamId===store.G.myTeamId){
           store.G.prDirector=pr;
-          toast(`${pr.name} obejmuje funkcję Dyrektorki PR od nowego sezonu.`);
+          toast(t('season.prArrived',{name:pr.name}));
         }else{
           const team=store.G.teams.find(t=>t.id===entry.destinationTeamId);
           if(team)team.prDirector=pr;
@@ -4281,7 +4281,7 @@ function endSeason(){
       if(!store.G.staff.find(x=>x.id===s.id))store.G.staff.push(s);
       store.G.staffPool=store.G.staffPool.filter(x=>x.id!==s.id);
       if(store.G.scoutPool)store.G.scoutPool=store.G.scoutPool.filter(x=>x.id!==s.id);
-      if(entry.destinationTeamId===store.G.myTeamId)toast(`${s.name} do\u0142\u0105cza do sztabu od nowego sezonu.`);
+      if(entry.destinationTeamId===store.G.myTeamId)toast(t('season.staffArrived',{name:s.name}));
     });
     store.G.pendingStaffSignings=[];
   }
@@ -4294,7 +4294,7 @@ function endSeason(){
       if(buyer){
         p.teamId=buyer.id;p.contractYears=1+rnd(0,2);p.salary=contractExpect(p,buyer.id).salary;
         p.role='starter';
-        toast(`${p.name} podpisa\u0142 z ${buyer.name}!`);
+        toast(t('season.preSignedElsewhere',{name:p.name,club:buyer.name}));
         safeLog(`${p.name} odszed\u0142 do ${buyer.name}`,'bd');
       }
     }
@@ -4337,10 +4337,13 @@ function endSeason(){
       if((myTeam().budget||0)>=cost){
         myTeam().budget-=cost;
         const fin=ensureSeasonFinance();if(fin)fin.brandCosts+=cost;
-        safeLog(`Okładziny (${tier.label}): -${cost.toLocaleString('pl')} €`,'bd');
+        safeLog(t('season.rubberCost',{label:t(`equipment.rubber.${store.G.rubberTier||0}`),cost:formatCurrency(cost)}),'bd');
       }else{
         store.G.rubberTier=Math.max(0,(store.G.rubberTier||0)-1);
-        pushMail({from:'Dyrektor sportowy',subject:'Nie stać nas na okładziny',body:`Budżet nie udźwignął kosztu ${tier.label.toLowerCase()} (${cost.toLocaleString('pl')} €). Schodzimy o poziom niżej: ${EQUIPMENT.rubberTiers[store.G.rubberTier].label}.`});
+        pushMail({fromKey:'mail.sportingDirector',subjectKey:'mail.rubberUnaffordableSubject',bodyKey:'mail.rubberUnaffordableBody',bodyParams:{
+          tier:t(`equipment.rubber.${Math.min(store.G.rubberTier+1,EQUIPMENT.rubberTiers.length-1)}`),
+          cost:formatCurrency(cost),lowerTier:t(`equipment.rubber.${store.G.rubberTier}`),
+        }});
       }
     }
   }
@@ -4379,11 +4382,11 @@ function endSeason(){
 // v15: Require exactly 3 sponsors + tech partnership to start season
 function startSeason(){
   const activeSponsors=store.G.sponsors.filter(s=>s.active).length;
-  if(activeSponsors<3){toast('Potrzebujesz 3 sponsor\u00f3w! (masz: '+activeSponsors+'/3)');return;}
-  if(!store.G.techPartnership){toast('Wybierz Partnerstwo Techniczne przed startem!');return;}
-  if(!store.G.boardObjective){toast('Wybierz cel zarządu przed startem sezonu!');return;}
+  if(activeSponsors<3){toast(t('season.needSponsors',{count:activeSponsors}));return;}
+  if(!store.G.techPartnership){toast(t('season.needTechPartner'));return;}
+  if(!store.G.boardObjective){toast(t('season.needBoardGoal'));return;}
   store.G.phase='pre';ui.page='dash';render();updateHeader();
-  toast('Sezon '+store.G.season+' ('+( myLeague()===1?'I Liga':'II Liga')+') - do boju!');
+  toast(t('season.started',{season:store.G.season,division:myLeague()===1?'I':'II'}));
   persistGame();
 }
 
@@ -4428,7 +4431,7 @@ function aiSignPlayers(){
     if((s.contractYears||0)<=0){
       closeStaffTenure(s,store.G.season);
       if(s.teamId===store.G.myTeamId){
-        toast(`${s.name} (${s.type}) — kontrakt wygasł, odchodzi z klubu.`);
+        toast(t('season.staffContractExpired',{name:s.name,role:t(s.type==='coach'?'staff.coach':s.type==='physio'?'staff.physio':s.type==='psychologist'?'staff.psychologist':s.type==='scout'?'staff.scout':'staff.prDirector')}));
         safeLog(`${s.name} odszedł po wygaśnięciu kontraktu`,'bd');
       }
       s.teamId=null;
@@ -5409,22 +5412,22 @@ function fireStaff(sid){
 function upgradeInfra(type){
   const mt=myTeam();
   if(type==='merch'){
-    const cur=store.G.infraMerchandising||0;const next=INFRA_MERCH[cur+1];if(!next){toast('Maks!');return;}
-    if(mt.budget<next.cost){toast('Brak bud\u017cetu!');return;}
+    const cur=store.G.infraMerchandising||0;const next=INFRA_MERCH[cur+1];if(!next){toast(t('infra.maximum'));return;}
+    if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
     mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMerchandising=cur+1;toast(`${next.name}!`);
     syncMyTeamInfra();render();updateHeader();persistGame();return;
   }
   if(type==='hall'){
-    const cur=store.G.infraHall||0;const next=INFRA_HALL[cur+1];if(!next){toast('Maks!');return;}
-    if(mt.budget<next.cost){toast('Brak bud\u017cetu!');return;}
+    const cur=store.G.infraHall||0;const next=INFRA_HALL[cur+1];if(!next){toast(t('infra.maximum'));return;}
+    if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
     mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraHall=cur+1;toast(`${next.name}!`);
   }else if(type==='med'){
-    const cur=store.G.infraMed||0;const next=INFRA_MED[cur+1];if(!next){toast('Maks!');return;}
-    if(mt.budget<next.cost){toast('Brak bud\u017cetu!');return;}
+    const cur=store.G.infraMed||0;const next=INFRA_MED[cur+1];if(!next){toast(t('infra.maximum'));return;}
+    if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
     mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMed=cur+1;toast(`${next.name}!`);
   }else if(type==='academy'){
-    const cur=store.G.infraAcademy||0;const next=INFRA_ACADEMY[cur+1];if(!next){toast('Maks!');return;}
-    if(mt.budget<next.cost){toast('Brak bud\u017cetu!');return;}
+    const cur=store.G.infraAcademy||0;const next=INFRA_ACADEMY[cur+1];if(!next){toast(t('infra.maximum'));return;}
+    if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
     mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraAcademy=cur+1;toast(`${next.name}!`);
   }
   syncMyTeamInfra();render();updateHeader();persistGame();
@@ -5502,11 +5505,11 @@ function sellPlayer(pid){
 function selectTechPartnership(tpId){
   const tp=TECH_PARTNERSHIPS.find(t=>t.id===tpId);if(!tp)return;
   const pres=calcPrestige();
-  if(pres<tp.prestige[0]||pres>tp.prestige[1]){toast('Tw\u00f3j presti\u017c ('+pres+') nie pasuje do tego tier!');return;}
+  if(pres<tp.prestige[0]||pres>tp.prestige[1]){toast(t('sponsor.prestigeMismatch',{prestige:pres}));return;}
   store.G.techPartnership=tpId;
   render();
-  const costStr=tp.costPerSeason>0?'+'+tp.costPerSeason.toLocaleString('pl')+' €':tp.costPerSeason<0?tp.costPerSeason.toLocaleString('pl')+' €':'0 €';
-  toast(`Partnerstwo: ${tp.name} (${tp.bonusDesc}, ${costStr}/sezon)`);
+  const costStr=tp.costPerSeason>0?'+'+formatCurrency(tp.costPerSeason):formatCurrency(tp.costPerSeason);
+  toast(t('sponsor.partnershipSelected',{name:tp.name,bonus:tp.bonusDesc,cost:costStr}));
   persistGame();
 }
 
@@ -5523,17 +5526,17 @@ function activateSponsor(s,years){
 function signSponsor(sid,years){
   const s=store.G.sponsorOffers.find(x=>x.id===sid);if(!s)return;
   const activeCount=store.G.sponsors.filter(x=>x.active).length;
-  if(activeCount>=3){toast('Masz ju\u017c 3 aktywnych sponsor\u00f3w!');return;}
+  if(activeCount>=3){toast(t('sponsor.maximum'));return;}
   activateSponsor(s,years);
-  closeModal();render();toast(`Umowa z ${s.name} na ${s.years} ${s.years===1?'sezon':'sez.'} podpisana! (${activeCount+1}/3)`);
+  closeModal();render();toast(t('sponsor.signed',{name:s.name,years:s.years,count:activeCount+1}));
   persistGame();
 }
 function signSponsorPreseason(sid,years){
   const s=store.G.sponsorOffers.find(x=>x.id===sid);if(!s)return;
   const activeCount=store.G.sponsors.filter(x=>x.active).length;
-  if(activeCount>=3){toast('Masz ju\u017c 3 aktywnych sponsor\u00f3w!');return;}
+  if(activeCount>=3){toast(t('sponsor.maximum'));return;}
   activateSponsor(s,years);
-  render();toast(`Umowa z ${s.name} na ${s.years} ${s.years===1?'sezon':'sez.'} podpisana! (${activeCount+1}/3)`);
+  render();toast(t('sponsor.signed',{name:s.name,years:s.years,count:activeCount+1}));
   persistGame();
 }
 
