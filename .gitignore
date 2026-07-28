@@ -1,4 +1,6 @@
 node_modules/
+dist/
+desktop-dist/
 *.log
 .DS_Store
 saves/

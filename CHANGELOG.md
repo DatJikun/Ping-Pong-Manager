@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-28 — Windows desktop foundation
+
+- Added a sandboxed Electron shell with no Node access in game code, denied
+  permissions/navigation and a restrictive offline Content Security Policy.
+- Added reproducible portable and NSIS build commands plus desktop release
+  tests and documentation.
+- Verified a real x64 portable build and launch. Production dependencies report
+  zero known vulnerabilities; final icon and code signing remain release tasks.
+
 ## 2026-07-28 — English localisation foundation
 
 - Added a dependency-free i18n boundary with parameter interpolation,

@@ -2,11 +2,43 @@
   "name": "pingpong-manager",
   "version": "17.0.0",
   "private": true,
+  "author": "DatJikun",
+  "main": "desktop/main.cjs",
   "description": "PingPong Manager — table tennis club management sim (browser app).",
   "scripts": {
     "test": "node --test --test-skip-pattern=\"^\\[slow\\]\"",
     "test:full": "node --test",
-    "check": "node -e \"['src/i18n/i18n.js','src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
-    "test:cleanup": "node --test tests/cleanup.test.js"
+    "check": "node -e \"['desktop/main.cjs','src/i18n/i18n.js','src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
+    "test:cleanup": "node --test tests/cleanup.test.js",
+    "desktop": "electron .",
+    "dist:win": "electron-builder --win portable",
+    "dist:win:installer": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^37.2.4",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.datjikun.pingpongmanager",
+    "productName": "PingPong Manager",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "src/**/*",
+      "styles/**/*",
+      "assets/**/*",
+      "desktop/**/*",
+      "THIRD-PARTY-NOTICES.md",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "PingPong-Manager-${version}-${arch}.${ext}"
+    }
   }
 }
