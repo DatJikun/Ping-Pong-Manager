@@ -397,3 +397,37 @@ test('the mandatory match nomination flow follows the active locale', () => {
   const polish = g.document.getElementById('modal').innerHTML;
   assert.match(polish, /Nominacja meczowa|Kliknij zawodnika|Zmęczenie/i);
 });
+
+test('club job market and post-season gala follow the active locale', async () => {
+  const g = boot(3122);
+  g.PPM.gameplay.newGame(0, 'PL');
+  g.PPM.state.G.clubOffers = [{
+    clubId: 1, clubIndex: 1, clubName: 'Arc United', countryId: 'PL',
+    countryName: 'Polska', league: 1, ovr: 70, budget: 100000,
+    prestigeNeed: 20, eligible: true, lastPosition: 4, recentTitles: 0,
+  }];
+
+  g.PPM.gameplay.openClubOfferPicker();
+  const englishMarket = g.document.getElementById('modal').innerHTML;
+  assert.match(englishMarket, /Club job market|All countries|Required prestige/i);
+  assert.doesNotMatch(englishMarket, /Rynek nowych klubów|Wszystkie kraje|Prestiż wymagany/i);
+
+  const englishGalaPromise = g.PPM.gameplay.showPostSeasonGala({
+    position: 4, summaryKey: 'gala.summary.solid', awards: [], clubOffers: [],
+  });
+  const englishGala = g.document.getElementById('modal').innerHTML;
+  assert.match(englishGala, /Post-season gala|Season summary|Awards/i);
+  assert.doesNotMatch(englishGala, /Gala posezonowa|Sezon w skrócie|Nagrody wieczoru/i);
+  g._galaResolved = true;
+  await englishGalaPromise;
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openClubOfferPicker();
+  assert.match(g.document.getElementById('modal').innerHTML, /Rynek nowych klubów|Wszystkie kraje/i);
+  const polishGalaPromise = g.PPM.gameplay.showPostSeasonGala({
+    position: 4, summaryKey: 'gala.summary.solid', awards: [], clubOffers: [],
+  });
+  assert.match(g.document.getElementById('modal').innerHTML, /Gala posezonowa|Sezon w skrócie/i);
+  g._galaResolved = true;
+  await polishGalaPromise;
+});
