@@ -2764,7 +2764,7 @@ let _nomState=null;
 function openMatchNomination(onConfirm){
   const myId=store.G.myTeamId;
   const pool=getEligibleMatchPlayers(myId).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
-  if(pool.length<3){toast('Za mało zdolnych do gry zawodników (min. 3)!');return;}
+  if(pool.length<3){toast(t('match.nom.tooFew'));return;}
   const cap=nominationSlotCount();
   const def=pool.slice(0,3).map(p=>p.id);
   // Promised reserves are pre-picked into the reserve slots (keep your word!).
@@ -2776,9 +2776,9 @@ function openMatchNomination(onConfirm){
 function nominationSlotCount(){return getLeagueFormat().protocol==='superliga'?5:3;}
 function protocolDescription(){
   const f=getLeagueFormat();
-  if(f.protocol==='olympic')return `${f.label} (format olimpijski, do 3 wygranych gier): G1 A–X / G2 B–Y / G3 <b>DEBEL</b> (B+C vs Y+Z) / G4 A–Y / G5 C–X. Skład 3-osobowy — nikt nie gra więcej niż 2 gry.`;
-  if(f.protocol==='tleague')return `${f.label} (do 3 wygranych gier): mecz otwiera <b>DEBEL</b> (B+C, best-of-3), potem single S1 A–X / S2 B–Y / S3 C–Z; przy 2:2 jednosetowy <b>VICTORY MATCH</b> (A vs X). Golden Point: przy 10:10 decyduje następny punkt; set decydujący od stanu 6:6.`;
-  return `${f.label} (do 3 wygranych gier): G1 A–Y / G2 B–X / G3 C–Z / G4 A lub rezerwowy vs X lub rezerwowy / G5 <b>DEBEL</b> (B+C — zawodnik z 1. stołu nie gra debla).${f.lastSetTo?` Piąty set każdej gry do ${f.lastSetTo} pkt, bez przewag.`:''}`;
+  if(f.protocol==='olympic')return t('match.protocol.olympic',{label:f.label});
+  if(f.protocol==='tleague')return t('match.protocol.tleague',{label:f.label});
+  return t('match.protocol.superliga',{label:f.label,lastSet:f.lastSetTo?t('match.protocol.lastSet',{points:f.lastSetTo}):''});
 }
 function nomToggle(pid){
   if(!_nomState)return;
@@ -2786,12 +2786,12 @@ function nomToggle(pid){
   const i=_nomState.sel.indexOf(pid);
   if(i>=0)_nomState.sel.splice(i,1);
   else if(_nomState.sel.length<cap)_nomState.sel.push(pid);
-  else{toast(cap===5?'Maksymalnie 5 zawodników (3 podstawowych + 2 rezerwowych).':'Ten format gra 3-osobowym składem — bez rezerwowych.');return;}
+  else{toast(t(cap===5?'match.nom.maxFive':'match.nom.noReserves'));return;}
   renderNominationModal();
 }
 function nomConfirm(){
   if(!_nomState)return;
-  if(_nomState.sel.length<3){toast('Wybierz co najmniej 3 zawodników podstawowych.');return;}
+  if(_nomState.sel.length<3){toast(t('match.nom.chooseThree'));return;}
   store.G.matchNomination={season:store.G.season,matchday:store.G.matchday,base:_nomState.sel.slice(0,3),reserves:_nomState.sel.slice(3,5)};
   const cb=_nomState.onConfirm;_nomState=null;
   closeModal();persistGame();
@@ -2801,21 +2801,21 @@ function renderNominationModal(){
   const myId=store.G.myTeamId;
   const pool=getEligibleMatchPlayers(myId).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
   const fiveSlots=nominationSlotCount()===5;
-  const slots=fiveSlots?['A — stół 1','B — stół 2','C — stół 3','R1 — od G4','R2 — od G4']:['A — stół 1','B — stół 2','C — stół 3'];
+  const slots=fiveSlots?['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'].map(key=>t(key)):['match.nom.slotA','match.nom.slotB','match.nom.slotC'].map(key=>t(key));
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">NOMINACJA MECZOWA — ${getLeagueFormat().label}</div>
-  <div class="fs11 ink3 mb10 lh16">${protocolDescription()} Kliknij zawodnika, aby dodać/usunąć. Kolejność wyboru = ${fiveSlots?'A, B, C, R1, R2':'A, B, C'}.</div>
+  modal.innerHTML=`<div class="mt2">${t('match.nom.title',{format:getLeagueFormat().label}).toUpperCase()}</div>
+  <div class="fs11 ink3 mb10 lh16">${protocolDescription()} ${t('match.nom.selectHint',{order:fiveSlots?'A, B, C, R1, R2':'A, B, C'})}</div>
   <div class="grid gp6 ova" style="max-height:46vh">
   ${pool.map(p=>{const idx=_nomState.sel.indexOf(p.id);const tag=idx>=0?slots[idx]:null;
     return `<div onclick="nomToggle(${p.id})" style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid ${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--b1)'};background:${tag?'var(--s2)':'var(--s1)'};border-radius:6px;cursor:pointer">
     <div style="min-width:86px;font-weight:800;font-size:11px;color:${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--ink3)'}">${tag||'—'}</div>
-    <div><div class="b7 fs13">${p.name}${p._promisedMatch?' <span class="fs9 cgold">OBIECANA SZANSA</span>':''}${p.role==='reserve'?' <span class="fs9 ink3">REZERWA</span>':''}</div>
-    <div class="fs10 ink3">Forma: <b>${seasonFormLabel(p)}</b> / Zmęczenie: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / Morale: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}</div></div>
-    <div class="fs10 ink3">${p.seasonW||0}W/${p.seasonL||0}P</div>
+    <div><div class="b7 fs13">${p.name}${p._promisedMatch?` <span class="fs9 cgold">${t('match.nom.promised')}</span>`:''}${p.role==='reserve'?` <span class="fs9 ink3">${t('match.nom.reserve')}</span>`:''}</div>
+    <div class="fs10 ink3">${t('match.nom.form')}: <b>${seasonFormLabel(p)}</b> / ${t('match.nom.fatigue')}: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / ${t('match.nom.morale')}: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}</div></div>
+    <div class="fs10 ink3">${t('match.nom.record',{wins:p.seasonW||0,losses:p.seasonL||0})}</div>
     <div class="syne b8 fs22 cr">${ovr(p)}</div>
     </div>`;}).join('')}
   </div>
-  <div class="btn-row mt-12"><button class="btn go" onclick="nomConfirm()" ${_nomState.sel.length>=3?'':'disabled'}>ZATWIERDŹ NOMINACJĘ (${Math.min(3,_nomState.sel.length)}/3 podst. + ${Math.max(0,_nomState.sel.length-3)} rez.)</button></div>`;
+  <div class="btn-row mt-12"><button class="btn go" onclick="nomConfirm()" ${_nomState.sel.length>=3?'':'disabled'}>${t('match.nom.confirm',{starters:Math.min(3,_nomState.sel.length),reserves:Math.max(0,_nomState.sel.length-3)}).toUpperCase()}</button></div>`;
   openModal();
 }
 

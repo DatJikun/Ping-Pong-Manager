@@ -382,3 +382,18 @@ test('player and staff contract negotiations follow the active locale', () => {
   g.PPM.gameplay.openStaffNeg(staff.id);
   assert.match(g.document.getElementById('modal').innerHTML, /Lata kontraktu|Zatrudnij/i);
 });
+
+test('the mandatory match nomination flow follows the active locale', () => {
+  const g = boot(3121);
+  g.PPM.gameplay.newGame(0, 'PL');
+
+  g.PPM.gameplay.openMatchNomination(() => {});
+  const english = g.document.getElementById('modal').innerHTML;
+  assert.match(english, /Match nomination|Click a player|Fatigue/i);
+  assert.doesNotMatch(english, /Nominacja meczowa|Kliknij zawodnika|Zmęczenie/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openMatchNomination(() => {});
+  const polish = g.document.getElementById('modal').innerHTML;
+  assert.match(polish, /Nominacja meczowa|Kliknij zawodnika|Zmęczenie/i);
+});
