@@ -305,6 +305,39 @@ function migrateLoadedGame(parsed){
     repairIds(game.scoutPool);
     repairIds(game.prDirectorPool);
 
+    // Staff UI and negotiation flows search several collections by the same ID.
+    // An employed person is authoritative; different market candidates yield to
+    // that ID and to earlier market pools. A keptScouts copy is the same logical
+    // person, so it intentionally retains the employed scout's ID.
+    const sameStaffIdentity=(a,b)=>!!a&&!!b
+      &&a.name===b.name
+      &&a.type===b.type
+      &&a.age===b.age
+      &&a.nationality===b.nationality;
+    const claimedStaffIds=new Map();
+    const claimEmployedStaff=(s)=>{
+      if(s&&Number.isInteger(s.id)&&s.id>=0&&!claimedStaffIds.has(s.id)){
+        claimedStaffIds.set(s.id,s);
+      }
+    };
+    (game.staff||[]).forEach(claimEmployedStaff);
+    claimEmployedStaff(game.prDirector);
+    (game.teams||[]).forEach(t=>claimEmployedStaff(t&&t.prDirector));
+    const repairStaffMarketIds=(arr)=>{
+      (arr||[]).forEach(s=>{
+        if(!s)return;
+        const claimed=Number.isInteger(s.id)&&s.id>=0?claimedStaffIds.get(s.id):null;
+        if(!Number.isInteger(s.id)||s.id<0||(claimed&&!sameStaffIdentity(claimed,s))){
+          while(claimedStaffIds.has(nextRepairId))nextRepairId++;
+          s.id=nextRepairId++;
+        }
+        if(!claimedStaffIds.has(s.id))claimedStaffIds.set(s.id,s);
+      });
+    };
+    repairStaffMarketIds(game.staffPool);
+    repairStaffMarketIds(game.scoutPool);
+    repairStaffMarketIds(game.prDirectorPool);
+
     // Pending academy candidates will later be appended to `players`, so they
     // share the player lookup domain even though they live in separate arrays
     // before signing. Reserve repaired live-player IDs first, then make both
