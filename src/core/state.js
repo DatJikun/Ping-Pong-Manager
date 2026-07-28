@@ -357,6 +357,43 @@ function migrateLoadedGame(parsed){
     };
     repairPendingPlayerIds(game.academyProspects);
     repairPendingPlayerIds(game.academyTrial);
+
+    // The market stores only `playerId`, so rows written while several players
+    // shared one ID all point at the same number. Renumbering the players above
+    // leaves those rows stale — S11 carries 997 `fa` rows over just 695 distinct
+    // IDs, which the player sees as the same free agent listed several times.
+    // `fa` rows hold no per-entity data (always fee 0), so they are rebuilt from
+    // the repaired player list. Negotiated rows carry randomised fee/tier/share,
+    // so they are kept verbatim — de-duplicated and dropped when they no longer
+    // resolve, but never re-rolled on load.
+    if(Array.isArray(game.transferMarket)){
+      const liveById=new Map((game.players||[])
+        .filter(p=>p&&Number.isInteger(p.id))
+        .map(p=>[p.id,p]));
+      // Mirrors the free-agent predicate in buildMarket().
+      const freeAgents=(game.players||[]).filter(p=>p&&!p.retired&&!p.loanedOut
+        &&((p.teamId===null)||p.contractYears<=0)&&p.teamId!==game.myTeamId);
+      const freeAgentIds=new Set(freeAgents.map(p=>p.id));
+      const seenNegotiated=new Set();
+      const negotiated=game.transferMarket.filter(row=>{
+        if(!row||row.type==='fa')return false;
+        if(!liveById.has(row.playerId))return false;
+        // A stale fee/pre-sign row for someone whose contract has since expired
+        // contradicts his current state; buildMarket() would never pair the two.
+        if(freeAgentIds.has(row.playerId))return false;
+        const key=row.playerId+'|'+row.type;
+        if(seenNegotiated.has(key))return false;
+        seenNegotiated.add(key);
+        return true;
+      });
+      game.transferMarket=[
+        ...freeAgents.map(p=>({playerId:p.id,type:'fa',fee:0})),
+        ...negotiated,
+      ];
+      // Shortlist/compare entries are plain ID lists — drop what no longer resolves.
+      if(Array.isArray(game.marketShortlist))game.marketShortlist=game.marketShortlist.filter(id=>liveById.has(id));
+      if(Array.isArray(game.marketCompare))game.marketCompare=game.marketCompare.filter(id=>liveById.has(id));
+    }
   }
   // The player's infra levels are authoritative on game.infra*; mirror them onto
   // the team object so club-strength scoring and the team-overview panel (which
