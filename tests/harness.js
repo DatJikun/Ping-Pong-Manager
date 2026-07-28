@@ -29,6 +29,7 @@ const LOAD_ORDER = [
   'src/data/names.js', // optional 10x name pools (skipped if absent)
   'src/data/constants.js',
   'src/core/utils.js',
+  'src/core/save-storage.js',
   'src/core/state.js',
   'src/core/gameplay.js',
   'src/core/gameplay.visuals.js',
