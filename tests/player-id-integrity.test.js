@@ -1,0 +1,70 @@
+const { test } = require('node:test');
+const assert = require('node:assert');
+const { boot } = require('./harness');
+
+function makePendingCandidate(g, id, name) {
+  const G = g.PPM.state.G;
+  const candidate = g.PPM.gameplay.genYouthPlayer(G.myTeamId, G.countryId);
+  candidate.id = id;
+  candidate.name = name;
+  candidate.teamId = G.myTeamId;
+  candidate.role = 'youth';
+  return candidate;
+}
+
+test('migration keeps live player IDs and reassigns colliding academy candidates', () => {
+  const g = boot(801);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const established = G.players.find((p) => Array.isArray(G.playerHistory[p.id]));
+  const occupiedId = established.id;
+  const establishedName = established.name;
+
+  G.academyProspects = [
+    makePendingCandidate(g, occupiedId, 'Academy Collision'),
+  ];
+  G.academyTrial = [
+    makePendingCandidate(g, occupiedId, 'Trial Collision'),
+  ];
+
+  g.PPM.stateApi.loadGameFromText(JSON.stringify({ ...G, _pid: 3 }));
+  const loaded = g.PPM.state.G;
+  const loadedEstablished = loaded.players.find((p) => p.name === establishedName);
+  const academy = loaded.academyProspects[0];
+  const trial = loaded.academyTrial[0];
+  const liveIds = new Set(loaded.players.map((p) => p.id));
+
+  assert.equal(loadedEstablished.id, occupiedId, 'established player keeps the canonical ID');
+  assert.notEqual(academy.id, occupiedId, 'academy prospect is moved away from the live-player ID');
+  assert.notEqual(trial.id, occupiedId, 'trial prospect is moved away from the live-player ID');
+  assert.notEqual(trial.id, academy.id, 'pending candidates are unique across both pending arrays');
+  assert.ok(!liveIds.has(academy.id), 'academy prospect ID is outside live players');
+  assert.ok(!liveIds.has(trial.id), 'trial prospect ID is outside live players');
+  assert.ok(g.PPM.ui._pid > Math.max(academy.id, trial.id), 'counter is above IDs minted by migration');
+});
+
+test('migration preserves intentional ID sharing outside the pending-player domain', () => {
+  const g = boot(802);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const real = G.players[0];
+  const teamWithSameId = G.teams.find((t) => t.id === real.id);
+  assert.ok(teamWithSameId, 'fixture has the intentional team/player namespace overlap');
+
+  G.scoutResults = [{
+    realId: real.id,
+    reported: { ...real },
+    scoutId: G.staff.find((s) => s.type === 'scout')?.id ?? -1,
+    region: 'Test',
+    seen: false,
+  }];
+
+  g.PPM.stateApi.loadGameFromText(JSON.stringify(G));
+  const loaded = g.PPM.state.G;
+  const report = loaded.scoutResults[0];
+
+  assert.equal(report.realId, real.id, 'real player reference is stable');
+  assert.equal(report.reported.id, real.id, 'reported scout copy intentionally shares the player ID');
+  assert.equal(loaded.teams.find((t) => t.name === teamWithSameId.name).id, real.id,
+    'team/player namespace overlap is not renumbered');
+});
