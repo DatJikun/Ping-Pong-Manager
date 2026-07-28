@@ -264,3 +264,32 @@ test('league tables and the cup bracket follow the active locale', () => {
   assert.match(polishLeague, /Tabela I Ligi/i);
   assert.match(polishCup, /Puchar krajowy/i);
 });
+
+test('completed English screens reject common Polish UI regressions and raw keys', () => {
+  const g = boot(3116);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  g.PPM.state.G.inbox = [];
+  g.PPM.state.G.newsFeed = [];
+  g.PPM.ui.squadTab = 'starter';
+  g.PPM.ui.historyTab = 'seasons';
+  g.PPM.ui.leagueStatsTab = 'table';
+
+  const rendered = [
+    g.PPM.pages.pageDash(),
+    g.PPM.pages.pagePreseason(),
+    g.PPM.pages.pageSquad(),
+    g.PPM.pages.pageStaff(),
+    g.PPM.pages.pageMarket(),
+    g.PPM.pages.pageBudget(),
+    g.PPM.pages.pageSponsors(),
+    g.PPM.pages.pageHistory(),
+    g.PPM.pages.pageLeague(),
+    g.PPM.pages.pageCup(),
+    g.PPM.pages.pageInbox(),
+    g.PPM.pages.pageNews(),
+  ].join('\n');
+
+  assert.doesNotMatch(rendered, /Skład główny|Szukaj w transferach|Zobowiązania S\+1|Aktywne umowy|Historia sezonów|Tabela I Ligi|Puchar krajowy|Skrzynka klubowa|Wszystkie sezony/i);
+  assert.doesNotMatch(rendered, />\s*(?:squad|staff|market|budget|sponsors|history|league|cup|inbox|news)\.[a-zA-Z.]+\s*</);
+});

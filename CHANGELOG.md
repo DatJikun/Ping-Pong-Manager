@@ -27,6 +27,8 @@
   compact permanent ledgers and locale-aware historical money values.
 - Localized league tables, all four statistical rankings and the national cup
   bracket without changing competition rules or stored results.
+- Added a rendered release gate that rejects common Polish-label regressions and
+  unresolved translation keys across every completed English screen.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 
