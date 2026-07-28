@@ -69,6 +69,21 @@ test('the start screen renders in English and switches to Polish without reload'
   assert.match(content.innerHTML, /Twoje kariery/i);
 });
 
+test('the in-game guide follows the active locale', () => {
+  const g = boot(3135);
+  vm.runInContext(read('src/ui/shell.js'), g, { filename: 'src/ui/shell.js' });
+
+  g.PPM.shell.openGuide();
+  const english = g.document.getElementById('modal').innerHTML;
+  assert.match(english, /GUIDE|PLAYING STYLES|Grip|Strong against|PRE-SEASON|FATIGUE|LOANS & DATABASE/i);
+  assert.doesNotMatch(english, /PRZEWODNIK|STYLE GRY|Uchwyt|Dobry przeciw|ZMĘCZENIE|WYPOŻYCZENIA/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.shell.openGuide();
+  const polish = g.document.getElementById('modal').innerHTML;
+  assert.match(polish, /PRZEWODNIK|STYLE GRY|Uchwyt|Dobry przeciw|ZMĘCZENIE|WYPOŻYCZENIA I DATABASE/i);
+});
+
 test('the pre-season decision flow follows the active locale', () => {
   const g = boot(3105);
   g.PPM.gameplay.newGame(0, 'PL');
@@ -640,6 +655,14 @@ test('new career news is stored as semantic data, never as a fixed-language sent
 test('persistent season log producers do not store fixed Polish sentences', () => {
   const gameplay = read('src/core/gameplay.js');
   assert.doesNotMatch(gameplay, /safeLog\(`Partnerstwo |safeLog\(`\$\{s\.name\}.*(?:urlop|emerytur)|safeLog\(`\$\{p\.name\} odszed/);
+});
+
+test('career backup labels are rendered from semantic checkpoint data', () => {
+  const manager = read('src/core/save-manager.js');
+  const main = read('src/main.js');
+  assert.doesNotMatch(manager, /Przed kolejk|Przed turniejem|Punkt odzyskiwania|Nieznany klub/);
+  assert.match(main, /career\.backup\./);
+  assert.match(main, /backupLabel\(b\)/);
 });
 
 test('matchday modal title follows the active locale', () => {

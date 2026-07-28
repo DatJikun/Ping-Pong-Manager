@@ -122,6 +122,17 @@ async function exportCareer(id){
 function escapeModal(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+function backupLabel(backup){
+  const summary=backup?.summary||{};
+  const kindKey=`career.backup.${backup?.kind||'default'}`;
+  const translatedKind=t(kindKey);
+  const title=translatedKind===kindKey?t('career.backup.default'):translatedKind;
+  const where=t(summary.phase==='preseason'?'career.backup.preseasonWhere':'career.backup.matchdayWhere',{
+    season:summary.season||1,
+    matchday:summary.matchday||0,
+  });
+  return t('career.backup.label',{title,where});
+}
 
 async function showCareerBackups(id){
   const career=await window.PPM.saveManager.getCareer(id);
@@ -129,7 +140,7 @@ async function showCareerBackups(id){
   const modal=document.getElementById('modal');
   modal.className='modal';
   modal.innerHTML=`<div class="mt2">${t('career.backupsTitle',{name:escapeModal(career?.name||'Career')}).toUpperCase()} <button class="close-btn" onclick="closeModal()">✕</button></div>
-    <div class="flex fdc gp6 mt-12">${backups.length?backups.map(b=>`<div class="flex jcb aic bgs1 bb1 r8 pd10-12"><div><div class="b7 fs12">${escapeModal(b.label)}</div><div class="fs9 ink3 mt-2">${formatDateTime(b.createdAt)}</div></div><button class="btn sm" onclick="restoreCareerBackup('${escapeModal(id)}','${escapeModal(b.id)}')">${t('career.restore').toUpperCase()}</button></div>`).join(''):`<div class="fs11 ink3">${t('career.noBackups')}</div>`}</div>`;
+    <div class="flex fdc gp6 mt-12">${backups.length?backups.map(b=>`<div class="flex jcb aic bgs1 bb1 r8 pd10-12"><div><div class="b7 fs12">${escapeModal(backupLabel(b))}</div><div class="fs9 ink3 mt-2">${formatDateTime(b.createdAt)}</div></div><button class="btn sm" onclick="restoreCareerBackup('${escapeModal(id)}','${escapeModal(b.id)}')">${t('career.restore').toUpperCase()}</button></div>`).join(''):`<div class="fs11 ink3">${t('career.noBackups')}</div>`}</div>`;
   shell.openModal();
 }
 
