@@ -3168,21 +3168,10 @@ function applyGrowth(){
     if(store.G.playerHistory&&store.G.playerHistory[p.id])store.G.playerHistory[p.id].push(snap(p));
     if(p.age>=40&&!p.retired&&Math.random()<0.15*(p.age-39))retirePlayer(p);
   });
-  // v15: II Liga AI transfers between AI teams
-  const l2AITeams=store.G.teams.filter(t=>t.league===2&&!t.isPlayer);
-  l2AITeams.forEach(t=>{
-    const roster=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&p.contractYears>0);
-    // Low-OVR starters might get replaced
-    if(roster.length>0&&Math.random()<0.25){
-      const freeAgents=store.G.players.filter(p=>!p.retired&&(p.teamId===null||p.contractYears<=0)&&!p.isYouth).sort((a,b)=>ovrBase(b)-ovrBase(a));
-      if(freeAgents.length>0){
-        const pick=freeAgents[rnd(0,Math.min(2,freeAgents.length-1))];
-        pick.teamId=t.id;pick.contractYears=1+rnd(0,2);pick.salary=contractExpect(pick).salary;
-        pick.role=roster.filter(p=>p.role==='starter').length<4?'starter':'reserve';
-        if(ovrBase(pick)>=68)pushNews('news.freeAgentSigned','',{club:t.name,name:pick.name,ovr:ovrBase(pick)});
-      }
-    }
-  });
+  // AI recruitment for both divisions is handled once, with budget/contract
+  // checks, by aiSignPlayers() during the rollover. The old L2-only shortcut
+  // signed one of the three best free agents without any affordability check,
+  // eventually making the entire second division stronger than the first.
   store.G.staff.forEach(s=>{s.contractYears=(s.contractYears||0)-1;});
   if(store.G.prDirector)store.G.prDirector.contractYears=(store.G.prDirector.contractYears||0)-1;
   store.G.teams.forEach(t=>{if(t.prDirector)t.prDirector.contractYears=(t.prDirector.contractYears||0)-1;});
@@ -4162,7 +4151,13 @@ function applyAiClubFinances(){
     const wages=teamPayroll(team.id);
     const acadUp=INFRA_ACADEMY[clamp(team.infraAcademy||0,0,INFRA_ACADEMY.length-1)].upkeep||0;
     const upkeep=(L===1?30000:11000)+acadUp;
-    team.budget=clamp(Math.round((team.budget||0)+income-wages-upkeep),0,1200000);
+    // Lower-tier commercial reach is smaller even for a well-run club. Without
+    // a league-specific treasury ceiling, every L2 club eventually accumulated
+    // the same €1.2m as L1 and the whole lower division became equally strong.
+    // €550k still allows an exceptional promotion contender while preserving a
+    // meaningful top-flight economy over very long careers.
+    const treasuryCeiling=L===1?1200000:550000;
+    team.budget=clamp(Math.round((team.budget||0)+income-wages-upkeep),0,treasuryCeiling);
   });
 }
 // Re-couple AI squad strength to current budget each season (Layer-1 abstraction:
@@ -4176,18 +4171,42 @@ function applyAiClubFinances(){
 // him; the seller banks a real fee. This keeps the budget→strength hierarchy
 // emergent instead of frozen.
 function aiPoachOutgrownStars(){
+  const l2Avg=calcLeagueAvgOvr(2);
+  const movedThisWindow=new Set();
   store.G.teams.filter(t=>!t.isPlayer).forEach(seller=>{
     const level=leagueStrengthTopForBudget(seller.budget);
     store.G.players.filter(p=>p.teamId===seller.id&&!p.retired&&!p.isYouth&&p.role!=='youth'&&!p.loanedOut).forEach(p=>{
-      if(ovrBase(p)-(level+6)<=0||Math.random()>0.55)return;
-      const fee=Math.round(playerWageForOvr(ovrBase(p))*2.2);
+      if(movedThisWindow.has(p.id))return;
+      const outgrownBudget=ovrBase(p)>(level+6);
+      // Strong second-division starters should attract top-flight clubs even
+      // when their current club has accumulated enough cash to keep them.
+      // Without this sporting step-up, mature L2 squads eventually hoarded
+      // developed stars and the average second division overtook L1.
+      const leagueStepUp=seller.league===2&&p.role==='starter'&&ovrBase(p)>=Math.max(78,l2Avg);
+      if((!outgrownBudget&&!leagueStepUp)||Math.random()>(leagueStepUp?0.80:0.55))return;
+      // A top-flight step-up happens late in the contract cycle: the selling
+      // club is compensated, but not with the ruinous full-star premium that
+      // previously bankrupted buyers and made L2 richer than L1.
+      const fee=Math.round(playerWageForOvr(ovrBase(p))*(leagueStepUp?0.75:2.2));
       const buyer=store.G.teams
-        .filter(t=>!t.isPlayer&&t.id!==seller.id&&leagueStrengthTopForBudget(t.budget)>=ovrBase(p)-4&&(t.budget||0)>fee*1.4)
-        .filter(t=>store.G.players.filter(x=>x.teamId===t.id&&!x.retired).length<12)
+        .filter(t=>!t.isPlayer&&t.id!==seller.id&&(!leagueStepUp||t.league===1)&&leagueStrengthTopForBudget(t.budget)>=ovrBase(p)-4&&(t.budget||0)>fee*1.4)
+        .filter(t=>{
+          const senior=store.G.players.filter(x=>x.teamId===t.id&&!x.retired&&x.role!=='youth');
+          const weakestStarter=senior.filter(x=>x.role==='starter').sort((a,b)=>ovrBase(a)-ovrBase(b))[0];
+          return senior.length<10||!weakestStarter||ovrBase(p)>ovrBase(weakestStarter);
+        })
         .sort((a,b)=>(b.budget||0)-(a.budget||0))[0];
       if(!buyer)return;
       buyer.budget-=fee;seller.budget=(seller.budget||0)+fee;
-      p.teamId=buyer.id;p.salary=contractExpect(p).salary;p.contractYears=1+rnd(0,2);p.role='reserve';
+      p.teamId=buyer.id;p.salary=contractExpect(p,buyer.id).salary;p.contractYears=1+rnd(0,2);p.role='reserve';
+      movedThisWindow.add(p.id);
+      const surplus=store.G.players
+        .filter(x=>x.teamId===buyer.id&&!x.retired&&x.role!=='youth'&&x.id!==p.id)
+        .sort((a,b)=>ovrBase(a)-ovrBase(b));
+      while(store.G.players.filter(x=>x.teamId===buyer.id&&!x.retired&&x.role!=='youth').length>10&&surplus.length){
+        const released=surplus.shift();
+        released.teamId=null;released.contractYears=0;released.role='reserve';
+      }
       if(ovrBase(p)>=72)pushNews('news.playerTransferred','',{buyer:buyer.name,name:p.name,ovr:ovrBase(p),seller:seller.name,fee:formatCurrency(fee)});
     });
   });
@@ -4470,6 +4489,11 @@ function aiSignPlayers(){
     .sort((a,b)=>(ovrBase(b.player)-ovrBase(a.player))||((a.item.fee||0)-(b.item.fee||0)));
   const aiTeams=store.G.teams.filter(t=>!t.isPlayer).sort((a,b)=>(teamOvr(a.id)-teamOvr(b.id))||((a.budget||0)-(b.budget||0)));
   aiTeams.forEach(team=>{
+    const leagueContext=contractContextFor(team);
+    // A lower-division club can develop an exceptional star, but established
+    // top-flight players should not routinely choose L2 just because that club
+    // has stockpiled cash. This is the sporting-prestige side of recruitment.
+    const maxExternalOvr=team.league===2?Math.min(84,leagueContext.leagueAvgOvr+2):99;
     [
       {key:'infraHall',levels:INFRA_HALL,chance:team.league===1?0.24:0.12},
       {key:'infraMed',levels:INFRA_MED,chance:team.league===1?0.22:0.10},
@@ -4501,6 +4525,7 @@ function aiSignPlayers(){
     let starters=roster.filter(p=>p.role==='starter').length;
     while(!youthOnly&&roster.length<desiredRoster&&freeAgents.length){
       const fa=freeAgents
+        .filter(p=>ovrBase(p)<=maxExternalOvr)
         .filter(p=>contractExpect(p,team.id,contractContextFor(team)).salary<=Math.max(1200,aiAffordableCash(team)+3000))
         .sort((a,b)=>(ovrBase(b)+Math.max(0,playerCeiling(b)-ovrBase(b))*0.22)-(ovrBase(a)+Math.max(0,playerCeiling(a)-ovrBase(a))*0.22))[0];
       if(!fa)break;
@@ -4518,6 +4543,7 @@ function aiSignPlayers(){
     const weakestStarter=roster.filter(p=>p.role==='starter').sort((a,b)=>ovrBase(a)-ovrBase(b))[0];
     const futureTarget=youthOnly?null:contractedTargets.find(({item,player})=>{
       if(player.teamId===team.id)return false;
+      if(ovrBase(player)>maxExternalOvr)return false;
       if(store.G.preSignedPlayers?.find(x=>x.playerId===player.id))return false;
       const exp=contractExpect(player,team.id,contractContextFor(team));
       const fee=(item.type==='transfer'?(item.fee||0):0)+exp.signingBonus;

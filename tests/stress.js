@@ -171,6 +171,10 @@ const leagueOvr = (l) => {
   const ts = G().teams.filter((t) => t.league === l);
   return Math.round(ts.reduce((s, t) => s + gp.teamOvr(t.id), 0) / Math.max(1, ts.length));
 };
+const leagueMedianBudget = (l) => {
+  const budgets = G().teams.filter((t) => t.league === l).map((t) => t.budget || 0).sort((a, b) => a - b);
+  return budgets.length ? Math.round(budgets[Math.floor(budgets.length / 2)] / 1000) : 0;
+};
 
 const t0 = Date.now();
 let lastMark = t0;
@@ -186,6 +190,7 @@ const sizes = (label) => {
     `news=${(G_.newsFeed || []).length} log=${(G_.gameLog || []).length} ` +
     `seasonHistory=${(G_.seasonHistory || []).length} clubRows=${clubRows} save=${saveKB}KB ` +
     `L1ovr=${leagueOvr(1)} L2ovr=${leagueOvr(2)} ` +
+    `L1budget=€${leagueMedianBudget(1)}k L2budget=€${leagueMedianBudget(2)}k ` +
     `mem=${Math.round(process.memoryUsage().heapUsed / 1048576)}MB`);
 };
 
@@ -193,6 +198,7 @@ console.log(`${MODE === 'fast' ? 'Fast lifecycle gate' : 'Full match-engine stre
 sizes('start');
 let failedAt = null;
 let failureReason = null;
+const hierarchyGaps = [];
 try {
   for (let s = 0; s < SEASONS; s++) {
     resetStandings();
@@ -206,6 +212,15 @@ try {
     if(G().results.length>resultLimit)throw new Error(`result retention exceeded ${resultLimit}: ${G().results.length}`);
     if(freeAgents>Math.max(60,G().teams.length*5))throw new Error(`free-agent cap exceeded: ${freeAgents}`);
     if(G().hallOfFame.length>20)throw new Error(`Hall of Fame cap exceeded: ${G().hallOfFame.length}`);
+    // Promotion must remain meaningful in a mature world. Short generational
+    // swings are fine; a severe inversion is not, and the mature-run average is
+    // checked after the loop.
+    if((s+1)>=20){
+      hierarchyGaps.push(leagueOvr(1)-leagueOvr(2));
+    }
+    if((s+1)>=20&&(s+1)%10===0&&leagueOvr(2)>leagueOvr(1)+4){
+      throw new Error(`league hierarchy inverted: L1 ${leagueOvr(1)} vs L2 ${leagueOvr(2)}`);
+    }
     if ((s + 1) % 10 === 0) {
       const now = Date.now();
       console.log(`  +10 seasons in ${now - lastMark}ms (${((now - lastMark) / 10).toFixed(0)}ms/season)`);
@@ -213,6 +228,8 @@ try {
       sizes(`after ${s + 1}`);
     }
   }
+  const avgHierarchyGap=hierarchyGaps.reduce((sum,gap)=>sum+gap,0)/Math.max(1,hierarchyGaps.length);
+  if(avgHierarchyGap<1)throw new Error(`mature league hierarchy too weak: average L1-L2 gap ${avgHierarchyGap.toFixed(2)}`);
 } catch (e) {
   failedAt = G().season;
   failureReason = e?.message||String(e);
