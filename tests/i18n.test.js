@@ -336,6 +336,24 @@ test('club facilities and their data descriptions follow the active locale', () 
   assert.match(polish, /Treningi na podwórku|Brak hali/i);
 });
 
+test('club overview and difficulty details follow the active locale', () => {
+  const g = boot(3125);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const club = g.PPM.state.G.teams.find(team => team.id === g.PPM.state.G.myTeamId);
+
+  g.PPM.gameplay.openTeamOverview(club.id);
+  const english = g.document.getElementById('modal').innerHTML;
+  assert.match(english, /Management|Club identity|Rivalries|Infrastructure/i);
+  assert.doesNotMatch(english, /ZARZADZANIE|TOZSAMOSC KLUBU|RYWALIZACJE|Budzet/i);
+  assert.match(g.PPM.gameplay.difficultyEffectsSummary('hard').join(' '), /AI clubs|Free agents|Negotiations/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openTeamOverview(club.id);
+  const polish = g.document.getElementById('modal').innerHTML;
+  assert.match(polish, /Zarządzanie|Tożsamość klubu|Rywalizacje|Infrastruktura/i);
+  assert.match(g.PPM.gameplay.difficultyEffectsSummary('hard').join(' '), /Kluby AI|Wolni zawodnicy|Negocjacje/i);
+});
+
 test('player and staff profile modals follow the active locale', () => {
   const g = boot(3119);
   g.PPM.gameplay.newGame(0, 'PL');

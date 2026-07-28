@@ -110,7 +110,7 @@ function getClubHallOfFame(limit=20){
 
 function openTeamOverview(tid){
   const gameplay=window.PPM.gameplay;
-  const { getTeamBranding, getTeamLogoData, ovr, staffOvr, staffOvrColor, teamOvr, teamName } = gameplay;
+  const { getTeamBranding, getTeamLogoData, ovr, staffOvr, staffOvrColor, teamOvr, teamName, styleLabel } = gameplay;
   const t=store.G.teams.find(x=>x.id===tid);if(!t)return;
   const branding=getTeamBranding(t);
   const players=store.G.players.filter(p=>p.teamId===tid&&!p.retired).sort((a,b)=>ovr(b)-ovr(a));
@@ -135,57 +135,60 @@ function openTeamOverview(tid){
   const rivalry=[...rivalryMap.values()].sort((a,b)=>(b.games*3+b.close*2+Math.abs(b.wins-b.losses))-(a.games*3+a.close*2+Math.abs(a.wins-a.losses)))[0];
   const rivalName=rivalry?teamName(rivalry.oppId):null;
   const starPlayer=players[0]||null;
-  const clubStory=bestSeason?`${t.name} najlepiej wygladal w sezonie ${bestSeason.season}, gdy zamknal lige na pozycji #${bestSeason.position} z dorobkiem ${bestSeason.pts} pkt.`:`${t.name} dopiero buduje swoja historie sezon po sezonie.`;
-  const rivalryStory=rivalry?`Najmocniej grzeje rywalizacja z ${rivalName}: ${rivalry.games} meczow, bilans ${rivalry.wins}-${rivalry.draws}-${rivalry.losses}, w tym ${rivalry.close} spotkan na styku.`:'Na razie brak wyraznie zarysowanej historycznej rywalizacji.';
+  const tr=(key,params)=>window.PPM.i18n.t(key,params);
+  const clubStory=bestSeason?tr('clubOverview.bestSeason',{club:t.name,season:bestSeason.season,position:bestSeason.position,points:bestSeason.pts}):tr('clubOverview.buildingHistory',{club:t.name});
+  const rivalryStory=rivalry?tr('clubOverview.rivalryStory',{rival:rivalName,games:rivalry.games,wins:rivalry.wins,draws:rivalry.draws,losses:rivalry.losses,close:rivalry.close}):tr('clubOverview.noRivalry');
+  const staffRole=type=>tr(type==='coach'?'staff.coach':type==='physio'?'staff.physio':type==='psychologist'?'staff.psychologist':type==='scout'?'staff.scout':'staff.prDirector');
+  const traitLabel=trait=>tr(`clubOverview.trait.${trait}`);
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
-  modal.innerHTML=`<div class="mt2">${t.name} <button class="close-btn" onclick="closeModal()">x</button></div>
+  modal.innerHTML=`<div class="mt2">${t.name} <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="flex aic gp14 mb14 pd12 bb1 bgs1" style="border-radius:14px">
     <img src="${getTeamLogoData(t)}" alt="${t.name}" class="club-logo lg">
     <div><div class="syne fs22 b8">${t.name}</div><div class="fs11 ink3">${branding.nickname} / ${branding.motto}</div></div>
   </div>
   <div class="g3 gp8 mb14">
-    <div class="sb pd10"><div class="l">Liga</div><div class="v fs22">${t.league===1?'I Liga':'II Liga'}</div></div>
+    <div class="sb pd10"><div class="l">${tr('clubOverview.league')}</div><div class="v fs22">${tr('clubOverview.division',{division:t.league===1?'I':'II'})}</div></div>
     <div class="sb pd10"><div class="l">OVR</div><div class="v gold fs22">${teamOvr(tid)}</div></div>
-    <div class="sb pd10"><div class="l">Budzet</div><div class="v g fs22">${(t.budget||0).toLocaleString('pl')} €</div></div>
+    <div class="sb pd10"><div class="l">${tr('clubOverview.budget')}</div><div class="v g fs22">${formatCurrency(t.budget||0)}</div></div>
   </div>
-  ${(t.principal||(t.traits&&t.traits.length)||t.isPlayer)?`<div class="card mb14"><div class="ct">ZARZADZANIE</div>
-    ${t.principal?`<div class="fs12">Dyrektor: <b>${t.principal.name}</b> (${t.principal.age}l) — <b class="cr">${gameplay.principalStrategyLabel(t.principal.strategy)}</b> / kompetencje <b>${t.principal.competence}</b></div>`:t.isPlayer?'<div class="fs12">Dyrektor: <b>Ty (gracz)</b></div>':''}
-    ${(t.traits&&t.traits.length)?`<div class="fs11 ink3 mt-6">Cechy klubu: <b>${t.traits.map(tr=>tr==='youthOnly'?'Tylko własna młodzież':tr).join(', ')}</b></div>`:''}
+  ${(t.principal||(t.traits&&t.traits.length)||t.isPlayer)?`<div class="card mb14"><div class="ct">${tr('clubOverview.management').toUpperCase()}</div>
+    ${t.principal?`<div class="fs12">${tr('clubOverview.director')}: <b>${t.principal.name}</b> (${tr('clubOverview.age',{age:t.principal.age})}) — <b class="cr">${gameplay.principalStrategyLabel(t.principal.strategy)}</b> / ${tr('clubOverview.competence').toLowerCase()} <b>${t.principal.competence}</b></div>`:t.isPlayer?`<div class="fs12">${tr('clubOverview.director')}: <b>${tr('clubOverview.you')}</b></div>`:''}
+    ${(t.traits&&t.traits.length)?`<div class="fs11 ink3 mt-6">${tr('clubOverview.traits')}: <b>${t.traits.map(traitLabel).join(', ')}</b></div>`:''}
   </div>`:''}
   <div class="g2 gp10 mb14">
     <div class="card">
-      <div class="ct">TOZSAMOSC KLUBU</div>
+      <div class="ct">${tr('clubOverview.identity').toUpperCase()}</div>
       <div class="fs12 lh155">${clubStory}</div>
-      <div class="fs11 ink3 mt-8">Marka: <b>${branding.nickname}</b> / ${branding.motto}</div>
-      <div class="fs11 ink3 mt-4">${starPlayer?`Twarz projektu: ${starPlayer.name} (OVR ${ovr(starPlayer)})`:'Brak lidera kadry.'}</div>
+      <div class="fs11 ink3 mt-8">${tr('clubOverview.brand')}: <b>${branding.nickname}</b> / ${branding.motto}</div>
+      <div class="fs11 ink3 mt-4">${starPlayer?tr('clubOverview.face',{name:starPlayer.name,ovr:ovr(starPlayer)}):tr('clubOverview.noLeader')}</div>
     </div>
     <div class="card">
-      <div class="ct">RYWALIZACJE</div>
+      <div class="ct">${tr('clubOverview.rivalries').toUpperCase()}</div>
       <div class="fs12 lh155">${rivalryStory}</div>
-      <div class="fs11 ink3 mt-8">${rivalName?`Glowny rywal: ${rivalName}`:'Rywale dopiero wylonia sie wraz z kolejnymi sezonami.'}</div>
-      ${rivalName?`<button class="btn sm mt-8" onclick="closeModal();openTeamOverview(${rivalry.oppId})">OTWORZ RYWALA</button>`:''}
+      <div class="fs11 ink3 mt-8">${rivalName?tr('clubOverview.mainRival',{rival:rivalName}):tr('clubOverview.rivalsFuture')}</div>
+      ${rivalName?`<button class="btn sm mt-8" onclick="closeModal();openTeamOverview(${rivalry.oppId})">${tr('clubOverview.openRival').toUpperCase()}</button>`:''}
     </div>
   </div>
   <div class="g2">
     <div>
-      <div class="card"><div class="ct">SKLAD</div>
-      ${players.slice(0,8).map(p=>`<div class="grid gtc1aa gp8 pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l / ${p.contractYears} lata kontraktu / ${p.profileTag||p.playStyle}</div></div><div class="fs10 ink3">${p.playStyle}</div><div class="syne b8 cr">${ovr(p)}</div></div>`).join('')||'<div class="ink3">Brak danych</div>'}
+      <div class="card"><div class="ct">${tr('clubOverview.squad').toUpperCase()}</div>
+      ${players.slice(0,8).map(p=>`<div class="grid gtc1aa gp8 pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${tr('clubOverview.playerLine',{age:p.age,years:p.contractYears||0,style:styleLabel(p.playStyle)})}</div></div><div class="fs10 ink3">${styleLabel(p.playStyle)}</div><div class="syne b8 cr">${ovr(p)}</div></div>`).join('')||`<div class="ink3">${tr('clubOverview.noData')}</div>`}
       </div>
-      <div class="card"><div class="ct">SZTAB</div>
-      ${staff.length?staff.map(s=>`<div class="flex jcb pd6-0 bdb-s3"><div><b>${s.name}</b><div class="fs10 ink3">${s.type}</div></div><div style="font-weight:700;color:${staffOvrColor(staffOvr(s))}">${staffOvr(s)}</div></div>`).join(''):'<div class="ink3">Brak danych sztabu</div>'}
+      <div class="card"><div class="ct">${tr('clubOverview.staff').toUpperCase()}</div>
+      ${staff.length?staff.map(s=>`<div class="flex jcb pd6-0 bdb-s3"><div><b>${s.name}</b><div class="fs10 ink3">${staffRole(s.type)}</div></div><div style="font-weight:700;color:${staffOvrColor(staffOvr(s))}">${staffOvr(s)}</div></div>`).join(''):`<div class="ink3">${tr('clubOverview.noStaff')}</div>`}
       </div>
     </div>
     <div>
-      <div class="card"><div class="ct">INFRASTRUKTURA</div>
+      <div class="card"><div class="ct">${tr('clubOverview.infrastructure').toUpperCase()}</div>
         <div class="grid gp8 fs12">
-          <div>Hala: <b>${INFRA_HALL[t.infraHall||0]?.name||'Brak danych'}</b></div>
-          <div>Medyczne: <b>${INFRA_MED[t.infraMed||0]?.name||'Brak danych'}</b></div>
-          <div>Akademia: <b>${INFRA_ACADEMY[t.infraAcademy||0]?.name||'Brak danych'}</b></div>
-          <div>Strefa kibica: <b>${INFRA_MERCH[t.infraMerchandising||0]?.name||'Brak danych'}</b></div>
+          <div>${tr('clubOverview.hall')}: <b>${INFRA_HALL[t.infraHall||0]?.name||tr('clubOverview.noData')}</b></div>
+          <div>${tr('clubOverview.medical')}: <b>${INFRA_MED[t.infraMed||0]?.name||tr('clubOverview.noData')}</b></div>
+          <div>${tr('clubOverview.academy')}: <b>${INFRA_ACADEMY[t.infraAcademy||0]?.name||tr('clubOverview.noData')}</b></div>
+          <div>${tr('clubOverview.fanZone')}: <b>${INFRA_MERCH[t.infraMerchandising||0]?.name||tr('clubOverview.noData')}</b></div>
         </div>
       </div>
-      <div class="card"><div class="ct">OSTATNIE SEZONY</div>
-      ${history.length?history.map(h=>`<div class="flex jcb pd6-0 bdb-s3"><div>S${h.season} / ${h.league===1?'I':'II'} Liga</div><div><b>#${h.position}</b> / ${h.pts} pkt</div></div>`).join(''):'<div class="ink3">Historia zapisze sie po sezonie.</div>'}
+      <div class="card"><div class="ct">${tr('clubOverview.recentSeasons').toUpperCase()}</div>
+      ${history.length?history.map(h=>`<div class="flex jcb pd6-0 bdb-s3"><div>${tr('clubOverview.seasonDivision',{season:h.season,division:h.league===1?'I':'II'})}</div><div><b>#${h.position}</b> / ${tr('clubOverview.points',{points:h.pts})}</div></div>`).join(''):`<div class="ink3">${tr('clubOverview.historyPending')}</div>`}
       </div>
     </div>
   </div>`;

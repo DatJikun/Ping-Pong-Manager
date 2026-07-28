@@ -582,13 +582,13 @@ function getDifficultyConfig(){
 // config above, so it stays accurate if the numbers are tuned.
 function difficultyEffectsSummary(key){
   const c=AI_DIFFICULTY_CONFIG[key]||AI_DIFFICULTY_CONFIG.normal;
-  const rel=v=>{const p=Math.round((v-1)*100);return p===0?'bez zmian':(p>0?'+':'')+p+'%';};
-  const neg=c.negotiationBias>0?'łatwiejsze':c.negotiationBias<0?'trudniejsze':'neutralne';
+  const rel=v=>{const p=Math.round((v-1)*100);return p===0?t('difficulty.unchanged'):(p>0?'+':'')+p+'%';};
+  const neg=c.negotiationBias>0?t('difficulty.easier'):c.negotiationBias<0?t('difficulty.harder'):t('difficulty.neutral');
   return [
-    `Kluby AI: budżet ${rel(c.aiCashMult)}, tempo rozbudowy infrastruktury ${rel(c.aiInfraMult)}`,
-    `Wolni zawodnicy na rynku: maks. OVR ${c.freeAgentCap}`,
-    `Twoja akademia / skauting: sufit talentów ${rel(c.playerAcademyPotential)} / ${rel(c.playerScoutPotential)}`,
-    `Negocjacje i oferty klubów: ${neg}${c.prestigeBarrier>=0.9?` (wyższa bariera prestiżu)`:''}`,
+    t('difficulty.aiClubs',{budget:rel(c.aiCashMult),infra:rel(c.aiInfraMult)}),
+    t('difficulty.freeAgents',{ovr:c.freeAgentCap}),
+    t('difficulty.academyScouting',{academy:rel(c.playerAcademyPotential),scouting:rel(c.playerScoutPotential)}),
+    t('difficulty.negotiations',{level:neg,barrier:c.prestigeBarrier>=0.9?t('difficulty.prestigeBarrier'):''}),
   ];
 }
 function fatigueImpactFactor(){return 1.15;}
@@ -1648,7 +1648,7 @@ const PRINCIPAL_STRATEGIES={
   builder:{label:'Budowniczy',fit:['youthOnly','academy','community']},
   dealer:{label:'Wheeler-dealer',fit:['frugal','bigspender']},
 };
-function principalStrategyLabel(s){return (PRINCIPAL_STRATEGIES[s]||{}).label||s||'—';}
+function principalStrategyLabel(s){return PRINCIPAL_STRATEGIES[s]?t(`principal.strategy.${s}`):s||'—';}
 function genPrincipal(countryId,forceStrategy){
   const cid=countryId||store.G?.countryId||'PL';
   const keys=Object.keys(PRINCIPAL_STRATEGIES);

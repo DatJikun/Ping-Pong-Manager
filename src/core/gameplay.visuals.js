@@ -554,8 +554,8 @@ function getTeamBranding(team){
   const palette=palettes[seed%palettes.length];
   const words=(t?.name||'Klub').split(/\s+/).filter(Boolean);
   const initials=words.slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'PP';
-  const animal=['Smoki','Orly','Lwy','Wilki','Sztorm','Rakiety','Feniksy','Tygrysy','Tarcze','Blyskawice'][seed%10];
-  const motto=['Tradycja i tempo','Sila serwisu','Gra do konca','Technika ponad chaos','Presja nas niesie','Punkt po punkcie','Stalowe nerwy','Atak i kontrola'][seed%8];
+  const animal=window.PPM.i18n.t(`branding.nickname.${seed%10}`);
+  const motto=window.PPM.i18n.t(`branding.motto.${seed%8}`);
   return {...palette,initials,nickname:`${animal}`,motto};
 }
 
