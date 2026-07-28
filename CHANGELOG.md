@@ -17,6 +17,8 @@
 - Moved player styles, career phases, season form, traits, coaching styles and
   scouting specialities behind semantic translation keys so saved IDs remain
   language-independent.
+- Migrated the full budget screen and its locale-aware financial formatting,
+  including projections, objectives, S+1 commitments and season history.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

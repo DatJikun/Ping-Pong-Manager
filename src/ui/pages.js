@@ -623,42 +623,42 @@ function pageBudget(){
   if(!seasonOptions.includes(String(ui.budgetSeason)))ui.budgetSeason='live';
   const selected=ui.budgetSeason==='live'?live:(log.find(e=>String(e.season)===String(ui.budgetSeason))||live);
   const normalizeMoney=val=>{const num=Number(val)||0;return Object.is(num,-0)?0:num;};
-  const formatSignedMoney=val=>{const num=normalizeMoney(val);return`${num>0?'+':num<0?'':''}${num.toLocaleString('pl')} €`;};
-  const formatTableMoney=val=>{const num=normalizeMoney(val);return`${num>0?'+':num<0?'':''}${num.toLocaleString('pl')}`;};
+  const formatSignedMoney=val=>{const num=normalizeMoney(val);return`${num>0?'+':''}${formatCurrency(num)}`;};
+  const formatTableMoney=val=>{const num=normalizeMoney(val);return`${num>0?'+':''}${formatNumber(num)}`;};
   const rowClass=val=>normalizeMoney(val)<0?'pnl-neg':'pnl-pos';
   const fixedExpenseProjection=mt.budget-(wages+maint);
   const nextSeasonProjection=mt.budget-(wages+maint+nextSeason.total);
   const transferAndBonusCosts=-((selected.transfersIn||0)+Math.max(0,-(selected.other||0)));
   const otherAdjustments=Math.max(0,selected.other||0);
   const wageRows=[
-    ['Pensje zawodników',selected.playerWages||0],
-    ['Pensje trenerów',selected.coachWages||0],
-    ['Pensje fizjo',selected.physioWages||0],
-    ['Pensje psychologów',selected.psychologistWages||0],
-    ['Pensje skautów',selected.scoutWages||0],
-    ['Pensja dyrektora PR',selected.prDirectorWages||0],
+    [t('budget.playerWages'),selected.playerWages||0],
+    [t('budget.coachWages'),selected.coachWages||0],
+    [t('budget.physioWages'),selected.physioWages||0],
+    [t('budget.psychologistWages'),selected.psychologistWages||0],
+    [t('budget.scoutWages'),selected.scoutWages||0],
+    [t('budget.prWages'),selected.prDirectorWages||0],
   ];
   // P&L is grouped (income vs cost) with subtotals, and all-zero lines are hidden
   // behind a toggle — the flat 19-row list was mostly "0 €" in a normal season.
   const incomeRows=[
-    ['Bilety',selected.tickets||0],
-    ['Sklep kibica',selected.merch||0],
-    ['Nagrody ligowe i pucharowe',selected.prize||0],
-    ['Sponsorzy',selected.sponsorIncome||0],
-    ['Prawa TV',selected.tvRights||0],
-    ['Cel zarządu',selected.boardReward||0],
-    ['Partner techniczny',selected.techPartnership||0],
-    ...(otherAdjustments>0?[['Pozostałe korekty',otherAdjustments]]:[]),
+    [t('budget.tickets'),selected.tickets||0],
+    [t('budget.merch'),selected.merch||0],
+    [t('budget.prizes'),selected.prize||0],
+    [t('budget.sponsors'),selected.sponsorIncome||0],
+    [t('budget.tvRights'),selected.tvRights||0],
+    [t('budget.boardObjective'),selected.boardReward||0],
+    [t('budget.techPartner'),selected.techPartnership||0],
+    ...(otherAdjustments>0?[[t('budget.otherAdjustments'),otherAdjustments]]:[]),
   ];
   const wageTotal=wageRows.reduce((a,[,v])=>a+(v||0),0);
   const costRows=[
-    ['Pensje (rozbicie niżej)',-wageTotal],
-    ['Utrzymanie',-(selected.maint||0)],
-    ['Transfery i bonusy',transferAndBonusCosts],
-    ['Infrastruktura',-(selected.infraCost||0)],
-    ['Podkupienie sztabu',-(selected.staffBuyouts||0)],
-    ['Koszt zatrudnienia dyrektora PR',-(selected.prDirectorCost||0)],
-    ['Legacy koszty starego sprzętu',-(selected.brandCosts||0)],
+    [t('budget.wagesBreakdownBelow'),-wageTotal],
+    [t('budget.upkeep'),-(selected.maint||0)],
+    [t('budget.transfersBonuses'),transferAndBonusCosts],
+    [t('budget.infrastructure'),-(selected.infraCost||0)],
+    [t('budget.staffBuyouts'),-(selected.staffBuyouts||0)],
+    [t('budget.prHiring'),-(selected.prDirectorCost||0)],
+    [t('budget.legacyEquipment'),-(selected.brandCosts||0)],
   ];
   const showZeroRows=!!ui.budgetShowZero;
   const visibleRows=list=>showZeroRows?list:list.filter(([,v])=>normalizeMoney(v)!==0);
@@ -668,73 +668,73 @@ function pageBudget(){
     return`<div class="pnl-group">
       <div class="pnl-group-head"><span>${title}</span><span class="${rowClass(total)}">${formatSignedMoney(total)}</span></div>
       ${shown.length?shown.map(([label,val])=>`<div class="pnl-row"><div>${label}</div><div class="${rowClass(val)}">${formatSignedMoney(val)}</div></div>`).join('')
-        :`<div class="pnl-row"><div class="ink3">Brak pozycji w tym sezonie</div><div class="ink3">0 €</div></div>`}
-      ${hidden?`<div class="fs10 ink3 mt-4">${hidden} pozycji zerowych ukrytych</div>`:''}
+        :`<div class="pnl-row"><div class="ink3">${t('budget.noEntries')}</div><div class="ink3">${formatCurrency(0)}</div></div>`}
+      ${hidden?`<div class="fs10 ink3 mt-4">${t('budget.zeroHidden',{count:hidden})}</div>`:''}
     </div>`;
   };
-  return`<div class="ph"><div><div class="pt">BUD\u017bET <span>& FINANSE</span></div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('budget.title')}</div></div></div>
   <div class="g4">
-    <div class="sb"><div class="l">Bud\u017cet</div><div class="v g fs26">${mt.budget.toLocaleString('pl')}</div><div class="sub">€</div></div>
-    <div class="sb"><div class="l">Pensje \u0142\u0105cznie</div><div class="v r fs26">${wages.toLocaleString('pl')}</div><div class="sub">€/sezon</div></div>
-    <div class="sb"><div class="l">Utrzymanie</div><div class="v r fs26">${maint.toLocaleString('pl')}</div></div>
-    <div class="sb"><div class="l">Zobowiązania S+1</div><div class="v ${nextSeason.total>0?'gold':'g'} fs26">${formatTableMoney(-nextSeason.total)}</div><div class="sub">${nextSeason.entries.length} umów</div></div>
+    <div class="sb"><div class="l">${t('budget.cash')}</div><div class="v g fs26">${formatCurrency(mt.budget)}</div></div>
+    <div class="sb"><div class="l">${t('budget.totalWages')}</div><div class="v r fs26">${formatCurrency(wages)}</div><div class="sub">${t('budget.perSeason')}</div></div>
+    <div class="sb"><div class="l">${t('budget.upkeep')}</div><div class="v r fs26">${formatCurrency(maint)}</div></div>
+    <div class="sb"><div class="l">${t('budget.nextSeasonCommitments')}</div><div class="v ${nextSeason.total>0?'gold':'g'} fs26">${formatSignedMoney(-nextSeason.total)}</div><div class="sub">${t('budget.deals',{count:nextSeason.entries.length})}</div></div>
   </div>
-  <div class="card mb14"><div class="ct">PROGNOZA KOŃCA SEZONU</div>
+  <div class="card mb14"><div class="ct">${t('budget.forecast')}</div>
     <div class="pnl-block">
-      <div class="pnl-row"><div>Budżet po stałych kosztach</div><div class="${rowClass(fixedExpenseProjection)}">${formatSignedMoney(fixedExpenseProjection)}</div></div>
-      <div class="pnl-row"><div>Budżet po stałych kosztach i podpisach S+1</div><div class="${rowClass(nextSeasonProjection)}">${formatSignedMoney(nextSeasonProjection)}</div></div>
+      <div class="pnl-row"><div>${t('budget.afterFixed')}</div><div class="${rowClass(fixedExpenseProjection)}">${formatSignedMoney(fixedExpenseProjection)}</div></div>
+      <div class="pnl-row"><div>${t('budget.afterFixedAndDeals')}</div><div class="${rowClass(nextSeasonProjection)}">${formatSignedMoney(nextSeasonProjection)}</div></div>
     </div>
-    <div class="fs11 ink3 mt-8">To uproszczona prognoza: obecny budżet minus roczne pensje, utrzymanie i już zaklepane umowy od kolejnego sezonu. Nie dolicza niepewnych przychodów jak bilety, premie, sponsorzy czy transfery.</div>
+    <div class="fs11 ink3 mt-8">${t('budget.forecastHint')}</div>
   </div>
   ${ui.budgetSeason==='live'?(()=>{
     const sponsors=store.G.sponsors.filter(s=>s.active);
     const bo=getBoardObjective();
     if(!sponsors.length&&!bo)return '';
-    const goalRow=(name,goal,reward)=>{const met=checkGoal({goal});const prog=sponsorProg({goal});return`<div class="pnl-row"><div>${name} <span class="fs10 ink3">(${goalDesc(goal)} — ${met?'✓ osiągnięty':prog.label})</span></div><div style="color:${met?'var(--g)':'var(--gold)'};font-weight:700">${met?'+':'~'}${(reward||0).toLocaleString('pl')} €</div></div>`;};
+    const goalRow=(name,goal,reward)=>{const met=checkGoal({goal});const prog=sponsorProg({goal});return`<div class="pnl-row"><div>${name} <span class="fs10 ink3">(${goalDesc(goal)} — ${met?`✓ ${t('budget.goalMet')}`:prog.label})</span></div><div style="color:${met?'var(--g)':'var(--gold)'};font-weight:700">${met?'+':'~'}${formatCurrency(reward||0)}</div></div>`;};
     const sponsorRows=sponsors.map(s=>goalRow(s.name,s.goal,s.reward)).join('');
-    const boRow=bo?goalRow('Cel zarządu',bo.goal,bo.reward):'';
+    const boRow=bo?goalRow(t('budget.boardObjective'),bo.goal,bo.reward):'';
     const potential=sponsors.reduce((a,s)=>a+(s.reward||0),0)+(bo?(bo.reward||0):0);
     const secured=sponsors.filter(s=>checkGoal(s)).reduce((a,s)=>a+(s.reward||0),0)+((bo&&checkGoal(bo))?(bo.reward||0):0);
-    return`<div class="card mb14 bt3-gold"><div class="ct">PRZYCHÓD Z CELÓW (SPONSORZY + ZARZĄD)</div>
+    return`<div class="card mb14 bt3-gold"><div class="ct">${t('budget.objectiveIncome')}</div>
       <div class="pnl-block">${sponsorRows}${boRow}
-        <div class="pnl-row total"><div>Zabezpieczone już teraz / pełny potencjał</div><div class="${secured>0?'pnl-pos':''} b8">${secured.toLocaleString('pl')} / ${potential.toLocaleString('pl')} €</div></div>
+        <div class="pnl-row total"><div>${t('budget.securedPotential')}</div><div class="${secured>0?'pnl-pos':''} b8">${formatCurrency(secured)} / ${formatCurrency(potential)}</div></div>
       </div>
-      <div class="fs11 ink3 mt-8">„~" = nagroda warunkowa, wypłacana na koniec sezonu po spełnieniu celu. „✓" = cel już osiągnięty (zabezpieczony). Sponsorzy bez wymagań liczą się od razu.</div>
+      <div class="fs11 ink3 mt-8">${t('budget.objectiveHint')}</div>
     </div>`;
   })():''}
-  <div class="card mb14 bt3-blue"><div class="ct">PLANOWANIE KOLEJNEGO SEZONU</div>
+  <div class="card mb14 bt3-blue"><div class="ct">${t('budget.nextSeasonPlanning')}</div>
     <div class="pnl-block">
-      <div class="pnl-row"><div>Nowi zawodnicy od S+1</div><div class="${rowClass(-nextSeason.playerWages)}">${formatSignedMoney(-nextSeason.playerWages)}</div></div>
-      <div class="pnl-row"><div>Nowy sztab od S+1</div><div class="${rowClass(-nextSeason.staffWages)}">${formatSignedMoney(-nextSeason.staffWages)}</div></div>
-      <div class="pnl-row"><div>Premie podpisowe już zaklepane</div><div class="${rowClass(-nextSeason.bonuses)}">${formatSignedMoney(-nextSeason.bonuses)}</div></div>
+      <div class="pnl-row"><div>${t('budget.newPlayers')}</div><div class="${rowClass(-nextSeason.playerWages)}">${formatSignedMoney(-nextSeason.playerWages)}</div></div>
+      <div class="pnl-row"><div>${t('budget.newStaff')}</div><div class="${rowClass(-nextSeason.staffWages)}">${formatSignedMoney(-nextSeason.staffWages)}</div></div>
+      <div class="pnl-row"><div>${t('budget.signingBonuses')}</div><div class="${rowClass(-nextSeason.bonuses)}">${formatSignedMoney(-nextSeason.bonuses)}</div></div>
     </div>
     ${nextSeason.entries.length?`<div class="mt-10 grid gp8">
       ${nextSeason.entries.map(entry=>`<div class="tile">
         <div class="row-bet">
           <div><div class="b7">${entry.name}</div><div class="fs10 ink3">${entry.label} / ${entry.kind==='player'?roleGuaranteeLabel(entry.role):entry.role.toUpperCase()} / ${entry.years} l.</div></div>
-          <div class="tar fs11"><div class="b7 cr">${(entry.salary||0).toLocaleString('pl')} €</div><div class="ink3">bonus ${(entry.bonus||0).toLocaleString('pl')} €</div></div>
+          <div class="tar fs11"><div class="b7 cr">${formatCurrency(entry.salary||0)}</div><div class="ink3">${t('budget.bonus',{amount:formatCurrency(entry.bonus||0)})}</div></div>
         </div>
       </div>`).join('')}
-    </div>`:'<div class="fs12 ink3 mt-8">Brak potwierdzonych zobowiązań na kolejny sezon. Możesz działać elastycznie.</div>'}
+    </div>`:`<div class="fs12 ink3 mt-8">${t('budget.noNextSeason')}</div>`}
   </div>
-  <div class="card mb14"><div class="ct">WYNIK SEZONU
-    <div class="card-tools">${seasonOptions.map(opt=>`<button class="btn sm ${String(ui.budgetSeason)===String(opt)?'pr':''}" onclick="ui.budgetSeason='${opt}';render()">${opt==='live'?'BIEŻĄCY':`S${opt}`}</button>`).join('')}<button class="btn sm" onclick="ui.budgetShowZero=!ui.budgetShowZero;render()">${showZeroRows?'UKRYJ ZEROWE':'POKAŻ WSZYSTKIE'}</button></div></div>
+  <div class="card mb14"><div class="ct">${t('budget.seasonResult')}
+    <div class="card-tools">${seasonOptions.map(opt=>`<button class="btn sm ${String(ui.budgetSeason)===String(opt)?'pr':''}" onclick="ui.budgetSeason='${opt}';render()">${opt==='live'?t('budget.current'):`S${opt}`}</button>`).join('')}<button class="btn sm" onclick="ui.budgetShowZero=!ui.budgetShowZero;render()">${t(showZeroRows?'budget.hideZero':'budget.showAll')}</button></div></div>
     <div class="g2">
-      ${pnlGroup('Przychody',incomeRows)}
-      ${pnlGroup('Koszty',costRows)}
+      ${pnlGroup(t('budget.income'),incomeRows)}
+      ${pnlGroup(t('budget.costs'),costRows)}
     </div>
-    <div class="pnl-row total mt-10"><div>Wynik finansowy</div><div class="${rowClass(selected.net)}">${formatSignedMoney(selected.net||0)}</div></div>
+    <div class="pnl-row total mt-10"><div>${t('budget.financialResult')}</div><div class="${rowClass(selected.net)}">${formatSignedMoney(selected.net||0)}</div></div>
   </div>
   <div class="g2">
-    <div class="card"><div class="ct">PENSJE — ROZBICIE</div>
+    <div class="card"><div class="ct">${t('budget.wageBreakdown')}</div>
       <div class="pnl-block">
         ${wageRows.map(([label,val])=>`<div class="pnl-row"><div>${label}</div><div class="${val?'pnl-neg':'ink3'}">${formatSignedMoney(-val)}</div></div>`).join('')}
-        <div class="pnl-row total"><div>Razem</div><div class="pnl-neg">${formatSignedMoney(-wageTotal)}</div></div>
+        <div class="pnl-row total"><div>${t('budget.total')}</div><div class="pnl-neg">${formatSignedMoney(-wageTotal)}</div></div>
       </div>
     </div>
-    <div class="card"><div class="ct">HISTORIA SEZONÓW</div>
-      ${log.length?`<table class="t"><tr><th>Sezon</th><th>Bilety</th><th>Merch</th><th>TV</th><th>Bilans</th></tr>
-      ${log.slice().reverse().map(e=>`<tr><td><button class="btn sm ${String(ui.budgetSeason)===String(e.season)?'pr':''}" onclick="ui.budgetSeason='${e.season}';render()">S${e.season}</button></td><td class="cg">${formatTableMoney(e.tickets||0)}</td><td class="cg">${formatTableMoney(e.merch||0)}</td><td class="cg">${formatTableMoney(e.tvRights||0)}</td><td style="${normalizeMoney(e.net)>=0?'color:var(--g)':'color:var(--r)'};font-weight:700">${formatTableMoney(e.net||0)}</td></tr>`).join('')}</table>`:'<div class="empty-state fs12">Historia pojawi się po zamknięciu pierwszego sezonu.</div>'}
+    <div class="card"><div class="ct">${t('budget.seasonHistory')}</div>
+      ${log.length?`<table class="t"><tr><th>${t('budget.season')}</th><th>${t('budget.tickets')}</th><th>${t('budget.merch')}</th><th>TV</th><th>${t('budget.balance')}</th></tr>
+      ${log.slice().reverse().map(e=>`<tr><td><button class="btn sm ${String(ui.budgetSeason)===String(e.season)?'pr':''}" onclick="ui.budgetSeason='${e.season}';render()">S${e.season}</button></td><td class="cg">${formatTableMoney(e.tickets||0)}</td><td class="cg">${formatTableMoney(e.merch||0)}</td><td class="cg">${formatTableMoney(e.tvRights||0)}</td><td style="${normalizeMoney(e.net)>=0?'color:var(--g)':'color:var(--r)'};font-weight:700">${formatTableMoney(e.net||0)}</td></tr>`).join('')}</table>`:`<div class="empty-state fs12">${t('budget.noHistory')}</div>`}
     </div>
   </div>`;
 }

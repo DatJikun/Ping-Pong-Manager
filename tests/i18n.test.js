@@ -159,3 +159,21 @@ test('the transfer market follows the active locale', () => {
   assert.match(polish, /Rynek transferowy/i);
   assert.match(polish, /Szukaj nazwiska lub klubu/i);
 });
+
+test('the budget screen follows the active locale and locale-aware money formatting', () => {
+  const g = boot(3111);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageBudget();
+  assert.match(english, /Budget &amp; finance|Budget & finance/i);
+  assert.match(english, /End-of-season forecast/i);
+  assert.match(english, /Next-season planning/i);
+  assert.doesNotMatch(english, /Prognoza końca sezonu/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageBudget();
+  assert.match(polish, /Budżet i finanse/i);
+  assert.match(polish, /Prognoza końca sezonu/i);
+  assert.match(polish, /Planowanie kolejnego sezonu/i);
+});
