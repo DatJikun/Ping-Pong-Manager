@@ -1,3 +1,12 @@
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Regular.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap;}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Medium.ttf') format('truetype');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-SemiBold.ttf') format('truetype');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Bold.ttf') format('truetype');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-Medium.ttf') format('truetype');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-SemiBold.ttf') format('truetype');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-Bold.ttf') format('truetype');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-ExtraBold.ttf') format('truetype');font-style:normal;font-weight:800;font-display:swap;}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PINGPONG MANAGER — design system
    Language: `prototypes/proto-final.html` ("Paddock"), locked by the owner

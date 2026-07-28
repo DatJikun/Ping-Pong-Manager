@@ -4,20 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PingPong Manager</title>
-<!-- Painted before anything else loads. Without this the browser shows a white
-     page for as long as the CDN stylesheets take to arrive. -->
+<!-- Painted before anything else loads so the native window never flashes white. -->
 <style>html,body{background:#101319;color:#eef2f8;margin:0}</style>
 <!-- Saira Condensed carries every figure and display line (broadcast/motorsport
-     condensed), Barlow carries body copy. Locked with the proto-final skin.
-     Loaded non-render-blocking (media swap) so the fonts never gate first paint;
-     `display=swap` draws the fallback in the meantime. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="./styles/main.css?v=25">
-<!-- deferred: GSAP is only used for page/modal transitions at runtime, and every
-     call site guards with `typeof gsap`. In <head> it blocked the first paint. -->
-<script defer charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+     condensed), Barlow carries body copy. Both are bundled for offline play. -->
+<link rel="stylesheet" href="./styles/main.css?v=26">
 </head>
 <body>
 <div id="app">
@@ -96,7 +87,7 @@
 <script charset="UTF-8" src="./src/core/save-storage.js?v=25"></script>
 <script charset="UTF-8" src="./src/core/state.js?v=25"></script>
 <script charset="UTF-8" src="./src/core/save-manager.js?v=25"></script>
-<script charset="UTF-8" src="./src/ui/shell.js?v=25"></script>
+<script charset="UTF-8" src="./src/ui/shell.js?v=26"></script>
 <script charset="UTF-8" src="./src/core/gameplay.js?v=25"></script>
 <script charset="UTF-8" src="./src/core/gameplay.visuals.js?v=25"></script>
 <script charset="UTF-8" src="./src/core/gameplay.club-ui.js?v=25"></script>

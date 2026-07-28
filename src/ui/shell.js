@@ -5,8 +5,8 @@
 // Responsibilities:
 //   - setShellMode()   — switches body CSS classes between 'start' and 'game'
 //   - syncNavState()   — highlights the active nav button (desktop + mobile)
-//   - go(page)         — changes ui.page, triggers GSAP fade, calls render()
-//   - openModal()      — shows the #ov overlay with GSAP pop-in animation
+//   - go(page)         — changes ui.page, renders, plays a native transition
+//   - openModal()      — shows the #ov overlay with a native pop-in animation
 //   - closeModal()     — hides the overlay; also bound to Escape key
 //   - toast(msg)       — shows a timed bottom-right notification
 //   - playClick/Ping/Pong() — Web Audio API sound effects (synthesised, no files)
@@ -85,23 +85,35 @@ function syncNavState(){
   const desktopBtn=document.getElementById('n-'+ui.page);if(desktopBtn)desktopBtn.classList.add('on');
   document.querySelectorAll('.mn-btn').forEach(b=>b.classList.toggle('on',b.dataset.page===ui.page));
 }
+function animateUi(el,keyframes,options){
+  if(!el||typeof el.animate!=='function')return null;
+  try{
+    if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null;
+    return el.animate(keyframes,options);
+  }catch{return null;}
+}
 function go(p){
   if(ui.running)return;
   if(!store.G&&p!=='dash')return;
   ui.page=p;
   const el=document.getElementById('content');
-  if(typeof gsap!=='undefined'&&el){gsap.to(el,{opacity:0,y:6,duration:.1,ease:'power2.in',onComplete:()=>{render();el.scrollTop=0;gsap.fromTo(el,{opacity:0,y:10},{opacity:1,y:0,duration:.24,ease:'power3.out'});}});}
-  else{render();if(el)el.scrollTop=0;}
+  render();
+  if(el){
+    el.scrollTop=0;
+    animateUi(el,[{opacity:.2,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{
+      duration:180,easing:'cubic-bezier(.2,.8,.2,1)',
+    });
+  }
   syncNavState();
   playClick();
 }
 function openModal(){
   const ov=document.getElementById('ov');
   ov.classList.add('on');
-  if(typeof gsap!=='undefined'){
-    const m=document.getElementById('modal');
-    gsap.fromTo(m,{opacity:0,scale:.9,y:24},{opacity:1,scale:1,y:0,duration:.3,ease:'back.out(1.6)'});
-  }
+  const m=document.getElementById('modal');
+  animateUi(m,[{opacity:0,transform:'translateY(18px) scale(.96)'},{opacity:1,transform:'translateY(0) scale(1)'}],{
+    duration:220,easing:'cubic-bezier(.2,.8,.2,1)',
+  });
 }
 function closeModal(){document.getElementById('ov').classList.remove('on');}
 let _toastTimer=null;

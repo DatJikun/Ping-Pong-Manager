@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-28 — Release audit and offline runtime
+
+- Added one evidence-based release-readiness document covering legal data,
+  localisation, desktop packaging, persistence and recovery requirements.
+- Removed all runtime CDN requests. Barlow and Saira Condensed are bundled with
+  their OFL 1.1 licences; page and modal transitions now use the browser-native
+  Web Animations API instead of GSAP.
+- Added a release gate that fails if a remote runtime script, stylesheet or font
+  is reintroduced or a required local font/licence asset is missing.
+
 ## 2026-07-28 — Biblioteka karier i bezpieczne zapisy
 
 - Zastąpiono pojedynczy zapis `ppgame` biblioteką dowolnej liczby nazwanych
