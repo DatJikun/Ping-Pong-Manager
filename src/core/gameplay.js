@@ -444,11 +444,26 @@ function fitEquipmentToStyle(p){
   const sponge=(st==='DEFENDER'||st==='FISHER')?'CIENKA':st==='BLOCKER'?(Math.random()<0.5?'SREDNIA':'CIENKA'):st==='FH_LOOPER'?'GRUBA':(Math.random()<0.5?'GRUBA':'SREDNIA');
   return{blade,sponge};
 }
+// id → team index. ovr() runs millions of times per season change and used to pay
+// a linear teams.find() on every call; that alone was seconds of frozen UI at the
+// season boundary. The club list is created once per career and only ever mutated
+// in place (never pushed, spliced or re-sorted), so the index is keyed on the array
+// itself and rebuilt automatically when a save is loaded and hands us a new one.
+let _teamIndexFor=null,_teamIndex=null;
+function teamById(id){
+  const teams=store.G?.teams;
+  if(!teams)return undefined;
+  if(_teamIndexFor!==teams||_teamIndex.size!==teams.length){
+    _teamIndex=new Map(teams.map(t=>[t?.id,t]));
+    _teamIndexFor=teams;
+  }
+  return _teamIndex.get(id);
+}
 function clubRubberTier(teamId){
   if(teamId===null||teamId===undefined||!store.G)return 0;
   const maxTier=EQUIPMENT.rubberTiers.length-1;
   if(teamId===store.G.myTeamId)return clamp(store.G.rubberTier||0,0,maxTier);
-  const t=store.G.teams?.find(x=>x.id===teamId);
+  const t=teamById(teamId);
   if(!t)return 0;
   return (t.budget||0)>350000?2:(t.budget||0)>120000?1:0;
 }
@@ -502,22 +517,40 @@ function myTeam(){return store.G.teams.find(t=>t.isPlayer);}
 function myPlayers(){return store.G.players.filter(p=>p.teamId===myTeam().id&&!p.retired);}
 function myStarters(){return myPlayers().filter(p=>p.role==='starter');}
 function myReserves(){return myPlayers().filter(p=>p.role==='reserve');}
-function teamName(id){return store.G.teams.find(t=>t.id===id)?.name||'?';}
+function teamName(id){return teamById(id)?.name||'?';}
 function playerName(id){return store.G.players.find(p=>p.id===id)?.name||'?';}
-function teamLeague(tid){return store.G.teams.find(t=>t.id===tid)?.league||1;}
+function teamLeague(tid){return teamById(tid)?.league||1;}
 function myLeague(){return myTeam()?.league||1;}
 function teamOvr(tid){
   let st=store.G.players.filter(p=>p.teamId===tid&&!p.retired&&p.role==='starter'&&!(p.injuredFor>0)).slice(0,4);
   if(st.length<4){const ex=store.G.players.filter(p=>p.teamId===tid&&!p.retired&&!(p.injuredFor>0)).sort((a,b)=>ovr(b)-ovr(a));st=ex.slice(0,4);}
   return st.length?Math.round(st.reduce((s,p)=>s+ovr(p),0)/st.length):40;
 }
+// Every club's best four, averaged. contractExpect() calls this for every single
+// negotiation, and the naive shape (one full player scan per club, plus a fresh
+// ovr() inside every sort comparison) made the AI transfer window take seconds of
+// frozen UI at each season change. One grouping pass and one ovr() per player —
+// same players, same order, same number.
 function calcLeagueAvgOvr(leagueId){
-  const teams=store.G.teams.filter(t=>t.league===leagueId);
-  const samples=teams.flatMap(t=>store.G.players
-    .filter(p=>p.teamId===t.id&&!p.retired&&p.role!=='youth')
-    .sort((a,b)=>ovr(b)-ovr(a))
-    .slice(0,4));
-  return samples.length?Math.round(samples.reduce((sum,p)=>sum+ovr(p),0)/samples.length):60;
+  const byTeam=new Map();
+  const rating=new Map();
+  for(const p of store.G.players){
+    if(!p||p.retired||p.role==='youth'||p.teamId===null||p.teamId===undefined)continue;
+    let group=byTeam.get(p.teamId);
+    if(!group){group=[];byTeam.set(p.teamId,group);}
+    group.push(p);
+    rating.set(p,ovr(p));
+  }
+  const rate=p=>rating.get(p);
+  let sum=0,count=0;
+  for(const t of store.G.teams){
+    if(t.league!==leagueId)continue;
+    const group=byTeam.get(t.id);
+    if(!group)continue;
+    const best=group.slice().sort((a,b)=>rate(b)-rate(a)).slice(0,4);
+    for(const p of best){sum+=rate(p);count++;}
+  }
+  return count?Math.round(sum/count):60;
 }
 function getTopClubPlayers(teamId,count=3){
   return store.G.players
@@ -531,7 +564,7 @@ function expectsStarterRole(p,targetTeamId=p.teamId){
   return topGroup.some(x=>x.id===p.id);
 }
 function getPlayerTargetLeague(teamId=store.G?.myTeamId){
-  return store.G.teams.find(t=>t.id===teamId)?.league||myLeague();
+  return teamById(teamId)?.league||myLeague();
 }
 function getMax(p,s){
   if(s==='fh'&&p.traits.includes('IRON_ATTACK'))return 96;
