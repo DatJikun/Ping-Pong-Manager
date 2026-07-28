@@ -16,6 +16,12 @@ existing entities. The concrete S8 failure is:
 - accepting Łukasz appends him to `players`;
 - `openPlayerModal(319)` uses the first match in `players`, so it opens Kacper.
 
+Runtime verification showed that the wrong profile is already visible before
+acceptance: the academy card calls `openPlayerModal(p.id)`, but the modal resolver
+searches only `players`. With a collision it opens the established player; with a
+unique pending ID it finds nothing. Accepting a colliding candidate also assigns
+`playerHistory[p.id]=[snap(p)]`, overwriting the established player's history.
+
 The current migration repairs duplicates only within each individual array
 because `repairIds()` creates a new `Set` for every call. It therefore misses a
 collision between a live player and a pending academy candidate.
@@ -46,6 +52,9 @@ single global `Set` covering every object in the save.
   corrupted `players` array; assign fresh IDs to later duplicates.
 - Add a runtime guard before an academy or trial candidate is appended to
   `players`.
+- Resolve an academy/trial card to its exact pending collection and index so its
+  profile opens correctly before acceptance.
+- Prevent signing from overwriting the established player's `playerHistory`.
 - Restore `ui._pid` above every ID minted by migration.
 - Add regression tests based on a minimal, anonymized equivalent of the S8 save.
 - Validate the migration locally against all seven supplied saves without
@@ -106,6 +115,18 @@ If a collision exists:
 The guard is defense in depth. Correctly migrated saves should normally reach
 these functions with an already-safe ID.
 
+## Pending profile resolution
+
+Academy cards must not resolve pending candidates through the live-player
+first-match lookup. The UI passes an explicit pending source
+(`academyProspects` or `academyTrial`) and the rendered index to
+`openPlayerModal`. The resolver accepts only these two allowlisted sources and
+returns the candidate at that index when its ID still matches; all existing
+player cards continue to use the normal `players.find(id)` path.
+
+This makes the lookup unambiguous even if malformed runtime state reintroduces a
+collision before the signing guard runs.
+
 ## Tests
 
 ### Required red-green regression tests
@@ -135,6 +156,12 @@ these functions with an already-safe ID.
    - A scout report's `reported.id === realId` is not renumbered.
    - Team/player namespace overlap is not treated as corruption.
 
+6. **Pending profile before acceptance**
+   - Resolving the academy card returns the candidate, not the established
+     player with the colliding ID.
+   - The trial card follows the same explicit-source path.
+   - Existing squad/market cards still resolve live players normally.
+
 ### Local save verification
 
 For every supplied S4/S6/S7/S8/S11 export:
@@ -157,6 +184,8 @@ Claude performs independent verification after the implementation commit:
 
 - reproduce the wrong-profile behavior on the unpatched S8 K0 save;
 - load the patched game with S8 K0 and S11 K4;
+- before acceptance, click every available academy and trial candidate card and
+  confirm that its own profile opens;
 - accept every available academy candidate on isolated copies;
 - click each accepted player's card/profile;
 - compare displayed name and ID with the accepted candidate;
