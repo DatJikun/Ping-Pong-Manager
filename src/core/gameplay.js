@@ -817,9 +817,9 @@ function canPreSignStaff(s){
   return !!(s&&s.teamId!==null&&s.teamId!==store.G?.myTeamId&&(s.contractYears||0)===1);
 }
 function staffNegotiationBlockReason(s){
-  if(!s)return 'Nie znaleziono członka sztabu.';
+  if(!s)return t('staff.neg.notFound');
   if(s.teamId!==null&&s.teamId!==store.G?.myTeamId&&(s.contractYears||0)>1){
-    return `${s.name} ma jeszcze ${(s.contractYears||0)} lata kontraktu. Sztab możesz zaklepać dopiero przy ostatnim roku umowy.`;
+    return t('staff.neg.contractBlocked',{name:s.name,years:s.contractYears||0});
   }
   return '';
 }
@@ -1283,15 +1283,15 @@ function getContractProfile(p){
   const loyalty=p.loyalty||0;
   const form=seasonFormImpact(p);
   const expectedRole=p.preferredRole||'starter';
-  let agentType='balansujący';
-  if(age<=21||p.traits?.includes('WUNDERKIND'))agentType='ambitny talent';
-  else if(loyalty>=7&&p.teamId===store.G?.myTeamId)agentType='lojalista';
-  else if(form>=6||ovrBase(p)>=78)agentType='gwiazda kontraktu';
-  else if(age>=31||p.traits?.includes('VETERAN'))agentType='weteran bezpieczeństwa';
+  let agentType='balanced';
+  if(age<=21||p.traits?.includes('WUNDERKIND'))agentType='ambitiousTalent';
+  else if(loyalty>=7&&p.teamId===store.G?.myTeamId)agentType='loyalist';
+  else if(form>=6||ovrBase(p)>=78)agentType='contractStar';
+  else if(age>=31||p.traits?.includes('VETERAN'))agentType='securityVeteran';
   const roleWeight=expectedRole==='starter'?3:expectedRole==='rotation'?1:0;
-  const wageWeight=agentType==='gwiazda kontraktu'?3:agentType==='lojalista'?1:2;
-  const securityWeight=agentType==='weteran bezpieczeństwa'?3:age<=22?1:2;
-  const loyaltyDiscount=agentType==='lojalista'?0.08:0;
+  const wageWeight=agentType==='contractStar'?3:agentType==='loyalist'?1:2;
+  const securityWeight=agentType==='securityVeteran'?3:age<=22?1:2;
+  const loyaltyDiscount=agentType==='loyalist'?0.08:0;
   return{
     agentType,
     expectedRole,
@@ -1299,11 +1299,7 @@ function getContractProfile(p){
     roleWeight,
     securityWeight,
     loyaltyDiscount,
-    summary:
-      agentType==='ambitny talent'?'Najmocniej patrzy na minuty i ścieżkę rozwoju.':
-      agentType==='lojalista'?'Łatwiej schodzi z ceny, jeśli czuje zaufanie klubu.':
-      agentType==='gwiazda kontraktu'?'Najważniejsze są pieniądze i status w projekcie.':
-      'Szuka stabilnego pakietu i bezpieczeństwa kontraktu.',
+    summaryKey:`neg.agentSummary.${agentType==='balanced'?'securityVeteran':agentType}`,
   };
 }
 function contractExpect(p,targetTeamId=store.G?.myTeamId){
@@ -1331,7 +1327,7 @@ function contractExpect(p,targetTeamId=store.G?.myTeamId){
     signingBonus,
     role:p.preferredRole||'starter',
     profile,
-    interest:p.teamId===store.G?.myTeamId?'przed\u0142u\u017cenie':(form>=5?'gor\u0105ce nazwisko':form<=-4?'okazja rynkowa':'normalny cel'),
+    interestKey:p.teamId===store.G?.myTeamId?'neg.interest.renewal':(form>=5?'neg.interest.hot':form<=-4?'neg.interest.bargain':'neg.interest.normal'),
     marketValue:playerMarketValue(p),
     leagueAvgOvr,
     prestigeDiff,
@@ -1345,7 +1341,7 @@ function negResponse(p,sal,yrs,bonus,roleGuarantee,targetTeamId=store.G?.myTeamI
   const targetLeague=getPlayerTargetLeague(targetTeamId);
   const ambitionBlocked=(p.traits?.includes('AMBITNY')&&((exp.prestigeDiff||0)>4||(targetLeague===2&&ovrBase(p)>75)));
   if(ambitionBlocked){
-    return{mood:-1,score:-99,reasons:['jest zbyt ambitny na ten poziom rozgrywkowy','interesują go tylko topowe projekty'],profile,hardBlock:'Jestem zbyt ambitny, aby grać na tak niskim poziomie rozgrywkowym. Interesują mnie tylko topowe projekty.'};
+    return{mood:-1,score:-99,reasons:['neg.reason.tooAmbitious','neg.reason.topProjects'],profile,hardBlockKey:'neg.hardBlockAmbition'};
   }
   // Signing bonus amortises into effective annual pay: a 10k bonus on a 2-year
   // deal ≈ +5k/year. So a player wanting 35k can accept 30k + a 10k/2yr bonus.
@@ -1378,14 +1374,14 @@ function negResponse(p,sal,yrs,bonus,roleGuarantee,targetTeamId=store.G?.myTeamI
   }
   sc+=diffCfg.negotiationBias;
   const reasons=[];
-  if(salaryRatio<0.9)reasons.push('za niska pensja');
-  else if(salaryRatio>=1.05)reasons.push('mocna pensja');
-  if(guaranteeRatio<0.92)reasons.push('za ma\u0142a gwarancja ca\u0142ego pakietu');
-  else if(guaranteeRatio>=1.05)reasons.push('dobry pakiet ca\u0142kowity');
-  if(roleScore<0)reasons.push('rola nie spe\u0142nia oczekiwa\u0144');
-  else if(roleScore>0)reasons.push('rola pasuje do oczekiwa\u0144');
-  if(yrs<exp.years)reasons.push('kr\u00f3tsze bezpiecze\u0144stwo kontraktu');
-  if(p.teamId!==store.G?.myTeamId&&diffCfg.prestigeBarrier>0.7&&ovrBase(p)>calcPrestige()+18)reasons.push('klub musi jeszcze urosn\u0105\u0107 presti\u017cem');
+  if(salaryRatio<0.9)reasons.push('neg.reason.lowSalary');
+  else if(salaryRatio>=1.05)reasons.push('neg.reason.strongSalary');
+  if(guaranteeRatio<0.92)reasons.push('neg.reason.lowGuarantee');
+  else if(guaranteeRatio>=1.05)reasons.push('neg.reason.goodPackage');
+  if(roleScore<0)reasons.push('neg.reason.badRole');
+  else if(roleScore>0)reasons.push('neg.reason.goodRole');
+  if(yrs<exp.years)reasons.push('neg.reason.shortSecurity');
+  if(p.teamId!==store.G?.myTeamId&&diffCfg.prestigeBarrier>0.7&&ovrBase(p)>calcPrestige()+18)reasons.push('neg.reason.lowPrestige');
   const mood=sc>=4?1:sc>=1?0:-1;
   return{mood,score:sc,reasons,profile};
 }
@@ -1406,9 +1402,9 @@ function staffNegResponse(s,sal,bonus,yrs){
   if(guaranteeRatio>=1.12)sc+=2;else if(guaranteeRatio>=1.0)sc+=1;else if(guaranteeRatio<0.85)sc-=3;
   if((yrs||2)>=expYears)sc+=1;else sc-=1;
   const reasons=[];
-  if(salaryRatio<0.9)reasons.push('za niska pensja');else if(salaryRatio>=1.05)reasons.push('mocna pensja');
-  if(bonusRatio>=1.3)reasons.push('hojna premia za podpis');
-  if(guaranteeRatio<0.9)reasons.push('za mały pakiet całkowity');else if(guaranteeRatio>=1.1)reasons.push('dobry pakiet całkowity');
+  if(salaryRatio<0.9)reasons.push('neg.reason.lowSalary');else if(salaryRatio>=1.05)reasons.push('neg.reason.strongSalary');
+  if(bonusRatio>=1.3)reasons.push('neg.reason.largeBonus');
+  if(guaranteeRatio<0.9)reasons.push('neg.reason.lowGuarantee');else if(guaranteeRatio>=1.1)reasons.push('neg.reason.goodPackage');
   const mood=sc>=4?1:sc>=0?0:-1;
   return{mood,score:sc,reasons};
 }
@@ -5014,23 +5010,19 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
 function negUpdate(){
   const p=store.G.players.find(x=>x.id===window._negPid);if(!p)return;
   const exp=contractExpect(p);
-  const sl=document.getElementById('neg-sal-lbl');if(sl)sl.textContent=window._negSal.toLocaleString('pl')+' €/rok';
-  const yl=document.getElementById('neg-yr-lbl');if(yl)yl.textContent=window._negYrs+' lat';
-  const bl=document.getElementById('neg-bonus-lbl');if(bl)bl.textContent=(window._negBonus||0).toLocaleString('pl')+' €';
-  const pkg=document.getElementById('neg-pkg-lbl');if(pkg)pkg.textContent=((window._negBonus||0)+(window._negFee||0)).toLocaleString('pl')+' €';
+  const sl=document.getElementById('neg-sal-lbl');if(sl)sl.textContent=`${formatCurrency(window._negSal)} ${t('neg.perYear')}`;
+  const yl=document.getElementById('neg-yr-lbl');if(yl)yl.textContent=t('neg.yearsValue',{count:window._negYrs});
+  const bl=document.getElementById('neg-bonus-lbl');if(bl)bl.textContent=formatCurrency(window._negBonus||0);
+  const pkg=document.getElementById('neg-pkg-lbl');if(pkg)pkg.textContent=formatCurrency((window._negBonus||0)+(window._negFee||0));
   const rl=document.getElementById('neg-role-lbl');if(rl)rl.textContent=roleGuaranteeLabel(window._negRole||exp.role);
   const reasons=document.getElementById('neg-reasons');
   const mood=document.getElementById('neg-mood');
   const feedback=negResponse(p,window._negSal||exp.salary,window._negYrs||exp.years,window._negBonus||exp.signingBonus,window._negRole||exp.role,store.G.myTeamId);
   if(mood){
     mood.className='nfb '+(feedback.mood>0?'happy':feedback.mood===0?'ok':'angry');
-    mood.textContent=feedback.hardBlock||(
-      feedback.mood>0?'Agent widzi sp\u00f3jny pakiet i jest blisko akceptacji.':
-      feedback.mood===0?'Pakiet jest na granicy akceptacji.':
-      'Agent uwa\u017ca, \u017ce oferta jest zbyt s\u0142aba lub rola nie pasuje.'
-    );
+    mood.textContent=feedback.hardBlockKey?t(feedback.hardBlockKey):t(feedback.mood>0?'neg.moodHappy':feedback.mood===0?'neg.moodBorderline':'neg.moodWeak');
   }
-  if(reasons)reasons.textContent=feedback.reasons.length?`Sygna\u0142y z rozm\u00f3w: ${feedback.reasons.join(', ')}.`:'Sygna\u0142y z rozm\u00f3w: agent czeka na pe\u0142niejszy pakiet.';
+  if(reasons)reasons.textContent=feedback.reasons.length?t('neg.signals',{reasons:feedback.reasons.map(key=>t(key)).join(', ')}):t('neg.waitingPlayer');
 }
 function findStaffById(sid){
   return store.G.staffPool.find(x=>x.id===sid)||(store.G.scoutPool||[]).find(x=>x.id===sid)||(store.G.prDirectorPool||[]).find(x=>x.id===sid)||store.G.staff.find(x=>x.id===sid)||(store.G.prDirector&&store.G.prDirector.id===sid?store.G.prDirector:null)||getRivalPRDirectors().find(x=>x.id===sid);
@@ -5039,16 +5031,16 @@ function staffNegUpdate(){
   const s=findStaffById(window._staffNegSid);if(!s)return;
   const fb=staffNegResponse(s,window._staffNegSal||s.salary,window._staffNegBonus||0,window._staffNegYrs||2);
   const mood=document.getElementById('staff-mood');
-  if(mood){mood.className='nfb '+(fb.mood>0?'happy':fb.mood===0?'ok':'angry');mood.textContent=fb.mood>0?'Specjalista jest blisko akceptacji.':fb.mood===0?'Oferta jest na granicy akceptacji.':'Oferta jest zbyt s\u0142aba.';}
+  if(mood){mood.className='nfb '+(fb.mood>0?'happy':fb.mood===0?'ok':'angry');mood.textContent=t(fb.mood>0?'staff.neg.moodHappy':fb.mood===0?'staff.neg.moodBorderline':'staff.neg.moodWeak');}
   const reasons=document.getElementById('staff-reasons');
-  if(reasons)reasons.textContent=fb.reasons.length?`Sygna\u0142y z rozm\u00f3w: ${fb.reasons.join(', ')}.`:'Sygna\u0142y z rozm\u00f3w: czeka na pe\u0142niejszy pakiet.';
+  if(reasons)reasons.textContent=fb.reasons.length?t('neg.signals',{reasons:fb.reasons.map(key=>t(key)).join(', ')}):t('neg.waitingStaff');
 }
 function openNegotiate(pid){
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
   ensurePlayerMeta(p);
-  if(getLoanedIn().find(l=>l.playerId===pid)){toast('Zawodnik wypo\u017cyczony do nas \u2014 kontrakt nale\u017cy do jego klubu.');return;}
+  if(getLoanedIn().find(l=>l.playerId===pid)){toast(t('neg.loanedContract'));return;}
   if(alreadyNegotiated('player',pid)){
-    toast(`Oferta dla ${p.name} zosta\u0142a ju\u017c z\u0142o\u017cona w tej kolejce.`);return;
+    toast(t('neg.alreadyOffered',{name:p.name}));return;
   }
   // v15: Transfer refusal based on prestige gap
   if(p.teamId!==null&&p.teamId!==store.G.myTeamId){
@@ -5062,13 +5054,13 @@ function openNegotiate(pid){
       // Player from much stronger club refuses if our prestige is too low
       if(ovrDiff>12&&myPres<40){
         const modal=document.getElementById('modal');modal.className='modal';
-        modal.innerHTML=`<div class="mt2">Odmowa Transferu <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+        modal.innerHTML=`<div class="mt2">${t('neg.refusalTitle')} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
         <div class="bbr r4 mb12" style="padding:16px;background:#fae8e4">
-          <div class="b7 mb6">${p.name} odmawia negocjacji</div>
-          <div class="fs12 ink2">"Tw\u00f3j klub ma za ma\u0142y presti\u017c (${myPres}/100), \u017ceby mnie zainteresowa\u0107. Wr\u00f3\u0107 gdy b\u0119dziesz w lepszej formie."</div>
+          <div class="b7 mb6">${t('neg.refusalName',{name:p.name})}</div>
+          <div class="fs12 ink2">${t('neg.refusalQuote',{prestige:myPres})}</div>
         </div>
-        <div class="fs11 ink3">Wymagany presti\u017c: ~40+. Tw\u00f3j presti\u017c: ${myPres}. Popraw pozycj\u0119 ligow\u0105 przez 2-3 sezony.</div>
-        <button class="btn mt-12" onclick="closeModal()">ZAMKNIJ</button>`;
+        <div class="fs11 ink3">${t('neg.refusalHint',{prestige:myPres})}</div>
+        <button class="btn mt-12" onclick="closeModal()">${t('common.close').toUpperCase()}</button>`;
         openModal();return;
       }
     }
@@ -5082,34 +5074,34 @@ function openNegotiate(pid){
   const bonus=Math.min(exp.signingBonus,maxBonus);
   window._negSal=sal;window._negYrs=yrs;window._negBonus=bonus;window._negPid=pid;window._negFee=marketItem?.fee||0;window._negRole=exp.role;
   const isFutureJoin=p.teamId!==null&&p.teamId!==store.G.myTeamId&&p.contractYears>0;
-  modal.innerHTML=`<div class="mt2">Negocjacje: ${p.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+  modal.innerHTML=`<div class="mt2">${t('neg.title',{name:p.name})} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="neg-block">
-    <div class="neg-row"><div class="neg-label">OVR zawodnika</div><div class="neg-val syne fs24 cr">${ovrBase(p)}</div></div>
-    <div class="neg-row"><div class="neg-label">Wiek / Lojalno\u015b\u0107</div><div class="neg-val">${p.age} lat / ${p.loyalty||0}/10</div></div>
-    <div class="neg-row"><div class="neg-label">Nastroje gracza</div><div class="neg-val">${seasonFormLabel(p)} / ${exp.interest}</div></div>
-    <div class="neg-row"><div class="neg-label">Profil agenta</div><div class="neg-val">${exp.profile.agentType} / ${exp.profile.summary}</div></div>
-    <div class="neg-row"><div class="neg-label">Oczekiwana rola</div><div class="neg-val">${roleGuaranteeLabel(exp.role)}</div></div>
-    ${marketItem?.type==='transfer'?`<div class="neg-row"><div class="neg-label">Kwota odst\u0119pnego</div><div class="neg-val">${marketItem.fee.toLocaleString('pl')} €</div></div>`:''}
+    <div class="neg-row"><div class="neg-label">${t('neg.playerOvr')}</div><div class="neg-val syne fs24 cr">${ovrBase(p)}</div></div>
+    <div class="neg-row"><div class="neg-label">${t('neg.ageLoyalty')}</div><div class="neg-val">${t('neg.ageYears',{age:p.age})} / ${p.loyalty||0}/10</div></div>
+    <div class="neg-row"><div class="neg-label">${t('neg.playerMood')}</div><div class="neg-val">${seasonFormLabel(p)} / ${t(exp.interestKey)}</div></div>
+    <div class="neg-row"><div class="neg-label">${t('neg.agentProfile')}</div><div class="neg-val">${t(`neg.agent.${exp.profile.agentType}`)} / ${t(exp.profile.summaryKey)}</div></div>
+    <div class="neg-row"><div class="neg-label">${t('neg.expectedRole')}</div><div class="neg-val">${roleGuaranteeLabel(exp.role)}</div></div>
+    ${marketItem?.type==='transfer'?`<div class="neg-row"><div class="neg-label">${t('neg.transferFee')}</div><div class="neg-val">${formatCurrency(marketItem.fee)}</div></div>`:''}
   </div>
-  ${isFutureJoin?'<div class="pd8-12 r3 fs11" style="background:#f8f0dc;border:1px solid var(--gold);color:#8a6000;margin:8px 0">Zawodnik ma wa\u017cny kontrakt. Podpis zadzia\u0142a dopiero od nast\u0119pnego sezonu.</div>':''}
+  ${isFutureJoin?`<div class="pd8-12 r3 fs11" style="background:#f8f0dc;border:1px solid var(--gold);color:#8a6000;margin:8px 0">${t('neg.futureJoin')}</div>`:''}
   <div style="margin:16px 0">
-    <div class="fs10 up ls1 ink3 mb4">Pensja: <b id="neg-sal-lbl" class="cr">${sal.toLocaleString('pl')} €/rok</b></div>
+    <div class="fs10 up ls1 ink3 mb4">${t('neg.salary')}: <b id="neg-sal-lbl" class="cr">${formatCurrency(sal)} ${t('neg.perYear')}</b></div>
     <input type="range" min="1000" max="${maxSal}" step="1000" value="${sal}" class="w100 accr" oninput="window._negSal=+this.value;negUpdate()">
-    <div class="kicker">Lata kontraktu: <b id="neg-yr-lbl" class="cr">${yrs} lat</b></div>
+    <div class="kicker">${t('neg.contractYears')}: <b id="neg-yr-lbl" class="cr">${t('neg.yearsValue',{count:yrs})}</b></div>
     <input type="range" min="1" max="4" step="1" value="${yrs}" class="w100 accr" oninput="window._negYrs=+this.value;negUpdate()">
-    <div class="kicker">Premia za podpis: <b id="neg-bonus-lbl" class="cr">${bonus.toLocaleString('pl')} €</b></div>
+    <div class="kicker">${t('neg.signingBonus')}: <b id="neg-bonus-lbl" class="cr">${formatCurrency(bonus)}</b></div>
     <input type="range" min="0" max="${maxBonus}" step="1000" value="${bonus}" class="w100 accr" oninput="window._negBonus=+this.value;negUpdate()">
-    <div class="kicker">Obiecana rola: <b id="neg-role-lbl" class="cr">${roleGuaranteeLabel(exp.role)}</b></div>
+    <div class="kicker">${t('neg.promisedRole')}: <b id="neg-role-lbl" class="cr">${roleGuaranteeLabel(exp.role)}</b></div>
     <select class="w100 pd10-12 bb1 bgs1 r10" onchange="window._negRole=this.value;negUpdate()">
-      <option value="starter" ${exp.role==='starter'?'selected':''}>Gwarancja pierwszego sk\u0142adu</option>
-      <option value="rotation" ${exp.role==='rotation'?'selected':''}>Rola w rotacji</option>
-      <option value="prospect" ${exp.role==='prospect'?'selected':''}>Projekt / \u0142awka</option>
+      <option value="starter" ${exp.role==='starter'?'selected':''}>${t('role.starter')}</option>
+      <option value="rotation" ${exp.role==='rotation'?'selected':''}>${t('role.rotation')}</option>
+      <option value="prospect" ${exp.role==='prospect'?'selected':''}>${t('role.prospect')}</option>
     </select>
   </div>
-  <div class="nfb ok" id="neg-mood">Pakiet jest na granicy akceptacji.</div>
-  <div id="neg-reasons" class="fs11 ink3" style="margin:8px 0 10px">Sygna\u0142y z rozm\u00f3w: agent czeka na pe\u0142niejszy pakiet.</div>
-  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">Oczekiwania agenta: ok. ${exp.salary.toLocaleString('pl')} €/rok, ${exp.years} lata, bonus ${exp.signingBonus.toLocaleString('pl')} €. Najwa\u017cniejsza jest pensja roczna, rola i \u0142\u0105czna gwarancja kontraktu. Koszt wej\u015bcia teraz: <b id="neg-pkg-lbl">${((marketItem?.fee||0)+bonus).toLocaleString('pl')} €</b>. ${isFutureJoin?'Przy wa\u017cnym kontrakcie transfer jest tylko na kolejny sezon.':'W tej kolejce mo\u017cesz wys\u0142a\u0107 jedn\u0105 ofert\u0119 tylko temu konkretnemu zawodnikowi.'}</div>
-  <div class="btn-row"><button class="btn pr" onclick="doNegotiate(${pid})">ZAPROPONUJ KONTRAKT</button><button class="btn" onclick="closeModal()">REZYGNUJ</button></div>`;
+  <div class="nfb ok" id="neg-mood">${t('neg.moodBorderline')}</div>
+  <div id="neg-reasons" class="fs11 ink3" style="margin:8px 0 10px">${t('neg.waitingPlayer')}</div>
+  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">${t('neg.expectations',{salary:formatCurrency(exp.salary),years:t('neg.yearsValue',{count:exp.years}),bonus:formatCurrency(exp.signingBonus),upfront:`<b id="neg-pkg-lbl">${formatCurrency((marketItem?.fee||0)+bonus)}</b>`,rule:t(isFutureJoin?'neg.ruleFuture':'neg.ruleOneOffer')})}</div>
+  <div class="btn-row"><button class="btn pr" onclick="doNegotiate(${pid})">${t('neg.propose').toUpperCase()}</button><button class="btn" onclick="closeModal()">${t('neg.withdraw').toUpperCase()}</button></div>`;
   negUpdate();
   openModal();
 }
@@ -5118,9 +5110,9 @@ function doNegotiate(pid){
   // Club trait: youth-only clubs may NOT sign adult external players \u2014 but scouted
   // JUNIORS (isYouth) are part of the academy pipeline, so those are allowed.
   if(myTeam().traits?.includes('youthOnly')&&p.teamId!==store.G.myTeamId&&!p.isYouth){
-    toast('Tw\u00f3j klub rekrutuje WY\u0141\u0104CZNIE w\u0142asnych junior\u00f3w \u2014 doros\u0142ych z zewn\u0105trz nie podpisujesz (junior\u00f3w ze skautingu tak).');return;
+    toast(t('neg.youthOnly'));return;
   }
-  if(alreadyNegotiated('player',pid)){toast(`Oferta dla ${p.name} zosta\u0142a ju\u017c z\u0142o\u017cona w tej kolejce.`);return;}
+  if(alreadyNegotiated('player',pid)){toast(t('neg.alreadyOffered',{name:p.name}));return;}
   const exp=contractExpect(p,store.G.myTeamId);
   const sal=window._negSal||exp.salary;
   const yrs=window._negYrs||exp.years;
@@ -5128,11 +5120,11 @@ function doNegotiate(pid){
   const promisedRole=window._negRole||exp.role;
   const marketItem=(store.G.transferMarket||[]).find(m=>m.playerId===pid)||null;
   const upfront=(marketItem?.type==='transfer'?(marketItem.fee||0):0)+bonus;
-  if(myTeam().budget<upfront){toast('Brak bud\u017cetu na ten pakiet!');return;}
+  if(myTeam().budget<upfront){toast(t('neg.noBudget'));return;}
   const feedback=negResponse(p,sal,yrs,bonus,promisedRole,store.G.myTeamId);
   markNegotiated('player',pid);
   pushNegotiationHistory({kind:'player',targetId:p.id,targetName:p.name,status:feedback.score<0?'rejected':'accepted',salary:sal,years:yrs,bonus,promisedRole,reasons:feedback.reasons});
-  if(feedback.score<0){toast(feedback.hardBlock||`${p.name} odrzuci\u0142 ofert\u0119!`);closeModal();persistGame();return;}
+  if(feedback.score<0){toast(feedback.hardBlockKey?t(feedback.hardBlockKey):t('neg.rejected',{name:p.name}));closeModal();persistGame();return;}
   const joinsNextSeason=p.teamId!==null&&p.teamId!==store.G.myTeamId&&p.contractYears>0;
   const finance=ensureSeasonFinance();
   myTeam().budget-=upfront;
@@ -5147,7 +5139,7 @@ function doNegotiate(pid){
       const seller=store.G.teams.find(t=>t.id===p.teamId);
       if(seller)seller.budget=(seller.budget||0)+(marketItem.fee||0);
     }
-    toast(`${p.name} podpisze kontrakt wa\u017cny od nast\u0119pnego sezonu (${roleGuaranteeLabel(promisedRole).toLowerCase()})!`);
+    toast(t('neg.joinsNext',{name:p.name,role:roleGuaranteeLabel(promisedRole).toLowerCase()}));
   }else{
     const previousTeamId=p.teamId;
     if(marketItem?.type==='transfer'&&previousTeamId!==null&&previousTeamId!==store.G.myTeamId){
@@ -5170,7 +5162,7 @@ function doNegotiate(pid){
     clearScoutResult(p.id);
   }
   buildMarket();closeModal();render();updateHeader();
-  if(!joinsNextSeason)toast(`${p.name} podpisa\u0142 kontrakt (${sal.toLocaleString('pl')} € x ${yrs} lat, bonus ${bonus.toLocaleString('pl')} €, ${roleGuaranteeLabel(promisedRole).toLowerCase()})`);
+  if(!joinsNextSeason)toast(t('neg.signed',{name:p.name,salary:formatCurrency(sal),years:t('neg.yearsValue',{count:yrs}),bonus:formatCurrency(bonus),role:roleGuaranteeLabel(promisedRole).toLowerCase()}));
   persistGame();
 }
 
@@ -5267,11 +5259,11 @@ function openStaffNeg(sid){
   const blockReason=staffNegotiationBlockReason(s);
   if(blockReason){toast(blockReason);return;}
   if(alreadyNegotiated('staff',sid)){
-    toast(`Oferta dla ${s.name} zosta\u0142a ju\u017c z\u0142o\u017cona w tej kolejce.`);return;
+    toast(t('staff.neg.alreadyOffered',{name:s.name}));return;
   }
   const isHiring=s.teamId!==store.G.myTeamId;
   const mt=myTeam();const modal=document.getElementById('modal');modal.className='modal';
-  const typeLbl=s.type==='coach'?'Trener':s.type==='scout'?'Skaut':s.type==='physio'?'Fizjoterapeuta':s.type==='pr'?'Dyrektorka PR':'Psycholog';
+  const typeLbl=t(s.type==='coach'?'staff.coach':s.type==='scout'?'staff.scout':s.type==='physio'?'staff.physio':s.type==='pr'?'staff.prDirector':'staff.psychologist');
   const typeIcon=s.type==='coach'?'':s.type==='scout'?'':s.type==='physio'?'':s.type==='pr'?'':'';
   const sOvr=staffOvr(s);
   const defaultYrs=s.contractYears||2;
@@ -5286,27 +5278,27 @@ function openStaffNeg(sid){
   modal.innerHTML=`<div class="mt2">${typeIcon} ${s.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="flex aic gp16 mb14">
     <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:40px;color:${staffOvrColor(sOvr)}">${sOvr}</div>
-    <div><div class="fs11 ink3">${typeLbl} / OVR ${sOvr} / Wiek: ${s.age||'?'} lat${s.peakAge?' / Peak: '+s.peakAge+'l':''}${s.teamId===store.G.myTeamId?' / Peak OVR: '+staffCeiling(s):''}</div><div class="fs11 ink3 mt-2">${s.salary.toLocaleString('pl')} €/rok</div></div>
+    <div><div class="fs11 ink3">${t('staff.neg.ageLine',{role:typeLbl,ovr:sOvr,age:s.age||'?',peak:s.peakAge?t('staff.neg.peak',{age:s.peakAge}):'',ceiling:s.teamId===store.G.myTeamId?t('staff.neg.ceiling',{ovr:staffCeiling(s)}):''})}</div><div class="fs11 ink3 mt-2">${formatCurrency(s.salary)} ${t('neg.perYear')}</div></div>
   </div>
-  ${s.type==='coach'?`<div class="pd8-12 bgs2 bb1 r6 fs11 mb10"><b>Rozwój zawodników:</b> młodzież <b class="cg">+${Math.round((coachDevMultiplier(s.training,true)-1)*100)}%</b>, seniorzy <b class="cg">+${Math.round((coachDevMultiplier(s.training,false)-1)*100)}%</b> tempa wzrostu. To główna wartość elitarnego trenera — buduje dynastię.</div>`:''}
+  ${s.type==='coach'?`<div class="pd8-12 bgs2 bb1 r6 fs11 mb10">${t('staff.neg.development',{youth:Math.round((coachDevMultiplier(s.training,true)-1)*100),senior:Math.round((coachDevMultiplier(s.training,false)-1)*100)})}</div>`:''}
   ${(isHiring&&canPreSign)||replaceFee>0?`<div class="neg-block">
-    ${isHiring&&canPreSign?`<div class="neg-row"><div class="neg-label">Status kontraktu</div><div class="neg-val">ostatni rok / podpis od nowego sezonu</div></div>`:''}
-    ${replaceFee>0?`<div class="neg-row"><div class="neg-label">Koszt wymiany roli</div><div class="neg-val">${replaceFee.toLocaleString('pl')} € za zwolnienie ${currentRoleHolder.name}</div></div>`:''}
+    ${isHiring&&canPreSign?`<div class="neg-row"><div class="neg-label">${t('staff.neg.contractStatus')}</div><div class="neg-val">${t('staff.neg.preSignStatus')}</div></div>`:''}
+    ${replaceFee>0?`<div class="neg-row"><div class="neg-label">${t('staff.neg.replacementCost')}</div><div class="neg-val">${t('staff.neg.replacementValue',{cost:formatCurrency(replaceFee),name:currentRoleHolder.name})}</div></div>`:''}
   </div>`:''}
   <div style="margin:12px 0">
-    <div class="fs10 up ls1 ink3 mb4">Pensja: <b id="staff-sal-lbl" class="cr">${(s.salary||staffExpSal).toLocaleString('pl')} €/rok</b> <span class="ink3">(oczekuje ~${staffExpSal.toLocaleString('pl')})</span></div>
-    <input type="range" min="1000" max="${staffMaxSal}" step="1000" value="${s.salary||staffExpSal}" class="w100 accr" oninput="window._staffNegSal=+this.value;document.getElementById('staff-sal-lbl').firstChild.textContent=(+this.value).toLocaleString('pl')+' €/rok';staffNegUpdate()">
-    <div class="kicker">Premia za podpis: <b id="staff-bonus-lbl" class="cr">${staffDefBonus.toLocaleString('pl')} €</b></div>
-    <input type="range" min="0" max="${staffMaxBonus}" step="1000" value="${staffDefBonus}" class="w100 accr" oninput="window._staffNegBonus=+this.value;document.getElementById('staff-bonus-lbl').textContent=(+this.value).toLocaleString('pl')+' €';staffNegUpdate()">
-    <div class="kicker">Lata kontraktu: <b id="staff-yr-lbl" class="cr">${defaultYrs} lat</b></div>
-    <input type="range" min="1" max="4" step="1" value="${defaultYrs}" class="w100 accr" oninput="window._staffNegYrs=+this.value;document.getElementById('staff-yr-lbl').textContent=this.value+' lat';staffNegUpdate()">
-    <div id="staff-mood" class="nfb ok mt-12">Oferta jest na granicy akceptacji.</div>
+    <div class="fs10 up ls1 ink3 mb4">${t('neg.salary')}: <b id="staff-sal-lbl" class="cr">${formatCurrency(s.salary||staffExpSal)} ${t('neg.perYear')}</b> <span class="ink3">(${t('staff.neg.expected',{salary:formatCurrency(staffExpSal)})})</span></div>
+    <input type="range" min="1000" max="${staffMaxSal}" step="1000" value="${s.salary||staffExpSal}" class="w100 accr" oninput="window._staffNegSal=+this.value;document.getElementById('staff-sal-lbl').firstChild.textContent=formatCurrency(+this.value)+' '+t('neg.perYear');staffNegUpdate()">
+    <div class="kicker">${t('neg.signingBonus')}: <b id="staff-bonus-lbl" class="cr">${formatCurrency(staffDefBonus)}</b></div>
+    <input type="range" min="0" max="${staffMaxBonus}" step="1000" value="${staffDefBonus}" class="w100 accr" oninput="window._staffNegBonus=+this.value;document.getElementById('staff-bonus-lbl').textContent=formatCurrency(+this.value);staffNegUpdate()">
+    <div class="kicker">${t('neg.contractYears')}: <b id="staff-yr-lbl" class="cr">${t('neg.yearsValue',{count:defaultYrs})}</b></div>
+    <input type="range" min="1" max="4" step="1" value="${defaultYrs}" class="w100 accr" oninput="window._staffNegYrs=+this.value;document.getElementById('staff-yr-lbl').textContent=t('neg.yearsValue',{count:this.value});staffNegUpdate()">
+    <div id="staff-mood" class="nfb ok mt-12">${t('staff.neg.moodBorderline')}</div>
     <div id="staff-reasons" class="fs11 ink3 mt-6"></div>
   </div>
-  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">${canPreSign?'Ma ostatni rok kontraktu, więc możesz zaklepać go od następnego sezonu bez automatycznego wykupu. ':replaceFee>0?'To natychmiastowa podmiana na tej roli, więc obecna osoba zostanie zwolniona tylko jeśli to potwierdzisz. ':'Wolny specjalista może dołączyć od razu. '}Dla własnego sztabu ustawiasz docelową długość kontraktu, a nie dokładanie lat do obecnej umowy.</div>
+  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">${t(canPreSign?'staff.neg.preSignInfo':replaceFee>0?'staff.neg.replaceInfo':'staff.neg.freeInfo')}${t('staff.neg.ownInfo')}</div>
   <div class="btn-row mt-14">
-    <button class="btn ${isHiring?'pr':'go'}" onclick="doHireStaff(${s.id})">${isHiring?'ZATRUDNIJ':'PRZED\u0141U\u017b'}</button>
-    <button class="btn" onclick="closeModal()">ANULUJ</button>
+    <button class="btn ${isHiring?'pr':'go'}" onclick="doHireStaff(${s.id})">${t(isHiring?'staff.neg.hire':'staff.neg.extend').toUpperCase()}</button>
+    <button class="btn" onclick="closeModal()">${t('staff.neg.cancel').toUpperCase()}</button>
   </div>`;
   openModal();staffNegUpdate();
 }
@@ -5328,9 +5320,9 @@ function doHireStaff(sid){
   const negBonus=Math.max(0,Math.round(window._staffNegBonus||0));
   if(s){
     const fb=staffNegResponse(s,negSal,negBonus,window._staffNegYrs||2);
-    if(fb.score<0){toast(`${s.name} odrzuca ofert\u0119: ${fb.reasons[0]||'zbyt s\u0142aby pakiet'}.`);return;}
+    if(fb.score<0){toast(t('staff.neg.rejected',{name:s.name,reason:t(fb.reasons[0]||'neg.reason.weakPackage')}));return;}
   }
-  if(alreadyNegotiated('staff',sid)){toast('Dla tej osoby oferta zosta\u0142a ju\u017c wys\u0142ana w tej kolejce.');return;}
+  if(alreadyNegotiated('staff',sid)){toast(t('staff.neg.alreadyOffered',{name:s?.name||existing?.name||''}));return;}
   markNegotiated('staff',sid);
   const yrs=window._staffNegYrs||2;
   if(s){
@@ -5340,8 +5332,8 @@ function doHireStaff(sid){
     // wage (paid each season from income), NOT required upfront \u2014 so a near-broke
     // club can still hire an affordable scout/coach. (PR directors keep their cost.)
     const upfrontFee=(s.type==='pr'?(s.cost||0):0);
-    const cost=upfrontFee+replaceFee+negBonus;if(cost>0&&mt.budget<cost){toast('Brak bud\u017cetu na premi\u0119/odst\u0119pne!');closeModal();return;}
-    if(replaceFee>0&&!confirm(`Zatrudnienie ${s.name} zwolni ${currentRoleHolder.name}.\nKoszt zwolnienia: ${replaceFee.toLocaleString('pl')} €.\nKontynuowa\u0107?`)){closeModal();return;}
+    const cost=upfrontFee+replaceFee+negBonus;if(cost>0&&mt.budget<cost){toast(t('staff.neg.noBudget'));closeModal();return;}
+    if(replaceFee>0&&!confirm(t('staff.neg.replaceConfirm',{name:s.name,current:currentRoleHolder.name,cost:formatCurrency(replaceFee)}))){closeModal();return;}
     const finance=ensureSeasonFinance();
     mt.budget-=cost;
     s.salary=negSal;
@@ -5354,7 +5346,7 @@ function doHireStaff(sid){
       if(s.teamId!==null&&s.teamId!==store.G.myTeamId){
         store.G.pendingStaffSignings=store.G.pendingStaffSignings||[];
         if(!store.G.pendingStaffSignings.find(x=>x.staffId===s.id))store.G.pendingStaffSignings.push({staffId:s.id,destinationTeamId:store.G.myTeamId,sourceTeamId:s.teamId,years:yrs,kind:'pr'});
-        toast(`${s.name} do\u0142\u0105czy jako Dyrektorka PR od nowego sezonu!`);
+        toast(t('staff.neg.prJoinsNext',{name:s.name}));
       }else{
         if(currentRoleHolder&&currentRoleHolder.id!==s.id){
           closeStaffTenure(currentRoleHolder,store.G.season);
@@ -5363,12 +5355,12 @@ function doHireStaff(sid){
         startStaffTenure(s,store.G.myTeamId,store.G.season);s.contractYears=yrs;
         store.G.prDirector=s;
         store.G.prDirectorPool=(store.G.prDirectorPool||[]).filter(x=>x.id!==sid);
-        toast(`${s.name} zatrudniona jako Dyrektorka PR na ${yrs} lata!`);
+        toast(t('staff.neg.prHired',{name:s.name,years:t('neg.yearsValue',{count:yrs})}));
       }
     }else if(s.teamId!==null&&s.teamId!==store.G.myTeamId){
       store.G.pendingStaffSignings=store.G.pendingStaffSignings||[];
       if(!store.G.pendingStaffSignings.find(x=>x.staffId===s.id))store.G.pendingStaffSignings.push({staffId:s.id,destinationTeamId:store.G.myTeamId,sourceTeamId:s.teamId,years:yrs,kind:'staff'});
-      toast(`${s.name} do\u0142\u0105czy do sztabu od nowego sezonu!`);
+      toast(t('staff.neg.joinsNext',{name:s.name}));
     }else{
       if(currentRoleHolder&&currentRoleHolder.id!==s.id){
         closeStaffTenure(currentRoleHolder,store.G.season);
@@ -5380,22 +5372,22 @@ function doHireStaff(sid){
       if(!store.G.staffHistory[s.id])store.G.staffHistory[s.id]=[staffSnap(s)];
       store.G.staffPool=store.G.staffPool.filter(x=>x.id!==sid);
       if(store.G.scoutPool)store.G.scoutPool=store.G.scoutPool.filter(x=>x.id!==sid);
-      toast(`${s.name} zatrudniony na ${yrs} lat!`);
+      toast(t('staff.neg.hired',{name:s.name,years:t('neg.yearsValue',{count:yrs})}));
     }
   }else if(existing){
     existing.contractYears=yrs;
     if(negSal>0)existing.salary=negSal;
     if(negBonus>0){mt.budget-=negBonus;const f=ensureSeasonFinance();if(f)f.other-=negBonus;}
-    toast(`Kontrakt ${existing.name} ustawiony na ${yrs} lat!`);
+    toast(t('staff.neg.renewed',{name:existing.name,years:t('neg.yearsValue',{count:yrs})}));
   }
   closeModal();render();updateHeader();persistGame();
 }
 function fireStaff(sid){
   const s=store.G.staff.find(x=>x.id===sid);if(!s)return;
-  if(!confirm(`Zwolni\u0107 ${s.name}?`))return;
+  if(!confirm(t('staff.neg.fireConfirm',{name:s.name})))return;
   const mt=myTeam();mt.budget-=s.salary*s.contractYears;
   closeStaffTenure(s,store.G.season);
-  store.G.staff=store.G.staff.filter(x=>x.id!==sid);render();updateHeader();toast(`${s.name} zwolniony.`);
+  store.G.staff=store.G.staff.filter(x=>x.id!==sid);render();updateHeader();toast(t('staff.neg.fired',{name:s.name}));
   persistGame();
 }
 

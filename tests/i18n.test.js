@@ -359,3 +359,26 @@ test('player and staff profile modals follow the active locale', () => {
   g.PPM.gameplay.openStaffModal(staff.id);
   assert.match(g.document.getElementById('modal').innerHTML, /Historia klubów/i);
 });
+
+test('player and staff contract negotiations follow the active locale', () => {
+  const g = boot(3120);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const player = g.PPM.state.G.players.find(p => p.teamId === null && !p.retired);
+  const staff = g.PPM.state.G.staffPool.find(s => s.teamId === null);
+
+  g.PPM.gameplay.openNegotiate(player.id);
+  const englishPlayer = g.document.getElementById('modal').innerHTML;
+  assert.match(englishPlayer, /Negotiations|Signing bonus|Promised role/i);
+  assert.doesNotMatch(englishPlayer, /Negocjacje|Premia za podpis|Obiecana rola/i);
+
+  g.PPM.gameplay.openStaffNeg(staff.id);
+  const englishStaff = g.document.getElementById('modal').innerHTML;
+  assert.match(englishStaff, /Contract years|Expected|Hire/i);
+  assert.doesNotMatch(englishStaff, /Lata kontraktu|Zatrudnij/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openNegotiate(player.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Negocjacje|Premia za podpis/i);
+  g.PPM.gameplay.openStaffNeg(staff.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Lata kontraktu|Zatrudnij/i);
+});
