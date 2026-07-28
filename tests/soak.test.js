@@ -18,12 +18,15 @@ const { checkWorld, checkLiveLookups, describeWorld } = require('./lib/invariant
 
 const invariantsOf = (info) => [...checkWorld(info.game), ...checkLiveLookups(info.sandbox)];
 
-async function soak(seasons, countryId, seed) {
+// Plays a career and collects every invariant violation. Pass `sizes` to also
+// capture the population report after each season.
+async function soak(seasons, countryId, seed, sizes) {
   const problems = [];
   const result = await runCareer({
     seasons,
     seed,
     countryId,
+    onSeason: sizes ? (info) => sizes.push(describeWorld(info.game)) : null,
     afterSeason: (info) => {
       const found = invariantsOf(info);
       problems.push(...found.map((p) => `S${info.season}: ${p}`));
@@ -53,7 +56,7 @@ for (const [countryId, label] of [['JP', 'T.League (golden point)'], ['CN', 'CTT
 
 test('[slow] twelve seasons keep population and save size bounded', async () => {
   const sizes = [];
-  const { result, problems } = await soak0(12, 'PL', 20260728, sizes);
+  const { result, problems } = await soak(12, 'PL', 20260728, sizes);
   assert.deepEqual(problems, []);
 
   const first = sizes[0];
@@ -79,22 +82,6 @@ test('[slow] twelve seasons keep population and save size bounded', async () => 
   assert.equal(result.game.season, 13);
 });
 
-// Same helper, but also collecting the population report per season.
-async function soak0(seasons, countryId, seed, sizes) {
-  const problems = [];
-  const result = await runCareer({
-    seasons,
-    seed,
-    countryId,
-    onSeason: (info) => sizes.push(describeWorld(info.game)),
-    afterSeason: (info) => {
-      const found = invariantsOf(info);
-      problems.push(...found.map((p) => `S${info.season}: ${p}`));
-      return found;
-    },
-  });
-  return { result, problems };
-}
 
 test('[slow] the same seed replays the same career', async () => {
   const fingerprint = async () => {
