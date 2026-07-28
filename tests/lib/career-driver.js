@@ -102,10 +102,13 @@ class AutoManager {
     if (this.G.techPartnership) return;
     const pres = this.gp.calcPrestige();
     const tiers = this.g.PPM.constants.TECH_PARTNERSHIPS;
-    // Cheapest partner whose prestige window we are inside.
-    const affordable = tiers.filter((t) => pres >= t.prestige[0] && pres <= t.prestige[1])
-      .sort((a, b) => a.costPerSeason - b.costPerSeason);
-    if (affordable.length) this.gp.selectTechPartnership(affordable[0].id);
+    // costPerSeason is signed: negative means the club pays. Take the best deal
+    // in our prestige window — a manager who picks the one that drains €2k a year
+    // eventually cannot afford a signing at all, and a club that cannot sign
+    // cannot field a team.
+    const inRange = tiers.filter((t) => pres >= t.prestige[0] && pres <= t.prestige[1])
+      .sort((a, b) => b.costPerSeason - a.costPerSeason);
+    if (inRange.length) this.gp.selectTechPartnership(inRange[0].id);
   }
 
   pickBoardObjective() {
@@ -269,8 +272,9 @@ class AutoManager {
   ensureFieldable() {
     const gp = this.gp;
     // Don't wait for the squad to become illegal: a club that goes into a round
-    // with five bodies is one bad injury from a blocked matchday.
-    if (this.seniors().length < 6) this.fillSquad(8);
+    // with five bodies is one bad injury from a blocked matchday. An overdrawn
+    // account blocks every signing, so square the books before shopping.
+    if (this.seniors().length < 6) { this.balanceBooks(); this.fillSquad(8); }
     if (gp.getEligibleMatchPlayers(this.myId).length >= 3) return true;
     this.mine().filter((p) => p.role === 'youth' && !(p.injuredFor > 0))
       .sort((a, b) => gp.ovr(b) - gp.ovr(a))

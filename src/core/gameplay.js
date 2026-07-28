@@ -3082,6 +3082,23 @@ function applyAgingTo(p,devMult,roleMult){
     if(d!==0)p[s]=Math.max(10,Math.min(getMax(p,s),p[s]+d));
   });
 }
+// An AI club with the `youthOnly` trait may not sign anyone from the transfer
+// market — that restriction is the whole point of the challenge club. For that
+// club an expiring contract is therefore not a squad decision, it is the club
+// quietly dissolving: every player it grows leaves the season after graduating
+// and nothing can replace him. The owner's real season-11 save shows the end
+// state — Akademia Orłów was down to ONE senior, below the three the match
+// protocol needs. Such a club renews its own people instead of releasing them.
+// The human-run version is excluded: the manager renews contracts himself.
+function clubMustRetainOwnPlayers(teamId){
+  if(teamId===null||teamId===undefined||!store.G)return false;
+  const team=store.G.teams.find(t=>t.id===teamId);
+  return !!team&&!team.isPlayer&&(team.traits||[]).includes('youthOnly');
+}
+function retainForClosedClub(p){
+  p.contractYears=1+rnd(1,2);
+  p.salary=contractExpect(p,p.teamId).salary;
+}
 function applyGrowth(){
   const myId=store.G.myTeamId;
   const coach=store.G.staff.find(s=>s.teamId===myId&&s.type==='coach');
@@ -3141,6 +3158,7 @@ function applyGrowth(){
     // Youth at 21+ auto-promote for EVERY club (was player-only).
     if(p.role==='youth'&&p.age>=21&&p.teamId!==null){
       const wasMine=p.teamId===myId;
+      if(p.contractYears<=0&&clubMustRetainOwnPlayers(p.teamId))retainForClosedClub(p);
       if(p.contractYears>0){
         p.role='reserve';p.isYouth=false;
         if(wasMine)toast(`${p.name} (${ovrBase(p)} OVR) uko\u0144czy\u0142 akademi\u0119 i do\u0142\u0105czy\u0142 do rezerwy!`);
@@ -4438,6 +4456,11 @@ function rebalanceAiLineup(teamId){
 }
 function aiSignPlayers(){
   const diffCfg=getDifficultyConfig();
+  // Clubs barred from the market keep their own squad (see clubMustRetainOwnPlayers).
+  // Runs BEFORE the expiry sweep below, which would otherwise release them all.
+  store.G.players.forEach(p=>{
+    if(!p.retired&&(p.contractYears||0)<=0&&clubMustRetainOwnPlayers(p.teamId))retainForClosedClub(p);
+  });
   const freeAgents=store.G.players.filter(p=>!p.retired&&(p.teamId===null||p.contractYears<=0)).sort((a,b)=>ovrBase(b)-ovrBase(a));
   freeAgents.forEach(p=>{p.teamId=null;p.contractYears=0;});
   store.G.staff=store.G.staff.filter(s=>{
@@ -4815,8 +4838,19 @@ function negUpdate(){
   }
   if(reasons)reasons.textContent=feedback.reasons.length?`Sygna\u0142y z rozm\u00f3w: ${feedback.reasons.join(', ')}.`:'Sygna\u0142y z rozm\u00f3w: agent czeka na pe\u0142niejszy pakiet.';
 }
+// An EMPLOYED person is authoritative. The season change mirrors the club's own
+// scouts into scoutPool (so the market page can grey them out), and those mirrors
+// are shallow copies that stop tracking the real record the moment either side
+// changes. Resolving to a copy meant the staff modal showed a stale contract and
+// a renewal wrote the new terms to a throwaway object — visible in the owner's
+// S4 save, where scout id 456 existed twice.
 function findStaffById(sid){
-  return store.G.staffPool.find(x=>x.id===sid)||(store.G.scoutPool||[]).find(x=>x.id===sid)||(store.G.prDirectorPool||[]).find(x=>x.id===sid)||store.G.staff.find(x=>x.id===sid)||(store.G.prDirector&&store.G.prDirector.id===sid?store.G.prDirector:null)||getRivalPRDirectors().find(x=>x.id===sid);
+  return store.G.staff.find(x=>x.id===sid)
+    ||(store.G.prDirector&&store.G.prDirector.id===sid?store.G.prDirector:null)
+    ||store.G.staffPool.find(x=>x.id===sid)
+    ||(store.G.scoutPool||[]).find(x=>x.id===sid)
+    ||(store.G.prDirectorPool||[]).find(x=>x.id===sid)
+    ||getRivalPRDirectors().find(x=>x.id===sid);
 }
 function staffNegUpdate(){
   const s=findStaffById(window._staffNegSid);if(!s)return;
@@ -5093,12 +5127,17 @@ function openStaffNeg(sid){
   openModal();staffNegUpdate();
 }
 function doHireStaff(sid){
-  const s=store.G.staffPool.find(x=>x.id===sid)
+  let s=store.G.staffPool.find(x=>x.id===sid)
     || (store.G.scoutPool||[]).find(x=>x.id===sid)
     || (store.G.prDirectorPool||[]).find(x=>x.id===sid)
     || store.G.staff.find(x=>x.id===sid&&x.teamId!==store.G.myTeamId)
     || getRivalPRDirectors().find(x=>x.id===sid);
   const existing=store.G.staff.find(x=>x.id===sid)||(store.G.prDirector&&store.G.prDirector.id===sid?store.G.prDirector:null);
+  // Our own scouts are mirrored into scoutPool at the season change (see
+  // findStaffById). Signing "the pool row" for someone we already employ wrote the
+  // renewal to that stale copy and left the real contract to expire — treat it as
+  // the renewal it actually is.
+  if(s&&existing&&existing.teamId===store.G.myTeamId)s=null;
   const mt=myTeam();
   if(s){
     const blockReason=staffNegotiationBlockReason(s);
@@ -5600,5 +5639,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons };
+window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, maintainAiRosters, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectBrand, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons };
 })();

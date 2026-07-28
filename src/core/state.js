@@ -442,6 +442,10 @@ function migrateLoadedGame(parsed){
       const negotiated=game.transferMarket.filter(row=>{
         if(!row||row.type==='fa')return false;
         if(!liveById.has(row.playerId))return false;
+        // A fee/pre-sign row for someone who is now OUR player is stale — the S8
+        // and S11 careers both carry one, and it shows the manager his own squad
+        // member for sale. buildMarket() never lists own players.
+        if(liveById.get(row.playerId).teamId===game.myTeamId)return false;
         // A stale fee/pre-sign row for someone whose contract has since expired
         // contradicts his current state; buildMarket() would never pair the two.
         if(freeAgentIds.has(row.playerId))return false;
@@ -461,6 +465,27 @@ function migrateLoadedGame(parsed){
       if(Array.isArray(game.marketCompare))game.marketCompare=game.marketCompare.filter(id=>liveById.has(id));
     }
   }
+  repairMergedPlayerHistories(game);
+  // A club that fell below the three players the match protocol needs is a broken
+  // fixture for the rest of the career — the owner's S11 career has one (Akademia
+  // Orłów, down to a single senior; see clubMustRetainOwnPlayers in gameplay.js
+  // for how that happened and how it is prevented now). Careers already carrying
+  // the damage heal it on load by graduating the club's OWN juniors: no player is
+  // invented and nobody changes clubs.
+  (game.teams||[]).forEach(team=>{
+    if(!team||team.isPlayer)return;
+    const squad=(game.players||[]).filter(p=>p&&p.teamId===team.id&&!p.retired&&!p.loanedOut);
+    let seniors=squad.filter(p=>p.role!=='youth').length;
+    if(seniors>=3)return;
+    squad.filter(p=>p.role==='youth')
+      .sort((a,b)=>(b.age||0)-(a.age||0))
+      .forEach(p=>{
+        if(seniors>=3)return;
+        p.role='reserve';p.isYouth=false;
+        p.contractYears=Math.max(1,p.contractYears||0);
+        seniors++;
+      });
+  });
   // The player's infra levels are authoritative on game.infra*; mirror them onto
   // the team object so club-strength scoring and the team-overview panel (which
   // read team.infra*, like they do for AI clubs) see the real levels.
@@ -476,6 +501,44 @@ function migrateLoadedGame(parsed){
   game.schemaVersion=SAVE_SCHEMA_VERSION;
   game._migratedFromSchema=fromVersion;
   return game;
+}
+// While several players shared one id (the pre-2026-07-02 counter bug) they also
+// pushed their season snapshots into the SAME playerHistory bucket. Renumbering
+// the duplicates cannot un-merge those rows, so the player who kept the id ends
+// up with a career chart plotting another man's age and stats — both the S8 and
+// the S11 career carry dozens of them.
+//
+// One person's snapshots always sit on one timeline: the engine writes one row
+// per season and ages him by exactly one year each time, so `age - season` is
+// constant across his history (the creation row sits one below, taken before
+// that season's birthday). Rows that don't fit that line came from somebody
+// else and are dropped. A history that is already consistent is left untouched,
+// so an undamaged save is not rewritten.
+function repairMergedPlayerHistories(game){
+  if(!game.playerHistory)return;
+  (game.players||[]).forEach(p=>{
+    if(!p||!Number.isInteger(p.id))return;
+    const rows=game.playerHistory[p.id];
+    if(!Array.isArray(rows)||!rows.length)return;
+    const drift=rows.map(r=>(r&&Number.isFinite(r.age)&&Number.isFinite(r.season))?r.age-r.season:NaN);
+    // His most recent snapshot is the one taken at his current age — the engine
+    // writes it right after the birthday, so the timeline has to END there.
+    let anchor=-1;
+    for(let i=rows.length-1;i>=0;i--){if(Number.isFinite(drift[i])&&rows[i].age===p.age){anchor=i;break;}}
+    if(anchor<0){game.playerHistory[p.id]=[];return;}
+    const own=drift[anchor];
+    const lastSeason=rows[anchor].season;
+    const consistent=rows.every((r,i)=>drift[i]===own||(i===0&&drift[i]===own-1))
+      &&anchor===rows.length-1;
+    if(consistent)return;
+    const kept=rows.filter((r,i)=>drift[i]===own&&r.season<=lastSeason);
+    const firstOwn=rows.findIndex((r,i)=>drift[i]===own&&r.season<=lastSeason);
+    // Keep the creation snapshot when it directly precedes his first season row.
+    if(firstOwn>0&&drift[firstOwn-1]===own-1&&rows[firstOwn-1].season===rows[firstOwn].season){
+      kept.unshift(rows[firstOwn-1]);
+    }
+    game.playerHistory[p.id]=kept;
+  });
 }
 // Walks the whole save object and returns the highest numeric `id` found.
 // Saves written before _pid syncing carry a counter that is lower than IDs
