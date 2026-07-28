@@ -1089,8 +1089,8 @@ function pageHoF(){
   const rec=store.G.records||{};
   
   const tabsHtml=`<div class="rtabs mb14">
-    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">GALERIA EMERYT\u00d3W</div>
-    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">KSI\u0118GA REKORD\u00d3W</div>
+    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">${t('hof.gallery')}</div>
+    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">${t('hof.records')}</div>
   </div>`;
   
   let bodyHtml='';
@@ -1098,21 +1098,21 @@ function pageHoF(){
   if(hofRealTab==='hof'){
     const filterTabs=`<div class="g2 mb14">
       <div class="rtabs" style="margin-bottom:0">
-        <div class="rtab ${tab==='all'?'on':''}" onclick="ui.hofTab='all';render()">WSZYSCY</div>
-        <div class="rtab ${tab==='mine'?'on':''}" onclick="ui.hofTab='mine';render()">M\u00d3J KLUB</div>
+        <div class="rtab ${tab==='all'?'on':''}" onclick="ui.hofTab='all';render()">${t('hof.everyone')}</div>
+        <div class="rtab ${tab==='mine'?'on':''}" onclick="ui.hofTab='mine';render()">${t('hof.myClub')}</div>
       </div>
-      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold','Trofea'],['ovr','Peak OVR'],['w','Wygrane'],['wrate','%W']].map(([v,l])=>`<div class="rtab ${sk===v?'on':''}" onclick="ui.hofSort='${v}';render()">${l}</div>`).join('')}</div>
+      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold',t('hof.trophies')],['ovr','Peak OVR'],['w',t('hof.wins')],['wrate','%W']].map(([v,l])=>`<div class="rtab ${sk===v?'on':''}" onclick="ui.hofSort='${v}';render()">${l}</div>`).join('')}</div>
     </div>`;
     
     const rows=list.length?list.slice(0,20).map((e,i)=>`<div class="hof-row">
       <div class="hr-rank ${i<3?'r'+(i+1):''}">${i+1}</div>
       <div>
         <div class="hr-name">${e.name}${e.wasMyPlayer?' <span class="fs10 cg">\u2605</span>':''}</div>
-        <div class="hr-meta">${e.retiredAge}l / ${e.careerW}W/${e.careerL}L / ${e.wrate}%W</div>
+        <div class="hr-meta">${e.retiredAge} / ${e.careerW}W/${e.careerL}L / ${e.wrate}%W</div>
         <div class="mt-3">${(e.awards||[]).slice(0,4).map(a=>`<span class="award">${a.displayLabel||a.label}</span>`).join('')}</div>
       </div>
       <div class="hr-val">${sk==='trophies_gold'?e.goldCount+'':sk==='ovr'?e.ovr:sk==='w'?e.careerW:e.wrate+'%'}</div>
-    </div>`).join(''):'<div class="pd40 tac ink3">Brak zawodnik\u00f3w w Hall of Fame. Poczekaj a\u017c pierwsi zawodnicy przejd\u0105 na emerytur\u0119.</div>';
+    </div>`).join(''):`<div class="pd40 tac ink3">${t('hof.empty')}</div>`;
     
     bodyHtml=filterTabs+'<div class="card" style="padding:0">'+rows+'</div>';
   }
@@ -1167,45 +1167,46 @@ function pageHoF(){
     const topPlayersByLeague=[...playerTallies.values()].sort((a,b)=>b.league-a.league||b.total-a.total).slice(0,5);
     const topClubsByTotal=[...clubTallies.values()].sort((a,b)=>b.total-a.total||b.league-a.league).slice(0,5);
     const topClubsByLeague=[...clubTallies.values()].sort((a,b)=>b.league-a.league||b.total-a.total).slice(0,5);
-    const psRow=rec.PERFECT_SEASON?`<div class="pnl-row"><div><b>Perfekcyjny Sezon (66 pkt)</b><div class="fs10 ink3">${rec.PERFECT_SEASON.club} / Sezon ${rec.PERFECT_SEASON.season}</div></div><div class="pnl-pos">${rec.PERFECT_SEASON.pts} pkt</div></div>`:'<div class="ink3 fs11 pd8-0">Perfekcyjny Sezon (66 pkt) \u2014 jeszcze nie ustanowiony</div>';
-    const strRow=rec.LONGEST_STREAK?`<div class="pnl-row"><div><b>Najd\u0142u\u017csza Seria bez Pora\u017cki</b><div class="fs10 ink3">${rec.LONGEST_STREAK.club} / Sezon ${rec.LONGEST_STREAK.season}</div></div><div class="pnl-pos">${rec.LONGEST_STREAK.streak} kolejek</div></div>`:'<div class="ink3 fs11 pd8-0">Najd\u0142u\u017csza seria \u2014 jeszcze nie ustanowiona</div>';
-    const setsRow=rec.FEWEST_SETS_LOST?`<div class="pnl-row"><div><b>Najmniej Straconych Set\u00f3w (sezon)</b><div class="fs10 ink3">${rec.FEWEST_SETS_LOST.club} / Sezon ${rec.FEWEST_SETS_LOST.season}</div></div><div class="pnl-pos">${rec.FEWEST_SETS_LOST.setsLost}</div></div>`:'<div class="ink3 fs11 pd8-0">Najmniej straconych set\u00f3w \u2014 jeszcze nie ustanowiony</div>';
-    const winRow=rec.MOST_WINS_PLAYER?`<div class="pnl-row"><div><b>Najwi\u0119cej Wygranych w Sezonie</b><div class="fs10 ink3">${rec.MOST_WINS_PLAYER.playerName} / Sezon ${rec.MOST_WINS_PLAYER.season}</div></div><div class="pnl-pos">${rec.MOST_WINS_PLAYER.wins} W</div></div>`:'<div class="ink3 fs11 pd8-0">Rekord wygranych \u2014 jeszcze nie ustanowiony</div>';
-    const ovrRow=rec.HIGHEST_OVR?`<div class="pnl-row"><div><b>Najwy\u017cszy OVR w Historii</b><div class="fs10 ink3">${rec.HIGHEST_OVR.playerName} / Sezon ${rec.HIGHEST_OVR.season}</div></div><div class="pnl-pos syne b8 fs22">${rec.HIGHEST_OVR.ovr}</div></div>`:'<div class="ink3 fs11 pd8-0">Najwy\u017cszy OVR \u2014 jeszcze nie ustanowiony</div>';
-    const mvpRow=rec.MOST_MVP?`<div class="pnl-row"><div><b>Najwi\u0119cej tytu\u0142\u00f3w Top 12 Masters</b><div class="fs10 ink3">${rec.MOST_MVP.playerName}</div></div><div class="pnl-pos">${rec.MOST_MVP.count}\u00d7</div></div>`:'<div class="ink3 fs11 pd8-0">Rekordzista Top 12 Masters \u2014 jeszcze nie ustanowiony</div>';
-    const mgrStatus=(store.G.managerPrestige||0)>=75?'Kwalifikujesz si\u0119 na Selekcjonera!':(store.G.managerPrestige||0)>=50?'Dobra \u015bcie\u017cka kariery':'Buduj presti\u017c przez wyniki ligowe';
-    const natTeamBadge=store.G.isNatTeamManager?`<div class="mt-8 pd8-12 bg-ok bbg r3 fs12 cg b7">Selekcjoner ${COUNTRIES[store.G.countryId]?.nationalTeam||'Reprezentacji'}</div>`:'';
+    const recordEmpty=label=>`<div class="ink3 fs11 pd8-0">${label} — ${t('hof.notSet')}</div>`;
+    const psRow=rec.PERFECT_SEASON?`<div class="pnl-row"><div><b>${t('hof.perfectSeason')}</b><div class="fs10 ink3">${rec.PERFECT_SEASON.club} / ${t('common.season')} ${rec.PERFECT_SEASON.season}</div></div><div class="pnl-pos">${t('history.pointsShort',{points:rec.PERFECT_SEASON.pts})}</div></div>`:recordEmpty(t('hof.perfectSeason'));
+    const strRow=rec.LONGEST_STREAK?`<div class="pnl-row"><div><b>${t('hof.longestStreak')}</b><div class="fs10 ink3">${rec.LONGEST_STREAK.club} / ${t('common.season')} ${rec.LONGEST_STREAK.season}</div></div><div class="pnl-pos">${t('hof.matchdays',{count:rec.LONGEST_STREAK.streak})}</div></div>`:recordEmpty(t('hof.longestStreak'));
+    const setsRow=rec.FEWEST_SETS_LOST?`<div class="pnl-row"><div><b>${t('hof.fewestSets')}</b><div class="fs10 ink3">${rec.FEWEST_SETS_LOST.club} / ${t('common.season')} ${rec.FEWEST_SETS_LOST.season}</div></div><div class="pnl-pos">${rec.FEWEST_SETS_LOST.setsLost}</div></div>`:recordEmpty(t('hof.fewestSets'));
+    const winRow=rec.MOST_WINS_PLAYER?`<div class="pnl-row"><div><b>${t('hof.mostWins')}</b><div class="fs10 ink3">${rec.MOST_WINS_PLAYER.playerName} / ${t('common.season')} ${rec.MOST_WINS_PLAYER.season}</div></div><div class="pnl-pos">${rec.MOST_WINS_PLAYER.wins} W</div></div>`:recordEmpty(t('hof.mostWins'));
+    const ovrRow=rec.HIGHEST_OVR?`<div class="pnl-row"><div><b>${t('hof.highestOvr')}</b><div class="fs10 ink3">${rec.HIGHEST_OVR.playerName} / ${t('common.season')} ${rec.HIGHEST_OVR.season}</div></div><div class="pnl-pos syne b8 fs22">${rec.HIGHEST_OVR.ovr}</div></div>`:recordEmpty(t('hof.highestOvr'));
+    const mvpRow=rec.MOST_MVP?`<div class="pnl-row"><div><b>${t('hof.mostMasters')}</b><div class="fs10 ink3">${rec.MOST_MVP.playerName}</div></div><div class="pnl-pos">${rec.MOST_MVP.count}\u00d7</div></div>`:recordEmpty(t('hof.mostMasters'));
+    const mgrStatus=t((store.G.managerPrestige||0)>=75?'hof.managerEligible':(store.G.managerPrestige||0)>=50?'hof.managerGoodPath':'hof.managerBuild');
+    const natTeamBadge=store.G.isNatTeamManager?`<div class="mt-8 pd8-12 bg-ok bbg r3 fs12 cg b7">${t('hof.nationalCoach',{team:COUNTRIES[store.G.countryId]?.nationalTeam||t('history.noData')})}</div>`:'';
     bodyHtml=`<div class="g2">
       <div>
-        <div class="card"><div class="ct cgold">REKORDY KLUBOWE</div>
+        <div class="card"><div class="ct cgold">${t('hof.clubRecords')}</div>
           ${psRow}${strRow}${setsRow}
         </div>
-        <div class="card"><div class="ct">NAJBARDZIEJ UTYTUŁOWANE KLUBY</div>
-          ${topClubsByTotal.length?topClubsByTotal.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b><div class="fs10 ink3">Ligi: ${c.league} / Puchary: ${c.cup}</div></div><div class="pnl-pos">${c.total} trof.</div></div>`).join(''):'<div class="fs11 ink3">Jeszcze brak pełnej historii.</div>'}
+        <div class="card"><div class="ct">${t('hof.decoratedClubs')}</div>
+          ${topClubsByTotal.length?topClubsByTotal.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b><div class="fs10 ink3">${t('hof.leaguesCups',{leagues:c.league,cups:c.cup})}</div></div><div class="pnl-pos">${t('hof.trophiesShort',{count:c.total})}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
-        <div class="card"><div class="ct">NAJWIĘCEJ TYTUŁÓW LIGOWYCH</div>
-          ${topClubsByLeague.length?topClubsByLeague.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b></div><div class="pnl-pos">${c.league}×</div></div>`).join(''):'<div class="fs11 ink3">Jeszcze brak pełnej historii.</div>'}
+        <div class="card"><div class="ct">${t('hof.clubLeagueTitles')}</div>
+          ${topClubsByLeague.length?topClubsByLeague.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b></div><div class="pnl-pos">${c.league}×</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
       </div>
       <div>
-        <div class="card"><div class="ct cr">REKORDY INDYWIDUALNE</div>
+        <div class="card"><div class="ct cr">${t('hof.individualRecords')}</div>
           ${winRow}${ovrRow}${mvpRow}
         </div>
-        <div class="card"><div class="ct">NAJBARDZIEJ UTYTUŁOWANI ZAWODNICY</div>
-          ${topPlayersByTotal.length?topPlayersByTotal.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b><div class="fs10 ink3">Liga: ${p.league} / Puchar: ${p.cup} / Top 12: ${p.masters} / Międzynarodowe: ${p.international}</div></div><div class="pnl-pos">${p.total} trof.</div></div>`).join(''):'<div class="fs11 ink3">Jeszcze brak pełnej historii.</div>'}
+        <div class="card"><div class="ct">${t('hof.decoratedPlayers')}</div>
+          ${topPlayersByTotal.length?topPlayersByTotal.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b><div class="fs10 ink3">${t('hof.playerTrophies',{league:p.league,cup:p.cup,masters:p.masters,international:p.international})}</div></div><div class="pnl-pos">${t('hof.trophiesShort',{count:p.total})}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
-        <div class="card"><div class="ct">NAJWIĘCEJ TYTUŁÓW LIGOWYCH ZAWODNIKA</div>
-          ${topPlayersByLeague.length?topPlayersByLeague.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b></div><div class="pnl-pos">${p.league}×</div></div>`).join(''):'<div class="fs11 ink3">Jeszcze brak pełnej historii.</div>'}
+        <div class="card"><div class="ct">${t('hof.playerLeagueTitles')}</div>
+          ${topPlayersByLeague.length?topPlayersByLeague.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b></div><div class="pnl-pos">${p.league}×</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
-        <div class="card"><div class="ct">PRESTI\u017b MENED\u017bERA</div>
-          <div class="sb mb10"><div class="l">Presti\u017c MGR</div><div class="v gold fs40">${store.G.managerPrestige||0}</div><div class="sub">${mgrStatus}</div></div>
+        <div class="card"><div class="ct">${t('hof.managerPrestige')}</div>
+          <div class="sb mb10"><div class="l">${t('hof.managerPrestige')}</div><div class="v gold fs40">${store.G.managerPrestige||0}</div><div class="sub">${mgrStatus}</div></div>
           ${natTeamBadge}
         </div>
       </div>
     </div>`;
   }
   
-  return`<div class="ph"><div><div class="pt">HALL <span>OF FAME</span></div></div></div>${tabsHtml}${bodyHtml}`;
+  return`<div class="ph"><div><div class="pt">${t('hof.title')}</div></div></div>${tabsHtml}${bodyHtml}`;
 }
 
 function pageMundial(){

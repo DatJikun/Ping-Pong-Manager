@@ -29,6 +29,8 @@
   bracket without changing competition rules or stored results.
 - Added a rendered release gate that rejects common Polish-label regressions and
   unresolved translation keys across every completed English screen.
+- Localized the capped Hall of Fame gallery and record book while leaving the
+  top-20 summaries and compact club ledgers unchanged.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

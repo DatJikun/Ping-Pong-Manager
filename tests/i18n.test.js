@@ -288,8 +288,30 @@ test('completed English screens reject common Polish UI regressions and raw keys
     g.PPM.pages.pageCup(),
     g.PPM.pages.pageInbox(),
     g.PPM.pages.pageNews(),
+    g.PPM.pages.pageHoF(),
   ].join('\n');
 
-  assert.doesNotMatch(rendered, /Skład główny|Szukaj w transferach|Zobowiązania S\+1|Aktywne umowy|Historia sezonów|Tabela I Ligi|Puchar krajowy|Skrzynka klubowa|Wszystkie sezony/i);
-  assert.doesNotMatch(rendered, />\s*(?:squad|staff|market|budget|sponsors|history|league|cup|inbox|news)\.[a-zA-Z.]+\s*</);
+  assert.doesNotMatch(rendered, /Skład główny|Szukaj w transferach|Zobowiązania S\+1|Aktywne umowy|Historia sezonów|Tabela I Ligi|Puchar krajowy|Skrzynka klubowa|Wszystkie sezony|Galeria emerytów/i);
+  assert.doesNotMatch(rendered, />\s*(?:squad|staff|market|budget|sponsors|history|league|cup|inbox|news|hof)\.[a-zA-Z.]+\s*</);
+});
+
+test('Hall of Fame gallery and record book follow the active locale', () => {
+  const g = boot(3117);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  g.PPM.ui.hofRealTab = 'hof';
+  const englishGallery = g.PPM.pages.pageHoF();
+  assert.match(englishGallery, /Retired legends/i);
+  assert.match(englishGallery, /My club/i);
+  g.PPM.ui.hofRealTab = 'records';
+  const englishRecords = g.PPM.pages.pageHoF();
+  assert.match(englishRecords, /Club records/i);
+  assert.match(englishRecords, /Individual records/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.ui.hofRealTab = 'records';
+  const polish = g.PPM.pages.pageHoF();
+  assert.match(polish, /Księga rekordów/i);
+  assert.match(polish, /Rekordy klubowe/i);
 });
