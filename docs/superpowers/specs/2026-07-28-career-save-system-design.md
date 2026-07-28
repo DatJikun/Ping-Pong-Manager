@@ -6,15 +6,15 @@ Status: owner approved
 
 ## Goal
 
-The game supports five independent named careers, reliable autosaves and
-recoverable backups in the browser today. The gameplay code talks to one
-storage interface so the later Windows/Tauri build can replace IndexedDB with
-normal files and Steam Cloud without another save-system rewrite.
+The game supports any practical number of independent named careers, reliable
+autosaves and recoverable backups in the browser today. The only limit is
+available storage. The gameplay code talks to one storage interface so the
+later Windows/Tauri build can replace IndexedDB with normal files and Steam
+Cloud without another save-system rewrite.
 
 ## Player-facing flow
 
-The main menu contains a career list with five fixed slots. Each occupied slot
-shows:
+The main menu contains a dynamic career list. Each career shows:
 
 - career name;
 - managed club;
@@ -23,11 +23,10 @@ shows:
 - difficulty;
 - last-save time.
 
-Starting a new game uses the first empty slot. Its initial name is based on the
-club and can be renamed. If every slot is occupied, the player must explicitly
-delete a career before starting or importing another one.
+Starting a new game creates another career. Its initial name is based on the
+club and can be renamed. There is no artificial slot limit.
 
-Selecting an occupied slot offers:
+Selecting a career offers:
 
 - continue;
 - recover a backup;
@@ -35,14 +34,19 @@ Selecting an occupied slot offers:
 - export to JSON;
 - delete with confirmation.
 
-Importing JSON always creates a new career in an empty slot. It never silently
-overwrites an existing slot.
+Importing JSON always creates a new career. It never silently overwrites an
+existing career.
 
 ## Storage architecture
 
-Browser careers live in IndexedDB, not `localStorage`. Five long careers with
-three backups each exceed the reliable capacity of the current single-key
+Browser careers live in IndexedDB, not `localStorage`. Multiple long careers
+with three backups each exceed the reliable capacity of the current single-key
 storage.
+
+Before creating or importing a career, the game checks the browser's storage
+estimate when available. Low storage produces a clear warning with occupied
+space and suggests exporting or deleting old careers. It does not impose an
+arbitrary career count.
 
 The persistence layer has two boundaries:
 
@@ -60,12 +64,12 @@ Application settings remain in their small existing `localStorage` key.
 
 The browser database stores:
 
-- five slot records keyed by slot number `1..5`;
-- up to three rotating checkpoint records per occupied slot;
-- at most one temporary pre-migration recovery record per slot;
-- one small metadata record containing the active slot and storage version.
+- any practical number of career records keyed by stable generated career IDs;
+- up to three rotating checkpoint records per career;
+- at most one temporary pre-migration recovery record per career;
+- one small metadata record containing the active career ID and storage version.
 
-A slot record contains the serialized game plus metadata derived from that same
+A career record contains the serialized game plus metadata derived from that same
 snapshot. Metadata is never trusted as gameplay state.
 
 Each successful write is one IndexedDB transaction so the game payload and its
@@ -101,7 +105,7 @@ created only at useful boundaries:
 - immediately before season rollover;
 - before a loaded save is migrated to a newer schema.
 
-Only the three newest ordinary checkpoints are retained per slot. They are
+Only the three newest ordinary checkpoints are retained per career. They are
 labelled with season, matchday, phase and time so recovery is understandable.
 
 Before schema migration, the unmodified source is stored separately as a
@@ -118,7 +122,7 @@ On the first launch of the new system:
 
 1. inspect the existing `ppgame` key;
 2. parse and minimally validate it without changing the original;
-3. import it into slot 1, or the first empty slot if slot 1 already exists;
+3. import it as a new career with a stable generated ID;
 4. read the new IndexedDB record back and load it successfully;
 5. only then remove the legacy `ppgame` key.
 
@@ -144,15 +148,16 @@ being rewritten by an older build.
 This task changes only the main-menu career management and recovery flow. It
 does not redesign the in-game dashboard or the rest of the visual language.
 
-The initial loading state must make it clear that careers are being read. Empty,
-occupied, corrupted and temporarily unavailable storage states each have a
+The initial loading state must make it clear that careers are being read. An
+empty list, a corrupted career and temporarily unavailable storage each have a
 distinct message and valid next action.
 
 ## Verification
 
 Automated tests cover:
 
-- five-slot creation, metadata and rename;
+- dynamic career creation, stable IDs, metadata and rename;
+- creating more than five careers without an artificial rejection;
 - ordered/coalesced autosaves;
 - three-checkpoint rotation;
 - pre-migration recovery;
@@ -167,4 +172,3 @@ Automated tests cover:
 Browser verification covers creating two careers, switching between them,
 refreshing during a save, restoring a checkpoint, importing/exporting a supplied
 legacy career and simulating unavailable/full storage.
-
