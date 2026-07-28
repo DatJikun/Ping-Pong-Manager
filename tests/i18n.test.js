@@ -431,3 +431,27 @@ test('club job market and post-season gala follow the active locale', async () =
   g._galaResolved = true;
   await polishGalaPromise;
 });
+
+test('loan and squad replacement modals follow the active locale', () => {
+  const g = boot(3123);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const squad = g.PPM.state.G.players.filter(p => p.teamId === g.PPM.state.G.myTeamId && p.role !== 'youth');
+  const loanPlayer = squad.find(p => p.contractYears > 1 && !p.injuredFor);
+  const reserve = squad.find(p => p.role === 'reserve') || squad[0];
+
+  g.PPM.gameplay.openLoanModal(loanPlayer.id);
+  const englishLoan = g.document.getElementById('modal').innerHTML;
+  assert.match(englishLoan, /Loan|Choose a destination club|interest/i);
+  assert.doesNotMatch(englishLoan, /Wypożyczenie|Wybierz klub docelowy|zainteresowanie/i);
+
+  g.PPM.gameplay.openSwapModal(reserve.id);
+  const englishSwap = g.document.getElementById('modal').innerHTML;
+  assert.match(englishSwap, /first team is full|Choose who to replace|Swap/i);
+  assert.doesNotMatch(englishSwap, /Skład pełny|Wybierz kogo zastąpić|Zamień/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openLoanModal(loanPlayer.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Wypożyczenie|Wybierz klub docelowy/i);
+  g.PPM.gameplay.openSwapModal(reserve.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Skład pełny|Wybierz kogo zastąpić/i);
+});

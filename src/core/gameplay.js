@@ -22,18 +22,18 @@ function getLoanedIn(){
 }
 function canLoanOut(pid){
   const p=store.G.players.find(x=>x.id===pid);
-  if(!p)return{ok:false,reason:'Brak zawodnika'};
-  if(p.role==='youth'&&!p.isYouth)return{ok:false,reason:'Ten zawodnik nie mo\u017ce by\u0107 wypo\u017cyczony'};
-  if(p.injuredFor>0)return{ok:false,reason:'Zawodnik jest kontuzjowany'};
-  if(p.joinedSeason===store.G.season&&p.joinedViaTransfer)return{ok:false,reason:'Nowego transferu nie mo\u017cesz od razu wypo\u017cyczy\u0107'};
+  if(!p)return{ok:false,reason:t('loan.noPlayer')};
+  if(p.role==='youth'&&!p.isYouth)return{ok:false,reason:t('loan.notEligible')};
+  if(p.injuredFor>0)return{ok:false,reason:t('loan.injured')};
+  if(p.joinedSeason===store.G.season&&p.joinedViaTransfer)return{ok:false,reason:t('loan.newSigning')};
   // Final contract year: the deal would expire DURING the loan, so the player
   // "returns" straight into free agency \u2014 reads like he never came back.
-  if((p.contractYears||0)<=1)return{ok:false,reason:'Ostatni rok kontraktu \u2014 najpierw przed\u0142u\u017c umow\u0119'};
-  if(getLoanedIn().find(l=>l.playerId===pid))return{ok:false,reason:'Ten zawodnik jest wypo\u017cyczony DO nas \u2014 nie mo\u017cesz go podnaj\u0105\u0107'};
+  if((p.contractYears||0)<=1)return{ok:false,reason:t('loan.finalYear')};
+  if(getLoanedIn().find(l=>l.playerId===pid))return{ok:false,reason:t('loan.alreadyBorrowed')};
   const already=getLoanedOut().find(l=>l.playerId===pid);
-  if(already)return{ok:false,reason:'Ju\u017c wypo\u017cyczony'};
+  if(already)return{ok:false,reason:t('loan.alreadyOut')};
   if(myStarters().filter(x=>x.id!==pid).length<3&&p.role==='starter'){
-    return{ok:false,reason:'Musisz mie\u0107 przynajmniej 3 starters'};
+    return{ok:false,reason:t('loan.minimumSquad')};
   }
   return{ok:true};
 }
@@ -50,28 +50,28 @@ function openLoanModal(pid){
     return{...t,interest};
   }).sort((a,b)=>b.interest-a.interest);
   const modal=document.getElementById('modal');modal.className='modal';
-  modal.innerHTML=`<div class="mt2">${isAcademyLoan?'Wypo\u017cyczenie z akademii':'Wypo\u017cyczenie'}: ${p.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+  modal.innerHTML=`<div class="mt2">${t(isAcademyLoan?'loan.academyTitle':'loan.title',{name:p.name})} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="pd12 bgs2 r3 mb14 fs12">
-    <b>OVR ${ovrBase(p)}</b> / ${p.age} lat<br>
-    ${isAcademyLoan?'To wypo\u017cyczenie rozwojowe. Junior pozostaje zawodnikiem akademii i po sezonie wr\u00f3ci z zachowanym statusem oraz \u015bcie\u017ck\u0105 rozwoju.<br>':'Zawodnik chce gra\u0107 regularnie. Klub mo\u017ce odrzuci\u0107 ofert\u0119 lub uzna\u0107, \u017ce zawodnik nie pasuje do profilu.<br>'}
-    Mo\u017cesz negocjowa\u0107 tylko pokrycie cz\u0119\u015bci pensji, bez op\u0142aty transferowej.
+    <b>OVR ${ovrBase(p)}</b> / ${t('loan.age',{age:p.age})}<br>
+    ${t(isAcademyLoan?'loan.academyInfo':'loan.regularInfo')}<br>
+    ${t('loan.termsInfo')}
   </div>
-  <div class="fs11 ink3 mb8">Wybierz klub docelowy (II Liga):</div>
+  <div class="fs11 ink3 mb8">${t('loan.chooseClub')}</div>
   <div class="grid gp6">
   ${l2Teams.map(t=>`<div class="grid gtc1aa gp8 aic pd8-10 bb1 bgs1 r3">
-    <div><div class="b7 fs13">${t.name}</div><div class="fs10 ink3">OVR Dru\u017cyny: ${teamOvr(t.id)} / zainteresowanie: ${t.interest}%</div></div>
+    <div><div class="b7 fs13">${t.name}</div><div class="fs10 ink3">${window.t('loan.teamOvr')}: ${teamOvr(t.id)} / ${window.t('loan.interest')}: ${t.interest}%</div></div>
     <div>
       <select id="loan-share-${t.id}" class="bb1 bgs1 fs11" style="padding:5px">
-        <option value="0.2">20% pensji</option>
-        <option value="0.3" selected>30% pensji</option>
-        <option value="0.4">40% pensji</option>
-        <option value="0.5">50% pensji</option>
+        <option value="0.2">${window.t('loan.wageShare',{percent:20})}</option>
+        <option value="0.3" selected>${window.t('loan.wageShare',{percent:30})}</option>
+        <option value="0.4">${window.t('loan.wageShare',{percent:40})}</option>
+        <option value="0.5">${window.t('loan.wageShare',{percent:50})}</option>
       </select>
     </div>
-    <button class="btn pr sm" onclick="doLoanOut(${pid},${t.id},parseFloat(document.getElementById('loan-share-${t.id}').value))">NEGOCJUJ</button>
+    <button class="btn pr sm" onclick="doLoanOut(${pid},${t.id},parseFloat(document.getElementById('loan-share-${t.id}').value))">${window.t('loan.negotiate').toUpperCase()}</button>
   </div>`).join('')}
   </div>
-  <button class="btn mt-10" onclick="closeModal()">ANULUJ</button>`;
+  <button class="btn mt-10" onclick="closeModal()">${t('common.cancel').toUpperCase()}</button>`;
   openModal();
 }
 
@@ -80,14 +80,14 @@ function doLoanOut(pid, toTeamId, share){
   const loanShare=clamp(share||0.3,0.15,0.5);
   const target=store.G.teams.find(t=>t.id===toTeamId);if(!target)return;
   const interest=clamp(Math.round(35+Math.max(0,72-teamOvr(target.id))+Math.max(0,24-p.age)+Math.max(0,ovrBase(p)-teamOvr(target.id))-(p.salary/700)+loanShare*30+(p.isYouth?10:0)),5,95);
-  if(Math.random()*100>interest){toast(`${target.name} odrzuca wypo\u017cyczenie ${p.name}.`);return;}
+  if(Math.random()*100>interest){toast(t('loan.rejected',{club:target.name,name:p.name}));return;}
   store.G.loans=store.G.loans||[];
   store.G.loans.push({playerId:pid, fromTeamId:store.G.myTeamId, toTeamId, seasons:1, returned:false, originalRole:p.role, wageShare:loanShare, academyLoan:!!p.isYouth});
   p.teamId=toTeamId;
   p.role='starter'; // guaranteed starter on loan
   p.loanedOut=true;
   closeModal();
-  toast(`${p.name} ${p.isYouth?'z akademii ':''}wypo\u017cyczony do ${teamName(toTeamId)}! Klub pokrywa ${Math.round(loanShare*100)}% pensji.`);
+  toast(t('loan.completed',{name:p.name,club:teamName(toTeamId),percent:Math.round(loanShare*100)}));
   pushNews(`${p.name}${p.isYouth?' (akademia)':''} wypo\u017cyczony do ${teamName(toTeamId)}`,'');
   render();updateHeader();
   persistGame();
@@ -104,10 +104,10 @@ function returnLoans(){
       p.role=l.originalRole||'reserve';
       p.loanedOut=false;
       if(l.fromTeamId===store.G.myTeamId){
-        toast(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia!`);
+        toast(t('loan.returned',{name:p.name}));
         pushNews(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia`,'good');
       }else if(l.toTeamId===store.G.myTeamId){
-        toast(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia do ${teamName(l.fromTeamId)}.`);
+        toast(t('loan.returnedParent',{name:p.name,club:teamName(l.fromTeamId)}));
         pushNews(`${p.name} wr\u00f3ci\u0142 po wypo\u017cyczeniu do ${teamName(l.fromTeamId)}`,'');
       }
     }
@@ -1829,7 +1829,7 @@ function buildMarket(){
 function doBorrowIn(pid){
   const item=(store.G.transferMarket||[]).find(m=>m.playerId===pid&&m.type==='loan');
   const p=store.G.players.find(x=>x.id===pid);
-  if(!item||!p||p.retired||p.teamId===null||p.teamId===store.G.myTeamId){toast('Ta oferta wypożyczenia jest już nieaktualna.');return;}
+  if(!item||!p||p.retired||p.teamId===null||p.teamId===store.G.myTeamId){toast(t('loan.stale'));return;}
   const share=clamp(item.share||0.6,0.3,0.9);
   store.G.loans=store.G.loans||[];
   store.G.loans.push({playerId:pid,fromTeamId:p.teamId,toTeamId:store.G.myTeamId,seasons:1,returned:false,originalRole:p.role,wageShare:share});
@@ -1838,7 +1838,7 @@ function doBorrowIn(pid){
   const starterCount=myStarters().filter(x=>x.id!==p.id).length;
   p.role=starterCount<4?'starter':'reserve';
   store.G.transferMarket=store.G.transferMarket.filter(m=>!(m.playerId===pid&&m.type==='loan'));
-  toast(`${p.name} wypożyczony na sezon z ${fromName} (pokrywamy ${Math.round(share*100)}% pensji).`);
+  toast(t('loan.borrowed',{name:p.name,club:fromName,percent:Math.round(share*100)}));
   pushNews(`${p.name} wypożyczony z ${fromName}`,'');
   render();updateHeader();persistGame();
 }
@@ -5167,30 +5167,30 @@ function doNegotiate(pid){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // SQUAD MANAGEMENT
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-function promoteToStarter(pid){const p=store.G.players.find(x=>x.id===pid);if(!p)return;if(myStarters().length>=4){openSwapModal(pid);return;}p.role='starter';render();toast(`${p.name} awansowany do sk\u0142adu`);}
-function demoteToReserve(pid){const p=store.G.players.find(x=>x.id===pid);if(!p||p.role!=='starter')return;p.role='reserve';render();toast(`${p.name} \u2192 rezerwa`);}
+function promoteToStarter(pid){const p=store.G.players.find(x=>x.id===pid);if(!p)return;if(myStarters().length>=4){openSwapModal(pid);return;}p.role='starter';render();toast(t('squad.promoted',{name:p.name}));}
+function demoteToReserve(pid){const p=store.G.players.find(x=>x.id===pid);if(!p||p.role!=='starter')return;p.role='reserve';render();toast(t('squad.demoted',{name:p.name}));}
 function openSwapModal(rid){
   const rp=store.G.players.find(p=>p.id===rid);const st=myStarters();
   const modal=document.getElementById('modal');modal.className='modal';
-  modal.innerHTML=`<div class="mt2">Zamie\u0144 z ${rp.name} (OVR ${ovrBase(rp)}) <button class="close-btn" onclick="closeModal()">\u2715</button></div>
-  <div class="fs11 ink3 mb10">Sk\u0142ad pe\u0142ny (4/4). Wybierz kogo zast\u0105pi\u0107:</div>
+  modal.innerHTML=`<div class="mt2">${t('squad.swapTitle',{name:rp.name,ovr:ovrBase(rp)})} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
+  <div class="fs11 ink3 mb10">${t('squad.swapHint')}</div>
   ${st.map(p=>`<div class="grid gtc1aa gp8 aic pd8 bb1 mb4 bgs1">
-    <div><div class="syne b7">${p.name}</div><div class="fs10 ink3">${p.age}l / OVR ${ovrBase(p)}</div></div>
+    <div><div class="syne b7">${p.name}</div><div class="fs10 ink3">${t('squad.ageOvr',{age:p.age,ovr:ovrBase(p)})}</div></div>
     <div class="syne b8 fs22 cr">${ovrBase(p)}</div>
-    <button class="btn pr" onclick="doSwap(${rid},${p.id})">ZAMIE\u0143</button>
+    <button class="btn pr" onclick="doSwap(${rid},${p.id})">${t('squad.swap').toUpperCase()}</button>
   </div>`).join('')}
-  <button class="btn mt-6" onclick="closeModal()">Anuluj</button>`;
+  <button class="btn mt-6" onclick="closeModal()">${t('common.cancel')}</button>`;
   openModal();
 }
 function doSwap(rid,sid){const r=store.G.players.find(p=>p.id===rid),s=store.G.players.find(p=>p.id===sid);if(!r||!s)return;r.role='starter';s.role='reserve';closeModal();render();toast(`${r.name} \u2194 ${s.name}`);}
 function releasePlayer(pid){
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
-  if(getLoanedIn().find(l=>l.playerId===pid)){toast('Ten zawodnik jest wypożyczony do nas — wraca do swojego klubu po sezonie.');return;}
+  if(getLoanedIn().find(l=>l.playerId===pid)){toast(t('squad.loanedRelease'));return;}
   const yearsLeft=Math.max(0,p.contractYears);const buyout=yearsLeft>0?yearsLeft*(p.salary||0)*2:0;
   const mt=myTeam();
-  if(buyout>0){if(!confirm(`Zwolni\u0107 ${p.name}?\nOdszkodowanie: ${buyout.toLocaleString('pl')} €`))return;if(mt.budget<buyout){toast('Brak bud\u017cetu!');return;}mt.budget-=buyout;}
+  if(buyout>0){if(!confirm(t('squad.releaseConfirm',{name:p.name,cost:formatCurrency(buyout)})))return;if(mt.budget<buyout){toast(t('squad.noBudget'));return;}mt.budget-=buyout;}
   p.teamId=null;p.contractYears=0;
-  buildMarket();render();updateHeader();toast(`${p.name} zwolniony`);
+  buildMarket();render();updateHeader();toast(t('squad.released',{name:p.name}));
   persistGame();
 }
 
@@ -5467,18 +5467,18 @@ function youthSaleInterest(p){
 // Sell one of your players outright to the highest AI bidder (transfer fee income).
 function sellPlayer(pid){
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
-  if(p.teamId!==store.G.myTeamId){toast('To nie Twój zawodnik.');return;}
-  if(getLoanedOut().find(l=>l.playerId===pid)){toast('Zawodnik jest wypożyczony — najpierw zakończ wypożyczenie.');return;}
-  if(getLoanedIn().find(l=>l.playerId===pid)){toast('Ten zawodnik jest tylko wypożyczony do nas — nie możesz go sprzedać.');return;}
+  if(p.teamId!==store.G.myTeamId){toast(t('squad.notYours'));return;}
+  if(getLoanedOut().find(l=>l.playerId===pid)){toast(t('squad.loanedOutSale'));return;}
+  if(getLoanedIn().find(l=>l.playerId===pid)){toast(t('squad.loanedInSale'));return;}
   const offers=youthSaleInterest(p);
-  if(!offers.length){toast('Brak chętnych klubów.');return;}
+  if(!offers.length){toast(t('squad.noBuyers'));return;}
   const best=offers[0];
-  if(!confirm(`Sprzedać ${p.name} (OVR ${ovrBase(p)}) do ${best.team.name} za ${best.fee.toLocaleString('pl')} €?`))return;
+  if(!confirm(t('squad.sellConfirm',{name:p.name,ovr:ovrBase(p),club:best.team.name,fee:formatCurrency(best.fee)})))return;
   p.teamId=best.team.id;p.role='reserve';p.isYouth=false;p.contractYears=Math.max(2,p.contractYears||0);
   myTeam().budget+=best.fee;
   const finance=ensureSeasonFinance();if(finance)finance.other+=best.fee;
   pushNews(`${p.name} sprzedany do ${best.team.name} za ${best.fee.toLocaleString('pl')} €`,'');
-  toast(`${p.name} sprzedany za ${best.fee.toLocaleString('pl')} €`);
+  toast(t('squad.sold',{name:p.name,club:best.team.name,fee:formatCurrency(best.fee)}));
   buildMarket();render();updateHeader();persistGame();
 }
 
