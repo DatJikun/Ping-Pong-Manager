@@ -42,23 +42,15 @@ boundaries around text, persistence and the desktop host.
 
 ### R0 — Real trademarks and real club identities
 
-The default database still includes real equipment makers, sponsors, companies
-and club/brand identities. Examples include Butterfly, Stiga, Donic, Tibhar,
-Xiom, Cornilleau, Andro, DHS, Orlen, Adidas, BMW, Samsung, Toyota and IKEA.
-Non-Polish league lists also contain identities such as TTC Butterfly, Nittaku
-Premium and Seoul Samsung.
+**Status: remediated in schema 21.** Every supported country now ships 24
+fictional clubs and 60 fictional sponsors, all technical partners are fictional,
+and the obsolete branded equipment catalogue was removed. Stable club IDs and
+historical statistics survive migration; official save text is updated without
+touching community/custom database names.
 
-Owner direction is explicit: the shipped database must be fictional and may
-only evoke the real sport. Community-created real-name databases can be
-supported later. Before any public paid build:
-
-1. replace every shipped company, equipment and club identity with fictional
-   data;
-2. preserve stable internal IDs or add save migration aliases;
-3. add a release test that rejects a maintained deny-list of real identities;
-4. keep community databases outside the official distribution.
-
-This is a commercial-release blocker, not optional polish.
+Keep `tests/fictional-default-data.test.js` as a release gate and extend its
+deny-list if new official data is added. Community databases must remain outside
+the official distribution.
 
 ### R0 — English is absent
 

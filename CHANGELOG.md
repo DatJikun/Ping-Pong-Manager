@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-28 — Fictional official database
+
+- Replaced shipped real-world club, sponsor and technical-partner identities
+  with fictional data: 24 clubs and 60 sponsors for every supported country.
+- Added save schema 21 migration. Existing official careers keep their stable
+  club IDs, statistics and history while names in live data and historical text
+  are updated. Names from community/custom databases are never rewritten.
+- Removed the obsolete equipment-brand catalogue and its dead selection API.
+- Added a release gate that rejects a maintained list of real-world identities.
+- Verified all eight supplied careers (seasons 4–16) read-only through migration.
+
 ## 2026-07-28 — Release audit and offline runtime
 
 - Added one evidence-based release-readiness document covering legal data,
