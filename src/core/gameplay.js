@@ -763,7 +763,7 @@ function getAllExternalStaffMarket(){
   ];
 }
 function calcTeamMorale(){const mp=myPlayers();if(!mp.length)return 50;return Math.round(mp.reduce((s,p)=>s+(p.morale||50),0)/mp.length);}
-function moraleLabel(m){return m>=80?'Znakomite':m>=60?'Dobre':m>=40?'Przeci\u0119tne':'Z\u0142e';}
+function moraleLabel(m){return t(m>=80?'morale.excellent':m>=60?'morale.good':m>=40?'morale.average':'morale.bad');}
 // v13: Updated league maintenance costs
 function calcLeagueMaint(){const base=myLeague()===1?32000:13000;return base+(store.G.season||1)*800;}
 // Yearly academy upkeep (NEW): scales with level (€2k→€30k). Charged every season-
@@ -2121,7 +2121,7 @@ function getPlayerModifierBreakdown(p){
   const teamId=p.teamId;
   const coach=teamId!==null&&teamId!==undefined?getCoach(teamId):null;
   const tech=getTechPartnershipBonus(teamId);
-  const techLabel=getTechPartnership()?.name||'Brak';
+  const techLabel=getTechPartnership()?.name||t('common.none');
   const hasSynergy=!!(coach&&p.playStyle&&coach.styleSynergy&&p.playStyle===coach.styleSynergy);
   const oppositeStyle=!!(coach&&p.playStyle&&coach.styleSynergy&&OPPOSITE_STYLE[coach.styleSynergy]===p.playStyle);
   let coachSynergy=0;
@@ -4910,6 +4910,9 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
   const trophyCabinet=[...trophyMap.values()].sort((a,b)=>b.count-a.count||a.label.localeCompare(b.label));
   const clubs=[...new Set((p.clubHistory||[]).map(id=>teamName(id)).filter(Boolean))];
   const identity=describePlayerIdentity(p);
+  const isPolish=window.PPM.i18n.getLocale()==='pl';
+  const profileLabel=isPolish?(p.profileTag||identity.label):t('player.profile');
+  const profileNote=isPolish?(p.signatureNote||identity.note):t('player.profileNote',{top:SL[identity.topStat]||identity.topStat,weak:SL[identity.weakStat]||identity.weakStat});
   const techStatText=Object.entries(mods.techStats).filter(([,val])=>val>0).map(([key,val])=>`${SL[key]} +${val}`).join(' / ');
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">${p.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
@@ -4919,25 +4922,25 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
         <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar xl">
         <div>
           <div class="syne b8 fs52 cr lh1 mb6">${o}</div>
-          <div class="pc-meta">${p.age}l / Peak:${p.peakAge} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span>${p.teamId===store.G.myTeamId?` / Peak OVR bazowy: ${playerCeiling(p)}`:''}</div>
-          <div class="fs11 ink3 mt-4">Marketability: <b class="cgold">${marketability}</b></div>
+          <div class="pc-meta">${t('player.agePeak',{age:p.age,peak:p.peakAge})} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span>${p.teamId===store.G.myTeamId?` / ${t('player.basePeak',{value:playerCeiling(p)})}`:''}</div>
+          <div class="fs11 ink3 mt-4">${t('player.marketability')}: <b class="cgold">${marketability}</b></div>
         </div>
       </div>
-      <div style="margin-top:6px;padding:6px 10px;display:inline-block;border:1px solid ${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--b1)'};border-radius:3px;font-size:11px;font-weight:700;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)'}">${styleLabel(p.playStyle)}${store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?.styleSynergy===p.playStyle?' SYNERGY':''}</div>
+      <div style="margin-top:6px;padding:6px 10px;display:inline-block;border:1px solid ${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--b1)'};border-radius:3px;font-size:11px;font-weight:700;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)'}">${styleLabel(p.playStyle)}${store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?.styleSynergy===p.playStyle?` ${t('player.synergy')}`:''}</div>
       <div class="mt-8 pd8-10 bb1 r10 bgs2 fs12">
-        <div class="b7 mb4">${p.profileTag||identity.label}</div>
-        <div class="ink3">${p.signatureNote||identity.note}</div>
+        <div class="b7 mb4">${profileLabel}</div>
+        <div class="ink3">${profileNote}</div>
       </div>
       ${p.equipment?`<div class="mt-8 pd8-10 bb1 r10 bgs1 fs11">
-        <div class="b7 mb3">Sprzęt</div>
-        <div class="ink3">${EQUIPMENT.blades[p.equipment.blade]?.label||'?'} + ${EQUIPMENT.sponges[p.equipment.sponge]?.label||'?'} + ${EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.label||'?'}</div>
-        <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):'Neutralny setup';})()}</div>
+        <div class="b7 mb3">${t('player.equipment')}</div>
+        <div class="ink3">${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)} + ${t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>
+        <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):t('player.neutralSetup');})()}</div>
       </div>`:''}
-      <div class="traits mt-8">${p.traits.map(t=>`<span class="has-tooltip tb ${TRAITS[t]?.type||'men'}">${TRAITS[t]?.label||t}<span class="tip">${TRAITS[t]?.desc||''}</span></span>`).join('')||'<span class="fs10 ink3">Brak cech</span>'}</div>
+      <div class="traits mt-8">${p.traits.map(trait=>`<span class="has-tooltip tb ${TRAITS[trait]?.type||'men'}">${TRAITS[trait]?.label||trait}<span class="tip">${TRAITS[trait]?.desc||''}</span></span>`).join('')||`<span class="fs10 ink3">${t('player.noTraits')}</span>`}</div>
       <div class="grid gtc3 gp8 mt-12">
-        <div><div class="fs9 ink3 mb3">MORALE</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.morale||50}%;background:var(--g);border-radius:3px"></div></div><div class="fs11 mt-2">${moraleLabel(p.morale||50)}</div></div>
-        <div><div class="fs9 ink3 mb3">ZM\u0118CZENIE</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.fatigue||0}%;background:var(--orange);border-radius:3px"></div></div><div class="fs11 mt-2">${p.fatigue||0}%</div></div>
-        <div><div class="fs9 ink3 mb3">STAMINA</div><div class="h8 bgs3 r3"><div style="height:100%;width:${playerStamina(p)}%;background:var(--b);border-radius:3px"></div></div><div class="fs11 mt-2">${playerStamina(p)} / 100</div></div>
+        <div><div class="fs9 ink3 mb3">${t('player.morale').toUpperCase()}</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.morale||50}%;background:var(--g);border-radius:3px"></div></div><div class="fs11 mt-2">${moraleLabel(p.morale||50)}</div></div>
+        <div><div class="fs9 ink3 mb3">${t('player.fatigue').toUpperCase()}</div><div class="h8 bgs3 r3"><div style="height:100%;width:${p.fatigue||0}%;background:var(--orange);border-radius:3px"></div></div><div class="fs11 mt-2">${p.fatigue||0}%</div></div>
+        <div><div class="fs9 ink3 mb3">${t('player.stamina').toUpperCase()}</div><div class="h8 bgs3 r3"><div style="height:100%;width:${playerStamina(p)}%;background:var(--b);border-radius:3px"></div></div><div class="fs11 mt-2">${playerStamina(p)} / 100</div></div>
       </div>
     </div>
     <div>
@@ -4945,62 +4948,62 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
     </div>
   </div>
   <div class="g4 gp8 mb14">
-    <div class="sb pd10"><div class="l">Wygranych</div><div class="v g fs20">${p.careerW||0}</div></div>
-    <div class="sb pd10"><div class="l">Przegranych</div><div class="v r fs20">${p.careerL||0}</div></div>
-    <div class="sb pd10"><div class="l">% wygranych</div><div class="v gold fs20">${wr}%</div></div>
-    <div class="sb pd10"><div class="l">Lojalno\u015b\u0107</div><div class="v fs20">${p.loyalty||0}/10</div></div>
+    <div class="sb pd10"><div class="l">${t('player.wins')}</div><div class="v g fs20">${p.careerW||0}</div></div>
+    <div class="sb pd10"><div class="l">${t('player.losses')}</div><div class="v r fs20">${p.careerL||0}</div></div>
+    <div class="sb pd10"><div class="l">${t('player.winRate')}</div><div class="v gold fs20">${wr}%</div></div>
+    <div class="sb pd10"><div class="l">${t('player.loyalty')}</div><div class="v fs20">${p.loyalty||0}/10</div></div>
   </div>
   <div class="g3 gp8 mb14">
-    <div class="sb pd10"><div class="l">Dyspozycja</div><div class="v fs18">${seasonFormLabel(p)}</div></div>
-    <div class="sb pd10"><div class="l">Oczekiwana pensja</div><div class="v gold fs18">${exp.salary.toLocaleString('pl')} €</div></div>
-    <div class="sb pd10"><div class="l">Warto\u015b\u0107 rynkowa</div><div class="v g fs18">${exp.marketValue.toLocaleString('pl')} €</div></div>
+    <div class="sb pd10"><div class="l">${t('player.form')}</div><div class="v fs18">${seasonFormLabel(p)}</div></div>
+    <div class="sb pd10"><div class="l">${t('player.expectedSalary')}</div><div class="v gold fs18">${formatCurrency(exp.salary)}</div></div>
+    <div class="sb pd10"><div class="l">${t('player.marketValue')}</div><div class="v g fs18">${formatCurrency(exp.marketValue)}</div></div>
   </div>
   <div class="g2 gp10 mb14">
     <div class="tile tile-lg">
-      <div class="fs10 ink3 up ls1 mb8">Modyfikatory OVR</div>
-      <div class="pnl-row"><div>OVR bazowy</div><div>${mods.baseOvr}</div></div>
-      <div class="pnl-row"><div>Partner techniczny</div><div class="${mods.techOvr>0?'pnl-pos':''}">${mods.techOvr>0?`+${mods.techOvr}`:'0'}</div></div>
-      <div class="fs11 ink3 mt-8">${mods.techLabel}${techStatText?` / ${techStatText}`:' / bez aktywnego pakietu sprzętowego'}</div>
-      <div class="fs11 ink3 mt-6">OVR końcowy: <b>${mods.totalOvr}</b></div>
+      <div class="fs10 ink3 up ls1 mb8">${t('player.ovrModifiers')}</div>
+      <div class="pnl-row"><div>${t('player.baseOvr')}</div><div>${mods.baseOvr}</div></div>
+      <div class="pnl-row"><div>${t('player.techPartner')}</div><div class="${mods.techOvr>0?'pnl-pos':''}">${mods.techOvr>0?`+${mods.techOvr}`:'0'}</div></div>
+      <div class="fs11 ink3 mt-8">${mods.techLabel}${techStatText?` / ${techStatText}`:` / ${t('player.noEquipmentPackage')}`}</div>
+      <div class="fs11 ink3 mt-6">${t('player.finalOvr')}: <b>${mods.totalOvr}</b></div>
     </div>
     <div class="tile tile-lg">
-      <div class="fs10 ink3 up ls1 mb8">Modyfikatory meczowe</div>
-      <div class="pnl-row"><div>Trener: fokus</div><div class="${mods.coachFocus>0?'pnl-pos':''}">${mods.coachFocus>0?`+${mods.coachFocus}`:'0'}</div></div>
-      <div class="pnl-row"><div>Trener: synergia stylu</div><div class="${mods.coachSynergy>=0?'pnl-pos':'pnl-neg'}">${mods.coachSynergy>0?`+${mods.coachSynergy}`:mods.coachSynergy}</div></div>
-      <div class="pnl-row"><div>Trener: motywacja</div><div class="${mods.coachMorale>0?'pnl-pos':''}">${mods.coachMorale>0?`+${mods.coachMorale}`:'0'}</div></div>
-      <div class="pnl-row"><div>Forma sezonu</div><div class="${mods.formBonus>=0?'pnl-pos':'pnl-neg'}">${mods.formBonus>0?`+${mods.formBonus}`:mods.formBonus}</div></div>
-      <div class="pnl-row"><div>Morale</div><div class="${mods.moraleBonus>=0?'pnl-pos':'pnl-neg'}">${mods.moraleBonus>0?`+${mods.moraleBonus}`:mods.moraleBonus}</div></div>
+      <div class="fs10 ink3 up ls1 mb8">${t('player.matchModifiers')}</div>
+      <div class="pnl-row"><div>${t('player.coachFocus')}</div><div class="${mods.coachFocus>0?'pnl-pos':''}">${mods.coachFocus>0?`+${mods.coachFocus}`:'0'}</div></div>
+      <div class="pnl-row"><div>${t('player.coachSynergy')}</div><div class="${mods.coachSynergy>=0?'pnl-pos':'pnl-neg'}">${mods.coachSynergy>0?`+${mods.coachSynergy}`:mods.coachSynergy}</div></div>
+      <div class="pnl-row"><div>${t('player.coachMotivation')}</div><div class="${mods.coachMorale>0?'pnl-pos':''}">${mods.coachMorale>0?`+${mods.coachMorale}`:'0'}</div></div>
+      <div class="pnl-row"><div>${t('player.seasonForm')}</div><div class="${mods.formBonus>=0?'pnl-pos':'pnl-neg'}">${mods.formBonus>0?`+${mods.formBonus}`:mods.formBonus}</div></div>
+      <div class="pnl-row"><div>${t('player.morale')}</div><div class="${mods.moraleBonus>=0?'pnl-pos':'pnl-neg'}">${mods.moraleBonus>0?`+${mods.moraleBonus}`:mods.moraleBonus}</div></div>
       <div class="pnl-row"><div>Stamina / MEN</div><div class="pnl-pos">+${mods.staminaBonus}</div></div>
-      <div class="pnl-row"><div>Zmęczenie</div><div class="pnl-neg">-${mods.fatiguePenalty}</div></div>
-      <div class="pnl-row"><div>Bonus elity</div><div class="${mods.eliteBonus>0?'pnl-pos':''}">${mods.eliteBonus>0?`+${mods.eliteBonus}`:'0'}</div></div>
-      <div class="fs11 ink3 mt-8">Aktualna siła meczowa: <b>${mods.effectiveNow}</b>${mods.coachName?` / trener: ${mods.coachName}`:''}</div>
+      <div class="pnl-row"><div>${t('player.fatigue')}</div><div class="pnl-neg">-${mods.fatiguePenalty}</div></div>
+      <div class="pnl-row"><div>${t('player.eliteBonus')}</div><div class="${mods.eliteBonus>0?'pnl-pos':''}">${mods.eliteBonus>0?`+${mods.eliteBonus}`:'0'}</div></div>
+      <div class="fs11 ink3 mt-8">${t('player.currentMatchStrength')}: <b>${mods.effectiveNow}</b>${mods.coachName?` / ${t('player.coach')}: ${mods.coachName}`:''}</div>
     </div>
   </div>
   <div class="g2 gp10 mb14">
     <div class="tile tile-lg">
-      <div class="fs10 ink3 up ls1 mb6">Biografia</div>
+      <div class="fs10 ink3 up ls1 mb6">${t('player.biography')}</div>
       <div class="fs12 lh155">
-        ${p.name} ma ${p.age} lat i profil <b>${p.profileTag||identity.label}</b>. Najmocniej punktuje przez <b>${SL[identity.topStat]||identity.topStat}</b>, a jego słabszym obszarem pozostaje <b>${SL[identity.weakStat]||identity.weakStat}</b>.
+        ${t('player.biographyText',{name:p.name,age:p.age,top:SL[identity.topStat]||identity.topStat,weak:SL[identity.weakStat]||identity.weakStat})}
       </div>
-      <div class="fs11 ink3 mt-8">Ścieżka klubowa: <b>${clubs.join(' → ')||'debiut w obecnym klubie / wolny rynek'}</b></div>
-      ${p.teamId===store.G.myTeamId?`<div class="fs11 ink3 mt-6">Peak OVR bazowy: <b>${playerCeiling(p)}</b></div>`:''}
-      <div class="fs11 ink3 mt-6">Wydolność meczowa: <b>${playerStamina(p)}/100</b> ${playerStamina(p)>=75?'(może dłużej ciągnąć serię meczów)':playerStamina(p)<=45?'(szybciej łapie przeciążenie i potrzebuje rotacji)':'(standardowy profil obciążeń)'}</div>
-      <div class="fs11 ink3 mt-6">Punkty w karierze: <b>${(p.careerPointsWon||0).toLocaleString('pl')}</b> zdobytych / <b>${(p.careerPointsLost||0).toLocaleString('pl')}</b> straconych</div>
+      <div class="fs11 ink3 mt-8">${t('player.clubPath')}: <b>${clubs.join(' → ')||t('player.currentClubDebut')}</b></div>
+      ${p.teamId===store.G.myTeamId?`<div class="fs11 ink3 mt-6">${t('player.basePeak',{value:`<b>${playerCeiling(p)}</b>`})}</div>`:''}
+      <div class="fs11 ink3 mt-6">${t('player.matchEndurance')}: <b>${playerStamina(p)}/100</b> ${playerStamina(p)>=75?t('player.staminaHigh'):playerStamina(p)<=45?t('player.staminaLow'):t('player.staminaNormal')}</div>
+      <div class="fs11 ink3 mt-6">${t('player.careerPoints')}: ${t('player.pointsWonLost',{won:`<b>${formatNumber(p.careerPointsWon||0)}</b>`,lost:`<b>${formatNumber(p.careerPointsLost||0)}</b>`})}</div>
     </div>
     <div class="tile tile-lg">
-      <div class="fs10 ink3 up ls1 mb6">Gablotka</div>
-      ${trophyCabinet.length?trophyCabinet.map(t=>`<div class="pnl-row"><div>${t.label}</div><div class="pnl-pos">${t.count}x</div></div>`).join(''):'<div class="fs12 ink3">Na razie bez dużych trofeów. To wciąż profil do zbudowania.</div>'}
+      <div class="fs10 ink3 up ls1 mb6">${t('player.trophyCabinet')}</div>
+      ${trophyCabinet.length?trophyCabinet.map(trophy=>`<div class="pnl-row"><div>${trophy.label}</div><div class="pnl-pos">${trophy.count}x</div></div>`).join(''):`<div class="fs12 ink3">${t('player.noTrophies')}</div>`}
     </div>
   </div>
   ${p.academyProfile?`<div class="mb14 pd10-12 r10 fs12" style="border:1px solid var(--purple);background:rgba(104,40,160,.08)">
-    <div class="b7 cpurple mb6">Raport akademii</div>
-    <div>Region: <b>${p.academyProfile.region||'Klubowa akademia'}</b> / Gotowo\u015b\u0107: <b>${p.academyProfile.readiness||'projekt'}</b> / Peak OVR: <b>${p.academyProfile.ceiling||'?'}</b></div>
+    <div class="b7 cpurple mb6">${t('player.academyReport')}</div>
+    <div>${t('player.region')}: <b>${p.academyProfile.region||t('player.clubAcademy')}</b> / ${t('player.readiness')}: <b>${p.academyProfile.readiness||t('player.project')}</b> / Peak OVR: <b>${p.academyProfile.ceiling||'?'}</b></div>
     <div class="mt-4 ink3">${p.academyProfile.note||''}</div>
   </div>`:''}
-  ${p.awards?.length?`<div class="mb14"><div class="fs10 ink3 mb6 up ls1">Trofea sezon po sezonie</div><div>${p.awards.map(a=>`<span class="award">${a.label}</span>`).join('')}</div></div>`:''}
+  ${p.awards?.length?`<div class="mb14"><div class="fs10 ink3 mb6 up ls1">${t('player.seasonTrophies')}</div><div>${p.awards.map(a=>`<span class="award">${a.displayLabel||a.label}</span>`).join('')}</div></div>`:''}
   <div class="btn-row">
-    ${p.teamId===store.G.myTeamId?`<button class="btn pr" onclick="closeModal();openNegotiate(${p.id})">NEGOCJUJ KONTRAKT</button>`:''}
-    <button class="btn" onclick="closeModal()">ZAMKNIJ</button>
+    ${p.teamId===store.G.myTeamId?`<button class="btn pr" onclick="closeModal();openNegotiate(${p.id})">${t('player.negotiateContract').toUpperCase()}</button>`:''}
+    <button class="btn" onclick="closeModal()">${t('common.close').toUpperCase()}</button>
   </div>`;
   openModal();
 }
@@ -5215,40 +5218,41 @@ function openStaffModal(sid){
   ensureStaffMeta(s);
   const hist=(store.G.staffHistory?.[s.id]||[]).slice().reverse();
   const career=(s.careerHistory||[]).slice().reverse();
-  const currentTeam=s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):'Wolny rynek';
-  const roleLabel=s.type==='coach'?'Trener':s.type==='physio'?'Fizjoterapeuta':s.type==='psychologist'?'Psycholog':s.type==='scout'?'Skaut':'Dyrektorka PR';
+  const currentTeam=s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):t('staff.freeMarket');
+  const roleLabel=t(s.type==='coach'?'staff.coach':s.type==='physio'?'staff.physio':s.type==='psychologist'?'staff.psychologist':s.type==='scout'?'staff.scout':'staff.prDirector');
   const detail=s.type==='coach'
-    ?`Styl ${s.styleName||'?'} / Taktyka ${s.tactics||0} / Motywacja ${s.motivation||0}`
+    ?t('staff.styleDetail',{style:s.styleName||'?',tactics:s.tactics||0,motivation:s.motivation||0})
     :s.type==='physio'
-    ?`Redukcja kontuzji ${s.injReduction||0} / Regeneracja ${s.recovery||0}`
+    ?t('staff.physioDetail',{injury:s.injReduction||0,recovery:s.recovery||0})
     :s.type==='psychologist'
-    ?`Mental ${s.mentalTraining||0} / Presja ${s.pressure||0}`
+    ?t('staff.psychDetail',{mental:s.mentalTraining||0,pressure:s.pressure||0})
     :s.type==='scout'
-    ?`Dokładność ${s.accuracy||0} / Sieć ${s.network||0}`
-    :`Komercja +${Math.round((s.bonus||0)*100)}% / Cooldown -${s.cooldownReduce||0}`;
+    ?t('staff.scoutDetail',{accuracy:s.accuracy||0,network:s.network||0})
+    :t('staff.prDetail',{bonus:Math.round((s.bonus||0)*100),cooldown:s.cooldownReduce||0});
+  const bio=window.PPM.i18n.getLocale()==='pl'?s.bio:t('staff.bioFallback',{name:s.name,role:roleLabel.toLowerCase()});
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">${roleLabel}: ${s.name} <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="flex gp16 aic mb14">
     <img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar xl">
     <div>
       <div class="syne fs26 b8">${s.name}</div>
-      <div class="fs11 ink3">${roleLabel} / ${currentTeam}</div>
-      <div class="fs11 ink3 mt-4">${s.age||'?'} lat / kontrakt ${s.contractYears||0} l. / OVR ${staffOvr(s)}${s.teamId===store.G.myTeamId?` / Peak OVR ${staffCeiling(s)}`:''}</div>
+      <div class="fs11 ink3">${roleLabel} / ${t('staff.currentClub')}: ${currentTeam}</div>
+      <div class="fs11 ink3 mt-4">${t('staff.profileLine',{age:s.age||'?',years:s.contractYears||0,ovr:staffOvr(s)})}${s.teamId===store.G.myTeamId?` / Peak OVR ${staffCeiling(s)}`:''}</div>
       <div class="fs11 ink3 mt-4">${detail}</div>
     </div>
   </div>
-  <div class="card mb12"><div class="ct">BIO</div><div class="fs12 lh16">${s.bio}</div></div>
+  <div class="card mb12"><div class="ct">${t('staff.bio').toUpperCase()}</div><div class="fs12 lh16">${bio}</div></div>
   <div class="g2">
-    <div class="card"><div class="ct">HISTORIA KLUBÓW</div>
-      ${career.length?career.map(h=>`<div class="pnl-row"><div>${teamName(h.teamId)}<div class="fs10 ink3">S${h.startSeason} - ${h.endSeason?`S${h.endSeason}`:'teraz'}</div></div><div class="pnl-pos">${((h.endSeason||store.G.season)-h.startSeason+1)} lat</div></div>`).join(''):'<div class="fs12 ink3">Historia klubowa zapisze się po pierwszym sezonie pracy.</div>'}
+    <div class="card"><div class="ct">${t('staff.clubHistory').toUpperCase()}</div>
+      ${career.length?career.map(h=>`<div class="pnl-row"><div>${teamName(h.teamId)}<div class="fs10 ink3">S${h.startSeason} - ${h.endSeason?`S${h.endSeason}`:t('staff.now')}</div></div><div class="pnl-pos">${t('staff.tenureYears',{count:(h.endSeason||store.G.season)-h.startSeason+1})}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.clubHistoryEmpty')}</div>`}
     </div>
-    <div class="card"><div class="ct">SEZONY</div>
-      ${hist.length?hist.map(h=>`<div class="pnl-row"><div>S${h.season}<div class="fs10 ink3">${h.teamName||'Wolny rynek'} / ${h.style||h.type}</div></div><div class="pnl-pos">OVR ${h.ovr}</div></div>`).join(''):'<div class="fs12 ink3">Historia sezonowa pojawi się po zamknięciu pierwszego sezonu.</div>'}
+    <div class="card"><div class="ct">${t('staff.seasons').toUpperCase()}</div>
+      ${hist.length?hist.map(h=>`<div class="pnl-row"><div>S${h.season}<div class="fs10 ink3">${h.teamName||t('staff.freeMarket')} / ${h.style||h.type}</div></div><div class="pnl-pos">OVR ${h.ovr}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.seasonHistoryEmpty')}</div>`}
     </div>
   </div>
   <div class="btn-row mt-12">
-    <button class="btn ${s.teamId===store.G.myTeamId?'go':'pr'}" onclick="closeModal();openStaffNeg(${s.id})">${s.teamId===store.G.myTeamId?'PRZEDŁUŻ':'NEGOCJUJ'}</button>
-    <button class="btn" onclick="closeModal()">ZAMKNIJ</button>
+    <button class="btn ${s.teamId===store.G.myTeamId?'go':'pr'}" onclick="closeModal();openStaffNeg(${s.id})">${t(s.teamId===store.G.myTeamId?'staff.extend':'staff.negotiate').toUpperCase()}</button>
+    <button class="btn" onclick="closeModal()">${t('common.close').toUpperCase()}</button>
   </div>`;
   openModal();
 }

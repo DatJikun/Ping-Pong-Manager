@@ -335,3 +335,27 @@ test('club facilities and their data descriptions follow the active locale', () 
   assert.match(polish, /Hala treningowa/i);
   assert.match(polish, /Treningi na podwórku|Brak hali/i);
 });
+
+test('player and staff profile modals follow the active locale', () => {
+  const g = boot(3119);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const player = g.PPM.state.G.players.find(p => p.teamId === g.PPM.state.G.myTeamId);
+  const staff = g.PPM.state.G.staff.find(s => s.teamId === g.PPM.state.G.myTeamId)
+    || g.PPM.state.G.staffPool[0];
+
+  g.PPM.gameplay.openPlayerModal(player.id);
+  const englishPlayer = g.document.getElementById('modal').innerHTML;
+  assert.match(englishPlayer, /Equipment|Career points|Match modifiers/i);
+  assert.doesNotMatch(englishPlayer, /Sprzęt|Punkty w karierze|Modyfikatory meczowe/i);
+
+  g.PPM.gameplay.openStaffModal(staff.id);
+  const englishStaff = g.document.getElementById('modal').innerHTML;
+  assert.match(englishStaff, /Club history|Current club/i);
+  assert.doesNotMatch(englishStaff, /Historia klubów|Wolny rynek/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openPlayerModal(player.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Sprzęt|Punkty w karierze/i);
+  g.PPM.gameplay.openStaffModal(staff.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Historia klubów/i);
+});
