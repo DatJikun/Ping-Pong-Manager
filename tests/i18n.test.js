@@ -225,3 +225,22 @@ test('inbox and news entries can store semantic keys and switch language live', 
   assert.match(polishNews, /Newsy i media/i);
   assert.match(polishNews, /Witamy w Arc Club/i);
 });
+
+test('the career history views follow the active locale', () => {
+  const g = boot(3114);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  g.PPM.ui.historyTab = 'seasons';
+  const englishSeasons = g.PPM.pages.pageHistory();
+  assert.match(englishSeasons, /History &amp; statistics|History & statistics/i);
+  assert.match(englishSeasons, /Player OVR/i);
+  g.PPM.ui.historyTab = 'manager';
+  assert.match(g.PPM.pages.pageHistory(), /Manager career/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.ui.historyTab = 'seasons';
+  const polish = g.PPM.pages.pageHistory();
+  assert.match(polish, /Historia i statystyki/i);
+  assert.match(polish, /OVR zawodników/i);
+});

@@ -23,6 +23,8 @@
   contract roles and the full sponsor screen across every consumer.
 - Added language-independent keyed inbox/news entries with legacy text fallback,
   then localized both archive screens and the club welcome message.
+- Migrated season, manager, club and coaching history views while preserving the
+  compact permanent ledgers and locale-aware historical money values.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 
