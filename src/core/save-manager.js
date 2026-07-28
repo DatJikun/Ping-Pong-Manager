@@ -57,6 +57,9 @@ function createSaveManager(options){
     ||(globalThis.navigator?.storage?.estimate
       ?()=>globalThis.navigator.storage.estimate()
       :null);
+  const legacyStorage=options.legacyStorage||null;
+  const legacyKey=options.legacyKey||'ppgame';
+  const currentSchemaVersion=options.currentSchemaVersion;
   let activeCareerId=null;
   let initialized=false;
   let pendingText=null;
@@ -87,11 +90,27 @@ function createSaveManager(options){
   }
 
   async function initialize(){
+    if(initialized)return api;
     await adapter.open();
     activeCareerId=await adapter.getMeta(ACTIVE_META_KEY);
     if(activeCareerId&&!(await adapter.getCareer(activeCareerId))){
       activeCareerId=null;
       await adapter.putMeta(ACTIVE_META_KEY,null);
+    }
+    const legacyText=legacyStorage?.getItem?.(legacyKey);
+    if(legacyText){
+      validateText(legacyText);
+      let legacyCareer=(await adapter.listCareers()).find(x=>x.legacySource===legacyKey);
+      if(!legacyCareer){
+        legacyCareer={...makeCareer(legacyText,null),legacySource:legacyKey};
+        await adapter.commit({career:legacyCareer,backup:null,deleteBackupIds:[]});
+      }
+      const readBack=await adapter.getCareer(legacyCareer.id);
+      if(!readBack)throw new Error('Legacy career read-back failed');
+      validateText(readBack.data);
+      activeCareerId=readBack.id;
+      await adapter.putMeta(ACTIVE_META_KEY,activeCareerId);
+      legacyStorage.removeItem(legacyKey);
     }
     initialized=true;
     return api;
@@ -119,12 +138,30 @@ function createSaveManager(options){
   async function loadCareer(id){
     requireInitialized();
     await flush();
-    const career=await adapter.getCareer(id);
+    let career=await adapter.getCareer(id);
     if(!career)throw new Error('Career not found');
-    validateText(career.data);
-    loadText(career.data);
     activeCareerId=id;
     await adapter.putMeta(ACTIVE_META_KEY,id);
+    const parsed=validateText(career.data);
+    if(Number.isFinite(currentSchemaVersion)
+      &&(Number(parsed?.schemaVersion)||0)<currentSchemaVersion){
+      await createCheckpoint('migration',career.data);
+      loadText(career.data);
+      const migratedText=serializeCurrent();
+      if(!migratedText)throw new Error('Migrated career could not be serialized');
+      validateText(migratedText);
+      career=makeCareer(migratedText,career.name,career,career.id);
+      await adapter.commit({career,backup:null,deleteBackupIds:[]});
+      const readBack=await adapter.getCareer(id);
+      validateText(readBack?.data);
+      const migrationIds=(await adapter.listBackups(id))
+        .filter(x=>x.kind==='migration').map(x=>x.id);
+      if(migrationIds.length){
+        await adapter.commit({career:null,backup:null,deleteBackupIds:migrationIds});
+      }
+    }else{
+      loadText(career.data);
+    }
     return career;
   }
 
@@ -281,6 +318,9 @@ function createSaveManager(options){
 const storage=window.PPM.saveStorage;
 const defaultManager=createSaveManager({
   adapter:storage.createIndexedDbAdapter(),
+  legacyStorage:globalThis.localStorage,
+  legacyKey:window.PPM.stateApi.LOCAL_STORAGE_KEY,
+  currentSchemaVersion:window.PPM.stateApi.SAVE_SCHEMA_VERSION,
   validateText:text=>window.PPM.stateApi?.validateSaveText
     ?window.PPM.stateApi.validateSaveText(text)
     :JSON.parse(text),

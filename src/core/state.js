@@ -126,9 +126,13 @@ function setNamePools(countryId){
 // game never re-mints IDs that already belong to existing entities.
 function persistGame(){
   if(!store.G)return false;
-  store.G._pid=ui._pid;
+  const text=serializeGame();
+  const manager=window.PPM.saveManager;
+  if(manager?.isInitialized?.()){
+    return manager.requestAutosave(text);
+  }
   try{
-    localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(store.G));
+    localStorage.setItem(LOCAL_STORAGE_KEY,text);
     ui._saveFailureNotified=false;
     return true;
   }catch(_error){
@@ -142,6 +146,29 @@ function persistGame(){
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
 const SAVE_SCHEMA_VERSION=20;
+function validateSaveObject(parsed){
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Zapis musi być obiektem.');
+  if(!Number.isFinite(parsed.season))throw new Error('Zapis nie ma poprawnego numeru sezonu.');
+  if(!Array.isArray(parsed.teams))throw new Error('Zapis nie zawiera listy klubów.');
+  if(!Array.isArray(parsed.players))throw new Error('Zapis nie zawiera listy zawodników.');
+  if(Number.isFinite(parsed.schemaVersion)&&parsed.schemaVersion>SAVE_SCHEMA_VERSION){
+    throw new Error('Ten zapis pochodzi z nowszej wersji gry.');
+  }
+  return parsed;
+}
+function validateSaveText(text){
+  return validateSaveObject(JSON.parse(text));
+}
+function serializeGame(){
+  if(!store.G)return null;
+  store.G._pid=ui._pid;
+  return JSON.stringify(store.G);
+}
+async function flushPersistence(){
+  const manager=window.PPM.saveManager;
+  if(manager?.isInitialized?.())return manager.flush();
+  return true;
+}
 // ── Save migration ────────────────────────────────────────────────────────────
 // migrateLoadedGame() upgrades any loaded save object to the current field
 // layout. Every if(!field) block here is a guard for a missing field that was
@@ -468,7 +495,7 @@ function maxEntityId(node){
 // Parses a JSON string, runs migration, stores result in store.G.
 // Also restores ui._pid (the global entity-ID counter).
 function loadGameFromText(text){
-  const parsed = JSON.parse(text);
+  const parsed = validateSaveText(text);
   store.G = migrateLoadedGame(parsed);
   // Floor AFTER migration — the duplicate-id repair inside migrateLoadedGame can
   // mint ids above the save's original maximum.
@@ -490,4 +517,4 @@ function createNewGame(clubIdx, countryId){
 ui.settings=loadAppSettings();
 window.PPM.state = store;
 window.PPM.ui = ui;
-window.PPM.stateApi = { LOCAL_STORAGE_KEY, APP_SETTINGS_KEY, DEFAULT_APP_SETTINGS, SAVE_SCHEMA_VERSION, getGame, setGame, getUIState, setPage, persistGame, loadGameFromText, loadPersistedGame, createNewGame, setNamePools, migrateLoadedGame, loadAppSettings, persistAppSettings, updateAppSettings };
+window.PPM.stateApi = { LOCAL_STORAGE_KEY, APP_SETTINGS_KEY, DEFAULT_APP_SETTINGS, SAVE_SCHEMA_VERSION, getGame, setGame, getUIState, setPage, persistGame, serializeGame, flushPersistence, validateSaveObject, validateSaveText, loadGameFromText, loadPersistedGame, createNewGame, setNamePools, migrateLoadedGame, loadAppSettings, persistAppSettings, updateAppSettings };

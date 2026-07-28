@@ -63,8 +63,18 @@ function showStartScreen(force){
   pages.renderStart();
 }
 
-function resumeSavedGame(){
-  const saved = loadPersistedGame();
+async function resumeSavedGame(){
+  let saved=null;
+  try{
+    const manager=window.PPM.saveManager;
+    if(manager?.isInitialized?.()&&manager.getActiveCareerId()){
+      saved=await manager.loadCareer(manager.getActiveCareerId());
+    }else{
+      saved=loadPersistedGame();
+    }
+  }catch(error){
+    shell.toast(error?.message||'Nie udało się wczytać kariery.');
+  }
   if(!saved){
     shell.toast('Brak lokalnego zapisu do wznowienia.');
     pages.renderStart();
@@ -114,5 +124,17 @@ window.PPM.renderApp = pages.renderApp;
 window.PPM.updateHeader = shell.updateHeader;
 
 setNamePools(ui._selCountry);
-pages.renderStart();
+async function initializeApplication(){
+  const content=document.getElementById('content');
+  if(content)content.innerHTML='<div class="flex aic jcc" style="min-height:70vh">Wczytywanie karier…</div>';
+  try{
+    await window.PPM.saveManager.initialize();
+    ui._careers=await window.PPM.saveManager.listCareers();
+    ui._saveStorageError=null;
+  }catch(error){
+    ui._saveStorageError=error?.message||'Magazyn zapisów jest niedostępny.';
+  }
+  pages.renderStart();
+}
+initializeApplication();
 })();
