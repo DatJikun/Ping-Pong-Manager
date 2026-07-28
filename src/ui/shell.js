@@ -151,8 +151,12 @@ function openSettings(){
 }
 // Return to the main menu without destroying the current career (it stays saved and
 // resumable). Renders the menu directly (render() would go back into the game).
-function backToMainMenu(){
-  try{stateApi.persistGame&&stateApi.persistGame();}catch(e){}
+async function backToMainMenu(){
+  try{
+    stateApi.persistGame&&stateApi.persistGame();
+    await stateApi.flushPersistence?.();
+    await window.refreshCareerList?.(false);
+  }catch(e){}
   ui._startView='menu';
   closeModal();
   setShellMode('start');

@@ -53,6 +53,98 @@ function saveGame(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=buildSaveFilename();a.click();shell.toast(`Gra zapisana jako ${a.download}`);
 }
 
+function downloadCareerText(text,filename){
+  const pretty=JSON.stringify(JSON.parse(text),null,2);
+  const blob=new Blob([pretty],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+}
+
+async function refreshCareerList(renderMenu=true){
+  const manager=window.PPM.saveManager;
+  if(!manager?.isInitialized?.())return[];
+  ui._careers=await manager.listCareers();
+  ui._storageEstimate=await manager.estimateStorage();
+  if(renderMenu)pages.renderStart();
+  return ui._careers;
+}
+
+function enterLoadedCareer(message){
+  shell.updateHeader();
+  const targetPage=store.G&&store.G.phase==='preseason'?'preseason':'dash';
+  ui.page=targetPage;
+  pages.renderApp();
+  shell.syncNavState?.();
+  if(message)shell.toast(message);
+}
+
+async function continueCareer(id){
+  try{
+    await window.PPM.saveManager.loadCareer(id);
+    await refreshCareerList(false);
+    enterLoadedCareer('Wznowiono karierę.');
+  }catch(error){
+    shell.toast(error?.message||'Nie udało się wczytać kariery.');
+  }
+}
+
+async function renameCareer(id){
+  const career=await window.PPM.saveManager.getCareer(id);
+  if(!career)return;
+  const name=prompt('Nazwa kariery:',career.name);
+  if(name===null)return;
+  if(!String(name).trim()){shell.toast('Nazwa nie może być pusta.');return;}
+  await window.PPM.saveManager.renameCareer(id,name);
+  await refreshCareerList();
+}
+
+async function deleteCareer(id){
+  const career=await window.PPM.saveManager.getCareer(id);
+  if(!career)return;
+  if(!confirm(`Usunąć karierę „${career.name}” wraz z kopiami bezpieczeństwa?`))return;
+  await window.PPM.saveManager.deleteCareer(id);
+  if(!window.PPM.saveManager.getActiveCareerId())window.PPM.stateApi.setGame(null);
+  await refreshCareerList();
+  shell.toast('Kariera została usunięta.');
+}
+
+async function exportCareer(id){
+  const career=await window.PPM.saveManager.getCareer(id);
+  if(!career)return;
+  const s=career.summary||{};
+  const filename=`ppm-v17-${slugifySavePart(s.clubName||career.name)}-s${s.season||1}-k${s.matchday||0}.json`;
+  downloadCareerText(career.data,filename);
+  shell.toast(`Wyeksportowano ${career.name}.`);
+}
+
+function escapeModal(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+async function showCareerBackups(id){
+  const career=await window.PPM.saveManager.getCareer(id);
+  const backups=await window.PPM.saveManager.listBackups(id);
+  const modal=document.getElementById('modal');
+  modal.className='modal';
+  modal.innerHTML=`<div class="mt2">KOPIE — ${escapeModal(career?.name||'Kariera')} <button class="close-btn" onclick="closeModal()">✕</button></div>
+    <div class="flex fdc gp6 mt-12">${backups.length?backups.map(b=>`<div class="flex jcb aic bgs1 bb1 r8 pd10-12"><div><div class="b7 fs12">${escapeModal(b.label)}</div><div class="fs9 ink3 mt-2">${new Date(b.createdAt).toLocaleString('pl-PL')}</div></div><button class="btn sm" onclick="restoreCareerBackup('${escapeModal(id)}','${escapeModal(b.id)}')">PRZYWRÓĆ</button></div>`).join(''):'<div class="fs11 ink3">Brak punktów odzyskiwania.</div>'}</div>`;
+  shell.openModal();
+}
+
+async function restoreCareerBackup(id,backupId){
+  if(!confirm('Przywrócić tę kopię? Obecny stan kariery również zostanie zabezpieczony.'))return;
+  try{
+    await window.PPM.saveManager.restoreBackup(id,backupId);
+    shell.closeModal();
+    await refreshCareerList(false);
+    enterLoadedCareer('Przywrócono kopię kariery.');
+  }catch(error){
+    shell.toast(error?.message||'Nie udało się przywrócić kopii.');
+  }
+}
+
 function showStartScreen(force){
   if(ui.running)return;
   if(store.G&&!force){
@@ -68,7 +160,8 @@ async function resumeSavedGame(){
   try{
     const manager=window.PPM.saveManager;
     if(manager?.isInitialized?.()&&manager.getActiveCareerId()){
-      saved=await manager.loadCareer(manager.getActiveCareerId());
+      await continueCareer(manager.getActiveCareerId());
+      return;
     }else{
       saved=loadPersistedGame();
     }
@@ -89,7 +182,16 @@ async function resumeSavedGame(){
 
 function loadGame(ev){
   const f=ev.target.files[0];if(!f)return;
-  const r=new FileReader();r.onload=e=>{try{loadGameFromText(e.target.result);shell.updateHeader();const targetPage=store.G&&store.G.phase==='preseason'?'preseason':'dash';ui.page=targetPage;pages.renderApp();shell.syncNavState?.();shell.toast('Wczytano zapis z pliku!');}catch{shell.toast('B\u0142\u0105d pliku!');}};
+  const r=new FileReader();r.onload=async e=>{try{
+    const text=e.target.result;
+    window.PPM.stateApi.validateSaveText(text);
+    const estimate=await window.PPM.saveManager.estimateStorage();
+    if(estimate?.low&&!confirm('Pamięć na zapisy jest prawie pełna. Kontynuować import?'))return;
+    const career=await window.PPM.saveManager.importCareer(text,f.name.replace(/\.json$/i,''));
+    await window.PPM.saveManager.loadCareer(career.id);
+    await refreshCareerList(false);
+    enterLoadedCareer('Zaimportowano zapis jako osobną karierę.');
+  }catch(error){shell.toast(error?.message||'Błąd pliku!');}};
   r.readAsText(f);ev.target.value='';
 }
 function loadDatabaseFile(ev){
@@ -113,7 +215,7 @@ function clearDatabaseFile(){
   pages.renderStart();
 }
 
-Object.assign(window, { saveGame, loadGame, loadDatabaseFile, clearDatabaseFile, showStartScreen, resumeSavedGame, render: pages.renderApp, updateHeader: shell.updateHeader });
+Object.assign(window, { saveGame, loadGame, loadDatabaseFile, clearDatabaseFile, showStartScreen, resumeSavedGame, continueCareer, renameCareer, deleteCareer, exportCareer, showCareerBackups, restoreCareerBackup, refreshCareerList, render: pages.renderApp, updateHeader: shell.updateHeader });
 window.PPM.saveGame = saveGame;
 window.PPM.loadGame = loadGame;
 window.PPM.loadDatabaseFile = loadDatabaseFile;

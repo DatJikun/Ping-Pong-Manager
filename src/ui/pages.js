@@ -1391,9 +1391,40 @@ function renderStart(){
   if(!ui._startView)ui._startView='menu';
   document.getElementById('content').innerHTML=ui._startView==='newgame'?renderNewGameWizard():renderMainMenu();
 }
-function savedGameName(){try{const p=JSON.parse(localStorage.getItem('ppgame'));return p&&p.teams&&p.teams.find?((p.teams.find(t=>t.isPlayer)||{}).name||null):null;}catch(e){return null;}}
+function menuEscape(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function renderCareerLibrary(){
+  if(ui._saveStorageError){
+    return`<div class="card bt3-red"><div class="b8 cr">MAGAZYN ZAPISÓW NIEDOSTĘPNY</div><div class="fs11 ink3 mt-4">${menuEscape(ui._saveStorageError)}</div><div class="fs10 mt-6">Twój stary zapis nie został usunięty. Możesz nadal wczytać lub wyeksportować plik JSON.</div></div>`;
+  }
+  const careers=Array.isArray(ui._careers)?ui._careers:[];
+  if(!careers.length){
+    return`<div class="tac pd16 bgs1 bb1 r8"><div class="b7">Brak zapisanych karier</div><div class="fs10 ink3 mt-4">Rozpocznij nową grę albo zaimportuj zapis JSON.</div></div>`;
+  }
+  return careers.map(c=>{
+    const s=c.summary||{};
+    const phase=s.phase==='preseason'?'preseason':`kolejka ${s.matchday||0}`;
+    const updated=c.updatedAt?new Date(c.updatedAt).toLocaleString('pl-PL'):'—';
+    const id=menuEscape(c.id);
+    return`<div class="bgs1 bb1 r8 pd10-12">
+      <div class="flex jcb aic gp10">
+        <button class="btn flx1 tal" onclick="continueCareer('${id}')" style="padding:10px 12px">
+          <span class="block syne b8 fs13">${menuEscape(c.name)}</span>
+          <span class="block fs10 ink3 mt-2">${menuEscape(s.clubName||'Nieznany klub')} · sezon ${s.season||1}, ${phase} · ${menuEscape(s.countryId||'PL')}</span>
+          <span class="block fs9 ink3 mt-2">Ostatni zapis: ${menuEscape(updated)}</span>
+        </button>
+        <div class="flex gp4">
+          <button class="btn sm" onclick="renameCareer('${id}')">NAZWA</button>
+          <button class="btn sm" onclick="showCareerBackups('${id}')">KOPIE</button>
+          <button class="btn sm" onclick="exportCareer('${id}')">JSON</button>
+          <button class="btn sm r" onclick="deleteCareer('${id}')">USUŃ</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
 function renderMainMenu(){
-  const savedName=savedGameName();
   const hasCustomDb=!!window.PPM.customDatabase;
   // One accented action only. In this design language the livery marks the thing
   // you came here to do; a stack of seven solid slabs reads as noise.
@@ -1403,10 +1434,11 @@ function renderMainMenu(){
       <div class="syne b8 up" style="font-size:68px;letter-spacing:.01em;line-height:.9"><span class="cr">PING</span><span class="cgold">PONG</span></div>
       <div class="syne fs14 b7 ink3 up mt-2" style="letter-spacing:.9em">MANAGER</div>
     </div>
-    <div class="flex fdc gp8" style="width:340px;max-width:90vw">
+    <div class="flex fdc gp8" style="width:680px;max-width:94vw">
       ${menuBtn('&#9654; NOWA GRA','startNewGameFlow()','pr')}
-      ${menuBtn('WZN&Oacute;W OSTATNI ZAPIS','menuLoadGame()','',savedName||'brak zapisu',!!savedName)}
-      ${menuBtn('WCZYTAJ Z PLIKU (.json)','menuFilePicker()','','kopia zapasowa')}
+      <div class="fs10 ink3 up ls1 mt-6">Twoje kariery</div>
+      <div class="flex fdc gp6" style="max-height:44vh;overflow:auto">${renderCareerLibrary()}</div>
+      ${menuBtn('IMPORTUJ KARIERĘ (.json)','menuFilePicker()','','tworzy osobną karierę')}
       ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'','wkr&oacute;tce')}
       ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'','wkr&oacute;tce')}
       ${menuBtn('OPCJE','openSettings()','')}
@@ -1496,7 +1528,20 @@ function selClub(i){ui._selClub=i;renderStart();}
 function selectNewSaveDifficulty(level){ui._newSaveDifficulty=level;renderStart();playClick();}
 async function startGame(){
   if(ui._selClub<0)return;
+  const manager=window.PPM.saveManager;
+  if(manager?.isInitialized?.()){
+    const estimate=await manager.estimateStorage();
+    if(estimate?.low&&!confirm('Pamięć na zapisy jest prawie pełna. Kontynuować tworzenie kariery?'))return;
+    persistGame();
+    await manager.flush();
+    await manager.deactivate();
+  }
   newGame(ui._selClub,ui._selCountry);
+  if(manager?.isInitialized?.()){
+    const club=store.G.teams.find(t=>t.id===store.G.myTeamId);
+    await manager.createCareer(window.PPM.stateApi.serializeGame(),club?.name||'Nowa kariera');
+    ui._careers=await manager.listCareers();
+  }
   const historyN=ui._ngHistory??5;
   if(historyN>0){
     // World pre-history (owner backlog #1): block the UI with a progress modal
@@ -1525,6 +1570,8 @@ async function startGame(){
   renderApp();
   syncNavState();
   updateHeader();
+  persistGame();
+  await window.PPM.stateApi.flushPersistence();
   playClick();
 }
 

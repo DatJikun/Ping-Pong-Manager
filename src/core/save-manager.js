@@ -121,8 +121,14 @@ function createSaveManager(options){
     return (await adapter.listCareers()).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   }
 
+  async function getCareer(id){
+    requireInitialized();
+    return adapter.getCareer(id);
+  }
+
   async function createCareer(text,name){
     requireInitialized();
+    await flush();
     const career=makeCareer(text,name);
     await adapter.commit({career,backup:null,deleteBackupIds:[]});
     activeCareerId=career.id;
@@ -279,8 +285,7 @@ function createSaveManager(options){
     if(!backup)throw new Error('Backup not found');
     activeCareerId=careerId;
     await adapter.putMeta(ACTIVE_META_KEY,careerId);
-    const displaced=serializeCurrent();
-    if(displaced)await createCheckpoint('restore',displaced);
+    await createCheckpoint('restore',career.data);
     validateText(backup.data);
     const restored=makeCareer(backup.data,career.name,career,career.id);
     await adapter.commit({career:restored,backup:null,deleteBackupIds:[]});
@@ -308,7 +313,7 @@ function createSaveManager(options){
   function isInitialized(){return initialized;}
 
   const api={
-    initialize,listCareers,createCareer,importCareer,loadCareer,renameCareer,
+    initialize,listCareers,getCareer,createCareer,importCareer,loadCareer,renameCareer,
     deleteCareer,requestAutosave,flush,createCheckpoint,listBackups,
     restoreBackup,deactivate,getActiveCareerId,isInitialized,estimateStorage,
   };
