@@ -11,7 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -72,11 +72,11 @@ function pageDash(){
     nextActionCall='runMundial()';
     nextActionStyle='btn gl';
   }else if(canTop12L1){
-    nextActionLabel='TOP 12 I LIGA';
+    nextActionLabel=t('dash.top12Action',{division:'I'});
     nextActionCall='openTop12Picker(1)';
     nextActionStyle='btn gl';
   }else if(canTop12L2){
-    nextActionLabel='TOP 12 II LIGA';
+    nextActionLabel=t('dash.top12Action',{division:'II'});
     nextActionCall='openTop12Picker(2)';
     nextActionStyle='btn gl';
   }
@@ -713,7 +713,7 @@ function pageBudget(){
     ${nextSeason.entries.length?`<div class="mt-10 grid gp8">
       ${nextSeason.entries.map(entry=>`<div class="tile">
         <div class="row-bet">
-          <div><div class="b7">${entry.name}</div><div class="fs10 ink3">${entry.label} / ${entry.kind==='player'?roleGuaranteeLabel(entry.role):entry.role.toUpperCase()} / ${entry.years} l.</div></div>
+          <div><div class="b7">${entry.name}</div><div class="fs10 ink3">${t('budget.commitmentLine',{description:t(entry.labelKey),role:entry.kind==='player'?roleGuaranteeLabel(entry.role):t(entry.role==='pr'?'staff.prDirector':`staff.${entry.role}`),years:entry.years})}</div></div>
           <div class="tar fs11"><div class="b7 cr">${formatCurrency(entry.salary||0)}</div><div class="ink3">${t('budget.bonus',{amount:formatCurrency(entry.bonus||0)})}</div></div>
         </div>
       </div>`).join('')}
@@ -1110,7 +1110,7 @@ function pageHoF(){
       <div>
         <div class="hr-name">${e.name}${e.wasMyPlayer?' <span class="fs10 cg">\u2605</span>':''}</div>
         <div class="hr-meta">${e.retiredAge} / ${e.careerW}W/${e.careerL}L / ${e.wrate}%W</div>
-        <div class="mt-3">${(e.awards||[]).slice(0,4).map(a=>`<span class="award">${a.displayLabel||a.label}</span>`).join('')}</div>
+        <div class="mt-3">${(e.awards||[]).slice(0,4).map(a=>`<span class="award">${awardLabel(a)}</span>`).join('')}</div>
       </div>
       <div class="hr-val">${sk==='trophies_gold'?e.goldCount+'':sk==='ovr'?e.ovr:sk==='w'?e.careerW:e.wrate+'%'}</div>
     </div>`).join(''):`<div class="pd40 tac ink3">${t('hof.empty')}</div>`;

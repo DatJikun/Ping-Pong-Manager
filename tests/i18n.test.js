@@ -101,6 +101,23 @@ test('the dashboard shell follows the active locale', () => {
   assert.match(polish, /NARRACJA SEZONU/i);
 });
 
+test('the dashboard Top 12 action follows the active locale', () => {
+  const g = boot(3133);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  const G = g.PPM.state.G;
+  G.phase = 'pre';
+  G.matchday = 21;
+  G.top12MastersDone = { 1: false, 2: false };
+
+  const english = g.PPM.pages.pageDash();
+  assert.match(english, /TOP 12.*DIVISION (?:I|II)/i);
+  assert.doesNotMatch(english, /TOP 12.*LIGA/i);
+
+  g.PPM.i18n.setLocale('pl');
+  assert.match(g.PPM.pages.pageDash(), /TOP 12.*(?:I|II) LIGA/i);
+});
+
 test('the squad and academy flows follow the active locale', () => {
   const g = boot(3107);
   g.PPM.gameplay.newGame(0, 'PL');
@@ -176,6 +193,30 @@ test('the budget screen follows the active locale and locale-aware money formatt
   assert.match(polish, /Budżet i finanse/i);
   assert.match(polish, /Prognoza końca sezonu/i);
   assert.match(polish, /Planowanie kolejnego sezonu/i);
+});
+
+test('next-season commitment descriptions follow the active locale', () => {
+  const g = boot(3125);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  const G = g.PPM.state.G;
+  const player = G.players.find(p => p.teamId === null && !p.retired);
+  const staff = G.staffPool.find(s => s.teamId === null && s.type !== 'pr');
+  G.preSignedPlayers = [{
+    playerId: player.id, destinationTeamId: G.myTeamId,
+    salary: 12000, bonus: 3000, years: 2, promisedRole: 'rotation',
+  }];
+  G.pendingStaffSignings = [{
+    staffId: staff.id, destinationTeamId: G.myTeamId, years: 2,
+  }];
+
+  const english = g.PPM.pages.pageBudget();
+  assert.match(english, /player joining next season|staff joining next season/i);
+  assert.doesNotMatch(english, /zawodnik od nowego sezonu|sztab od nowego sezonu/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageBudget();
+  assert.match(polish, /zawodnik od nowego sezonu|sztab od nowego sezonu/i);
 });
 
 test('sponsor goals and the sponsor screen follow the active locale', () => {
@@ -442,6 +483,32 @@ test('player and staff profile modals follow the active locale', () => {
   assert.match(g.document.getElementById('modal').innerHTML, /Historia klubów/i);
 });
 
+test('saved player awards are translated in profiles and Hall of Fame', () => {
+  const g = boot(3132);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  const player = g.PPM.state.G.players.find(p => p.teamId === g.PPM.state.G.myTeamId);
+  player.awards = [
+    { season: 1, type: 'golden_paddle', displayLabel: 'Z\u0142ota Paletka', label: 'Z\u0142ota Paletka S1' },
+    { season: 1, type: 'cup_winner', displayLabel: 'Puchar Polski', label: 'Puchar Polski S1' },
+  ];
+
+  g.PPM.gameplay.openPlayerModal(player.id);
+  const englishProfile = g.document.getElementById('modal').innerHTML;
+  assert.match(englishProfile, /Golden Paddle|Polish Cup winner/i);
+  assert.doesNotMatch(englishProfile, /Z\u0142ota Paletka|Puchar Polski/i);
+
+  g.PPM.gameplay.retirePlayer(player);
+  const englishHof = g.PPM.pages.pageHoF();
+  assert.match(englishHof, /Golden Paddle|Polish Cup winner/i);
+  assert.doesNotMatch(englishHof, /Z\u0142ota Paletka|Puchar Polski/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openPlayerModal(player.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Z\u0142ota Paletka|Puchar Polski/i);
+  assert.match(g.PPM.pages.pageHoF(), /Z\u0142ota Paletka|Puchar Polski/i);
+});
+
 test('player and staff contract negotiations follow the active locale', () => {
   const g = boot(3120);
   g.PPM.gameplay.newGame(0, 'PL');
@@ -568,4 +635,20 @@ test('new career news is stored as semantic data, never as a fixed-language sent
   const producers = calls.filter(call => !call.startsWith('pushNews(msg'));
   assert.ok(producers.length > 10, 'news producers found');
   producers.forEach(call => assert.match(call, /^pushNews\('news\./, call));
+});
+
+test('persistent season log producers do not store fixed Polish sentences', () => {
+  const gameplay = read('src/core/gameplay.js');
+  assert.doesNotMatch(gameplay, /safeLog\(`Partnerstwo |safeLog\(`\$\{s\.name\}.*(?:urlop|emerytur)|safeLog\(`\$\{p\.name\} odszed/);
+});
+
+test('matchday modal title follows the active locale', () => {
+  const g = boot(3134);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const english = g.PPM.gameplay.matchdayModalTitle(1, 1);
+  assert.match(english, /Matchday 1\/22 \(Division (?:I|II)\)/i);
+  assert.doesNotMatch(english, /Kolejka|Liga/i);
+
+  g.PPM.i18n.setLocale('pl');
+  assert.match(g.PPM.gameplay.matchdayModalTitle(1, 1), /Kolejka 1\/22 \(I Liga\)/i);
 });

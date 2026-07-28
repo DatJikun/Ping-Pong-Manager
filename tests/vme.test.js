@@ -69,3 +69,20 @@ test('initiative bar reflects the live situation (not static)', () => {
   assert.ok(width(homeLeading) > width(awayLeading),
     `home-leading initiative (${width(homeLeading)}%) should exceed away-leading (${width(awayLeading)}%)`);
 });
+
+test('match presentation follows the active locale', () => {
+  const { g, gp, home, away, r } = setup(8);
+  const total = r.matchups[0].setScores.length;
+
+  const english = gp.renderVME(home, away, r.matchups, 0, 0, 0, false, {
+    home: 0, away: 0, setIndex: total,
+  });
+  assert.match(english, /MATCH 1\/4|INITIATIVE|Duel statistics|Points|Aces|Winners|Close sets|Morale/i);
+  assert.doesNotMatch(english, /MECZ|INICJATYWA|Mikrostatystyki|Punkty|Asy|Sety na styku/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = gp.renderVME(home, away, r.matchups, 0, 0, 0, false, {
+    home: 0, away: 0, setIndex: total,
+  });
+  assert.match(polish, /MECZ 1\/4|INICJATYWA|Mikrostatystyki pojedynku|Punkty|Asy|Sety na styku|Morale/i);
+});
