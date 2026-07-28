@@ -479,3 +479,11 @@ test('new matchday mail and news store semantic localisation keys', () => {
   }], G.myTeamId);
   assert.ok(G.newsFeed.some(n => n.msgKey === 'news.leaderDropsPoints'));
 });
+
+test('new career news is stored as semantic data, never as a fixed-language sentence', () => {
+  const gameplay = read('src/core/gameplay.js');
+  const calls = gameplay.match(/pushNews\([^;\n]+/g) || [];
+  const producers = calls.filter(call => !call.startsWith('pushNews(msg'));
+  assert.ok(producers.length > 10, 'news producers found');
+  producers.forEach(call => assert.match(call, /^pushNews\('news\./, call));
+});

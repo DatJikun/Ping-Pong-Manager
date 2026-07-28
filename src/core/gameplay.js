@@ -88,7 +88,7 @@ function doLoanOut(pid, toTeamId, share){
   p.loanedOut=true;
   closeModal();
   toast(t('loan.completed',{name:p.name,club:teamName(toTeamId),percent:Math.round(loanShare*100)}));
-  pushNews(`${p.name}${p.isYouth?' (akademia)':''} wypo\u017cyczony do ${teamName(toTeamId)}`,'');
+  pushNews('news.loanedOut','',{name:p.name,academy:p.isYouth?t('news.academySuffix'):'',club:teamName(toTeamId)});
   render();updateHeader();
   persistGame();
 }
@@ -105,10 +105,10 @@ function returnLoans(){
       p.loanedOut=false;
       if(l.fromTeamId===store.G.myTeamId){
         toast(t('loan.returned',{name:p.name}));
-        pushNews(`${p.name} wr\u00f3ci\u0142 z wypo\u017cyczenia`,'good');
+        pushNews('news.loanReturned','good',{name:p.name});
       }else if(l.toTeamId===store.G.myTeamId){
         toast(t('loan.returnedParent',{name:p.name,club:teamName(l.fromTeamId)}));
-        pushNews(`${p.name} wr\u00f3ci\u0142 po wypo\u017cyczeniu do ${teamName(l.fromTeamId)}`,'');
+        pushNews('news.loanReturnedParent','',{name:p.name,club:teamName(l.fromTeamId)});
       }
     }
     l.returned=true;
@@ -1123,7 +1123,7 @@ function acceptClubOffer(clubId){
     store.G.seasonHistory=snapshot.seasonHistory;
     store.G.records=snapshot.records;
     store.G.clubOffers=[];
-    pushNews(`Menedżer przenosi się do ${offer.clubName} (${offer.countryName}) przed sezonem ${store.G.season}.`,'hot');
+    pushNews('news.managerMovesCountry','hot',{club:offer.clubName,country:t(`country.${offer.countryId}`),season:store.G.season});
     closeModal();render();updateHeader();toast(t('jobs.newClub',{club:`${offer.clubName} / ${t(`country.${offer.countryId}`)}`}));persistGame();
     return;
   }
@@ -1140,7 +1140,7 @@ function acceptClubOffer(clubId){
   store.G.infraAcademy=next.infraAcademy||0;
   store.G.infraMerchandising=next.infraMerchandising||0;
   store.G.clubOffers=[];
-  pushNews(`Menedżer przenosi się do ${next.name} przed sezonem ${store.G.season+1}.`,'hot');
+  pushNews('news.managerMoves','hot',{club:next.name,season:store.G.season+1});
   closeModal();render();updateHeader();toast(t('jobs.newClub',{club:next.name}));persistGame();
 }
 function showPostSeasonGala(payload){
@@ -1839,7 +1839,7 @@ function doBorrowIn(pid){
   p.role=starterCount<4?'starter':'reserve';
   store.G.transferMarket=store.G.transferMarket.filter(m=>!(m.playerId===pid&&m.type==='loan'));
   toast(t('loan.borrowed',{name:p.name,club:fromName,percent:Math.round(share*100)}));
-  pushNews(`${p.name} wypożyczony z ${fromName}`,'');
+  pushNews('news.loanedIn','',{name:p.name,club:fromName});
   render();updateHeader();persistGame();
 }
 function toggleMarketShortlist(pid){
@@ -2210,7 +2210,7 @@ function applySeveranceRelease(p){
   team.budget=(team.budget||0)-severance;
   const finance=store.G.seasonFinance;
   if(finance)finance.other=(finance.other||0)-severance;
-  pushNews(`${p.name} rozwiązuje kontrakt z ${team.name}. Odprawa: ${severance.toLocaleString('pl')} €`,'hot');
+  pushNews('news.contractTerminated','hot',{name:p.name,club:team.name,severance:formatCurrency(severance)});
   p.teamId=null;
   p.contractYears=0;
   p.role='reserve';
@@ -2648,7 +2648,7 @@ async function simulateBackgroundSeasons(n,progressCb){
     genSponsorOffers(calcPrestige());
     buildMarket();
     store.G.matchNomination=null;
-    pushNews(`Nowy menedżer przejmuje ${club.name} przed sezonem ${store.G.season}.`,'hot');
+    pushNews('news.newManager','hot',{club:club.name,season:store.G.season});
     pushMail({fromKey:'mail.board',subjectKey:'mail.welcomeSubject',subjectParams:{club:club.name},bodyKey:'mail.welcomeBody',bodyParams:{years:n,club:club.name,division:club.league===1?'I':'II'}});
     ui._bgGen=false;
     updateHeader();
@@ -2923,7 +2923,7 @@ function tryInjuriesForTeam(teamId){
       p.injuredFor=dur;p.morale=Math.max(10,(p.morale||50)-10);
       p._injMd=store.G.matchday;
       injured.push({name:p.name,dur,teamId});
-      if(ovr(p)>=72)pushNews(`Kontuzja gwiazdy: ${p.name} (${teamName(p.teamId)}) wypada na ${dur} kolejek.`,'hot');
+      if(ovr(p)>=72)pushNews('news.starInjury','hot',{name:p.name,club:teamName(p.teamId),rounds:dur});
     }
   });
   return injured;
@@ -3156,7 +3156,7 @@ function applyGrowth(){
         const pick=freeAgents[rnd(0,Math.min(2,freeAgents.length-1))];
         pick.teamId=t.id;pick.contractYears=1+rnd(0,2);pick.salary=contractExpect(pick).salary;
         pick.role=roster.filter(p=>p.role==='starter').length<4?'starter':'reserve';
-        if(ovrBase(pick)>=68)pushNews(`${t.name} pozyskuje z rynku ${pick.name} (OVR ${ovrBase(pick)}).`,'');
+        if(ovrBase(pick)>=68)pushNews('news.freeAgentSigned','',{club:t.name,name:pick.name,ovr:ovrBase(pick)});
       }
     }
   });
@@ -3567,7 +3567,7 @@ async function playCupRoundBody(){
     semiRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.semifinal,'Premia za półfinał PP');});
     quarterRound.forEach(match=>{if(match.result?.loser?.isReal)rewardCupTeam(match.result.loser.id,cupPrizeTable.quarterfinal,'Premia za ćwierćfinał PP');});
     if(cup.winner.isReal&&cup.winner.id===myId){
-      pushNews(`${myTeam().name} wygrywa Puchar Polski! Premia +${cupPrizeTable.winner.toLocaleString('pl')} €`,'cup');
+      pushNews('news.cupWinner','cup',{club:myTeam().name,prize:formatCurrency(cupPrizeTable.winner)});
       store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.role==='starter').forEach(p=>{
         p.awards=p.awards||[];
         p.awards.push({season:store.G.season,type:'cup_winner',clubName:myTeam().name,displayLabel:'Puchar Polski',label:`Puchar Polski S${store.G.season}`});
@@ -4157,7 +4157,7 @@ function aiPoachOutgrownStars(){
       if(!buyer)return;
       buyer.budget-=fee;seller.budget=(seller.budget||0)+fee;
       p.teamId=buyer.id;p.salary=contractExpect(p).salary;p.contractYears=1+rnd(0,2);p.role='reserve';
-      if(ovrBase(p)>=72)pushNews(`${buyer.name} kupuje ${p.name} (OVR ${ovrBase(p)}) z ${seller.name} za ${fee.toLocaleString('pl')} €.`,'');
+      if(ovrBase(p)>=72)pushNews('news.playerTransferred','',{buyer:buyer.name,name:p.name,ovr:ovrBase(p),seller:seller.name,fee:formatCurrency(fee)});
     });
   });
 }
@@ -4697,7 +4697,7 @@ async function runMundialBody(){
       p.awards.push({season:store.G.season,type:'mundial_gold',displayLabel:'Z\u0142oto Mundialu',label:`Z\u0142oto Mundialu S${store.G.season}`});
     });
     toast('Mistrzostwo \u015awiata!!! Bonus +50 000 €!');
-    pushNews(`MUNDIAL: ${mundialWinner.name} zostaje Mistrzem \u015awiata!`,'cup');
+    pushNews('news.worldChampion','cup',{country:mundialWinner.name});
   }else{
     addLog(`// Wynik: ${mundialWinner?.isPlayer?'Z\u0142oto':'Brak trofeum'}`,'dm');
   }
@@ -4834,7 +4834,7 @@ function signAcademyProspect(idx){
   closeModal();
   render();updateHeader();
   toast(`Junior ${p.name} (${ovrBase(p)} OVR) do\u0142\u0105czy\u0142 do akademii!`);
-  pushNews(`Akademia: ${p.name} do\u0142\u0105czy\u0142 do klubu (${p.academyProfile?.region||'lokalny talent'})`,'good');
+  pushNews('news.academyJoined','good',{name:p.name,region:p.academyProfile?.region||t('academy.localTalent')});
   persistGame();
 }
 
@@ -4873,7 +4873,7 @@ function signTrialProspect(idx){
   store.G.academyTrial=[]; // the other candidates leave
   clearScoutResult(p.id);
   toast(`${p.name} (${ovrBase(p)} OVR) wybrany z mini-turnieju!`);
-  pushNews(`Mini-turniej: ${p.name} do\u0142\u0105czy\u0142 do akademii`,'good');
+  pushNews('news.trialJoined','good',{name:p.name});
   render();updateHeader();persistGame();
 }
 
@@ -5477,7 +5477,7 @@ function sellPlayer(pid){
   p.teamId=best.team.id;p.role='reserve';p.isYouth=false;p.contractYears=Math.max(2,p.contractYears||0);
   myTeam().budget+=best.fee;
   const finance=ensureSeasonFinance();if(finance)finance.other+=best.fee;
-  pushNews(`${p.name} sprzedany do ${best.team.name} za ${best.fee.toLocaleString('pl')} €`,'');
+  pushNews('news.playerSold','',{name:p.name,club:best.team.name,fee:formatCurrency(best.fee)});
   toast(t('squad.sold',{name:p.name,club:best.team.name,fee:formatCurrency(best.fee)}));
   buildMarket();render();updateHeader();persistGame();
 }
@@ -5770,7 +5770,7 @@ async function runTop12MastersBody(leagueId){
     // No else-reset: both leagues' tournaments run the same matchday, and losing
     // the OTHER league's Top 12 must not wipe a bonus earned in ours. The flag is
     // cleared at season start (startSeason) anyway.
-    pushNews(`${champion.name} mistrzem Top 12 Masters ${leagueId===1?'I':'II'} Liga S${store.G.season}!`,'cup');
+    pushNews('news.top12Champion','cup',{name:champion.name,division:leagueId===1?'I':'II',season:store.G.season});
   }
   
   await sleep(1200);
