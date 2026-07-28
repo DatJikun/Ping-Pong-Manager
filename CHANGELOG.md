@@ -12,6 +12,8 @@
 - Save validation and autosave failures now follow the selected language.
 - Migrated the complete squad and academy workflow, including loans, youth
   intake, scout missions and reports, to the same live language switch.
+- Migrated the club staff and transfer market screens, including filters,
+  comparisons, shortlists and next-season commitments.
 - Added rendered-HTML tests for switching the start screen, dashboard,
   pre-season, squad and academy between EN and PL.
 

@@ -114,3 +114,37 @@ test('the squad and academy flows follow the active locale', () => {
   assert.match(polishAcademy, /Nabór do akademii/i);
   assert.match(polishAcademy, /Kogo bierzesz do akademii/i);
 });
+
+test('the club staff screen follows the active locale', () => {
+  const g = boot(3108);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageStaff();
+  assert.match(english, /Club staff/i);
+  assert.match(english, /Search transfers/i);
+  assert.match(english, /Physiotherapist/i);
+  assert.doesNotMatch(english, /Szukaj w transferach/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageStaff();
+  assert.match(polish, /Sztab klubu/i);
+  assert.match(polish, /Szukaj w transferach/i);
+});
+
+test('the transfer market follows the active locale', () => {
+  const g = boot(3109);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  const english = g.PPM.pages.pageMarket();
+  assert.match(english, /Transfer market/i);
+  assert.match(english, /Search by name or club/i);
+  assert.match(english, /S\+1 deals/i);
+  assert.doesNotMatch(english, /Rynek transferowy/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pageMarket();
+  assert.match(polish, /Rynek transferowy/i);
+  assert.match(polish, /Szukaj nazwiska lub klubu/i);
+});

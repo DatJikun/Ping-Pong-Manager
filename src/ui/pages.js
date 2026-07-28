@@ -465,11 +465,11 @@ function pageStaff(){
   const ownedStaff=store.G.staff.filter(s=>s.teamId===myId);
   const prDir=getPRDirector();
   const sections=[
-    {label:'TRENER',items:ownedStaff.filter(s=>s.type==='coach')},
-    {label:'FIZJOTERAPEUTA',items:ownedStaff.filter(s=>s.type==='physio')},
-    {label:'PSYCHOLOG',items:ownedStaff.filter(s=>s.type==='psychologist')},
-    {label:'DYREKTORKA PR',items:prDir?[prDir]:[]},
-    {label:'SKAUCI',items:ownedStaff.filter(s=>s.type==='scout')},
+    {label:t('staff.coach'),items:ownedStaff.filter(s=>s.type==='coach')},
+    {label:t('staff.physio'),items:ownedStaff.filter(s=>s.type==='physio')},
+    {label:t('staff.psychologist'),items:ownedStaff.filter(s=>s.type==='psychologist')},
+    {label:t('staff.prDirector'),items:prDir?[prDir]:[]},
+    {label:t('staff.scouts'),items:ownedStaff.filter(s=>s.type==='scout')},
   ];
   function staffCard(s){
     const sOvr=staffOvr(s);
@@ -477,23 +477,23 @@ function pageStaff(){
     return`<div class="staff-card hired cur" onclick="openStaffModal(${s.id})">
       <div class="flex jcb aifs mb10">
         <div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="syne b7 fs15">${roleIcon} ${s.name}</div>
-        <div class="fs10 ink3 mt-2">${s.salary.toLocaleString('pl')} €/rok / ${s.contractYears||0} lat</div>
-        <div class="fs10 mt-2"><span class="ink3">${s.age||'?'}l</span> / Peak: ${s.peakAge||'?'}l / Peak OVR: ${staffCeiling(s)}</div></div></div>
+        <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(s.salary),years:`${s.contractYears||0} ${t((s.contractYears||0)===1?'common.year':'common.years')}`})}</div>
+        <div class="fs10 mt-2">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?',ovr:staffCeiling(s)})}</div></div></div>
         <div class="tar"><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:28px;color:${staffOvrColor(sOvr)}">${sOvr}</div><div class="fs9 ink3">OVR</div></div>
       </div>
-      <div class="fs11 ink3">${s.type==='coach'?(s.styleName||'Trener ogólny'):s.type==='scout'?(s.specialtyLabel||'Skaut'):s.type==='pr'?`+${Math.round((s.bonus||0)*100)}% komercji`:'Specjalista klubowy'}</div>
+      <div class="fs11 ink3">${s.type==='coach'?(s.styleName||t('staff.generalCoach')):s.type==='scout'?(s.specialtyLabel||t('staff.scout')):s.type==='pr'?t('staff.commerceBonus',{percent:Math.round((s.bonus||0)*100)}):t('staff.clubSpecialist')}</div>
       <div class="btn-row mt-8">
-        <button class="btn gl sm" onclick="event.stopPropagation();openStaffNeg(${s.id})">PRZEDŁUŻ</button>
-        ${s.type!=='pr'?`<button class="btn sm bcr cr" onclick="event.stopPropagation();fireStaff(${s.id})">ZWOLNIJ</button>`:''}
+        <button class="btn gl sm" onclick="event.stopPropagation();openStaffNeg(${s.id})">${t('staff.extend')}</button>
+        ${s.type!=='pr'?`<button class="btn sm bcr cr" onclick="event.stopPropagation();fireStaff(${s.id})">${t('staff.fire')}</button>`:''}
       </div>
     </div>`;
   }
-  return`<div class="ph"><div><div class="pt">SZTAB <span>KLUBU</span></div><div class="ps">Tu są tylko osoby zatrudnione u ciebie — cały rynek jest w Transferach</div></div>
-    <button class="btn bl" onclick="go('market')">SZUKAJ W TRANSFERACH</button></div>
+  return`<div class="ph"><div><div class="pt">${t('staff.title')}</div><div class="ps">${t('staff.subtitle')}</div></div>
+    <button class="btn bl" onclick="go('market')">${t('staff.search')}</button></div>
   <div class="grid gp12" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
     ${sections.map(section=>`<div class="card"><div class="ct">${section.label} <span class="fs10 ink3">${section.items.length}</span></div>
       ${section.items.length?`<div class="grid gp10">${section.items.map(staffCard).join('')}</div>`
-        :`<div class="empty-state fs12">Brak osoby na tym stanowisku.<div class="mt-10"><button class="btn sm bl" onclick="go('market')">ZNAJDŹ KANDYDATA</button></div></div>`}
+        :`<div class="empty-state fs12">${t('staff.vacant')}<div class="mt-10"><button class="btn sm bl" onclick="go('market')">${t('staff.findCandidate')}</button></div></div>`}
     </div>`).join('')}
   </div>`;
 }
@@ -786,7 +786,7 @@ function pageMarket(){
   const compareIds=ui.marketCompare||[];
   const nextSeason=getNextSeasonCommitments();
   const negotiationHistory=(store.G.negotiationHistory||[]).slice(-6).reverse();
-  const roleLabel=type=>type==='coach'?'Trener':type==='physio'?'Fizjo':type==='psychologist'?'Psycholog':type==='scout'?'Skaut':type==='pr'?'PR':'Zawodnik';
+  const roleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('market.physios'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?'PR':t('market.players');
   // \u2500\u2500 one normalised row shape for players and staff alike \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const rows=[];
   for(const item of (store.G.transferMarket||[])){
@@ -799,15 +799,15 @@ function pageMarket(){
       name:p.name,nat:(p.nationality||store.G.countryId||'PL'),age:p.age||0,
       ovr:o,stars:ovrStars(o),
       teamId:p.teamId,club:p.teamId!==null?teamName(p.teamId):'',
-      series:p.teamId!==null?(teamLeague(p.teamId)===1?'I Liga':'II Liga'):'',
+      series:p.teamId!==null?t(teamLeague(p.teamId)===1?'league.divisionOne':'league.divisionTwo'):'',
       salary:isLoan?Math.round((p.salary||0)*(item.share||0.6)):contractExpect(p).salary,
       fee:isLoan?0:(item.fee||0),
       until:isFa?0:(p.contractYears||0),
-      deal:isFa?'Wolny agent':isPreSign?'Pre-sign':isLoan?'Wypo\u017cyczenie':'Transfer',
+      deal:t(isFa?'market.freeAgent':isPreSign?'market.preSign':isLoan?'market.loan':'market.transfer'),
       dealTone:isFa?'pos':isPreSign?'warn':isLoan?'':'club',
       action:isLoan
-        ?`<button class="btn sm pr" onclick="event.stopPropagation();doBorrowIn(${p.id})">WYPO\u017bYCZ</button>`
-        :`<button class="btn sm pr" onclick="event.stopPropagation();openNegotiate(${p.id})">${isPreSign?'PRE-SIGN':'PODPISZ'}</button>`,
+        ?`<button class="btn sm pr" onclick="event.stopPropagation();doBorrowIn(${p.id})">${t('market.loan')}</button>`
+        :`<button class="btn sm pr" onclick="event.stopPropagation();openNegotiate(${p.id})">${t(isPreSign?'market.preSign':'market.sign')}</button>`,
       open:`openPlayerModal(${p.id})`,
     });
   }
@@ -821,16 +821,16 @@ function pageMarket(){
       name:s.name,nat:(s.nationality||store.G.countryId||'PL'),age:s.age||0,
       ovr:o,stars:ovrStars(o),
       teamId:s.teamId,club:s.teamId!==null?teamName(s.teamId):'',
-      series:s.teamId!==null?(teamLeague(s.teamId)===1?'I Liga':'II Liga'):'',
+      series:s.teamId!==null?t(teamLeague(s.teamId)===1?'league.divisionOne':'league.divisionTwo'):'',
       salary:s.salary||0,fee:0,until:s.contractYears||0,
-      deal:mine?'Tw\u00f3j sztab':s.teamId===null?'Wolny agent':canPreSign?'Pre-sign':'Zaj\u0119ty',
+      deal:t(mine?'market.yourStaff':s.teamId===null?'market.freeAgent':canPreSign?'market.preSign':'market.unavailable'),
       dealTone:mine?'':s.teamId===null?'pos':canPreSign?'warn':'',
-      action:`<button class="btn sm ${blocked?'':canPreSign?'bl':'pr'}" ${blocked?'disabled':''} onclick="event.stopPropagation();${blocked?'':`openStaffNeg(${s.id})`}">${blocked?'ZAJ\u0118TY':canPreSign?'NA S+1':'NEGOCJUJ'}</button>`,
+      action:`<button class="btn sm ${blocked?'':canPreSign?'bl':'pr'}" ${blocked?'disabled':''} onclick="event.stopPropagation();${blocked?'':`openStaffNeg(${s.id})`}">${t(blocked?'market.unavailable':canPreSign?'market.forNextSeason':'market.negotiate')}</button>`,
       open:`openStaffModal(${s.id})`,
     });
   }
 
-  const roleTabs=[['player','Zawodnicy'],['coach','Trenerzy'],['physio','Fizjo'],['psychologist','Psycholodzy'],['scout','Skauci'],['pr','PR']];
+  const roleTabs=[['player',t('market.players')],['coach',t('market.coaches')],['physio',t('market.physios')],['psychologist',t('market.psychologists')],['scout',t('market.scouts')],['pr','PR']];
   const inRole=rows.filter(r=>r.role===marketType);
   const favIdsForRole=marketFavIds(marketType==='player'?'player':'staff');
   const ageOk=r=>ageBand==='all'
@@ -852,7 +852,7 @@ function pageMarket(){
   })[sortKey]??r.ovr;
   market.sort((a,b)=>{
     const x=sortVal(a),y=sortVal(b);
-    const cmp=typeof x==='string'?String(y).localeCompare(String(x),'pl'):(y-x);
+    const cmp=typeof x==='string'?String(y).localeCompare(String(x),PPM.i18n.getLocale()):(y-x);
     return cmp*sortDir;
   });
   const th=(key,label,cls)=>`<th class="${cls||''} ${sortKey===key?'srt':''}" onclick="ui.mktSort='${key}';ui.mktSortDir=${sortKey===key?-sortDir:1};render()">${label}${sortKey===key?(sortDir>0?' \u2193':' \u2191'):''}</th>`;
@@ -864,44 +864,44 @@ function pageMarket(){
   const playerCommitments=nextSeason.entries.filter(entry=>entry.kind==='player');
   const staffCommitments=nextSeason.entries.filter(entry=>entry.kind==='staff');
   const showDetails=ui.mktDetails===true;
-  const money=n=>n?n.toLocaleString('pl')+' €':'-';
-  const compareBlock=compare.length===2?`<div class="card mb14"><div class="ct">PORÓWNANIE 1 NA 1<div class="card-tools"><button class="btn sm" onclick="ui.marketCompare=[];render()">WYCZYŚĆ</button></div></div>
+  const money=n=>n?formatCurrency(n):'-';
+  const compareBlock=compare.length===2?`<div class="card mb14"><div class="ct">${t('market.compare')}<div class="card-tools"><button class="btn sm" onclick="ui.marketCompare=[];render()">${t('market.clear')}</button></div></div>
     <div class="grid gtc2 gp12">
       ${compare.map(p=>`<div class="tile tile-lg">
         <div class="flex jcb gp10 aifs mb8">
-          <div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age}l / ${styleLabel(p.playStyle)}</div></div>
+          <div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age} / ${styleLabel(p.playStyle)}</div></div>
           <div class="syne b8 fs28 cr">${ovr(p)}</div>
         </div>
         <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
-        <div class="fs11 ink3">Pensja oczekiwana: ${contractExpect(p).salary.toLocaleString('pl')} € / punkty+ ${(p.seasonPointsWon||0)} / punkty- ${(p.seasonPointsLost||0)}</div>
+        <div class="fs11 ink3">${t('market.expectedSalary',{amount:formatCurrency(contractExpect(p).salary)})} · +${p.seasonPointsWon||0} / −${p.seasonPointsLost||0}</div>
       </div>`).join('')}
     </div>
   </div>`:'';
 
   return`<div class="ph">
-    <div><div class="pt">RYNEK <span>TRANSFEROWY</span></div><div class="ps">Budżet ${mt.budget.toLocaleString('pl')} € · wolnych agentów bierzesz od razu, zakontraktowanych podpisujesz na kolejny sezon</div></div>
-    <div class="tools"><button class="btn ${showDetails?'on':''}" onclick="ui.mktDetails=${showDetails?'false':'true'};render()">Umowy S+1 (${nextSeason.entries.length})</button></div>
+    <div><div class="pt">${t('market.title')}</div><div class="ps">${t('market.subtitle',{budget:formatCurrency(mt.budget)})}</div></div>
+    <div class="tools"><button class="btn ${showDetails?'on':''}" onclick="ui.mktDetails=${showDetails?'false':'true'};render()">${t('market.nextSeasonDeals',{count:nextSeason.entries.length})}</button></div>
   </div>
   ${ourExpiring.length?`<div class="banner" style="border-left-color:var(--volt)"><div class="dot" style="background:var(--volt)"></div>
-    ${ourExpiring.length} ${ourExpiring.length===1?'twój zawodnik kończy kontrakt':'twoich zawodników kończy kontrakt'} — rywale mogą ich podpisać na kolejny sezon: ${ourExpiring.map(p=>p.name).join(', ')}
+    ${t(ourExpiring.length===1?'market.expiringOne':'market.expiringMany',{count:ourExpiring.length,names:ourExpiring.map(p=>p.name).join(', ')})}
   </div>`:''}
 
   <div class="filters">
-    <div class="filters-h">Filtry</div>
-    <div class="fgrp wide mb14"><i>Rola</i>
+    <div class="filters-h">${t('market.filters')}</div>
+    <div class="fgrp wide mb14"><i>${t('market.role')}</i>
       ${seg('marketTypeFilter',marketType,roleTabs.map(([v,l])=>[v,l]))}
     </div>
     <div class="frow">
-      <div class="fgrp"><i>Widok</i>
-        ${seg('mktFav',favOnly?'fav':'all',[['all','Wszyscy',inRole.length],['fav','Obserwowani',favIdsForRole.length||null]])}
+      <div class="fgrp"><i>${t('market.view')}</i>
+        ${seg('mktFav',favOnly?'fav':'all',[['all',t('market.everyone'),inRole.length],['fav',t('market.watched'),favIdsForRole.length||null]])}
       </div>
-      <div class="fgrp"><i>Wiek</i>
-        ${seg('mktAge',ageBand,[['all','Wszyscy'],['16-22','16-22'],['22-28','22-28'],['28-34','28-34'],['34+','34+']])}
+      <div class="fgrp"><i>${t('market.age')}</i>
+        ${seg('mktAge',ageBand,[['all',t('market.everyone')],['16-22','16-22'],['22-28','22-28'],['28-34','28-34'],['34+','34+']])}
       </div>
-      <div class="fgrp"><i>Ocena</i>
+      <div class="fgrp"><i>${t('market.rating')}</i>
         <div class="seg">
-          <button class="${minStars?'':'on'}" onclick="ui.mktStars=0;render()">Wszyscy</button>
-          <button class="${minStars?'on':''}" onclick="ui.mktStars=${minStars?minStars:3};render()">Minimum</button>
+          <button class="${minStars?'':'on'}" onclick="ui.mktStars=0;render()">${t('market.everyone')}</button>
+          <button class="${minStars?'on':''}" onclick="ui.mktStars=${minStars?minStars:3};render()">${t('market.minimum')}</button>
           <button class="step" onclick="ui.mktStars=Math.max(0,(ui.mktStars||0)-0.5);render()" ${minStars?'':'disabled'}>‹</button>
           <button class="step" style="flex:0 0 auto;padding:8px 10px" onclick="event.preventDefault()">${starsHtml(minStars)}</button>
           <button class="step" onclick="ui.mktStars=Math.min(5,(ui.mktStars||0)+0.5);render()" ${minStars>=5?'disabled':''}>›</button>
@@ -909,42 +909,42 @@ function pageMarket(){
       </div>
     </div>
     <div class="fgrp wide mt-14">
-      <input value="${ui.marketSearch||''}" oninput="ui.marketSearch=this.value;render()" placeholder="Szukaj nazwiska lub klubu..." class="w100">
+      <input value="${ui.marketSearch||''}" oninput="ui.marketSearch=this.value;render()" placeholder="${t('market.search')}" class="w100">
     </div>
   </div>
 
   ${showDetails?`<div class="g2 mb14">
-    <div class="card bt3-blue"><div class="ct">UMOWY NA KOLEJNY SEZON<span class="pill">${nextSeason.total.toLocaleString('pl')} €</span></div>
-      ${nextSeason.entries.length?`<table class="tbl"><thead><tr><th>Kto</th><th>Rola</th><th class="n">Lata</th><th class="n">Pensja</th><th class="n">Bonus</th></tr></thead><tbody>
-        ${nextSeason.entries.map(e=>`<tr><td class="pname">${e.name}</td><td class="dim">${e.kind==='player'?roleGuaranteeLabel(e.role):roleLabel(e.role)}</td><td class="n dim">${e.years}</td><td class="n">${(e.salary||0).toLocaleString('pl')}</td><td class="n dim">${(e.bonus||0).toLocaleString('pl')}</td></tr>`).join('')}
-      </tbody></table>`:'<div class="pad fs12 ink3">Nic jeszcze nie zaklepane na S+1.</div>'}
-      <div class="pad fs11 ink3">Zawodnicy: ${playerCommitments.length} · sztab: ${staffCommitments.length}</div>
+    <div class="card bt3-blue"><div class="ct">${t('market.nextSeasonTitle')}<span class="pill">${formatCurrency(nextSeason.total)}</span></div>
+      ${nextSeason.entries.length?`<table class="tbl"><thead><tr><th>${t('market.who')}</th><th>${t('market.role')}</th><th class="n">${t('market.years')}</th><th class="n">${t('market.salary')}</th><th class="n">${t('market.bonus')}</th></tr></thead><tbody>
+        ${nextSeason.entries.map(e=>`<tr><td class="pname">${e.name}</td><td class="dim">${e.kind==='player'?roleGuaranteeLabel(e.role):roleLabel(e.role)}</td><td class="n dim">${e.years}</td><td class="n">${formatNumber(e.salary||0)}</td><td class="n dim">${formatNumber(e.bonus||0)}</td></tr>`).join('')}
+      </tbody></table>`:`<div class="pad fs12 ink3">${t('market.noCommitments')}</div>`}
+      <div class="pad fs11 ink3">${t('market.commitmentsSplit',{players:playerCommitments.length,staff:staffCommitments.length})}</div>
     </div>
-    <div class="card"><div class="ct">OSTATNIE NEGOCJACJE</div>
-      ${negotiationHistory.length?`<table class="tbl"><thead><tr><th>Kto</th><th>Kiedy</th><th>Wynik</th></tr></thead><tbody>
-        ${negotiationHistory.map(e=>`<tr><td class="pname">${e.targetName}</td><td class="dim">S${e.season}/K${e.matchday}</td><td><span class="pill ${e.status==='accepted'?'pos':'club'}">${e.status==='accepted'?'Przyjęte':'Odrzucone'}</span></td></tr>`).join('')}
-      </tbody></table>`:'<div class="pad fs12 ink3">Brak historii negocjacji.</div>'}
+    <div class="card"><div class="ct">${t('market.recentNegotiations')}</div>
+      ${negotiationHistory.length?`<table class="tbl"><thead><tr><th>${t('market.who')}</th><th>${t('market.when')}</th><th>${t('market.result')}</th></tr></thead><tbody>
+        ${negotiationHistory.map(e=>`<tr><td class="pname">${e.targetName}</td><td class="dim">S${e.season}/M${e.matchday}</td><td><span class="pill ${e.status==='accepted'?'pos':'club'}">${t(e.status==='accepted'?'market.accepted':'market.rejected')}</span></td></tr>`).join('')}
+      </tbody></table>`:`<div class="pad fs12 ink3">${t('market.noNegotiations')}</div>`}
     </div>
   </div>`:''}
   ${compareBlock}
 
   <div class="panel" style="overflow-x:auto">
-    <header><h4>${(roleTabs.find(t=>t[0]===marketType)||[0,"Rynek"])[1]} — dostępni (${market.length})</h4>
-      <span class="pill">${minStars?`min. ${minStars} ★`:'bez progu'}${ageBand!=='all'?` · ${ageBand} lat`:''}</span>
+    <header><h4>${t('market.available',{role:(roleTabs.find(tab=>tab[0]===marketType)||[0,t('market.title')])[1],count:market.length})}</h4>
+      <span class="pill">${minStars?`min. ${minStars} ★`:t('market.noThreshold')}${ageBand!=='all'?` · ${ageBand}`:''}</span>
     </header>
     <table class="tbl wide">
       <thead><tr>
         <th style="width:30px"></th>
-        ${th('name','Nazwisko')}
-        ${th('nat','Kraj')}
-        ${th('age','Wiek','n')}
-        ${th('ovr','Ocena')}
-        ${th('club','Klub')}
-        ${th('series','Rozgrywki')}
-        ${th('salary','Pensja','n')}
-        ${th('fee','Odstępne','n')}
-        ${th('until','Kontrakt do','n')}
-        <th>Status</th>
+        ${th('name',t('market.who'))}
+        ${th('nat',t('market.country'))}
+        ${th('age',t('market.age'),'n')}
+        ${th('ovr',t('market.rating'))}
+        ${th('club',t('market.club'))}
+        ${th('series',t('market.competition'))}
+        ${th('salary',t('market.salary'),'n')}
+        ${th('fee',t('market.fee'),'n')}
+        ${th('until',t('market.contractUntil'),'n')}
+        <th>${t('market.status')}</th>
         <th></th>
       </tr></thead>
       <tbody>
@@ -952,7 +952,7 @@ function pageMarket(){
         const fav=favIdsForRole.includes(r.id);
         const av=r.kind==='player'?getAvatarData(r.data,'player'):getAvatarData(r.data,'staff');
         return`<tr class="row-link" onclick="${r.open}">
-          <td><button class="fav ${fav?'on':''}" onclick="event.stopPropagation();toggleMarketFav('${r.kind}',${r.id})" title="Obserwuj">${fav?'★':'☆'}</button></td>
+          <td><button class="fav ${fav?'on':''}" onclick="event.stopPropagation();toggleMarketFav('${r.kind}',${r.id})" title="${t('market.watch')}">${fav?'★':'☆'}</button></td>
           <td><span class="face" style="background-image:url('${av}');--ring:${fav?'var(--volt)':'var(--line2)'}"></span><span class="pname">${r.name}</span></td>
           <td><span class="nat">${r.nat}</span></td>
           <td class="n dim">${r.age||'-'}</td>
@@ -965,7 +965,7 @@ function pageMarket(){
           <td><span class="pill ${r.dealTone}">${r.deal}</span></td>
           <td class="n">${r.action}</td>
         </tr>`;
-      }).join('')||`<tr><td colspan="12"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
+      }).join('')||`<tr><td colspan="12"><div class="empty-state">${t('market.empty')}</div></td></tr>`}
       </tbody>
     </table>
   </div>`;
