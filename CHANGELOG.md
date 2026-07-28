@@ -10,7 +10,10 @@
   game wizard, dashboard and pre-season decision flow to translation keys.
   Language changes apply without a restart.
 - Save validation and autosave failures now follow the selected language.
-- Added a rendered-HTML test for switching the start screen between EN and PL.
+- Migrated the complete squad and academy workflow, including loans, youth
+  intake, scout missions and reports, to the same live language switch.
+- Added rendered-HTML tests for switching the start screen, dashboard,
+  pre-season, squad and academy between EN and PL.
 
 ## 2026-07-28 — Fictional official database
 

@@ -89,3 +89,28 @@ test('the dashboard shell follows the active locale', () => {
   assert.match(polish, /PULS PROJEKTU/i);
   assert.match(polish, /NARRACJA SEZONU/i);
 });
+
+test('the squad and academy flows follow the active locale', () => {
+  const g = boot(3107);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+
+  g.PPM.ui.squadTab = 'starter';
+  const englishSquad = g.PPM.pages.pageSquad();
+  assert.match(englishSquad, /Player squad/i);
+  assert.match(englishSquad, /First team/i);
+  assert.match(englishSquad, /Fatigue/i);
+  assert.doesNotMatch(englishSquad, /Skład główny/i);
+
+  g.PPM.ui.squadTab = 'youth';
+  g.PPM.ui.academyTab = 'intake';
+  const englishAcademy = g.PPM.pages.pageSquad();
+  assert.match(englishAcademy, /Academy intake/i);
+  assert.match(englishAcademy, /Who joins the academy/i);
+  assert.doesNotMatch(englishAcademy, /Kogo bierzesz do akademii/i);
+
+  g.PPM.i18n.setLocale('pl');
+  const polishAcademy = g.PPM.pages.pageSquad();
+  assert.match(polishAcademy, /Nabór do akademii/i);
+  assert.match(polishAcademy, /Kogo bierzesz do akademii/i);
+});

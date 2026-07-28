@@ -180,36 +180,36 @@ function pageSquad(){
   const boardList=st.filter(p=>!(p.injuredFor>0)).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
   const _loanedOut=getLoanedOut();
   if(ui.squadTab==='loans'){
-    return`<div class="ph"><div><div class="pt">SK\u0141AD <span>ZAWODNIK\u00d3W</span></div></div></div>
+    return`<div class="ph"><div><div class="pt">${t('squad.title')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab" onclick="ui.squadTab='starter';render()">SK\u0141AD G\u0141\u00d3WNY ${st.length}/4</div>
-    <div class="rtab" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
-    <div class="rtab on" onclick="ui.squadTab='loans';render()">WYPO\u017bYCZENIA (${_loanedOut.length})</div>
+    <div class="rtab" onclick="ui.squadTab='starter';render()">${t('squad.firstTeam')} ${st.length}/4</div>
+    <div class="rtab" onclick="ui.squadTab='reserve';render()">${t('squad.reserve')} (${res.length})</div>
+    <div class="rtab" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
+    <div class="rtab on" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${_loanedOut.length})</div>
   </div>
     <div class="grid gp10">
     ${_loanedOut.length?_loanedOut.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bbb bgs1 bl4-blue r4">
       <div>
         <div class="syne b7 fs16">${p.name}</div>
-        <div class="fs11 ink3">Wypo\u017cyczony do: <b>${teamName(l.toTeamId)}</b> (II Liga) ${l.academyLoan?'<span class="cpurple b7">/ AKADEMIA</span>':''}</div>
-        <div class="fs11 cg">Oszcz\u0119dno\u015b\u0107: ${Math.round(p.salary/2).toLocaleString('pl')} €/sezon</div>
-        <div class="fs10 ink3">${l.academyLoan?'Wraca po sezonie dalej jako zawodnik akademii':'Wraca po sezonie automatycznie'}</div>
+        <div class="fs11 ink3">${t('squad.loanedTo',{club:teamName(l.toTeamId)})} ${l.academyLoan?`<span class="cpurple b7">/ ${t('squad.academy')}</span>`:''}</div>
+        <div class="fs11 cg">${t('squad.saving',{amount:formatCurrency(Math.round(p.salary/2))})}</div>
+        <div class="fs10 ink3">${t(l.academyLoan?'squad.academyReturn':'squad.autoReturn')}</div>
         <div class="mt-6 grid gtc4 gp4" style="max-width:240px">${SK.map(s=>`<div class="tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
       </div>
       <div class="syne b8 fs36 cblue">${ovrBase(p)}</div>
-    </div>`;}).join(''):'<div class="pd40 tac ink3">Brak wypo\u017cyczonych zawodnik\u00f3w. Otw\u00f3rz kart\u0119 zawodnika w Sk\u0142adzie/Rezerwie i kliknij WYPO\u017bYCZ.</div>'}
-    ${(()=>{const inn=getLoanedIn();return inn.length?`<div class="ct mt-14">WYPO\u017bYCZENI DO NAS</div>${inn.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bgs1 bl4-purple r4" style="border:1px solid var(--purple)">
+    </div>`;}).join(''):`<div class="pd40 tac ink3">${t('squad.noLoans')}</div>`}
+    ${(()=>{const inn=getLoanedIn();return inn.length?`<div class="ct mt-14">${t('squad.loanedIn')}</div>${inn.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bgs1 bl4-purple r4" style="border:1px solid var(--purple)">
       <div>
         <div class="syne b7 fs16">${p.name}</div>
-        <div class="fs11 ink3">Wypo\u017cyczony z: <b>${teamName(l.fromTeamId)}</b> \u2014 wraca po sezonie</div>
-        <div class="fs11 ink3">Pokrywamy ${Math.round((l.wageShare||0.6)*100)}% pensji: <b>${Math.round((p.salary||0)*(l.wageShare||0.6)).toLocaleString('pl')} \u20ac/sezon</b></div>
+        <div class="fs11 ink3">${t('squad.loanedFrom',{club:teamName(l.fromTeamId)})}</div>
+        <div class="fs11 ink3">${t('squad.wageShare',{percent:Math.round((l.wageShare||0.6)*100),amount:formatCurrency(Math.round((p.salary||0)*(l.wageShare||0.6)))})}</div>
       </div>
       <div class="syne b8 fs36 cpurple">${ovrBase(p)}</div>
     </div>`;}).join('')}`:'';})()}
     </div>`;
   }
   const mt0=myTeam();
-  const ovrRange=store.G.infraAcademy>0?INFRA_ACADEMY[store.G.infraAcademy].desc:'Brak akademii';
+  const ovrRange=store.G.infraAcademy>0?INFRA_ACADEMY[store.G.infraAcademy].desc:t('squad.noAcademy');
   const academyLevel=store.G.infraAcademy||0;
   const academyBestPeak=youth.length?Math.max(...youth.map(p=>p.academyProfile?.ceiling||playerCeiling(p))):0;
   const academyCandidates=(store.G.academyProspects||[]);
@@ -220,33 +220,33 @@ function pageSquad(){
   // actually work: who is in the academy -> who wants in -> who is looking ->
   // what they found.
   const acaSteps=[
-    ['squad','Juniorzy',youth.length],
-    ['intake','Nabór',academyCandidates.length+academyTrial.length],
-    ['scouts','Skauci',academyScouts.length],
-    ['reports','Raporty',academyReports.length],
+    ['squad',t('squad.juniors'),youth.length],
+    ['intake',t('squad.intake'),academyCandidates.length+academyTrial.length],
+    ['scouts',t('squad.scouts'),academyScouts.length],
+    ['reports',t('squad.reports'),academyReports.length],
   ];
   if(!acaSteps.some(s=>s[0]===ui.academyTab))ui.academyTab='squad';
   const acaTab=ui.academyTab;
   const prospectCard=(p,i,action,label,pendingSource)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id},'${pendingSource}',${i})">
-    <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l · ${p.academyProfile?.region||'Klubowa akademia'}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
+    <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${p.academyProfile?.region||t('squad.clubAcademy')}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
     <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b class="${ovrBase(p)?'':''}">${p[s]}</b></div>`).join('')}</div>
-    <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Peak: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
+    <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div><div>Peak: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
     <button class="btn pr sm w100" onclick="event.stopPropagation();${action}">${label}</button>
   </div>`;
 
-  return`<div class="ph"><div><div class="pt">SKŁAD <span>ZAWODNIKÓW</span></div><div class="ps">Ustaw kolejność stołów 1-4, rotuj zmęczonych, pilnuj kończących się kontraktów</div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('squad.title')}</div><div class="ps">${t('squad.subtitle')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SKŁAD GŁÓWNY ${st.length}/4</div>
-    <div class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
-    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">WYPOŻYCZENIA (${getLoanedOut().length})</div>
+    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">${t('squad.firstTeam')} ${st.length}/4</div>
+    <div class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">${t('squad.reserve')} (${res.length})</div>
+    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
+    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${getLoanedOut().length})</div>
   </div>
   ${ui.squadTab==='youth'?`
   <div class="g4 mb14">
-    <div class="sb" style="--tone:var(--purple)"><div class="l">Akademia</div><div class="v" style="font-size:20px">${INFRA_ACADEMY[academyLevel].name}</div><div class="sub">poziom ${academyLevel}/${INFRA_ACADEMY.length-1} · ${ovrRange}</div></div>
-    <div class="sb" style="--tone:var(--cyan)"><div class="l">Juniorzy</div><div class="v">${youth.length}</div><div class="sub">w wieku 21 lat wychodzą do rezerwy</div></div>
-    <div class="sb" style="--tone:var(--volt)"><div class="l">Najlepszy peak</div><div class="v">${academyBestPeak||'-'}</div><div class="sub">sufit w tym roczniku</div></div>
-    <div class="sb"><div class="l">Utrzymanie</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div><div class="sub">${(INFRA_ACADEMY[academyLevel].upkeep||0).toLocaleString('pl')} € rocznie</div></div>
+    <div class="sb" style="--tone:var(--purple)"><div class="l">${t('squad.academy')}</div><div class="v" style="font-size:20px">${INFRA_ACADEMY[academyLevel].name}</div><div class="sub">${t('squad.level',{current:academyLevel,max:INFRA_ACADEMY.length-1})} · ${ovrRange}</div></div>
+    <div class="sb" style="--tone:var(--cyan)"><div class="l">${t('squad.juniors')}</div><div class="v">${youth.length}</div><div class="sub">${t('squad.juniorExit')}</div></div>
+    <div class="sb" style="--tone:var(--volt)"><div class="l">${t('squad.bestPeak')}</div><div class="v">${academyBestPeak||'-'}</div><div class="sub">${t('squad.classCeiling')}</div></div>
+    <div class="sb"><div class="l">${t('squad.upkeep')}</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div><div class="sub">${t('squad.yearly',{amount:formatCurrency(INFRA_ACADEMY[academyLevel].upkeep||0)})}</div></div>
   </div>
   <div class="substeps">
     ${acaSteps.map(([id,label,count])=>`<div class="ss ${acaTab===id?'on':''}" onclick="ui.academyTab='${id}';render()">
@@ -254,51 +254,51 @@ function pageSquad(){
     </div>`).join('')}
   </div>
   ${acaTab==='intake'?`<div class="stage">
-    <div class="over">Nabór do akademii</div>
-    <h3>Kogo bierzesz do akademii?</h3>
-    <p class="why">Akademia generuje 1-2 juniorów na sezon; pasmo OVR, peak i tempo rozwoju rosną z jej poziomem. Mini-turniej to jednorazowe <b>10 000 €</b> za sezon: trzech kandydatów, z których wybierasz <b>jednego</b> — reszta odchodzi. Jakość tylko nieco wyższa niż zwykły nabór, więc to opcja na wybór z większej puli, nie pewny zysk.</p>
-    ${academyLevel===0?`<div class="empty-state mt-14">Najpierw zbuduj akademię w zakładce Klub, żeby co sezon dostawać własnego juniora do oceny.</div>`:`
-      <div class="h-sub">Klasa rocznika</div>
-      ${academyCandidates.length?`<div class="grid gtcfit240 gp12">${academyCandidates.map((p,i)=>prospectCard(p,i,`signAcademyProspect(${i})`,'PRZYJMIJ DO AKADEMII','academyProspects')).join('')}</div>`
-        :`<div class="empty-state">Brak aktywnych kandydatów. Kolejna klasa rocznika pojawi się wraz z nowym sezonem.</div>`}
-      <div class="h-sub">Mini-turniej naboru</div>
-      ${academyTrial.length?`<div class="grid gtcfit240 gp12">${academyTrial.map((p,i)=>prospectCard(p,i,`signTrialProspect(${i})`,'WYBIERZ TEGO','academyTrial')).join('')}</div>`
-        :store.G.academyTrialUsed?`<div class="empty-state">Mini-turniej w tym sezonie został już rozegrany.</div>`
-        :`<div class="opt"><div><b>Zorganizuj mini-turniej</b><p>Trzech kandydatów, wybierasz jednego. Raz na sezon.</p></div><div class="m neg">−10 000<s>jednorazowo</s></div><button class="btn pr" onclick="runAcademyMiniTournament()" ${mtBudgetLow?'disabled':''}>ZORGANIZUJ</button></div>`}
+    <div class="over">${t('squad.intakeTitle')}</div>
+    <h3>${t('squad.intakeQuestion')}</h3>
+    <p class="why">${t('squad.intakeWhy')}</p>
+    ${academyLevel===0?`<div class="empty-state mt-14">${t('squad.buildAcademy')}</div>`:`
+      <div class="h-sub">${t('squad.class')}</div>
+      ${academyCandidates.length?`<div class="grid gtcfit240 gp12">${academyCandidates.map((p,i)=>prospectCard(p,i,`signAcademyProspect(${i})`,t('squad.acceptAcademy'),'academyProspects')).join('')}</div>`
+        :`<div class="empty-state">${t('squad.noCandidates')}</div>`}
+      <div class="h-sub">${t('squad.miniTournament')}</div>
+      ${academyTrial.length?`<div class="grid gtcfit240 gp12">${academyTrial.map((p,i)=>prospectCard(p,i,`signTrialProspect(${i})`,t('squad.chooseCandidate'),'academyTrial')).join('')}</div>`
+        :store.G.academyTrialUsed?`<div class="empty-state">${t('squad.tournamentUsed')}</div>`
+        :`<div class="opt"><div><b>${t('squad.organizeTournament')}</b><p>${t('squad.tournamentHint')}</p></div><div class="m neg">−${formatCurrency(10000)}<s>${t('squad.oneOff')}</s></div><button class="btn pr" onclick="runAcademyMiniTournament()" ${mtBudgetLow?'disabled':''}>${t('squad.organize')}</button></div>`}
     `}
   </div>`
   :acaTab==='scouts'?`<div class="stage">
-    <div class="over">Skauci akademii</div>
-    <h3>Kto szuka w terenie?</h3>
-    <p class="why">Skauci działają wyłącznie dla akademii. Każda misja trwa 10 kolejek i znajduje dokładnie jednego juniora poniżej 20 roku życia. Im wyższy OVR skauta, tym większa szansa na raport z wysokim peak OVR — ale nawet słabszy skaut może trafić diament.</p>
+    <div class="over">${t('squad.academyScouts')}</div>
+    <h3>${t('squad.scoutQuestion')}</h3>
+    <p class="why">${t('squad.scoutWhy')}</p>
     ${academyScouts.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const cost=Math.max(2500,Math.round(1800+staffOvr(s)*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
-        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${s.specialtyLabel||'skaut akademii'}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
-        ${mission?`<div class="tile fs11">W terenie: <b>${mission.region}</b><br>Pozostało: <b>${Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)} kolejek</b><br>Koszt misji: <b>${(mission.cost||cost).toLocaleString('pl')} €</b></div>`
-          :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">WYŚLIJ</button></div>
-             <div class="fs11 ink3 mt-6">Koszt misji: <b>${cost.toLocaleString('pl')} €</b> · raport: <b>1</b> junior · specjalność: <b>${s.specialtyLabel||'ogólna'}</b></div>`}
+        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${s.specialtyLabel||t('squad.academyScout')}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
+        ${mission?`<div class="tile fs11">${t('squad.inField',{region:mission.region})}<br>${t('squad.remaining',{count:Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)})}<br>${t('squad.missionCost',{amount:formatCurrency(mission.cost||cost)})}</div>`
+          :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">${t('squad.send')}</button></div>
+             <div class="fs11 ink3 mt-6">${t('squad.missionCost',{amount:formatCurrency(cost)})} · ${t('squad.reportCount')} · ${t('squad.specialty',{name:s.specialtyLabel||t('squad.general')})}</div>`}
       </div>`;}).join('')}
-    </div>`:`<div class="empty-state mt-14">Nie masz jeszcze skauta. Podpisz go w zakładce Transfery (rola: Skauci), a potem zarządzaj nim tutaj.</div>`}
+    </div>`:`<div class="empty-state mt-14">${t('squad.noScout')}</div>`}
   </div>`
   :acaTab==='reports'?`<div class="stage">
-    <div class="over">Raporty skautów</div>
-    <h3>Co przywieźli z terenu?</h3>
-    <p class="why">Każdy raport to jeden junior spoza klubu. Pewność mówi, jak bardzo można ufać liczbom — im niższa, tym większy rozrzut między raportem a rzeczywistością.</p>
+    <div class="over">${t('squad.scoutReports')}</div>
+    <h3>${t('squad.reportQuestion')}</h3>
+    <p class="why">${t('squad.reportWhy')}</p>
     ${academyReports.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyReports.map(res=>{const p=res.reported;const ri=(store.G.scoutResults||[]).findIndex(x=>x.realId===res.realId);const o=ovrBase(p);return`<div class="scout-card result academy-report cur" onclick="openPlayerModal(${res.realId})">
-        ${!res.seen?'<span class="pill club mb6">Nowy</span>':''}
-        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age}l · ${res.region||'?'}</div></div></div><div class="syne b8 fs28 cblue">${o}</div></div>
-        <div class="grid gtc2 gp6 fs11 ink3 mb8"><div>Styl: <b>${styleLabel(p.playStyle)}</b></div><div>Forma: <b>${p.formHint||'stabilna'}</b></div><div>Peak: <b>${p.ceilingHint||'?'}</b></div><div>Pewność: <b>${p.scoutConfidence||0}%</b></div></div>
+        ${!res.seen?`<span class="pill club mb6">${t('squad.new')}</span>`:''}
+        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${res.region||'?'}</div></div></div><div class="syne b8 fs28 cblue">${o}</div></div>
+        <div class="grid gtc2 gp6 fs11 ink3 mb8"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div><div>${t('squad.form')}: <b>${p.formHint||t('squad.stable')}</b></div><div>Peak: <b>${p.ceilingHint||'?'}</b></div><div>${t('squad.confidence')}: <b>${p.scoutConfidence||0}%</b></div></div>
         <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b>${p[s]}</b></div>`).join('')}</div>
-        <button class="btn pr sm w100" onclick="event.stopPropagation();scoutSign(${ri})">NEGOCJUJ</button></div>`;}).join('')}
-    </div>`:`<div class="empty-state mt-14">Brak aktywnych raportów. Wyślij skauta w teren w zakładce Skauci.</div>`}
+        <button class="btn pr sm w100" onclick="event.stopPropagation();scoutSign(${ri})">${t('squad.negotiate')}</button></div>`;}).join('')}
+    </div>`:`<div class="empty-state mt-14">${t('squad.noReports')}</div>`}
   </div>`
-  :`<div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="Szukaj zawodnika..." style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>Wszystkie style</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
+  :`<div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="${t('squad.search')}" style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>${t('squad.allStyles')}</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
     <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-      ${list.length?list.map(p=>squadCard(p,boardList)).join(''):'<div class="empty-state">Akademia jest pusta. Zajrzyj do zakładki Nabór.</div>'}
+      ${list.length?list.map(p=>squadCard(p,boardList)).join(''):`<div class="empty-state">${t('squad.emptyAcademy')}</div>`}
     </div>`}
   `:`
-  <div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="Szukaj zawodnika..." style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>Wszystkie style</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
+  <div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="${t('squad.search')}" style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>${t('squad.allStyles')}</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
   <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
     ${list.map(p=>squadCard(p,boardList)).join('')}
   </div>`}`;
@@ -322,42 +322,42 @@ function squadCard(p,boardList){
         <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar lg">
         <div class="minw0">
           <div class="pc-name">${p.name}</div>
-          <div class="pc-meta">${p.age} lat · peak ${p.peakAge} · <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span></div>
+          <div class="pc-meta">${t('squad.agePeak',{age:p.age,peak:p.peakAge})} · <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span></div>
           <div class="pc-style" style="color:${styleColor}">${styleLabel(p.playStyle)}</div>
         </div>
       </div>
       <div class="pc-ovr-wrap">
         <div class="pc-ovr">${o}</div>
-        ${p.teamId===store.G.myTeamId?`<div class="pc-ovr-sub">peak ${playerCeiling(p)}</div>`:''}
+        ${p.teamId===store.G.myTeamId?`<div class="pc-ovr-sub">${t('squad.peak',{value:playerCeiling(p)})}</div>`:''}
       </div>
     </div>
     ${inj||p.role==='youth'||isStarterTab?`<div class="pc-tags">
-      ${inj?`<span class="pc-tag bad">⚕ kontuzja ${p.injuredFor} kol.</span>`:''}
-      ${p.role==='youth'?`<span class="pc-tag youth">akademia · do ${21-p.age>0?21-p.age:0} lat</span>`:''}
-      ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">stół ${bi+1}
-        <button class="mini-btn" ${bi===0?'disabled':''} onclick="moveLineup(${p.id},-1)" title="Wyżej (niższy stół)">▲</button>
-        <button class="mini-btn" ${bi>=boardList.length-1?'disabled':''} onclick="moveLineup(${p.id},1)" title="Niżej (wyższy stół)">▼</button></span>`
-      :isStarterTab?`<span class="pc-tag bad">poza rotacją</span>`:''}
+      ${inj?`<span class="pc-tag bad">⚕ ${t('squad.injury',{count:p.injuredFor})}</span>`:''}
+      ${p.role==='youth'?`<span class="pc-tag youth">${t('squad.academyYears',{count:Math.max(0,21-p.age)})}</span>`:''}
+      ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">${t('squad.board',{number:bi+1})}
+        <button class="mini-btn" ${bi===0?'disabled':''} onclick="moveLineup(${p.id},-1)" title="${t('squad.moveUp')}">▲</button>
+        <button class="mini-btn" ${bi>=boardList.length-1?'disabled':''} onclick="moveLineup(${p.id},1)" title="${t('squad.moveDown')}">▼</button></span>`
+      :isStarterTab?`<span class="pc-tag bad">${t('squad.outRotation')}</span>`:''}
     </div>`:''}
     <div class="pc-stats">${SK.map(s=>`<div class="pcs"><span class="l">${SL[s]}</span><span class="bar"><span class="fill" style="width:${p[s]}%;background:${statTone(p[s])}"></span></span><span class="v">${p[s]}</span></div>`).join('')}</div>
     ${p.traits.length?`<div class="traits">${p.traits.map(t=>`<span class="has-tooltip tb ${TRAITS[t]?.type||'men'}">${TRAITS[t]?.label||t}<span class="tip">${TRAITS[t]?.desc||''}</span></span>`).join('')}</div>`:''}
     <div class="pc-cond ${mor>=80?'energy-active':''}">
-      <div><div class="pc-cond-l">Morale <b>${mor}%</b></div><div class="morale-bar"><div class="morale-fill" style="width:${mor}%"></div></div></div>
-      <div><div class="pc-cond-l">Zmęczenie <b class="${fat>=70?'cr':''}">${fat}%</b></div><div class="fatigue-bar"><div class="fatigue-fill" style="width:${fat}%"></div></div></div>
+      <div><div class="pc-cond-l">${t('squad.morale')} <b>${mor}%</b></div><div class="morale-bar"><div class="morale-fill" style="width:${mor}%"></div></div></div>
+      <div><div class="pc-cond-l">${t('squad.fatigue')} <b class="${fat>=70?'cr':''}">${fat}%</b></div><div class="fatigue-bar"><div class="fatigue-fill" style="width:${fat}%"></div></div></div>
     </div>
     <div class="pc-facts">
-      <span class="k">Pensja</span><span class="v">${p.salary.toLocaleString('pl')} €</span>
-      <span class="k">Kontrakt</span><span class="v ${p.contractYears<=1?'cr b7':''}">${p.contractYears} r.</span>
-      <span class="k">Forma</span><span class="v">${seasonFormLabel(p)}</span>
-      <span class="k">Bilans</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
+      <span class="k">${t('squad.salary')}</span><span class="v">${formatCurrency(p.salary)}</span>
+      <span class="k">${t('squad.contract')}</span><span class="v ${p.contractYears<=1?'cr b7':''}">${p.contractYears} ${t(p.contractYears===1?'common.year':'common.years')}</span>
+      <span class="k">${t('squad.form')}</span><span class="v">${seasonFormLabel(p)}</span>
+      <span class="k">${t('squad.record')}</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
     </div>
     <div class="pc-actions" onclick="event.stopPropagation()">
-      ${p.role==='youth'?`<button class="btn go sm" onclick="promoteYouth(${p.id})">↑ REZERWA</button>`
-        :p.role==='reserve'?`<button class="btn go sm" onclick="promoteToStarter(${p.id})">↑ SKŁAD</button>`:`<button class="btn sm" onclick="demoteToReserve(${p.id})">↓ REZERWA</button>`}
-      <button class="btn gl sm" onclick="openNegotiate(${p.id})">KONTRAKT</button>
-      ${!p.loanedOut?`<button class="btn sm bcb cblue" onclick="openLoanModal(${p.id})" title="Wypożycz do innego klubu">WYPOŻYCZ</button>`:''}
-      ${!p.loanedOut?`<button class="btn sm bcg cg" onclick="sellPlayer(${p.id})" title="Sprzedaj do klubu AI za opłatę transferową">SPRZEDAJ</button>`:''}
-      <button class="btn sm bcr cr" onclick="releasePlayer(${p.id})" title="Zwolnij z kontraktu">ZWOLNIJ</button>
+      ${p.role==='youth'?`<button class="btn go sm" onclick="promoteYouth(${p.id})">${t('squad.promoteReserve')}</button>`
+        :p.role==='reserve'?`<button class="btn go sm" onclick="promoteToStarter(${p.id})">${t('squad.promoteSquad')}</button>`:`<button class="btn sm" onclick="demoteToReserve(${p.id})">${t('squad.demoteReserve')}</button>`}
+      <button class="btn gl sm" onclick="openNegotiate(${p.id})">${t('squad.contract')}</button>
+      ${!p.loanedOut?`<button class="btn sm bcb cblue" onclick="openLoanModal(${p.id})" title="${t('squad.loanTitle')}">${t('squad.loan')}</button>`:''}
+      ${!p.loanedOut?`<button class="btn sm bcg cg" onclick="sellPlayer(${p.id})" title="${t('squad.sellTitle')}">${t('squad.sell')}</button>`:''}
+      <button class="btn sm bcr cr" onclick="releasePlayer(${p.id})" title="${t('squad.releaseTitle')}">${t('squad.release')}</button>
     </div>
   </div>`;
 }
