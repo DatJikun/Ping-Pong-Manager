@@ -33,7 +33,7 @@ test('League 1 is clearly stronger than League 2, purely from budget', () => {
   assert.ok(avg(1) - avg(2) >= 6, `L1 avg should clearly exceed L2 (got ${avg(1).toFixed(0)} vs ${avg(2).toFixed(0)})`);
 });
 
-test('leagues stay differentiated and churn over many seasons (AI finances)', () => {
+test('[slow] leagues stay differentiated and churn over many seasons (AI finances)', () => {
   const g = boot(1234);
   const gp = g.PPM.gameplay;
   gp.newGame(0, 'PL');

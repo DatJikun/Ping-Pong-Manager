@@ -4,7 +4,8 @@
   "private": true,
   "description": "PingPong Manager — table tennis club management sim (browser app).",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test --test-skip-pattern=\"^\\[slow\\]\"",
+    "test:full": "node --test",
     "check": "node -e \"['src/data/constants.js','src/core/utils.js','src/core/state.js','src/ui/shell.js','src/core/gameplay.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
     "test:cleanup": "node --test tests/cleanup.test.js"
   }

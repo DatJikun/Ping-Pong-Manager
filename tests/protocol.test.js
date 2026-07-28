@@ -97,7 +97,7 @@ test('staff market: pools hold at least 3x-clubs-per-league candidates and regen
   assert.ok(G.staffPool.every((s) => !oldIds.has(s.id)), 'retired pool staff replaced by fresh regens');
 });
 
-test('uncancellable: a seeded event replays identically after a "reload"', async () => {
+test('[slow] uncancellable: a seeded event replays identically after a "reload"', async () => {
   // Two fresh boots from the SAME persisted save with the SAME event seed must
   // produce the SAME cup-round results (reload cannot re-roll an event).
   const runOnce = (saveText) => {

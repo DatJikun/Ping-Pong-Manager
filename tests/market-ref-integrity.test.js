@@ -31,6 +31,10 @@ test('migration repairs market rows left behind by the player-ID repair', () => 
   const agents = G.players.filter((p) => isFreeAgent(G, p));
   assert.ok(agents.length >= 2, 'fixture has at least two free agents');
   const [keeper, shadow] = agents;
+  // Generated names are not unique. Give the two fixture entities stable,
+  // unmistakable identities so a same-name player cannot satisfy the lookup.
+  keeper.name = 'MARKET_FIXTURE_KEEPER';
+  shadow.name = 'MARKET_FIXTURE_SHADOW';
   const sharedId = keeper.id;
   shadow.id = sharedId;
   G.transferMarket = [

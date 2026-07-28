@@ -30,7 +30,7 @@ test('the youth-only challenge club gets a compatible principal', () => {
     `challenge club principal fits youthOnly (got ${ch.principal.strategy})`);
 });
 
-test('principals have a lifecycle: they change and the pool stays stocked', () => {
+test('[slow] principals have a lifecycle: they change and the pool stays stocked', () => {
   const g = boot(7);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = () => g.PPM.state.G;

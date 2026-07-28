@@ -110,7 +110,7 @@ test('#10 loaning out a final-contract-year player is blocked', () => {
   assert.equal(g.PPM.gameplay.canLoanOut(p.id).ok, false, 'final-year loan-out refused');
 });
 
-test('#11 AI wage discipline keeps league budgets alive over seasons', () => {
+test('[slow] #11 AI wage discipline keeps league budgets alive over seasons', () => {
   const g = boot(32);
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay; const G = g.PPM.state.G;
