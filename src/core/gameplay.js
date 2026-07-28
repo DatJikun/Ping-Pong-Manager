@@ -527,7 +527,7 @@ function getTopClubPlayers(teamId,count=3){
     .slice(0,count);
 }
 function expectsStarterRole(p,targetTeamId=p.teamId){
-  if(!targetTeamId)return false;
+  if(!targetTeamId||p.teamId!==targetTeamId)return false;
   const topGroup=getTopClubPlayers(targetTeamId,3);
   return topGroup.some(x=>x.id===p.id);
 }
@@ -1297,14 +1297,16 @@ function getContractProfile(p){
     summaryKey:`neg.agentSummary.${agentType==='balanced'?'securityVeteran':agentType}`,
   };
 }
-function contractExpect(p,targetTeamId=store.G?.myTeamId){
+function contractExpect(p,targetTeamId=store.G?.myTeamId,marketContext=null){
   ensurePlayerMeta(p);
   if(targetTeamId&&expectsStarterRole(p,targetTeamId))p.preferredRole='starter';
   const profile=getContractProfile(p);
   const o=ovrBase(p);
   const form=seasonFormImpact(p);
   const targetLeague=getPlayerTargetLeague(targetTeamId);
-  const leagueAvgOvr=calcLeagueAvgOvr(targetLeague);
+  const leagueAvgOvr=typeof marketContext?.leagueAvgOvr==='number'
+    ?marketContext.leagueAvgOvr
+    :calcLeagueAvgOvr(targetLeague);
   const prestigeDiff=Math.max(0,o-leagueAvgOvr);
   const loyaltyMod=(p.loyalty>=7?0.88:p.loyalty>=4?0.95:1.05)-profile.loyaltyDiscount;
   const ageMod=p.age<22?1.06:p.age<=29?1:p.age<=33?0.93:0.86;
@@ -4434,6 +4436,12 @@ function rebalanceAiLineup(teamId){
 }
 function aiSignPlayers(){
   const diffCfg=getDifficultyConfig();
+  // Contract expectations are evaluated hundreds of times in one AI transfer
+  // window. League strength does not materially change during that loop, so
+  // calculate it once per league instead of sorting every squad per candidate.
+  const contractContexts=new Map([...new Set(store.G.teams.map(t=>t.league))]
+    .map(league=>[league,{leagueAvgOvr:calcLeagueAvgOvr(league)}]));
+  const contractContextFor=team=>contractContexts.get(team.league);
   const freeAgents=store.G.players.filter(p=>!p.retired&&(p.teamId===null||p.contractYears<=0)).sort((a,b)=>ovrBase(b)-ovrBase(a));
   freeAgents.forEach(p=>{p.teamId=null;p.contractYears=0;});
   store.G.staff=store.G.staff.filter(s=>{
@@ -4493,10 +4501,10 @@ function aiSignPlayers(){
     let starters=roster.filter(p=>p.role==='starter').length;
     while(!youthOnly&&roster.length<desiredRoster&&freeAgents.length){
       const fa=freeAgents
-        .filter(p=>contractExpect(p,team.id).salary<=Math.max(1200,aiAffordableCash(team)+3000))
+        .filter(p=>contractExpect(p,team.id,contractContextFor(team)).salary<=Math.max(1200,aiAffordableCash(team)+3000))
         .sort((a,b)=>(ovrBase(b)+Math.max(0,playerCeiling(b)-ovrBase(b))*0.22)-(ovrBase(a)+Math.max(0,playerCeiling(a)-ovrBase(a))*0.22))[0];
       if(!fa)break;
-      const exp=contractExpect(fa,team.id);
+      const exp=contractExpect(fa,team.id,contractContextFor(team));
       fa.teamId=team.id;
       fa.contractYears=1+rnd(1,2);
       fa.salary=Math.round(exp.salary*(0.92+Math.random()*0.16));
@@ -4511,14 +4519,14 @@ function aiSignPlayers(){
     const futureTarget=youthOnly?null:contractedTargets.find(({item,player})=>{
       if(player.teamId===team.id)return false;
       if(store.G.preSignedPlayers?.find(x=>x.playerId===player.id))return false;
-      const exp=contractExpect(player,team.id);
+      const exp=contractExpect(player,team.id,contractContextFor(team));
       const fee=(item.type==='transfer'?(item.fee||0):0)+exp.signingBonus;
       if(aiAffordableCash(team)<fee)return false;
       if(weakestStarter&&ovrBase(player)<ovrBase(weakestStarter)+2&&playerCeiling(player)<playerCeiling(weakestStarter)+3&&roster.length>=desiredRoster)return false;
       return true;
     });
     if(futureTarget){
-      const exp=contractExpect(futureTarget.player,team.id);
+      const exp=contractExpect(futureTarget.player,team.id,contractContextFor(team));
       const fee=(futureTarget.item.type==='transfer'?(futureTarget.item.fee||0):0)+exp.signingBonus;
       team.budget-=fee;
       if(futureTarget.item.type==='transfer'){
