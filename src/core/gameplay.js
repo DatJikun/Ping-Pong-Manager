@@ -1994,12 +1994,22 @@ function newGame(clubIdx, countryId){
   const allNames=useDb?dbTeams.slice(0,24).map(t=>t.name):[...(COUNTRY.l1Names||TNAMES_L1),...(COUNTRY.l2Names||TNAMES_L2)];
   const budMult = COUNTRY.budgetMult || 1.0;
   const ovrMult = COUNTRY.ovrMult || 1.0;
+  // A custom database is user data and loadDatabaseFile() validates almost none of
+  // it, so its league split cannot be trusted. The engine is built on two divisions
+  // of twelve: makeSchedule() derives the round count from the club count, and
+  // promotion/relegation moves clubs between exactly two tiers. A file that puts
+  // all 24 clubs in one division produced 46 rounds in the first and NONE in the
+  // second — half the fixtures never played, the other division empty, and no
+  // error anywhere. Honour the file's split only when it is actually playable.
+  const dbSplitUsable=useDb
+    &&dbTeams.slice(0,24).filter(t=>t?.league===1).length===12
+    &&dbTeams.slice(0,24).filter(t=>t?.league===2).length===12;
   const teams=allNames.map((name,i)=>{
     const source=useDb?dbTeams[i]:null;
     const identity=CLUB_IDENTITIES[name]||null;
     return{
       id:i,name,isPlayer:i===clubIdx,
-      league:source?.league||(i<12?1:2),
+      league:(dbSplitUsable?source?.league:null)||(i<12?1:2),
       budget:source?.budget??identity?.budget??(i<12?Math.round((250000+i*22000)*budMult):Math.round((60000+Math.max(0,i-12)*8000)*budMult)),
       traits:source?.traits||identity?.traits||[],
       w:0,d:0,l:0,pts:0,gf:0,ga:0,pointsWon:0,pointsLost:0,
