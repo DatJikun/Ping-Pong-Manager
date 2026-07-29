@@ -397,7 +397,51 @@ function saveLoadRoundTrip(g) {
   api.validateSaveText(text);
   const reloaded = api.loadGameFromText(text);
   if (!reloaded) throw new Error('loadGameFromText() returned nothing');
-  return { bytes: text.length, game: reloaded };
+
+  // ROUND-TRIP IDENTITY. Loading is not a read-only operation — migration repairs
+  // damage and pruneCareerData trims the career — so the first load may
+  // legitimately differ from what was written. The SECOND must not: once a save
+  // has been through the pipeline, saving and loading it again has to be a no-op.
+  //
+  // Anything else means the game hands the player a different world than the one
+  // they saved. That is how an AI club's best junior was quietly dropping out of
+  // its lineup on every load (rebalanceAiLineup left `isYouth` on a starter, and
+  // the migration demoted him back to the academy).
+  const settled = api.serializeGame();
+  const again = api.loadGameFromText(settled);
+  const twice = api.serializeGame();
+  if (twice !== settled) {
+    throw new Error(`save/load is not stable: reloading a settled save changed it (${diffSummary(settled, twice)})`);
+  }
+  return { bytes: text.length, game: again };
+}
+
+// Names the first few fields that changed, so a stability failure points at the
+// culprit instead of dumping two megabytes of JSON.
+function diffSummary(a, b) {
+  let left, right;
+  try { left = JSON.parse(a); right = JSON.parse(b); } catch { return 'unparseable'; }
+  const diffs = [];
+  const walk = (x, y, path) => {
+    if (diffs.length >= 4) return;
+    if (x === y) return;
+    if (typeof x !== typeof y || x === null || y === null || typeof x !== 'object') {
+      diffs.push(`${path}: ${JSON.stringify(x)} → ${JSON.stringify(y)}`);
+      return;
+    }
+    if (Array.isArray(x) !== Array.isArray(y)) { diffs.push(`${path}: shape changed`); return; }
+    if (Array.isArray(x)) {
+      if (x.length !== y.length) { diffs.push(`${path}: length ${x.length} → ${y.length}`); return; }
+      for (let i = 0; i < x.length && diffs.length < 4; i++) walk(x[i], y[i], `${path}[${i}]`);
+      return;
+    }
+    for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) {
+      if (diffs.length >= 4) return;
+      walk(x[k], y[k], `${path}.${k}`);
+    }
+  };
+  walk(left, right, '$');
+  return diffs.join('; ') || 'byte length differs only';
 }
 
 // ── the season loop ──────────────────────────────────────────────────────────
@@ -537,4 +581,4 @@ async function runCareer(options = {}) {
   }
 }
 
-module.exports = { runCareer, playSeasons, bootFast, saveLoadRoundTrip, AutoManager, CareerError, TOTAL_MATCHDAYS };
+module.exports = { runCareer, playSeasons, bootFast, saveLoadRoundTrip, diffSummary, AutoManager, CareerError, TOTAL_MATCHDAYS };

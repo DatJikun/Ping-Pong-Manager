@@ -4568,7 +4568,15 @@ function rebalanceAiLineup(teamId){
     .filter(p=>p.teamId===teamId&&!p.retired)
     .sort((a,b)=>(ovrBase(b)+Math.max(0,(playerCeiling(b)-ovrBase(b))*0.18)+(b.role==='youth'?2:0))-(ovrBase(a)+Math.max(0,(playerCeiling(a)-ovrBase(a))*0.18)+(a.role==='youth'?2:0)));
   roster.forEach((p,idx)=>{
-    if(idx<4)p.role='starter';
+    if(idx<4){
+      // A junior good enough for the first team has graduated in practice. Say so:
+      // `isYouth` with role 'starter' is a state the save migration explicitly
+      // undoes (state.js: isYouth ⇒ role 'youth'), so leaving the flag on meant an
+      // AI club's best young player silently dropped out of its lineup on every
+      // load — the same save producing different teams before and after.
+      if(p.isYouth)p.isYouth=false;
+      p.role='starter';
+    }
     else if(p.isYouth||p.age<21)p.role='youth';
     else p.role='reserve';
   });
