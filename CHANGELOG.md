@@ -21,6 +21,18 @@ na młodzież daje więcej kredytu zaufania. Wcześniej nikt nie decydował: umo
 sztywne 3 lata podpisana w wieku 16–19 lat wygasała przed 21., więc ~75% każdego
 naboru znikało w dniu urodzin — w każdym klubie, także Twoim, bez ostrzeżenia.
 
+**Trwałość zapisów.** Nieudany zapis punktu odzyskiwania (pełny dysk, limit
+IndexedDB, tryb prywatny) przerywał całą kolejkę — kariera stawała, bo nie udała
+się *kopia zapasowa*. `endSeason` już traktował to jako best-effort, `runMatchday`
+i turnieje nie. Teraz wszędzie tak samo: log i gramy dalej. O problemie z
+magazynem i tak informuje ścieżka autosave'u.
+
+**Nowe testy.** Każdy przycisk nawigacji renderuje się przez prawdziwe
+`renderApp()` w obu językach i trzech fazach sezonu. Prawdziwa kariera przechodzi
+przez menedżer zapisów (kolejkowany autosave, punkty odzyskiwania, rotacja kopii)
+zamiast dwuliniowych atrap. Soak przeszedł **100 sezonów** przez prawdziwą pętlę
+gry z kompletem invariantów: populacja 387 → 388, zapis 1,8 → 5,0 MB.
+
 **Rywalizacje klubowe.** Stare mecze są usuwane z zapisu, ale panel „RYWALIZACJE"
 w podglądzie klubu liczył je bezpośrednio z listy wyników — po przycinaniu
 pokazywałby tylko bieżący sezon. Bilans z każdym rywalem trafia teraz do

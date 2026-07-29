@@ -1551,3 +1551,119 @@ f85322f  Remove the unreachable Mundial and Olympics tournaments
 ```
 
 — Claude
+
+---
+
+## 2026-07-29 — Claude → review: scalenie, akademia, trwałość zapisów
+
+Gałąź: **`merge/long-career`**. Niewypchnięta.
+
+### 0. Sprostowanie do mojego poprzedniego wpisu
+
+Ostrzegałem przy dwóch zmianach Codexa. **Obie oceniłem źle** — zmierzyłem i:
+
+- **`expectsStarterRole`** — pisałem, że zmienia oczekiwania płacowe kandydatów
+  z innych klubów. Nieprawda. `getTopClubPlayers` filtruje po `teamId`, więc
+  zawodnik z obcego klubu **nigdy** nie mógł trafić do top 3 klubu docelowego.
+  Zmierzone: 0 trafień na 1140 sprawdzeń. Jego warunek to czysty skrót
+  wykonawczy, semantycznie identyczny.
+- **Zamrożenie średniej ligi na czas okna transferowego** — pisałem, że „zmienia
+  wyniki". Formalnie tak, ale zmierzony dryf przez całe okno to **0 do 1 punktu
+  OVR** (5 kolejnych okien: 0, −1, 0, 0, 0). To wchodzi w `prestigeTax`, więc
+  realny wpływ na pensje jest rzędu pojedynczych procent i tylko u granicznych
+  zawodników. Przybliżenie jest uczciwe i udokumentowane.
+
+Krótko: jego optymalizacje są bezpieczniejsze, niż napisałem. Przepraszam za
+niepotrzebny alarm.
+
+### 1. Scalenie
+
+Dwanaście konfliktów. Wszystko, co widzi gracz → wersja zlokalizowana;
+`aiSignPlayers` zachowuje obie zmiany naraz; `doNegotiate` mój warunek z jego
+komunikatem; Mundial/Olimpiada, które wróciły z merge'em, usunięte ponownie.
+
+**Zysk z jego pracy jest realny:** sezon liczy się ~5,8 s zamiast ~12 s, a zapis
+po 30 sezonach ma 3,0 MB zamiast 4,3 MB.
+
+### 2. Akademia — Twoja decyzja
+
+Umowa juniorska sięga progu 21 lat (`max(3, 22 − wiek)`), więc junior **kończy**
+akademię. Przy promocji klub AI decyduje: zostawia, gdy brakuje mu ludzi, gdy
+junior już zasługuje na miejsce albo gdy jego sufit obiecuje, że wkrótce
+zasłuży; pełny skład z przeciętnym juniorem zwykle go wypuszcza — **jako wolnego
+agenta**, więc talent trafia na rynek zamiast znikać. Zarząd nastawiony na
+młodzież daje więcej kredytu zaufania. U Ciebie bez zmian: junior wchodzi do
+rezerw, kontrakt wchodzi w ostatni rok, skrzynka ostrzega.
+
+### 3. Trzy błędy znalezione po scaleniu
+
+| Błąd | Skutek dla gracza |
+|---|---|
+| Panel „RYWALIZACJE" liczył mecze z listy wyników, a stare mecze są teraz usuwane | Bilans z odwiecznym rywalem resetowałby się do bieżącego sezonu. Nic się nie wywalało, więc żaden test tego nie łapał |
+| **Nieudany zapis punktu odzyskiwania przerywał kolejkę** | Pełny dysk / limit IndexedDB / tryb prywatny → `runMatchday()` rzucał wyjątkiem i **nie dało się grać**. Kariera stawała, bo nie udała się *kopia zapasowa* |
+| Test wzrostu w soaku był nieaktualny po zmianie przycinania | Fałszywy alarm w `test:full` |
+
+Rywalizacje mają teraz trwały, kompaktowy rejestr (24 kluby × 23 rywali,
+ograniczony przez ligę, nie przez długość kariery), składany **zanim** mecze
+zostaną usunięte, plus invariant sprawdzający symetrię obu stron.
+
+Punkt odzyskiwania jest teraz best-effort wszędzie — `endSeason` już tak go
+traktował, `runMatchday` i turnieje nie. To była niespójność, a niespójna była
+ta strona, która blokuje grę.
+
+### 4. Nowe testy
+
+- **`tests/pages-render.test.js`** — przechodzi każdy przycisk nawigacji z
+  `index.html`, renderuje przez prawdziwe `renderApp()`, w obu językach, w trzech
+  fazach sezonu, na świeżym świecie i po czterech sezonach. Plus kontrola, że
+  żaden przycisk nie został bez trasy. To jest dokładnie ta klasa szkody, którą
+  zostawia duży merge — usunięcie strony Mundialu mogło zostawić martwą trasę.
+- **`tests/save-durability-long.test.js`** — pierwszy test, który przepycha
+  **prawdziwą, wielomegabajtową karierę** przez ścieżkę, którą naprawdę wędrują
+  Twoje dane: kolejkowany autosave, punkty odzyskiwania co kolejkę, rotacja
+  kopii. Sprawdza, że kariera jest aktualizowana w miejscu, wczytuje się z
+  kompletem invariantów, kopie zostają oknem trzech, zapisy się sklejają zamiast
+  jeden na wywołanie, a awaria magazynu zgłasza się **raz**, nie niszczy ostatniej
+  dobrej kopii i wraca do zapisywania, gdy magazyn wraca.
+- **`tests/academy-graduation.test.js`** i **`tests/club-rivalries.test.js`** —
+  po pięć/pięć przypadków na dwie powyższe zmiany.
+
+### 5. Weryfikacja w prawdziwej przeglądarce
+
+Nie tylko w atrapie DOM. Uruchomiłem grę na `localhost`, rozegrałem pełny sezon
+(22 kolejki, puchar, Top 12), zmianę sezonu i przeszedłem wszystkie 14 ekranów:
+
+- **zero błędów konsoli**,
+- każdy ekran renderuje treść (od 229 do 1,5 mln znaków — rynek jest największy),
+- panel klubu pokazuje RYWALIZACJE czytane z nowego rejestru (24 kluby),
+- brak pozostałości po Mundialu w nawigacji, schemat zapisu 21.
+
+### 6. Soak: 100 sezonów
+
+Przez **prawdziwą pętlę gry** (nie uproszczoną sondę), z invariantami i
+zapisem/wczytaniem co sezon. **Wszystkie invarianty zielone, 1060 s.**
+
+| sezon | zawodnicy | rynek | wyniki | historia | HoF | rejestr klubów | zapis |
+|---|---|---|---|---|---|---|---|
+| 1 | 387 | 256 | 264 | 659 | 0 | 24 | 1,8 MB |
+| 10 | 390 | 270 | 264 | 1 339 | 20 | 240 | 2,3 MB |
+| 30 | 384 | 276 | 264 | 1 766 | 20 | 720 | 3,1 MB |
+| 100 | 388 | 266 | 264 | 2 129 | 20 | 2 400 | 5,0 MB |
+
+Populacja stoi w miejscu przez sto lat. Rosną tylko dwie rzeczy, obie z
+założenia: rejestr klubów (24 wiersze/sezon) i historia zawodników.
+
+### 7. Stan
+
+```
+npm run check      syntax OK
+npm test           / npm run test:full — zielone
+npm run test:soak  100 sezonów, wszystkie invarianty zielone
+real saves         S4, S8, S11 — po dwa kolejne sezony, zielone
+przeglądarka       pełny sezon + zmiana sezonu, zero błędów konsoli
+git status         czysto
+```
+
+Gałąź `merge/long-career` czeka na Twoją decyzję o wypchnięciu — sam nie pushuję.
+
+— Claude

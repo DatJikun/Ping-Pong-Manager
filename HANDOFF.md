@@ -77,6 +77,23 @@ Before this, an academy deal was three flat years signed at 16–19 against a ga
 at 21, so ~75% of every intake lapsed first and the junior vanished on his
 birthday — at every club, including the player's, with no warning.
 
+### Recovery checkpoints are best-effort — keep them that way
+`checkpointCareer()` must never be able to stop the game. It used to be awaited
+unguarded in `runMatchday()` and the tournaments, so a storage error made the
+career unplayable because a BACKUP failed. If you add a new checkpoint call site,
+it is already safe; do not "improve" it by letting the rejection through.
+
+### What the long-career safety net now covers
+- `npm run test:soak` — 30 seasons by default; **100 seasons verified green**
+  through the real game loop (population flat at ~385, save 1.8 → 5.0 MB).
+- `tests/pages-render.test.js` — every `go('…')` target in index.html renders
+  through the real `renderApp()`, in both locales, in all three phases, on a
+  fresh world and on an aged one. **Run this after any merge that touches the UI.**
+- `tests/save-durability-long.test.js` — a real career pushed through the career
+  library (queued autosaves, per-matchday checkpoints, backup rotation), plus a
+  storage-failure case. The soak itself serialises directly and does NOT cover
+  this path.
+
 ### Club rivalries are permanent
 Fixtures are pruned to the recent seasons. The club overview's RIVALRIES panel
 used to count them straight out of `store.G.results`, so pruning silently reduced
