@@ -550,13 +550,16 @@ function scoutingIntegrity(G) {
   for (const r of arr(G.scoutResults)) {
     if (!r) { problems.push('scoutResults contains a null report'); continue; }
     if (!playerIds.has(r.realId)) problems.push(`scout report points at missing player ${r.realId}`);
-    if (r.scoutId !== undefined && !scoutIds.has(r.scoutId)) {
-      problems.push(`scout report ${r.realId} names a scout who is gone (${r.scoutId})`);
-    }
+    // The report's scoutId is attribution, not a live reference: the season
+    // change rebuilds scoutPool, so a scout can leave while the player he found
+    // is still on the shelf. Both real S8 and S11 careers carry such a report,
+    // and the squad screen never dereferences it — only realId has to resolve.
   }
   for (const m of arr(G.scoutMissions)) {
     if (!m) { problems.push('scoutMissions contains a null entry'); continue; }
-    if (!scoutIds.has(m.scoutId)) problems.push(`scout mission names a scout who is gone (${m.scoutId})`);
+    // A MISSION is different: checkScoutReturns() bails when the scout cannot be
+    // found, so the manager paid for a trip that can never report back.
+    if (!scoutIds.has(m.scoutId)) problems.push(`scout mission names a scout who is gone (${m.scoutId}) — it can never report back`);
     if (!Number.isFinite(m.startMatchday) || !Number.isFinite(m.duration)) {
       problems.push('a scout mission has a non-finite schedule');
     }
