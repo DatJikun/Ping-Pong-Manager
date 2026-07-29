@@ -26,10 +26,81 @@ function cupStageForTeam(teamId){
   return null;
 }
 
+// Permanent head-to-head ledger.
+//
+// The club overview's RIVALRIES panel used to count every fixture ever played,
+// straight out of store.G.results. Since results are pruned to the recent
+// seasons (they are the single biggest thing in a long save), that panel would
+// silently have become "this season only" — a club's defining rivalry is
+// exactly the kind of history a career game must not forget.
+//
+// So the totals are folded into a compact permanent ledger, once per season,
+// while the fixtures are still there. It is bounded by the league, not by the
+// career: 24 clubs × 23 opponents of {games, wins, draws, losses, close}, and
+// it stops growing the day the world is created.
+function foldSeasonIntoRivalries(season){
+  store.G.clubRivalries=store.G.clubRivalries||{};
+  const ledger=store.G.clubRivalries;
+  // A high-water mark, not a list: folding the same season twice would double
+  // every result in it.
+  if(season<=(ledger._through||0))return;
+  const seasonResults=(store.G.results||[]).filter(r=>r&&r.season===season);
+  if(!seasonResults.length)return;
+  const bump=(tid,oppId,result)=>{
+    if(tid===null||tid===undefined||oppId===null||oppId===undefined)return;
+    const rows=ledger[tid]=ledger[tid]||{};
+    const row=rows[oppId]=rows[oppId]||{games:0,wins:0,draws:0,losses:0,close:0};
+    row.games++;
+    if(result.close)row.close++;
+    if(result.draw)row.draws++;
+    else if(result.won)row.wins++;
+    else row.losses++;
+  };
+  for(const r of seasonResults){
+    const close=Math.abs((r.homePoints||0)-(r.awayPoints||0))<=8;
+    bump(r.homeId,r.awayId,{won:!!r.homeWin&&!r.isDraw,draw:!!r.isDraw,close});
+    bump(r.awayId,r.homeId,{won:!r.homeWin&&!r.isDraw,draw:!!r.isDraw,close});
+  }
+  ledger._through=season;
+}
+// Folds every season still present in results but not yet in the ledger. Called
+// before results are pruned (and on load), so nothing is lost even for a career
+// that predates the ledger.
+function foldAllSeasonsIntoRivalries(){
+  if(!store.G)return;
+  const seasons=[...new Set((store.G.results||[]).map(r=>r&&r.season).filter(Number.isFinite))]
+    .sort((a,b)=>a-b);
+  for(const season of seasons){
+    if(season>=(store.G.season||1))continue;  // the running season stays live
+    foldSeasonIntoRivalries(season);
+  }
+}
+// What the overview reads: the permanent ledger for every past season, plus the
+// live results of the season in progress (not folded in until it ends).
+function getClubRivalries(tid){
+  const stored=(store.G?.clubRivalries||{})[tid]||{};
+  const rows=new Map(Object.entries(stored)
+    .map(([oppId,row])=>[Number(oppId),{oppId:Number(oppId),...row}]));
+  const through=store.G?.clubRivalries?._through||0;
+  (store.G?.results||[]).forEach(r=>{
+    if(!r||r.homeId!==tid&&r.awayId!==tid)return;
+    if((r.season||0)<=through)return; // already in the ledger
+    const oppId=r.homeId===tid?r.awayId:r.homeId;
+    if(oppId===null||oppId===undefined)return;
+    const row=rows.get(oppId)||{oppId,games:0,wins:0,draws:0,losses:0,close:0};
+    row.games++;
+    if(Math.abs((r.homePoints||0)-(r.awayPoints||0))<=8)row.close++;
+    const won=(r.homeId===tid&&r.homeWin)||(r.awayId===tid&&!r.homeWin&&!r.isDraw);
+    if(r.isDraw)row.draws++;else if(won)row.wins++;else row.losses++;
+    rows.set(oppId,row);
+  });
+  return [...rows.values()];
+}
 function recordClubSeasonHistory(){
   if(!store.G)return;
   const { ovr, teamOvr } = window.PPM.gameplay;
   store.G.clubHistory=store.G.clubHistory||{};
+  foldSeasonIntoRivalries(store.G.season);
   [1,2].forEach(league=>{
     // pts-only, like every engine decision (champion, promotion, prizes) — a
     // different tiebreaker here recorded positions that never actually happened.
@@ -118,21 +189,7 @@ function openTeamOverview(tid){
   const history=getClubHistory(tid).slice(-5).reverse();
   const seasonsAll=getClubHistory(tid);
   const bestSeason=seasonsAll.slice().sort((a,b)=>b.pts-a.pts||a.position-b.position)[0];
-  const allMatches=(store.G.results||[]).filter(r=>r.homeId===tid||r.awayId===tid);
-  const rivalryMap=new Map();
-  allMatches.forEach(r=>{
-    const oppId=r.homeId===tid?r.awayId:r.homeId;
-    if(oppId===null||oppId===undefined)return;
-    const row=rivalryMap.get(oppId)||{oppId,games:0,wins:0,losses:0,draws:0,close:0};
-    row.games++;
-    if(Math.abs((r.homePoints||0)-(r.awayPoints||0))<=8)row.close++;
-    const won=(r.homeId===tid&&r.homeWin)||(r.awayId===tid&&!r.homeWin&&!r.isDraw);
-    if(r.isDraw)row.draws++;
-    else if(won)row.wins++;
-    else row.losses++;
-    rivalryMap.set(oppId,row);
-  });
-  const rivalry=[...rivalryMap.values()].sort((a,b)=>(b.games*3+b.close*2+Math.abs(b.wins-b.losses))-(a.games*3+a.close*2+Math.abs(a.wins-a.losses)))[0];
+  const rivalry=getClubRivalries(tid).sort((a,b)=>(b.games*3+b.close*2+Math.abs(b.wins-b.losses))-(a.games*3+a.close*2+Math.abs(a.wins-a.losses)))[0];
   const rivalName=rivalry?teamName(rivalry.oppId):null;
   const starPlayer=players[0]||null;
   const tr=(key,params)=>window.PPM.i18n.t(key,params);
@@ -195,5 +252,5 @@ function openTeamOverview(tid){
   openModal();
 }
 
-window.PPM.gameplayClubUI = { getClubHistory, recordClubSeasonHistory, getClubCareerStats, getClubHallOfFame, openTeamOverview };
+window.PPM.gameplayClubUI = { getClubHistory, recordClubSeasonHistory, getClubRivalries, foldSeasonIntoRivalries, foldAllSeasonsIntoRivalries, getClubCareerStats, getClubHallOfFame, openTeamOverview };
 })();

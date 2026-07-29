@@ -3344,6 +3344,10 @@ function pruneCareerData(){
   // 5) Full match rows are only needed for the current and previous season.
   //    Permanent club statistics and top performers live in the compact
   //    clubHistory ledger, so retaining every old fixture only bloats saves.
+  // Head-to-head totals are permanent; the fixtures behind them are not. Fold
+  // before dropping, so a club's rivalry history survives the prune (and so a
+  // career that predates the ledger backfills whatever it still carries).
+  window.PPM.gameplayClubUI?.foldAllSeasonsIntoRivalries?.();
   const keepFrom=(store.G.season||1)-1;
   if(Array.isArray(store.G.results)){
     store.G.results=store.G.results.filter(r=>(r.season||0)>=keepFrom);
