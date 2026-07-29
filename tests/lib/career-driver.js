@@ -335,6 +335,21 @@ class AutoManager {
     }
   }
 
+  // Takes a job elsewhere every few seasons. A real long career is not spent at
+  // one club, and acceptClubOffer() is the biggest state transition in the game —
+  // the player's club changes underneath everything that referenced it. Kept to a
+  // domestic move: crossing a border rebuilds the entire world with newGame(),
+  // which would restart the soak's world mid-run rather than test the season loop.
+  considerClubOffers(season) {
+    if (season % 8 !== 0) return false;
+    const offers = (this.G.clubOffers || [])
+      .filter((o) => o.eligible && o.countryId === (this.G.countryId || 'PL'));
+    if (!offers.length) return false;
+    const before = this.myId;
+    this.gp.acceptClubOffer(offers[0].clubId);
+    return this.myId !== before;
+  }
+
   // Signs whatever the scouts brought back — the report has to resolve to a real
   // player, and signing him goes through the ordinary negotiation.
   signScoutReports() {
@@ -535,6 +550,9 @@ async function playSeasons(g, seasons, options = {}) {
     ui.autoPlay = false;
 
     if (G().phase !== 'transfer') fail(`season ended in phase "${G().phase}" (expected "transfer")`);
+
+    // Club offers live in the transfer window and endSeason() clears them.
+    await guarded('club offers', () => manager.considerClubOffers(G().season));
 
     const finishedSeason = G().season;
     const simMs = Date.now() - seasonStart;
