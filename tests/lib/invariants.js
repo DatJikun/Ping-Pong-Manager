@@ -394,6 +394,58 @@ function clubHistoryIntegrity(G) {
   return problems;
 }
 
+// The permanent head-to-head ledger. It replaces counting old fixtures (which
+// are pruned), so if it drifts nobody notices — the club overview just quietly
+// shows the wrong rivalry. Two things make that detectable: the W/D/L split has
+// to add up, and the two sides of a fixture have to agree with each other.
+function rivalryLedger(G) {
+  const problems = [];
+  const ledger = G.clubRivalries;
+  if (!ledger) return problems; // a career that has not closed a season yet
+  const teamIds = new Set(arr(G.teams).map((t) => t && t.id));
+  if (ledger._through !== undefined && ledger._through > G.season) {
+    problems.push(`clubRivalries recorded through S${ledger._through}, ahead of the current S${G.season}`);
+  }
+  const rowOf = (tid, oppId) => (ledger[tid] || {})[oppId];
+  for (const [key, rows] of Object.entries(ledger)) {
+    if (key === '_through') continue;
+    const tid = Number(key);
+    if (!teamIds.has(tid)) { problems.push(`clubRivalries has rows for unknown club ${key}`); continue; }
+    const opponents = Object.keys(rows || {});
+    if (opponents.length > arr(G.teams).length) {
+      problems.push(`club ${key} has ${opponents.length} rivalry rows, more than there are clubs`);
+    }
+    for (const oppKey of opponents) {
+      const oppId = Number(oppKey);
+      const row = rows[oppKey];
+      if (oppId === tid) { problems.push(`club ${key} is listed as its own rival`); continue; }
+      if (!teamIds.has(oppId)) { problems.push(`club ${key} has a rivalry row against unknown club ${oppKey}`); continue; }
+      for (const k of ['games', 'wins', 'draws', 'losses', 'close']) {
+        if (!num(row[k]) || !Number.isFinite(row[k]) || row[k] < 0) {
+          problems.push(`clubRivalries[${key}][${oppKey}].${k} is ${row[k]}`);
+        }
+      }
+      if ((row.wins || 0) + (row.draws || 0) + (row.losses || 0) !== (row.games || 0)) {
+        problems.push(`clubRivalries[${key}][${oppKey}]: ${row.wins}W/${row.draws}D/${row.losses}L does not add up to ${row.games} games`);
+      }
+      if ((row.close || 0) > (row.games || 0)) {
+        problems.push(`clubRivalries[${key}][${oppKey}]: ${row.close} close matches out of ${row.games}`);
+      }
+      // The mirror row must tell the same story from the other side. This is what
+      // catches a season folded twice, or folded for only one of the two clubs.
+      const mirror = rowOf(oppId, tid);
+      if (!mirror) { problems.push(`clubRivalries[${key}][${oppKey}] has no matching row on the other side`); continue; }
+      if ((mirror.games || 0) !== (row.games || 0)) {
+        problems.push(`clubRivalries: ${key} counts ${row.games} games vs ${oppKey}, but ${oppKey} counts ${mirror.games}`);
+      }
+      if ((mirror.wins || 0) !== (row.losses || 0) || (mirror.losses || 0) !== (row.wins || 0)) {
+        problems.push(`clubRivalries: ${key} vs ${oppKey} win/loss does not mirror (${row.wins}/${row.losses} vs ${mirror.wins}/${mirror.losses})`);
+      }
+    }
+  }
+  return problems;
+}
+
 // Money must stay a number. A single NaN budget silently poisons every later
 // transfer, wage and sponsor calculation.
 function financeIntegrity(G) {
@@ -464,6 +516,7 @@ const CHECKS = [
   ['league-table', leagueTable],
   ['history-ownership', historyOwnership],
   ['club-history', clubHistoryIntegrity],
+  ['club-rivalries', rivalryLedger],
   ['finance', financeIntegrity],
   ['player-stats', playerStats],
   ['non-finite', (G) => findNonFinite(G).map((p) => `non-finite value at ${p}`)],
@@ -552,6 +605,9 @@ function describeWorld(G, extra = {}) {
     hallOfFame: arr(G.hallOfFame).length,
     clubHistoryRows: clubRows,
     seasonHistory: arr(G.seasonHistory).length,
+    rivalryRows: Object.entries(G.clubRivalries || {})
+      .filter(([k]) => k !== '_through')
+      .reduce((sum, [, rows]) => sum + Object.keys(rows || {}).length, 0),
     loans: arr(G.loans).length,
     saveKB: Math.round(json.length / 1024),
     ...extra,
