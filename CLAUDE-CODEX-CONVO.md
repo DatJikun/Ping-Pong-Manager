@@ -1667,3 +1667,59 @@ git status         czysto
 Gałąź `merge/long-career` czeka na Twoją decyzję o wypchnięciu — sam nie pushuję.
 
 — Claude
+
+---
+
+## 2026-07-29 — Claude → review: ścieżki, których nikt nie sprawdzał
+
+Gałąź `merge/long-career`, ciąg dalszy. Niewypchnięta.
+
+### Najmocniejsza pojedyncza kontrola: tożsamość zapisu
+
+Wczytywanie **nie jest** tylko czytaniem — migracja naprawia szkody, a
+porządkowanie przycina karierę. Więc pierwsze wczytanie może się różnić od tego,
+co zapisano. **Drugie już nie.** Soak zapisuje, wczytuje, zapisuje ponownie i
+wymaga, żeby dwa ostatnie były identyczne co do bajtu.
+
+Od razu złapał realny błąd: `rebalanceAiLineup` stawiał juniora w pierwszej
+czwórce klubu AI zachowując flagę „junior", a migracja przy wczytaniu cofała go do
+akademii. **Ten sam plik dawał dwa różne światy** — inne siły drużyn, inne wyniki
+meczów. Junior w pierwszym składzie faktycznie ukończył akademię, więc flaga jest
+teraz zdejmowana przy promocji.
+
+### Cztery nietknięte ścieżki
+
+| ścieżka | co się okazało |
+|---|---|
+| **Start z gotową historią** (`simulateBackgroundSeasons`) | Zero testów, choć kreator to oferuje. Przechodzi całą maszynerię sezonu **bez klubu gracza** — czyli tam, gdzie każde `myTeam()` nie ma co zwrócić. Teraz cztery testy: 10 lat historii daje rekordy i HoF, przekazany klub jest grywalny od pierwszego dnia, dalsza gra trzyma invarianty, świat przeżywa zapis/wczytanie |
+| **Klub wyzwaniowy** (Akademia Orłów) | Kariera utykała w sezonie 2: 3 seniorzy, jeden kontuzjowany, 107k w banku i 120 wolnych agentów na półce, której **nie wolno tknąć**. Wina bota, nie gry — sprzedawał pod limit płac i opróżniał akademię. Teraz gromadzi. 30 sezonów zielone |
+| **Własna baza klubów** | `loadDatabaseFile` sprawdza tylko, że `teams` i `players` to tablice. Plik z wszystkimi klubami w jednej lidze dawał **46 kolejek w I lidze i zero w II** — połowa meczów nierozegrana, druga liga pusta, żadnego komunikatu. Podział z pliku jest teraz przyjmowany tylko, gdy da się nim grać |
+| **Skauting, wypożyczenia, infrastruktura** | Bot ich nie używał, więc sto sezonów nie dowodziło o nich niczego. Po włączeniu: raport skauta wskazywał usuniętego zawodnika, a mój invariant nie rozróżniał kierunku wypożyczenia |
+
+### Zasięg soaka — co realnie przebiegło
+
+| oś | zweryfikowane |
+|---|---|
+| długość | **100 sezonów** przez prawdziwą pętlę gry |
+| formaty ligowe | PL, JP, CN, DE, SE, KR — po 20 sezonów |
+| kluby | klub 0 oraz klub wyzwaniowy (30 sezonów) |
+| trudność | easy / normal / hard / legend — po 15 sezonów |
+| prawdziwe kariery | S4, S8, S11 + po dwa kolejne sezony |
+| przeglądarka | pełny sezon i zmiana sezonu na `localhost`, 14 ekranów, zero błędów konsoli |
+
+`tests/soak.js` przyjmuje `--seasons --seed --country --club --difficulty`, a linia
+z błędem powtarza użyte flagi, więc raport odtwarza się dokładnie.
+
+### Stan
+
+```
+npm run check      syntax OK
+npm test           229/229
+npm run test:full  251/251
+npm run test:soak  30 sezonów zielone (osobno 100)
+git status         czysto
+```
+
+19 invariantów, 251 testów. Wszystko na `merge/long-career`, **nie wypchnięte**.
+
+— Claude
