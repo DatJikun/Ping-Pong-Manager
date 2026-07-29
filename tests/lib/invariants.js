@@ -446,6 +446,89 @@ function rivalryLedger(G) {
   return problems;
 }
 
+// The cup is one of the three live competitions and the only one with a
+// structure that persists between matchdays. A bracket that references a club
+// that no longer exists, pairs one club against itself, or claims a winner that
+// never played simply stops the cup working for the rest of the career.
+function cupIntegrity(G) {
+  const problems = [];
+  const cup = G.cup;
+  if (!cup) return problems; // no cup drawn yet
+  const teamIds = new Set(arr(G.teams).map((t) => t && t.id));
+  const rounds = arr(cup.rounds);
+  if (!rounds.length) { problems.push('cup exists with no rounds'); return problems; }
+  if (!Number.isFinite(cup.currentRound) || cup.currentRound < 0 || cup.currentRound > rounds.length) {
+    problems.push(`cup.currentRound is ${cup.currentRound} over ${rounds.length} round(s)`);
+  }
+  rounds.forEach((round, i) => {
+    const seen = new Set();
+    for (const tie of arr(round)) {
+      if (!tie) { problems.push(`cup round ${i} has a null tie`); continue; }
+      for (const side of [tie.home, tie.away]) {
+        if (!side) continue;
+        // A real club must still exist; amateur/bye entries are synthetic.
+        if (side.isReal && !teamIds.has(side.id)) {
+          problems.push(`cup round ${i} has unknown club ${side.id} ("${side.name}")`);
+        }
+        const key = String(side.id);
+        if (side.isReal && seen.has(key)) problems.push(`cup round ${i}: "${side.name}" appears twice`);
+        seen.add(key);
+      }
+      if (tie.home && tie.away && tie.home.id === tie.away.id) {
+        problems.push(`cup round ${i}: "${tie.home.name}" is drawn against itself`);
+      }
+    }
+    // Each round should halve the field.
+    if (i > 0 && arr(round).length > arr(rounds[i - 1]).length) {
+      problems.push(`cup round ${i} is larger than the round before it`);
+    }
+  });
+  if (cup.finished) {
+    if (!cup.winner) problems.push('cup is finished with no winner');
+    else if (cup.winner.isReal && !teamIds.has(cup.winner.id)) {
+      problems.push(`cup winner "${cup.winner.name}" is not a club that exists`);
+    }
+  }
+  return problems;
+}
+
+// Trophies are the permanent record of a career, and the Hall of Fame is built
+// from them. An award stamped with a season that has not happened, or a HoF
+// trophy tally that disagrees with the awards it was built from, means the
+// honours board is telling the player something untrue.
+function awardIntegrity(G) {
+  const problems = [];
+  const teamIds = new Set(arr(G.teams).map((t) => t && t.id));
+  const checkAwards = (awards, who) => {
+    for (const a of arr(awards)) {
+      if (!a) { problems.push(`${who} has a null award`); continue; }
+      if (!Number.isFinite(a.season) || a.season < 1 || a.season > G.season) {
+        problems.push(`${who} has an award stamped S${a.season} (current season is S${G.season})`);
+      }
+      if (typeof a.type !== 'string' || !a.type) problems.push(`${who} has an award with no type`);
+    }
+  };
+  for (const p of arr(G.players)) {
+    if (!p) continue;
+    checkAwards(p.awards, `player "${p.name}"`);
+    if (arr(p.awards).length > 200) problems.push(`player "${p.name}" carries ${p.awards.length} awards`);
+  }
+  for (const e of arr(G.hallOfFame)) {
+    if (!e) continue;
+    checkAwards(e.awards, `hallOfFame "${e.name}"`);
+    // trophyMap is the display summary of the same awards; a mismatch means the
+    // board shows a count nobody earned.
+    const tallied = Object.values(e.trophyMap || {}).reduce((s, t) => s + (t.count || 0), 0);
+    if (e.trophyMap && tallied !== arr(e.awards).length) {
+      problems.push(`hallOfFame "${e.name}": trophyMap counts ${tallied} but the award list has ${arr(e.awards).length}`);
+    }
+    for (const cid of arr(e.clubHistory)) {
+      if (!teamIds.has(cid)) problems.push(`hallOfFame "${e.name}" lists unknown club ${cid}`);
+    }
+  }
+  return problems;
+}
+
 // Money must stay a number. A single NaN budget silently poisons every later
 // transfer, wage and sponsor calculation.
 function financeIntegrity(G) {
@@ -517,6 +600,8 @@ const CHECKS = [
   ['history-ownership', historyOwnership],
   ['club-history', clubHistoryIntegrity],
   ['club-rivalries', rivalryLedger],
+  ['cup', cupIntegrity],
+  ['awards', awardIntegrity],
   ['finance', financeIntegrity],
   ['player-stats', playerStats],
   ['non-finite', (G) => findNonFinite(G).map((p) => `non-finite value at ${p}`)],
