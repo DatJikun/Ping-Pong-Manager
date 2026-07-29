@@ -125,13 +125,17 @@ The soak runner now plays 30 seasons green. Two things it MEASURED but that were
 deliberately left alone, because fixing either would move gameplay balance and
 neither breaks a career:
 
-1. `[ ]` **AI academies leak ~75% of their intake.** Juniors are generated at
+1. `[x]` **AI academies leak ~75% of their intake** — FIXED 2026-07-29 by owner
+   decision: juniors now finish the academy and the club decides whether to keep
+   them (see `aiKeepsGraduate`). Original note follows. Juniors are generated at
    16–19 on a flat 3-year deal but only graduate at 21, so most contracts lapse
    first and the club loses them. Ordinary clubs paper over it by signing free
    agents, and the leaked juniors do restock the market — but a club that pays
    for an academy mostly funds the rest of the league. Changing the contract
    length would shift the AI talent pool, so it needs an owner call.
-2. `[ ]` **`results` grows forever** (~264 rows/season, 7 920 by season 30).
+2. `[x]` **`results` grew forever** — FIXED on the diagnostics branch (fixtures are
+   pruned to the recent seasons; head-to-head totals moved to a permanent ledger).
+   Original note follows. (~264 rows/season, 7 920 by season 30).
    Per-duel detail is already stripped after two seasons, so 30 seasons is only
    ~4.3 MB of save and nothing slows down measurably. Worth a rolling window if
    careers are ever expected to run past ~60 seasons.

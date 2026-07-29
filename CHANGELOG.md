@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-07-29 — Scalenie i decyzja o akademii
+
+**Scalenie.** Praca nad długą karierą z dwóch gałęzi jest już razem: lokalizacja
+i build desktopowy, poprawki Codexa (przycinanie historii meczów, przyspieszenie
+okna transferowego AI, hierarchia lig) oraz soak runner, invarianty świata i
+poprawki integralności. Dwanaście konfliktów, wszystkie rozstrzygnięte na
+korzyść wersji zlokalizowanej; `aiSignPlayers` zachowuje obie zmiany naraz.
+Na scalonym kodzie: 30 sezonów zielone, zapisy S4/S8/S11 przechodzą.
+Sezon liczy się teraz ~5,8 s zamiast ~12 s, a zapis po 30 sezonach ma 3,0 MB
+zamiast 4,3 MB.
+
+**Akademia (decyzja właściciela).** Juniorzy mają **kończyć** akademię, a to,
+czy zostaną, jest decyzją klubu. Umowa juniorska sięga teraz progu 21 lat
+(`max(3, 22 - wiek)`), a przy promocji klub AI decyduje: zostawia, gdy brakuje
+mu ludzi, gdy junior już zasługuje na miejsce albo gdy jego sufit obiecuje, że
+wkrótce zasłuży. Pełny skład z przeciętnym juniorem zwykle go wypuszcza — jako
+**wolnego agenta**, więc talent trafia na rynek, zamiast znikać. Zarząd nastawiony
+na młodzież daje więcej kredytu zaufania. Wcześniej nikt nie decydował: umowa na
+sztywne 3 lata podpisana w wieku 16–19 lat wygasała przed 21., więc ~75% każdego
+naboru znikało w dniu urodzin — w każdym klubie, także Twoim, bez ostrzeżenia.
+
+**Rywalizacje klubowe.** Stare mecze są usuwane z zapisu, ale panel „RYWALIZACJE"
+w podglądzie klubu liczył je bezpośrednio z listy wyników — po przycinaniu
+pokazywałby tylko bieżący sezon. Bilans z każdym rywalem trafia teraz do
+kompaktowego, trwałego rejestru, składanego zanim mecze zostaną usunięte.
+Rejestr jest ograniczony przez ligę (24 kluby × 23 rywali), nie przez długość
+kariery.
+
 ## 2026-07-28 — Windows desktop foundation
 
 - Added a sandboxed Electron shell with no Node access in game code, denied

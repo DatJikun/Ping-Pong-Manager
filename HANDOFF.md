@@ -62,13 +62,28 @@ skips itself when the files are absent. Never write to those paths.
    severance payout (a starter benched three rounds walks out) could leave a career
    permanently unable to field three players.
 
-### Known limits (measured, not fixed)
-- `results` grows ~264 rows/season forever; per-duel detail is stripped after two
-  seasons, so 30 seasons is ~3.9 MB of save. Fine for now, worth a cap eventually.
-- ~75% of every AI academy's intake lapses before the age-21 graduation gate
-  (juniors get a flat 3-year deal at 16–19). Ordinary clubs paper over it with
-  free-agent signings; changing it would move the AI talent balance, so it was
-  left alone deliberately.
+### Academy graduation (owner call 2026-07-29)
+Juniors are meant to **finish** the academy; whether the graduate then stays is
+the club's decision. The academy contract runs `max(3, 22 - age)` so it reaches
+the age-21 gate, and `aiKeepsGraduate()` decides for AI clubs: kept when the club
+is short of players, when he is already worth a place or when his ceiling says he
+soon will be; otherwise usually released — as a **free agent**, so the talent
+flows into the market instead of evaporating. A youth-focused board is the one
+that gives a marginal graduate the benefit of the doubt. The manager decides for
+his own club the usual way (the graduate joins the reserves, his contract enters
+its final year, the inbox warns).
+
+Before this, an academy deal was three flat years signed at 16–19 against a gate
+at 21, so ~75% of every intake lapsed first and the junior vanished on his
+birthday — at every club, including the player's, with no warning.
+
+### Club rivalries are permanent
+Fixtures are pruned to the recent seasons. The club overview's RIVALRIES panel
+used to count them straight out of `store.G.results`, so pruning silently reduced
+it to "this season". Head-to-head totals now live in `G.clubRivalries`, folded in
+before the fixtures are dropped. Bounded by the league (24 clubs × 23 opponents),
+not by the career. **If you add anything that reads `results` across seasons,
+give it a compact permanent ledger like this one — the fixtures will not be there.**
 
 ---
 
