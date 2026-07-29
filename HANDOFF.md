@@ -77,6 +77,25 @@ Before this, an academy deal was three flat years signed at 16–19 against a ga
 at 21, so ~75% of every intake lapsed first and the junior vanished on his
 birthday — at every club, including the player's, with no warning.
 
+### Round-trip identity — the strongest single check
+Loading a save is **not** read-only: migration repairs damage and pruneCareerData
+trims the career, so the first load may legitimately differ from what was written.
+The second must not. `saveLoadRoundTrip()` therefore serialises, loads, serialises
+again, loads again and requires the last two to be **byte-identical**.
+
+That is what caught `rebalanceAiLineup` leaving `isYouth` on a starter while the
+migration demoted him back to the academy — the same file producing two different
+worlds, with different team ratings and therefore different results. If you touch
+migration, `pruneCareerData`, or anything that writes a role or a flag, this check
+is the one that will tell you.
+
+### Untrusted input
+`loadDatabaseFile()` validates only that `teams` and `players` are arrays. A custom
+database's league split is normalised in `newGame()` because the engine is built on
+two tiers of twelve; a file with everything in one division used to produce 46
+rounds in the first and none in the second. `tests/custom-database.test.js` covers
+the malformed files a person plausibly hands it.
+
 ### What the soak has actually been run against
 Every combination below finished with all invariants green. `tests/soak.js`
 takes `--seasons --seed --country --club --difficulty`.

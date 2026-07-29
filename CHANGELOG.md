@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-07-29 — Ścieżki, których nikt nie sprawdzał
+
+**Zapis wczytany dwa razy musi dać to samo.** Wczytywanie nie jest tylko
+czytaniem — migracja naprawia szkody, a porządkowanie przycina karierę — więc
+pierwsze wczytanie może się różnić od tego, co zapisano. Drugie już nie. Soak
+sprawdza teraz tę tożsamość i od razu złapał realny błąd: klub AI stawiał juniora
+w pierwszej czwórce zachowując flagę „junior", a migracja przy wczytaniu cofała
+go do akademii. Ten sam plik dawał dwa różne światy — inne siły drużyn, inne
+wyniki.
+
+**Start kariery z gotową historią** (`simulateBackgroundSeasons`) nie miał żadnego
+testu, choć kreator nowej gry to oferuje. Przechodzi całą maszynerię sezonu bez
+klubu gracza. Teraz: dziesięć lat historii daje rekordy i Hall of Fame, przekazany
+klub jest grywalny od pierwszego dnia, dalsza gra trzyma invarianty, a świat
+przeżywa zapis i wczytanie.
+
+**Klub wyzwaniowy** (Akademia Orłów) przechodzi 30 sezonów. Wcześniej kariera
+utykała w sezonie 2 — nie z winy gry, a bota testowego, który sprzedawał
+zawodników i opróżniał akademię, choć klub nie ma prawa nikogo kupić.
+
+**Własna baza klubów.** Plik użytkownika z wszystkimi klubami w jednej lidze dawał
+46 kolejek w pierwszej i zero w drugiej: połowa meczów nierozegrana, druga liga
+pusta, żadnego komunikatu. Podział z pliku jest teraz przyjmowany tylko wtedy, gdy
+da się nim grać.
+
+**Zasięg.** Soak przeszedł: 100 sezonów, wszystkie sześć formatów ligowych po 20
+sezonów, wszystkie cztery poziomy trudności, klub wyzwaniowy, prawdziwe zapisy
+S4/S8/S11.
+
 ## 2026-07-29 — Wskaźniki, które przestały wskazywać
 
 **Skauting.** Misja skauta kosztuje, a znaleziony zawodnik trafia do świata jako
