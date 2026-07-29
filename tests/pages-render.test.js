@@ -1,0 +1,139 @@
+// =============================================================================
+// tests/pages-render.test.js — every screen the player can reach must render.
+//
+// pages.js is the one file where a bad merge, a removed feature or a renamed
+// helper produces nothing until the moment a real player clicks the tab — the
+// unit tests parse the file and exercise the engine, but never actually build a
+// screen. This walks every navigation target in index.html and renders it, in
+// both locales, in the three career phases, on a fresh world and on a world that
+// has been running for a few seasons.
+//
+// It asserts almost nothing about the CONTENT on purpose: the point is that the
+// page produces markup instead of throwing, which is the failure this catches.
+// =============================================================================
+
+const { test } = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const { boot } = require('./harness');
+
+const ROOT = path.resolve(__dirname, '..');
+
+// The nav is the contract: whatever index.html offers, the player can click.
+function navTargets() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  return [...new Set([...html.matchAll(/go\('([a-z0-9]+)'\)/g)].map((m) => m[1]))];
+}
+
+// pages.js is DOM-bound, so it is not part of the headless harness load order.
+function bootWithPages(seed) {
+  const g = boot(seed);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/ui/pages.js'), 'utf8'), g,
+    { filename: 'src/ui/pages.js' });
+  return g;
+}
+
+// Drives the REAL route (renderApp -> the page's branch) rather than guessing a
+// function name, and captures what lands in #content so the markup can be read.
+function renderPage(g, page) {
+  let captured = '';
+  const realGet = g.document.getElementById;
+  g.document.getElementById = function (id) {
+    const el = realGet.call(this, id);
+    if (id === 'content') Object.defineProperty(el, 'innerHTML', {
+      configurable: true, get: () => captured, set: (v) => { captured = String(v); },
+    });
+    return el;
+  };
+  try {
+    g.PPM.ui.page = page;
+    g.PPM.pages.renderApp();
+  } finally {
+    g.document.getElementById = realGet;
+  }
+  return captured;
+}
+
+test('every navigation target in index.html renders', () => {
+  const g = bootWithPages(9001);
+  const targets = navTargets();
+  assert.ok(targets.length >= 10, `found ${targets.length} nav targets`);
+
+  const broken = [];
+  for (const page of targets) {
+    try {
+      const html = renderPage(g, page);
+      if (typeof html !== 'string' || html.length < 20) broken.push(`${page}: produced no markup`);
+      if (/undefined|\[object Object\]|NaN/.test(html)) {
+        broken.push(`${page}: markup contains ${html.match(/undefined|\[object Object\]|NaN/)[0]}`);
+      }
+    } catch (error) {
+      broken.push(`${page}: ${error.message}`);
+    }
+  }
+  assert.deepEqual(broken, []);
+});
+
+test('every screen survives all three career phases', () => {
+  const g = bootWithPages(9002);
+  const targets = navTargets();
+  const broken = [];
+  for (const phase of ['preseason', 'pre', 'transfer']) {
+    g.PPM.state.G.phase = phase;
+    for (const page of targets) {
+      try { renderPage(g, page); } catch (error) { broken.push(`${phase}/${page}: ${error.message}`); }
+    }
+  }
+  assert.deepEqual(broken, []);
+});
+
+test('every screen renders in both locales', () => {
+  const g = bootWithPages(9003);
+  const targets = navTargets();
+  const broken = [];
+  for (const locale of ['en', 'pl']) {
+    g.PPM.i18n.setLocale(locale);
+    for (const page of targets) {
+      try {
+        const html = renderPage(g, page);
+        // A missing key renders as the raw dotted key — visible to the player.
+        const raw = html.match(/[>"\s]([a-z][a-zA-Z0-9]+\.[a-zA-Z0-9.]{3,})[<"\s]/);
+        if (raw && !/\d/.test(raw[1]) && !raw[1].includes('.js')) {
+          broken.push(`${locale}/${page}: looks like an untranslated key "${raw[1]}"`);
+        }
+      } catch (error) {
+        broken.push(`${locale}/${page}: ${error.message}`);
+      }
+    }
+  }
+  g.PPM.i18n.setLocale('en');
+  assert.deepEqual(broken, []);
+});
+
+test('[slow] every screen still renders after several seasons of a real career', async () => {
+  const { runCareer } = require('./lib/career-driver');
+  const result = await runCareer({ seasons: 4, seed: 9004, countryId: 'PL' });
+  const g = result.sandbox;
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/ui/pages.js'), 'utf8'), g,
+    { filename: 'src/ui/pages.js' });
+
+  const broken = [];
+  for (const page of navTargets()) {
+    try { renderPage(g, page); } catch (error) { broken.push(`${page}: ${error.message}`); }
+  }
+  g.__stopGalaClicker();
+  assert.deepEqual(broken, [],
+    'a screen that only breaks on an aged world is exactly what unit tests miss');
+});
+
+test('a removed feature leaves no dangling navigation', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const pages = fs.readFileSync(path.join(ROOT, 'src/ui/pages.js'), 'utf8');
+  const routed = new Set([...pages.matchAll(/ui\.page===['"]([a-z0-9]+)['"]/g)].map((m) => m[1]));
+  const unrouted = navTargets().filter((p) => !routed.has(p));
+  assert.deepEqual(unrouted, [],
+    'every nav button must have a route in renderApp()');
+});
