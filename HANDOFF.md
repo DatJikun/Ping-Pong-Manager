@@ -77,6 +77,21 @@ Before this, an academy deal was three flat years signed at 16–19 against a ga
 at 21, so ~75% of every intake lapsed first and the junior vanished on his
 birthday — at every club, including the player's, with no warning.
 
+### What the soak has actually been run against
+Every combination below finished with all invariants green. `tests/soak.js`
+takes `--seasons --seed --country --club --difficulty`.
+
+| axis | verified |
+|---|---|
+| length | **100 seasons** (PL, club 0) through the real game loop |
+| league formats | PL, JP, CN, DE, SE, KR — 20 seasons each |
+| clubs | club 0, and `--club=12` (Akademia Orłów, the youth-only challenge club) for 30 |
+| difficulty | easy / normal / hard / legend — 15 seasons each |
+| real careers | the owner's S4, S8, S11 exports, migrated + two more seasons each |
+
+`npm run test:soak:formats` runs the country matrix; `npm run test:soak:challenge`
+runs the challenge club.
+
 ### Pointer systems, and the rule they all follow
 A long career prunes things. Anything that stores an **id** rather than the thing
 itself therefore needs someone to keep the two in step, and the failure is always

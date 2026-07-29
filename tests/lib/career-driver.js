@@ -525,9 +525,11 @@ async function playSeasons(g, seasons, options = {}) {
 
 // Starts a brand-new career and plays it for `seasons`.
 async function runCareer(options = {}) {
-  const { seasons = 30, seed = 1234, countryId = 'PL', clubIdx = 0, ...rest } = options;
+  const { seasons = 30, seed = 1234, countryId = 'PL', clubIdx = 0, difficulty = null, ...rest } = options;
   const g = bootFast(seed);
   try {
+    // The new-game wizard stores the choice here; newGame() reads it back.
+    if (difficulty) g.PPM.ui._newSaveDifficulty = difficulty;
     g.PPM.gameplay.newGame(clubIdx, countryId);
     return await playSeasons(g, seasons, rest);
   } finally {

@@ -5,6 +5,8 @@
 //   node tests/soak.js --seasons=10        shorter run
 //   node tests/soak.js --country=JP        a different league format
 //   node tests/soak.js --seed=99 --club=3  a different world / club
+//   node tests/soak.js --club=12            the youth-only challenge club
+//   node tests/soak.js --difficulty=legend  a different AI difficulty
 //   node tests/soak.js --quiet             one line per season only
 //
 // Starts a NEW career and plays it season after season through the real game
@@ -22,13 +24,14 @@ const { runCareer } = require('./lib/career-driver');
 const { checkWorld, checkLiveLookups, describeWorld } = require('./lib/invariants');
 
 function parseArgs(argv) {
-  const out = { seasons: 30, seed: 1234, country: 'PL', club: 0, quiet: false, milestones: [1, 10, 20, 30] };
+  const out = { seasons: 30, seed: 1234, country: 'PL', club: 0, difficulty: null, quiet: false, milestones: [1, 10, 20, 30] };
   for (const a of argv) {
     const [k, v] = a.replace(/^--/, '').split('=');
     if (k === 'seasons') out.seasons = Number(v);
     else if (k === 'seed') out.seed = Number(v);
     else if (k === 'country') out.country = v;
     else if (k === 'club') out.club = Number(v);
+    else if (k === 'difficulty') out.difficulty = v;
     else if (k === 'quiet') out.quiet = true;
     else if (!Number.isNaN(Number(k))) out.seasons = Number(k);
   }
@@ -60,7 +63,8 @@ function milestoneTable(rows, milestones) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const label = `${args.seasons} seasons / ${args.country} / seed ${args.seed} / club ${args.club}`;
+  const label = `${args.seasons} seasons / ${args.country} / seed ${args.seed} / club ${args.club}`
+    + (args.difficulty ? ` / ${args.difficulty}` : '');
   console.log(`Long-career soak: ${label}`);
   console.log('  after every season: world invariants + live lookups + save/validate/load round trip\n');
 
@@ -72,6 +76,7 @@ async function main() {
       seed: args.seed,
       countryId: args.country,
       clubIdx: args.club,
+      difficulty: args.difficulty,
       onSeason: (info) => {
         const stats = describeWorld(info.game, { simMs: info.simMs, saveKB: Math.round(info.saveBytes / 1024) });
         stats.season = info.season; // describeWorld reads the ALREADY-advanced season
@@ -89,7 +94,7 @@ async function main() {
     } else if (error.cause) {
       console.error(`\n${error.cause.stack}`);
     }
-    console.error(`\n  Reproduce with: node tests/soak.js --seasons=${args.seasons} --seed=${args.seed} --country=${args.country} --club=${args.club}`);
+    console.error(`\n  Reproduce with: node tests/soak.js --seasons=${args.seasons} --seed=${args.seed} --country=${args.country} --club=${args.club}${args.difficulty ? ` --difficulty=${args.difficulty}` : ''}`);
     process.exit(1);
   }
 
