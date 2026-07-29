@@ -3,7 +3,8 @@
 //
 // pruneCareerData() runs each season-end. It must: cap the Hall of Fame at the 20
 // best careers (deleting the rest), remove retired players from the active array,
-// and strip heavy per-duel detail from old results. See tests/stress.js for the
+// and delete old match rows once their season summary is in the club ledger. See
+// tests/stress.js for the
 // end-to-end proof; this is the fast unit check.
 // =============================================================================
 
@@ -41,20 +42,27 @@ test('retired players are removed from the active array (kept only as HoF summar
   }
 });
 
-test('old results lose heavy per-duel detail but recent results keep it', () => {
+test('only current and previous season results remain; permanent club history is untouched', () => {
   const g = boot(3);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   G.season = 10;
+  G.clubHistory = {
+    1: [
+      { season: 3, position: 2, pts: 48, w: 15, d: 3, l: 4 },
+      { season: 9, position: 1, pts: 55, w: 18, d: 1, l: 3 },
+    ],
+  };
+  const permanentHistory = JSON.parse(JSON.stringify(G.clubHistory));
   G.results = [
-    { season: 3, matchups: [{ a: 1 }], tiebreak: {}, score: '3:1' },   // old → strip
-    { season: 9, matchups: [{ a: 1 }], score: '3:2' },                  // recent → keep
-    { season: 10, matchups: [{ a: 1 }], score: '3:0' },                 // current → keep
+    { season: 3, matchups: [{ a: 1 }], tiebreak: {}, score: '3:1' },
+    { season: 8, matchups: [{ a: 1 }], score: '3:1' },
+    { season: 9, matchups: [{ a: 1 }], score: '3:2' },
+    { season: 10, matchups: [{ a: 1 }], score: '3:0' },
   ];
   g.PPM.gameplay.pruneCareerData();
-  assert.equal(G.results[0].matchups, undefined, 'season 3 detail stripped');
-  assert.equal(G.results[0].tiebreak, undefined);
-  assert.ok(Array.isArray(G.results[1].matchups), 'season 9 detail kept');
-  assert.ok(Array.isArray(G.results[2].matchups), 'season 10 detail kept');
-  assert.equal(G.results[0].score, '3:1', 'the lightweight result itself is preserved');
+  assert.deepEqual(G.results.map((r) => r.season), [9, 10], 'old match rows are deleted');
+  assert.ok(Array.isArray(G.results[0].matchups), 'previous-season match detail kept');
+  assert.ok(Array.isArray(G.results[1].matchups), 'current-season match detail kept');
+  assert.deepEqual(G.clubHistory, permanentHistory, 'compact permanent season summaries survive pruning');
 });

@@ -39,6 +39,7 @@ const DEFAULT_APP_SETTINGS = {
   // The locked design language (proto-final "Paddock") is dark carbon. There is
   // no light variant — see normalizeAppSettings().
   theme: 'dark',
+  locale: 'en',
   matchSpeed: 'normal',
   aiDifficulty: 'hard'
 };
@@ -91,6 +92,7 @@ function normalizeAppSettings(raw){
     // 'light' left in a returning player's localStorage is coerced back to dark,
     // otherwise they open the game into a theme that no longer exists.
     theme:'dark',
+    locale:['en','pl'].includes(raw?.locale)?raw.locale:DEFAULT_APP_SETTINGS.locale,
     matchSpeed:['slow','normal','fast'].includes(raw?.matchSpeed)?raw.matchSpeed:DEFAULT_APP_SETTINGS.matchSpeed,
     aiDifficulty:['easy','normal','hard','legend'].includes(raw?.aiDifficulty)?raw.aiDifficulty:DEFAULT_APP_SETTINGS.aiDifficulty,
   };
@@ -138,24 +140,24 @@ function persistGame(){
   }catch(_error){
     if(!ui._saveFailureNotified){
       ui._saveFailureNotified=true;
-      toast('Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.');
+      toast(t('storage.autosaveFailed'));
     }
     return false;
   }
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=20;
+const SAVE_SCHEMA_VERSION=21;
 function validateSaveObject(parsed){
-  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Zapis musi być obiektem.');
-  if(!Number.isFinite(parsed.season))throw new Error('Zapis nie ma poprawnego numeru sezonu.');
-  if(!Array.isArray(parsed.teams))throw new Error('Zapis nie zawiera listy klubów.');
-  if(!Array.isArray(parsed.players))throw new Error('Zapis nie zawiera listy zawodników.');
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
+  if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
+  if(!Array.isArray(parsed.teams))throw new Error(t('save.missingTeams'));
+  if(!Array.isArray(parsed.players))throw new Error(t('save.missingPlayers'));
   if(parsed.schemaVersion!==undefined&&!Number.isFinite(parsed.schemaVersion)){
-    throw new Error('Zapis ma niepoprawną wersję formatu.');
+    throw new Error(t('save.invalidSchema'));
   }
   if(Number.isFinite(parsed.schemaVersion)&&parsed.schemaVersion>SAVE_SCHEMA_VERSION){
-    throw new Error('Ten zapis pochodzi z nowszej wersji gry.');
+    throw new Error(t('save.futureSchema'));
   }
   return parsed;
 }
@@ -172,6 +174,68 @@ async function flushPersistence(){
   if(manager?.isInitialized?.())return manager.flush();
   return true;
 }
+function stableStringHash(value){
+  let hash=2166136261;
+  for(const char of String(value)){
+    hash^=char.codePointAt(0);
+    hash=Math.imul(hash,16777619);
+  }
+  return hash>>>0;
+}
+function replaceSaveStrings(root,replacements){
+  const pairs=[...replacements.entries()]
+    .filter(([oldValue,newValue])=>oldValue&&newValue&&oldValue!==newValue)
+    .sort((a,b)=>b[0].length-a[0].length);
+  if(!pairs.length)return;
+  const replacementByName=new Map(pairs);
+  const escaped=pairs.map(([oldValue])=>oldValue.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+  const pattern=new RegExp(escaped.join('|'),'g');
+  const seen=new WeakSet();
+  const visit=node=>{
+    if(!node||typeof node!=='object'||seen.has(node))return;
+    seen.add(node);
+    for(const key of Object.keys(node)){
+      const value=node[key];
+      if(typeof value==='string'){
+        node[key]=value.replace(pattern,match=>replacementByName.get(match));
+      }else if(value&&typeof value==='object'){
+        visit(value);
+      }
+    }
+  };
+  visit(root);
+}
+function migrateOfficialIdentityData(game,countryId){
+  // A custom/community database owns its naming and must never be rewritten.
+  if(game.customDatabase)return;
+  const country=COUNTRIES[countryId]||COUNTRIES.PL;
+  const officialClubNames=[...country.l1Names,...country.l2Names];
+  const sponsorPool=COUNTRY_SPONSORS[country.id]||SNAMES;
+  const replacements=new Map();
+  (game.teams||[]).forEach(team=>{
+    if(!team||!Number.isInteger(team.id)||team.id<0||team.id>=officialClubNames.length)return;
+    const nextName=officialClubNames[team.id];
+    if(typeof team.name==='string'&&team.name!==nextName)replacements.set(team.name,nextName);
+    team.name=nextName;
+  });
+  const migrateSponsor=sponsor=>{
+    if(!sponsor||typeof sponsor.name!=='string'||sponsorPool.includes(sponsor.name))return;
+    const oldName=sponsor.name;
+    const nextName=sponsorPool[stableStringHash(`${country.id}:${oldName}`)%sponsorPool.length];
+    replacements.set(oldName,nextName);
+    sponsor.name=nextName;
+  };
+  (game.sponsors||[]).forEach(migrateSponsor);
+  (game.sponsorOffers||[]).forEach(migrateSponsor);
+  replaceSaveStrings(game,replacements);
+  // Re-assert canonical slot names after replacing historical prose. This also
+  // handles promoted clubs that happened to exchange old names across slots.
+  (game.teams||[]).forEach(team=>{
+    if(team&&Number.isInteger(team.id)&&team.id>=0&&team.id<officialClubNames.length){
+      team.name=officialClubNames[team.id];
+    }
+  });
+}
 // ── Save migration ────────────────────────────────────────────────────────────
 // migrateLoadedGame() upgrades any loaded save object to the current field
 // layout. Every if(!field) block here is a guard for a missing field that was
@@ -181,6 +245,7 @@ function migrateLoadedGame(parsed){
   const game = parsed;
   const fromVersion=typeof game.schemaVersion==='number'?game.schemaVersion:0;
   const leagueCountryId=game.countryId||'PL';
+  migrateOfficialIdentityData(game,leagueCountryId);
   const STYLE_MIGRATE={AGRESYWNY:'FH_LOOPER',WSZECHSTRONNY:'TWO_SIDED',CIERPLIWY:'DEFENDER',TECHNICZNY:'BLOCKER'};
   const migrateStyle=v=>STYLE_MIGRATE[v]||v;
   (game.players||[]).forEach(p=>{if(p&&p.playStyle)p.playStyle=migrateStyle(p.playStyle);});

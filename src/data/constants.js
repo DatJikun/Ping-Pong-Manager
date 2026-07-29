@@ -13,8 +13,8 @@ const COUNTRIES = {
   DE: {
     id:'DE', name:'Niemcy', peakAgeBand:[27,32], flag:'\ud83c\udde9\ud83c\uddea',
     budgetMult:2.2, ovrMult:1.18,
-    l1Names:['Borussia D\u00fcsseldorf','TTC Bergneustadt','Fakel Neu-Ulm','TSV Schwabhausen','SV Post Telekom Flensburg','TTC Frankfurt','1FC Saarbr\u00fccken TT','TTC Zugbr\u00fccke Grenzau','TSV Schwalbe Bergneustadt','SC Preu\u00dfen M\u00fcnster','TTC Rh\u00f6nSprudel Maberzell','FC Karben'],
-    l2Names:['DJK G\u00f6nnern','SV Tegel','TSG Bielefeld','VfL Osnabr\u00fcck TT','SV Brackwede','SSV Reutlingen','TTC M\u00fcnchen West','TTC Schwandorf','TuS Weckhoven','SC Eintracht Berlin','TSV Vinnhorst','GW Hamm-Rhynern'],
+    l1Names:['Rheinpuls Düsseldorf','Bergfalken Köln','Elbstern Hamburg','Mainbogen Frankfurt','Saarspin Saarbrücken','Havelkraft Berlin','Isarblitz München','Ruhrwelle Essen','Neckar Kontra Stuttgart','Weser Topspin Bremen','Taunus Rally Wiesbaden','Alpenflug Augsburg'],
+    l2Names:['Nordlicht Kiel','Domstadt Aachen','Schwarzwald Freiburg','Spreebogen Potsdam','Emsland Spin Münster','Donaukraft Regensburg','Harzschlag Goslar','Moselstern Trier','Erzgebirge Rally Chemnitz','Bodensee Konstanz','Heidefalken Hannover','Rheintal Mainz'],
     firstNames:['Thomas','Michael','Andreas','Stefan','Markus','Christian','Martin','Klaus','Frank','Peter','J\u00fcrgen','Wolfgang','Hans','Dieter','Rainer','Karl','Bernd','Uwe','Horst','Werner','Lukas','Felix','Jonas','Leon','Tim','Julian','Maximilian','Finn','Niklas','Moritz','Tobias','Dominik','Florian','Matthias','Nico','Fabian','Daniel','Alexander','Bastian','Philipp','Johannes','Anton','David','Noah','Samuel','Benedikt','Vincent','Lennart','Patrick','Henning','Sascha','Ole','Kai','Sebastian','Marius','Dennis','Roman','Erik','Konrad','Timo'],
     lastNames:['M\u00fcller','Schmidt','Schneider','Fischer','Weber','Meyer','Wagner','Becker','Schulz','Hoffmann','Sch\u00e4fer','Koch','Bauer','Richter','Klein','Wolf','Schr\u00f6der','Neumann','Schwarz','Zimmermann','Braun','Kr\u00fcger','Hartmann','Lange','Werner','Schmitz','Meier','Krause','Lehmann','Schmid','Schulze','Maier','K\u00f6hler','Herrmann','K\u00f6nig','Walter','Mayer','Huber','Kaiser','Fuchs','Peters','Lang','Scholz','M\u00fcller','J\u00e4ger','Wei\u00df','Jung','Keller','Hahn','Lorenz','Bergmann','Albrecht','Franke','Busch','Voigt','Kramer','Dietrich','Arnold','Seidel','Fr\u00f6hlich'],
     nationalTeam:'Nationalmannschaft',
@@ -23,8 +23,8 @@ const COUNTRIES = {
   CN: {
     id:'CN', name:'Chiny', peakAgeBand:[21,26], flag:'\ud83c\udde8\ud83c\uddf3',
     budgetMult:3.5, ovrMult:1.35,
-    l1Names:['Shandong Luneng','Shanghai Longwu','Beijing Capital','Guangdong Dragon','Tianjin Binhai','Chengdu Roncheng','Wuhan Zhuo Erdeng','Nanjing Jiangnan','Shenzhen Longhua','Zhejiang Lions','Hebei Hengshui','Sichuan Jiannanchun'],
-    l2Names:['Dalian Renhe','Qingdao Huanghai','Xiamen Blue Lions','Kunming Ruili','Changsha Ginde','Zhengzhou Huo Feng','Fuzhou Tianyi','Jinan Steel','Harbin TT Club','Hangzhou Green Town','Xian Changan','Chongqing Liangjiang'],
+    l1Names:['Beijing Red Crane','Shanghai Pearl Spin','Guangzhou Jade River','Shenzhen Sky Serve','Chengdu Golden Panda','Wuhan Lake Rally','Nanjing Azure Wall','Tianjin Harbor Loop','Hangzhou Silk Arc','Chongqing Mountain Fire','Qingdao Ocean Blade','Xi’an Terra Warriors'],
+    l2Names:['Suzhou Garden Spin','Ningbo Wave Riders','Dalian North Star','Xiamen Island Loop','Kunming Cloud Peak','Changsha Ember Rally','Jinan Spring City','Harbin Ice Arc','Fuzhou Banyan Club','Zhengzhou Central Serve','Shijiazhuang Stone Gate','Nanning Green Wave'],
     firstNames:['Wei','Fang','Chao','Long','Jian','Ming','Lei','Hao','Kai','Feng','Tao','Jun','Bo','Yang','Zhe','Peng','Xu','Dong','Rui','Lin','Qiang','Yong','Tian','Shuo','Haoran','Zhiyuan','Jie','Bin','Yichen','Guang','Jin','Shen','Yifan','Xun','Yuan','Cheng','Hong','Xin','Zhen','Yun','An','Bao','Cen','Dawei','Enlai','Guoliang','Han','Junjie','Ke','Liren','Ning','Pei','Qin','Sheng','Teng','Wenhao','Xiang','Yuze','Zimo','Zhikai'],
     lastNames:['Zhang','Wang','Li','Liu','Chen','Yang','Zhao','Huang','Wu','Zhou','Xu','Sun','Ma','Hu','Zhu','Guo','Lin','He','Gao','Luo','Deng','Fang','Jiang','Cao','Yuan','Pan','Tang','Xie','Shen','Han','Lu','Wei','Feng','Yu','Dong','Xiao','Cheng','Ye','Su','Peng','Hong','Cui','Zeng','Tian','Qian','Yan','Du','Fan','Hou','Jin','Kong','Meng','Qiu','Ren','Shao','Tao','Wen','Xiong','Yin','Zou'],
     nationalTeam:'Zh\u014dnggu\u00f3 Du\u00ec',
@@ -33,8 +33,8 @@ const COUNTRIES = {
   JP: {
     id:'JP', name:'Japonia', peakAgeBand:[21,26], flag:'\ud83c\uddef\ud83c\uddf5',
     budgetMult:2.8, ovrMult:1.22,
-    l1Names:['Esforta TTC','TTC Butterfly','Nittaku Premium','T-Power TTC','Tasaki TTC','Saitama TT Club','Osaka Premier','Nagoya Falcons','Fukuoka TTC','Kobe Stars','Sendai Eagles','Hiroshima Carp TT'],
-    l2Names:['Yokohama TTC','Kyoto TTC','Kawasaki Kings','Chiba Rockets','Sapporo North','Niigata TTC','Matsuyama TTC','Okayama TT','Kumamoto TTC','Kagoshima Stars','Naha Ryukyu','Aomori Blizzard'],
+    l1Names:['Tokyo Hikari','Osaka Storm Loop','Nagoya Kintsugi','Yokohama Bay Spin','Kyoto Red Maple','Fukuoka Wave','Kobe Harbor Arc','Sendai Blue Forest','Hiroshima Rising Sun','Saitama Thunder','Chiba Sky Rally','Sapporo Snow Fox'],
+    l2Names:['Niigata Rice Field','Matsuyama Orange Club','Okayama Peach Spin','Kumamoto Firebird','Kagoshima Ash Cloud','Naha Coral Serve','Aomori Frost Loop','Kanazawa Gold Leaf','Shizuoka Fuji Arc','Nara White Deer','Takamatsu Island Rally','Nagasaki Harbor Light'],
     firstNames:['Yuki','Haruto','Sota','Hayato','Yuto','Riku','Kai','Ren','Ryota','Takumi','Shun','Kento','Daiki','Naoki','Yusuke','Tatsuya','Masaya','Hiroto','Kazuki','Tomoki','Sora','Itsuki','Minato','Koki','Sho','Taiga','Kosei','Toma','Ryusei','Keita','Haruki','Soma','Rin','Aoi','Kaito','Akito','Asahi','Chihiro','Eita','Fumiya','Genki','Hinata','Issei','Junpei','Kohei','Makoto','Noboru','Reo','Shota','Yamato','Yoshiki','Taichi','Yuu','Masato','Noriaki','Seiya','Takeru','Yoshiro','Zen','Yuya'],
     lastNames:['Sato','Suzuki','Takahashi','Tanaka','Watanabe','Ito','Yamamoto','Nakamura','Kobayashi','Kato','Yoshida','Yamada','Sasaki','Yamaguchi','Matsumoto','Inoue','Kimura','Hayashi','Shimizu','Ogawa','Ishikawa','Nakajima','Hasegawa','Abe','Ikeda','Hashimoto','Ishii','Yamashita','Mori','Fujita','Okada','Goto','Hara','Murakami','Kondo','Ishida','Sakamoto','Endo','Aoki','Fukuda','Miura','Nakai','Ueda','Sugiyama','Nishimura','Ando','Takeuchi','Kaneko','Tamura','Fujii','Ono','Maruyama','Kudou','Shibata','Kawasaki','Okamoto','Tsuchiya','Nagata','Kishimoto','Mizuno'],
     nationalTeam:'Nihon Daihyo',
@@ -43,8 +43,8 @@ const COUNTRIES = {
   SE: {
     id:'SE', name:'Szwecja', peakAgeBand:[27,32], flag:'\ud83c\uddf8\ud83c\uddea',
     budgetMult:1.6, ovrMult:1.05,
-    l1Names:['Sp\u00e5rv\u00e4gens TK','Halmstad BTK','IFK Liding\u00f6 TK','Kalmar BTK','\u00d6rebro TK','Link\u00f6ping TK','Ume\u00e5 TK','Uppsala BTK','Malm\u00f6 TK','Sundsvall TK','G\u00f6teborg TK','Stockholm Royals'],
-    l2Names:['Sk\u00f6vde TK','Eskilstuna TK','Bor\u00e5s TK','Lule\u00e5 TK','J\u00f6nk\u00f6ping TK','G\u00e4vle TK','V\u00e4ster\u00e5s TK','Helsingborg TK','Norrkoping TK','Falun TK','H\u00e4rn\u00f6sand TK','V\u00e4xj\u00f6 TK'],
+    l1Names:['Stockholm Nordljus','Göteborg Harbor Spin','Malmö Öresund Rally','Uppsala Crown Serve','Umeå Birch Loop','Luleå Arctic Arc','Västerås Lakefire','Örebro Black Pine','Linköping Skyforge','Jönköping Vättern Wave','Halmstad Coastline','Sundsvall Northwind'],
+    l2Names:['Gävle Iron Bay','Borås Loom Spin','Kalmar Castle Loop','Växjö Glass Arc','Karlstad Sun Rally','Eskilstuna Forge','Norrköping River Serve','Helsingborg Sound Wave','Falun Copper Club','Skövde Tableguard','Kiruna Polar Spin','Visby Island Arc'],
     firstNames:['Erik','Lars','Karl','Anders','Johan','Henrik','Per','Magnus','Stefan','Jonas','David','Peter','Mikael','Jan','Kristoffer','Patrik','Andreas','Bj\u00f6rn','Mattias','Linus','Emil','Viktor','Oscar','Anton','Filip','Axel','Gustav','Hugo','Ludvig','Nils','Robin','Adam','Albin','Dennis','Elias','Fabian','Glenn','Isak','Jesper','Kasper','Love','Melker','Niklas','Olle','Pontus','Rasmus','Simon','Tobias','Valter','William','Arvid','Daniel','Fredrik','Gunnar','Hannes','Joakim','Kalle','Leo','Martin','Sebbe'],
     lastNames:['Andersson','Johansson','Karlsson','Nilsson','Eriksson','Larsson','Olsson','Persson','Svensson','Gustafsson','Pettersson','Jonsson','Jansson','Hansson','Bengtsson','J\u00f6nsson','Lindstr\u00f6m','Jakobsson','Magnusson','Olofsson','Lundberg','Berg','Lindgren','Lundqvist','Bergstr\u00f6m','Axelsson','Berglund','Lindholm','Eklund','Sandberg','Sj\u00f6berg','Nystr\u00f6m','Holm','Danielsson','Hellstr\u00f6m','Forsberg','Engstr\u00f6m','Str\u00f6m','Sundberg','\u00d6berg','Blomqvist','Norberg','Edlund','\u00c5hman','Dahlberg','Lindqvist','Ros\u00e9n','S\u00f6derberg','Westin','Wikstr\u00f6m','Bj\u00f6rklund','Ekstr\u00f6m','Fransson','M\u00e5rtensson','Viklund','Holmgren','N\u00e4slund','T\u00f6rnqvist','\u00c5kesson','Hedlund'],
     nationalTeam:'Sveriges Landslag',
@@ -53,8 +53,8 @@ const COUNTRIES = {
   KR: {
     id:'KR', name:'Korea', peakAgeBand:[21,26], flag:'\ud83c\uddf0\ud83c\uddf7',
     budgetMult:2.0, ovrMult:1.12,
-    l1Names:['Seoul Samsung','Busan Lions','Korea Express TT','IBK Altos','Woori Card TT','Daegu Thunder','Incheon Elephants','Gwangju TT','Daejeon Korail','Ulsan TT','Suwon TTC','Pohang Steelers TT'],
-    l2Names:['Jeonju TT','Changwon TTC','Goyang TT','Anyang TT','Seongnam TTC','Bucheon TT','Cheonan Blue Wings','Gumi TT','Chuncheon TT','Jinju TT','Jeju TTC','Andong TT'],
+    l1Names:['Seoul Hanul Spin','Busan Harbor Wave','Incheon Sky Arc','Daegu Firebird','Daejeon Science Rally','Gwangju Light Serve','Ulsan Blue Forge','Suwon Fortress Loop','Pohang Iron Coast','Jeonju Hanok Club','Changwon Green Blade','Jeju Wind Riders'],
+    l2Names:['Goyang Starfield','Anyang Ridge Spin','Seongnam River Arc','Bucheon Bloom Rally','Cheonan Sky Serve','Gumi Silk Loop','Chuncheon Lake Wind','Jinju Lantern Club','Andong Mask Spin','Mokpo Southern Wave','Gangneung Sunrise Arc','Wonju Mountain Rally'],
     firstNames:['Minjun','Seojun','Dohyun','Junho','Juwon','Taehoon','Hyunwoo','Gunwoo','Yujin','Jaemin','Seungwoo','Dongwoo','Minseok','Jihoon','Woobin','Soohyun','Kyungjin','Sangwoo','Jaehyun','Yoonsoo','Jiho','Minjae','Hyeonjun','Siwoo','Eunho','Taeyang','Seungmin','Jisung','Kyuhyun','Yejun','Taemin','Byungho','Chanwoo','Daesung','Eunwoo','Hojin','Inho','Jongsu','Kihyun','Minho','Namjun','Sungmin','Taegyu','Ujin','Wonjun','Yeongho','Youngmin','Jinhwan','Seungho','Doyun','Hoseok','Joon','Kwanwoo','Minseong','Sihun','Taewoo','Woojin','Yongho','Junseok','Seonho'],
     lastNames:['Kim','Lee','Park','Choi','Jung','Kang','Cho','Yoon','Jang','Lim','Han','Oh','Shin','Kwon','Hwang','Ahn','Song','Yu','Hong','Ko','Moon','Baek','Heo','Nam','Jeon','Seo','Bae','Cha','Noh','Ha','Sim','Ryu','Jeong','Jin','Min','An','Byeon','Gwak','Gu','Im','Ma','Na','Ra','Son','Yang','Yeo','Yim','Jo','Chu','Do','Gang','Go','Kuk','Seol','Tak','Won','Wi','Yeom','Byeong','Pyo'],
     nationalTeam:'Daehan Minguk',
@@ -169,29 +169,32 @@ const PSYCHNAMES=['Jan Wi\u015bniewski','Zofia Adamska','Krzysztof Lis','Irena M
  'El\u017cbieta Kowal','Marek Zaj\u0105c','Barbara Nowak','\u0141ukasz Mroczek','Helena Doma\u0144ska',
  'Szymon Dobek','Alicja G\u0105sior','Wiktor Kuc','Monika K\u0142os','Rafa\u0142 Biernat','Teresa So\u0142tys'];
 
-const SNAMES=['Orlen','PKN Lotos','Allegro','InPost','Maspex','\u017bywiec','Tymbark','Wedel','Amica',
- 'Fakro','Bioton','Drutex','Bank Pekao','LPP SA','Asseco','CCC Group','Kruk SA','Play Mobile',
- 'Wittchen','Biedronka','CD Projekt','Comarch','PKO BP','mBank','Benefit Systems','\u017babka','Polpharma',
- 'Reserved','Cropp','Sinsay','House','Mohito','Rossmann','Hebe','x-kom','Media Expert','Neonet',
- 'Cyfrowy Polsat','Play','Plus','T-Mobile PL','Netia','Empik','Lubella','Soko\u0142\u00f3w','Tarczy\u0144ski','Mlekovita',
- 'Grupa Azoty','KGHM','JSW','Tauron','Enea','Energa','Santander PL','ING Bank \u015al\u0105ski','Alior Bank','PZU',
- 'Grupa Maspex','Oshee','Tiger','Kubu\u015b','Hortex','Ziaja','Inglot','W\u00f3lczanka','Vistula','Solaris'];
-// Country-appropriate sponsor pools (owner: a Chinese club shouldn't advertise
-// Allegro/InPost). Includes each country's real table-tennis brands where they exist
-// (Stiga=SE, Butterfly/Nittaku/Yasaka/TSP=JP, Li-Ning/DHS=CN). PL falls back to SNAMES.
-const COUNTRY_SPONSORS={
-  PL:SNAMES,
-  DE:['Adidas','BMW','Siemens','SAP','Bosch','Bayer','Volkswagen','Allianz','DHL','Lufthansa','Puma','Deutsche Bank','Continental','Henkel','Nivea','Miele','ThyssenKrupp','Telekom','Aldi','Lidl','Zeiss','Merck','Adler TT','Uhlmann',
-    'Mercedes-Benz','Audi','Porsche','BASF','Infineon','Commerzbank','DZ Bank','Bitburger','Warsteiner','Beck\'s','Dr. Oetker','Haribo','Ritter Sport','Milka DE','WMF','Braun','Sennheiser','Rossmann DE','dm-drogerie','MediaMarkt','Saturn','Otto','Zalando','Trigema'],
-  CN:['Alibaba','Tencent','Huawei','Xiaomi','JD.com','Baidu','ICBC','China Mobile','Li-Ning','ANTA','DHS','Meituan','BYD','Haier','Lenovo','Vivo','Oppo','Ping An','Sinopec','Yili','Midea','Geely','Double Fish','Bank of China',
-    'PetroChina','China Telecom','China Unicom','Bank of Communications','Wanda','Gree','TCL','Hisense','Nio','XPeng','Pinduoduo','NetEase','Bilibili','Kuaishou','JD Sports CN','361 Degrees','Peak Sport','Mengniu','Wahaha','Nongfu Spring','Moutai','Wuliangye','Sinopec Lubricants','China Life'],
-  JP:['Butterfly','Nittaku','Mizuno','Toyota','Sony','Panasonic','Nintendo','Uniqlo','Rakuten','Asics','Honda','SoftBank','Yasaka','TSP','Canon','Bridgestone','Fujitsu','Kirin','Suntory','Nomura','Yamaha','Casio','Shiseido','Nissan',
-    'Mitsubishi','Subaru','Mazda','Hitachi','Toshiba','Sharp','Epson','Ricoh','Komatsu','Daikin','Asahi','Sapporo','Ajinomoto','Nissin','Meiji','Lotte JP','Docomo','au KDDI','Seven & i','Fast Retailing','Mikasa','Molten','Descente','Mizuno Pro'],
-  SE:['IKEA','Volvo','Spotify','Ericsson','H&M','Electrolux','SEB','Scania','Klarna','Oatly','Stiga','SKF','Tetra Pak','Atlas Copco','Sandvik','ICA','Swedbank','Telia','Husqvarna','Assa Abloy','Securitas','Alfa Laval','Boliden','Fj\u00e4llr\u00e4ven',
-    'Volvo Trucks','Handelsbanken','Nordea SE','EQT','Investor AB','Essity','Hexagon','Epiroc','Trelleborg','Getinge','Kinnevik','Telenor SE','Comviq','Systembolaget','Coop SE','\u00c5hl\u00e9ns','Clas Ohlson','Bj\u00f6rn Borg','Craft','Peak Performance','Norr\u00f8na','Absolut','Spendrups','Marabou'],
-  KR:['Samsung','LG','Hyundai','Kia','SK Group','Naver','Kakao','Lotte','POSCO','CJ','Hana Bank','Nexen','Hanwha','Doosan','Coupang','KB','Shinhan','Amorepacific','Celltrion','GS','Nexon','Krafton','Hankook','Kolon',
-    'SK Hynix','LG Chem','LG Energy','Samsung SDI','Kakao Bank','Toss','Woori Bank','NH Bank','KT','LG U+','Emart','Homeplus','Orion','Nongshim','Ottogi','Binggrae','Hite Jinro','Fila Korea','Descente Korea','Hyundai Mobis','Kumho','HD Hyundai','Naver Webtoon'],
+function makeSponsorPool(roots,sectors){
+  return roots.flatMap(root=>sectors.map(sector=>`${root} ${sector}`));
+}
+// Fictional by design: official builds never imply a licence or endorsement.
+// Community databases remain free to provide their own club and sponsor names.
+const SPONSOR_ROOTS={
+  PL:['Asteron','Cedrava','Deltaris','Elaris','Falkora','Grovex','Helvara','Iveron','Jantaro','Korveta','Lumaro','Novaris'],
+  DE:['Rhevara','Nordkern','Alpenwerk','Silberhain','Westbruck','Kronfeld','Elboria','Falkenau','Morgenrot','Steinwald','Lichtberg','Tannwerk'],
+  CN:['Jade River','Azure Peak','Golden Crane','Red Cedar','Silver Lotus','Eastern Gate','Dragon Well','Moon Harbor','Bright Field','Cloud Bridge','Long River','Pearl Summit'],
+  JP:['Hikari Wave','Aozora','Kizuna','Takumi','Koyo','Shinsei','Yamabiko','Mizuhana','Akatsuki','Sorakaze','Hinode','Seiryu'],
+  SE:['Nordljus','Fjällvind','Sjöform','Eldmark','Bergnova','Iskrona','Tallvik','Solhamn','Norrsken','Kustlinje','Malmglöd','Vinterbro'],
+  KR:['Hanul','Baram','Nuri','Saebit','Gureum','Areum','Haedam','Pureun','Onbit','Dalmae','Garam','Mirinae'],
 };
+const SPONSOR_SECTORS={
+  PL:['Energia','Finanse','Żywność','Technologie','Logistyka'],
+  DE:['Energie','Finanz','Mobilität','Technik','Versand'],
+  CN:['Energy','Finance','Foods','Digital','Logistics'],
+  JP:['Energy','Finance','Foods','Digital','Transit'],
+  SE:['Energi','Finans','Mat','Teknik','Transport'],
+  KR:['Energy','Finance','Foods','Digital','Mobility'],
+};
+const COUNTRY_SPONSORS=Object.fromEntries(COUNTRY_IDS.map(id=>[
+  id,
+  makeSponsorPool(SPONSOR_ROOTS[id],SPONSOR_SECTORS[id]),
+]));
+const SNAMES=COUNTRY_SPONSORS.PL;
 
 const SGOALS=['top2','top3','top4','top6','top8','win4','win6','win8','win10','win12','win14','win16'];
 
@@ -261,22 +264,13 @@ const PLAYER_STYLE_INFO={
   },
 };
 
-const EQUIPMENT_BRANDS=[
-  {id:'stiga',name:'Stiga',logo:'\ud83d\udd35',bonus:{atk:4},bonusDesc:'+4 ATK',color:'#1a50a0',price:3000,prestige:20},
-  {id:'butterfly',name:'Butterfly',logo:'\ud83d\udfe1',bonus:{srv:5},bonusDesc:'+5 SRV',color:'#c09000',price:4500,prestige:30},
-  {id:'donic',name:'Donic',logo:'\ud83d\udd34',bonus:{def:4,men:2},bonusDesc:'+4 DEF, +2 MEN',color:'#c02818',price:4000,prestige:25},
-  {id:'tibhar',name:'Tibhar',logo:'\ud83d\udfe2',bonus:{atk:3,srv:3},bonusDesc:'+3 ATK, +3 SRV',color:'#207040',price:5500,prestige:35},
-  {id:'xiom',name:'Xiom',logo:'\u26ab',bonus:{men:6},bonusDesc:'+6 MEN',color:'#181818',price:3500,prestige:28},
-  {id:'cornilleau',name:'Cornilleau',logo:'\ud83d\udfe0',bonus:{def:6},bonusDesc:'+6 DEF',color:'#c84800',price:5000,prestige:32},
-];
-
 const TECH_PARTNERSHIPS=[
-  {id:'tp_local',name:'SportEquip Polska',tier:1,prestige:[0,22],costPerSeason:-2000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.00,bonusDesc:'+1 do wszystkich (podstawowy sprzęt)',desc:'Podstawowy pakiet sprzętowy dostępny dla KAŻDEGO klubu — wszyscy grają uczciwym sprzętem. Lekko odciąża budżet.',icon:'🏓'},
-  {id:'tp_regional',name:'Andro Regional Lab',tier:2,prestige:[16,38],costPerSeason:-500,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.06,bonusDesc:'+1 do wszystkich · +6% marketability',desc:'Ten sam sprzęt bazowy, ale marka zaczyna Cię promować — więcej merchu i frekwencji.',icon:'🧪'},
-  {id:'tp_national',name:'Butterfly Performance',tier:3,prestige:[30,58],costPerSeason:1000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.12,bonusDesc:'+1 do wszystkich · +12% marketability',desc:'Krajowy kontrakt marketingowy. Sprzęt bez zmian, ale co-branding napędza przychody.',icon:'🦋'},
-  {id:'tp_pro',name:'Tibhar Pro Circuit',tier:4,prestige:[48,74],costPerSeason:3000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.18,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +18% marketability',desc:'Pakiet zawodniczy: DROBNY dodatek ofensywny plus mocna promocja marki — za opłatą.',icon:'🚀'},
-  {id:'tp_elite',name:'DHS Elite Series',tier:5,prestige:[64,88],costPerSeason:6000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.26,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +26% marketability',desc:'Elitarny partner. Marginalny edge sprzętowy, ale duży strumień marketingowy — za wysoką opłatą.',icon:'💎'},
-  {id:'tp_world',name:'Global Xiom Signature',tier:6,prestige:[82,100],costPerSeason:10000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.35,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +35% marketability',desc:'Kontrakt premium dla topu. Przewaga na korcie MINIMALNA i płatna — realna wartość to globalny marketing.',icon:'🌍'},
+  {id:'tp_local',name:'Baseline Gearworks',tier:1,prestige:[0,22],costPerSeason:-2000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.00,bonusDesc:'+1 do wszystkich (podstawowy sprzęt)',desc:'Podstawowy pakiet sprzętowy dostępny dla KAŻDEGO klubu — wszyscy grają uczciwym sprzętem. Lekko odciąża budżet.',icon:'🏓'},
+  {id:'tp_regional',name:'RallyLab Regional',tier:2,prestige:[16,38],costPerSeason:-500,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.06,bonusDesc:'+1 do wszystkich · +6% marketability',desc:'Ten sam sprzęt bazowy, ale marka zaczyna Cię promować — więcej merchu i frekwencji.',icon:'🧪'},
+  {id:'tp_national',name:'PulseForge Performance',tier:3,prestige:[30,58],costPerSeason:1000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.12,bonusDesc:'+1 do wszystkich · +12% marketability',desc:'Krajowy kontrakt marketingowy. Sprzęt bez zmian, ale co-branding napędza przychody.',icon:'⚡'},
+  {id:'tp_pro',name:'IronLoop Pro Circuit',tier:4,prestige:[48,74],costPerSeason:3000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.18,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +18% marketability',desc:'Pakiet zawodniczy: DROBNY dodatek ofensywny plus mocna promocja marki — za opłatą.',icon:'🚀'},
+  {id:'tp_elite',name:'Jade Arc Elite',tier:5,prestige:[64,88],costPerSeason:6000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.26,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +26% marketability',desc:'Elitarny partner. Marginalny edge sprzętowy, ale duży strumień marketingowy — za wysoką opłatą.',icon:'💎'},
+  {id:'tp_world',name:'BlackArc Signature',tier:6,prestige:[82,100],costPerSeason:10000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.35,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +35% marketability',desc:'Kontrakt premium dla topu. Przewaga na korcie MINIMALNA i płatna — realna wartość to globalny marketing.',icon:'🌍'},
 ];
 
 const INFRA_HALL=[
@@ -395,5 +389,5 @@ if(typeof window!=='undefined'&&window.PPM_NAMES){
     const lset=new Set(LN);(window.PPM_NAMES.PL.last||[]).forEach(n=>{if(!lset.has(n))LN.push(n);});
   }
 }
-const constants = { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, LEAGUE_FORMATS, EQUIPMENT, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, COUNTRY_SPONSORS, SGOALS, SFULL, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, EQUIPMENT_BRANDS, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS, CLUB_IDENTITIES };
+const constants = { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, LEAGUE_FORMATS, EQUIPMENT, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, COUNTRY_SPONSORS, SGOALS, SFULL, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS, CLUB_IDENTITIES };
 window.PPM.constants = constants;

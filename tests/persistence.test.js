@@ -6,8 +6,6 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const { boot } = require('./harness');
 
-const FAILURE_MESSAGE = 'Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.';
-
 test('a successful autosave returns true, stores the live ID counter, and clears the failure latch', () => {
   const g = boot(1701);
   g.PPM.gameplay.newGame(0, 'PL');
@@ -29,6 +27,7 @@ test('a failed autosave preserves the previous save and reports once per failure
   const workingSetItem = g.localStorage.setItem;
   const previousSave = '{"known":"good"}';
   const messages = [];
+  const failureMessage = g.PPM.i18n.t('storage.autosaveFailed');
   g.localStorage.setItem(storageKey, previousSave);
   g.toast = (message) => messages.push(message);
 
@@ -43,7 +42,7 @@ test('a failed autosave preserves the previous save and reports once per failure
     assert.equal(g.PPM.stateApi.persistGame(), false);
   });
   assert.equal(g.localStorage.getItem(storageKey), previousSave);
-  assert.deepEqual(messages, [FAILURE_MESSAGE]);
+  assert.deepEqual(messages, [failureMessage]);
 
   g.localStorage.setItem = workingSetItem;
   assert.equal(g.PPM.stateApi.persistGame(), true);
@@ -52,5 +51,5 @@ test('a failed autosave preserves the previous save and reports once per failure
     throw new Error('storage unavailable again');
   };
   assert.equal(g.PPM.stateApi.persistGame(), false);
-  assert.deepEqual(messages, [FAILURE_MESSAGE, FAILURE_MESSAGE]);
+  assert.deepEqual(messages, [failureMessage, failureMessage]);
 });

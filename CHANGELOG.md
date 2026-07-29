@@ -1,5 +1,70 @@
 # Changelog
 
+## 2026-07-28 — Windows desktop foundation
+
+- Added a sandboxed Electron shell with no Node access in game code, denied
+  permissions/navigation and a restrictive offline Content Security Policy.
+- Added reproducible portable and NSIS build commands plus desktop release
+  tests and documentation.
+- Verified a real x64 portable build and launch. Production dependencies report
+  zero known vulnerabilities; final icon and code signing remain release tasks.
+
+## 2026-07-28 — English localisation foundation
+
+- Added a dependency-free i18n boundary with parameter interpolation,
+  locale-aware numbers, currency and dates, and key-parity tests.
+- English is now the release default; Polish remains selectable and persists in
+  app settings.
+- Migrated the application shell, navigation, settings, career library and new
+  game wizard, dashboard and pre-season decision flow to translation keys.
+  Language changes apply without a restart.
+- Save validation and autosave failures now follow the selected language.
+- Migrated the complete squad and academy workflow, including loans, youth
+  intake, scout missions and reports, to the same live language switch.
+- Migrated the club staff and transfer market screens, including filters,
+  comparisons, shortlists and next-season commitments.
+- Moved player styles, career phases, season form, traits, coaching styles and
+  scouting specialities behind semantic translation keys so saved IDs remain
+  language-independent.
+- Migrated the full budget screen and its locale-aware financial formatting,
+  including projections, objectives, S+1 commitments and season history.
+- Localized sponsor and board-goal descriptions, progress labels, promised
+  contract roles and the full sponsor screen across every consumer.
+- Added language-independent keyed inbox/news entries with legacy text fallback,
+  then localized both archive screens and the club welcome message.
+- Migrated season, manager, club and coaching history views while preserving the
+  compact permanent ledgers and locale-aware historical money values.
+- Localized league tables, all four statistical rankings and the national cup
+  bracket without changing competition rules or stored results.
+- Added a rendered release gate that rejects common Polish-label regressions and
+  unresolved translation keys across every completed English screen.
+- Localized the capped Hall of Fame gallery and record book while leaving the
+  top-20 summaries and compact club ledgers unchanged.
+- Localized club infrastructure, rubber tiers, TV/PR sections and technical
+  partnership data by stable IDs, without touching their economic values.
+- Added rendered-HTML tests for switching the start screen, dashboard,
+  pre-season, squad and academy between EN and PL.
+
+## 2026-07-28 — Fictional official database
+
+- Replaced shipped real-world club, sponsor and technical-partner identities
+  with fictional data: 24 clubs and 60 sponsors for every supported country.
+- Added save schema 21 migration. Existing official careers keep their stable
+  club IDs, statistics and history while names in live data and historical text
+  are updated. Names from community/custom databases are never rewritten.
+- Removed the obsolete equipment-brand catalogue and its dead selection API.
+- Added a release gate that rejects a maintained list of real-world identities.
+- Verified all eight supplied careers (seasons 4–16) read-only through migration.
+
+## 2026-07-28 — Release audit and offline runtime
+
+- Added one evidence-based release-readiness document covering legal data,
+  localisation, desktop packaging, persistence and recovery requirements.
+- Removed all runtime CDN requests. Barlow and Saira Condensed are bundled with
+  their OFL 1.1 licences; page and modal transitions now use the browser-native
+  Web Animations API instead of GSAP.
+- Added a release gate that fails if a remote runtime script, stylesheet or font
+  is reintroduced or a required local font/licence asset is missing.
 ## 2026-07-28 — Stabilność długiej kariery (30 sezonów)
 
 **Testy.** Nowy `npm run test:soak` rozgrywa całą karierę bez przeglądarki:

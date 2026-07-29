@@ -21,7 +21,7 @@ function parseSummary(text){
     ||(game.teams||[]).find(t=>t?.isPlayer)
     ||null;
   return{
-    clubName:team?.name||'Nieznany klub',
+    clubName:team?.name||'',
     countryId:game.countryId||'PL',
     season:Number(game.season)||1,
     matchday:Number(game.matchday)||0,
@@ -33,16 +33,16 @@ function parseSummary(text){
 
 function checkpointLabel(kind,summary){
   const where=summary.phase==='preseason'
-    ?`sezon ${summary.season}, preseason`
-    :`sezon ${summary.season}, kolejka ${summary.matchday}`;
+    ?`season ${summary.season}, pre-season`
+    :`season ${summary.season}, matchday ${summary.matchday}`;
   const labels={
-    matchday:'Przed kolejką',
-    tournament:'Przed turniejem',
-    season:'Przed zmianą sezonu',
-    migration:'Przed aktualizacją zapisu',
-    restore:'Przed przywróceniem kopii',
+    matchday:'Before matchday',
+    tournament:'Before tournament',
+    season:'Before season rollover',
+    migration:'Before save upgrade',
+    restore:'Before restoring a backup',
   };
-  return `${labels[kind]||'Punkt odzyskiwania'} — ${where}`;
+  return `${labels[kind]||'Recovery point'} — ${where}`;
 }
 
 function createSaveManager(options){
@@ -71,7 +71,7 @@ function createSaveManager(options){
   }
 
   function normalizeName(name,fallback){
-    return String(name||fallback||'Kariera').trim().slice(0,60)||'Kariera';
+    return String(name||fallback||'Career').trim().slice(0,60)||'Career';
   }
 
   function makeCareer(text,name,previous=null,id=null){
@@ -331,7 +331,7 @@ const defaultManager=createSaveManager({
     :JSON.parse(text),
   loadText:text=>window.PPM.stateApi?.loadGameFromText?.(text),
   serializeCurrent:()=>window.PPM.stateApi?.serializeGame?.()||null,
-  onError:()=>globalThis.toast?.('Autosave nie powiódł się — pobierz zapis do pliku w Ustawieniach.'),
+  onError:()=>globalThis.toast?.(t('storage.autosaveFailed')),
 });
 
 window.PPM.saveManagerApi={createSaveManager,parseSummary,ORDINARY_BACKUP_LIMIT};

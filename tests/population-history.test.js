@@ -149,7 +149,7 @@ test('migration enriches legacy club rows and removes duplicated team snapshots'
   const loaded = g.PPM.state.G;
   const row = loaded.clubHistory[team.id][0];
 
-  assert.equal(loaded.schemaVersion, 20);
+  assert.equal(loaded.schemaVersion, g.PPM.stateApi.SAVE_SCHEMA_VERSION);
   assert.equal(row.played, 22);
   assert.equal(row.gf, 49);
   assert.equal(row.ga, 41);

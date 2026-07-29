@@ -54,6 +54,23 @@ test('a generous signing bonus can rescue a slightly-low salary offer', () => {
   assert.ok(bigBonus.score >= 0, 'low salary + big bonus can close the deal');
 });
 
+test('AI market can reuse a precomputed league average without changing contract terms', () => {
+  const g = boot(17);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const target = G.teams.find((team) => team.id !== G.myTeamId);
+  const candidate = G.players.find((player) => player.teamId === null && !player.retired);
+  const baseline = gp.contractExpect(candidate, target.id);
+  const cached = gp.contractExpect(candidate, target.id, { leagueAvgOvr: baseline.leagueAvgOvr });
+  assert.deepEqual(
+    { salary: cached.salary, bonus: cached.signingBonus, leagueAvgOvr: cached.leagueAvgOvr },
+    { salary: baseline.salary, bonus: baseline.signingBonus, leagueAvgOvr: baseline.leagueAvgOvr },
+  );
+  const explicit = gp.contractExpect(candidate, target.id, { leagueAvgOvr: baseline.leagueAvgOvr + 7 });
+  assert.equal(explicit.leagueAvgOvr, baseline.leagueAvgOvr + 7, 'provided market context is actually used');
+});
+
 test('clubs can afford their squad at the new EUR scale', () => {
   const g = boot(3);
   const gp = g.PPM.gameplay;

@@ -6,15 +6,20 @@
 // schedules) to answer: can a career run ~100 seasons without crashing, without
 // slowing down, and without state growing unbounded (memory/lag)?
 //
-// Run:  node tests/stress.js [seasons]   (default 100)
+// Run:
+//   node tests/stress.js fast [seasons]  — quick lifecycle/save-growth gate
+//   node tests/stress.js [seasons]       — full match-engine soak (slow)
 // =============================================================================
 
 const { boot } = require('./harness');
 
-// Two modes:
-//   node tests/stress.js [seasons]          — long-career stability/perf probe
+// Three modes:
+//   node tests/stress.js fast [seasons]     — cheap lifecycle/save-growth probe
+//   node tests/stress.js [seasons]          — full match-engine stability probe
 //   node tests/stress.js youth [seasons]    — academy balance probe (below)
-const MODE = process.argv[2] === 'youth' ? 'youth' : 'stability';
+const MODE = process.argv[2] === 'youth' ? 'youth'
+  : process.argv[2] === 'fast' ? 'fast'
+    : 'stability';
 
 // ── Academy balance probe ────────────────────────────────────────────────────
 // Owner balance target: a well-managed youth-only club (€5k start, OVR ~60) should
@@ -105,7 +110,7 @@ function runYouthProbe(seasons) {
 
 if (MODE === 'youth') runYouthProbe(Number(process.argv[3] || 40));
 
-const SEASONS = Number(process.argv[2] || 100);
+const SEASONS = Number(MODE === 'fast' ? (process.argv[3] || 100) : (process.argv[2] || 100));
 const g = boot(1234);
 g.PPM.gameplay.newGame(0, 'PL');
 const G = () => g.PPM.state.G;
@@ -138,7 +143,17 @@ function playSeasonLeagues() {
     for (const s of sched) {
       const fixtures = s[md] || [];
       for (const f of fixtures) {
-        const r = gp.simTeamMatch(f.home, f.away, false);
+        // The fast gate intentionally skips the expensive point-by-point engine.
+        // It still drives real schedules, tables, history, promotion, aging,
+        // transfers, pruning and serialization for 100+ season lifecycle checks.
+        const r = MODE === 'fast'
+          ? {
+              homeId: f.home, awayId: f.away,
+              hTeamW: 3, aTeamW: 1, draws: 0,
+              homeWin: true, isDraw: false, score: '3:1',
+              matchups: [], homePoints: 44, awayPoints: 32, tiebreak: null,
+            }
+          : gp.simTeamMatch(f.home, f.away, false);
         gp.applyResult(r);
       }
     }
@@ -156,6 +171,10 @@ const leagueOvr = (l) => {
   const ts = G().teams.filter((t) => t.league === l);
   return Math.round(ts.reduce((s, t) => s + gp.teamOvr(t.id), 0) / Math.max(1, ts.length));
 };
+const leagueMedianBudget = (l) => {
+  const budgets = G().teams.filter((t) => t.league === l).map((t) => t.budget || 0).sort((a, b) => a - b);
+  return budgets.length ? Math.round(budgets[Math.floor(budgets.length / 2)] / 1000) : 0;
+};
 
 const t0 = Date.now();
 let lastMark = t0;
@@ -171,12 +190,15 @@ const sizes = (label) => {
     `news=${(G_.newsFeed || []).length} log=${(G_.gameLog || []).length} ` +
     `seasonHistory=${(G_.seasonHistory || []).length} clubRows=${clubRows} save=${saveKB}KB ` +
     `L1ovr=${leagueOvr(1)} L2ovr=${leagueOvr(2)} ` +
+    `L1budget=€${leagueMedianBudget(1)}k L2budget=€${leagueMedianBudget(2)}k ` +
     `mem=${Math.round(process.memoryUsage().heapUsed / 1048576)}MB`);
 };
 
-console.log(`Stress test: ${SEASONS} seasons, seed 1234`);
+console.log(`${MODE === 'fast' ? 'Fast lifecycle gate' : 'Full match-engine stress test'}: ${SEASONS} seasons, seed 1234`);
 sizes('start');
 let failedAt = null;
+let failureReason = null;
+const hierarchyGaps = [];
 try {
   for (let s = 0; s < SEASONS; s++) {
     resetStandings();
@@ -184,6 +206,21 @@ try {
     playSeasonLeagues();
     gp.endSeason();          // real offseason
     G().phase = 'pre';       // skip the UI start-gate; schedules already regenerated
+    const freeAgents=G().players.filter(p=>!p.retired&&!p.loanedOut
+      &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==G().myTeamId).length;
+    const resultLimit=G().teams.length*22;
+    if(G().results.length>resultLimit)throw new Error(`result retention exceeded ${resultLimit}: ${G().results.length}`);
+    if(freeAgents>Math.max(60,G().teams.length*5))throw new Error(`free-agent cap exceeded: ${freeAgents}`);
+    if(G().hallOfFame.length>20)throw new Error(`Hall of Fame cap exceeded: ${G().hallOfFame.length}`);
+    // Promotion must remain meaningful in a mature world. Short generational
+    // swings are fine; a severe inversion is not, and the mature-run average is
+    // checked after the loop.
+    if((s+1)>=20){
+      hierarchyGaps.push(leagueOvr(1)-leagueOvr(2));
+    }
+    if((s+1)>=20&&(s+1)%10===0&&leagueOvr(2)>leagueOvr(1)+4){
+      throw new Error(`league hierarchy inverted: L1 ${leagueOvr(1)} vs L2 ${leagueOvr(2)}`);
+    }
     if ((s + 1) % 10 === 0) {
       const now = Date.now();
       console.log(`  +10 seasons in ${now - lastMark}ms (${((now - lastMark) / 10).toFixed(0)}ms/season)`);
@@ -191,12 +228,16 @@ try {
       sizes(`after ${s + 1}`);
     }
   }
+  const avgHierarchyGap=hierarchyGaps.reduce((sum,gap)=>sum+gap,0)/Math.max(1,hierarchyGaps.length);
+  if(avgHierarchyGap<1)throw new Error(`mature league hierarchy too weak: average L1-L2 gap ${avgHierarchyGap.toFixed(2)}`);
 } catch (e) {
   failedAt = G().season;
+  failureReason = e?.message||String(e);
   console.error(`\n✖ CRASHED in season ${failedAt}:`, e && e.stack ? e.stack.split('\n').slice(0, 4).join('\n') : e);
 }
 
 const total = Date.now() - t0;
 console.log(`\nDone. ${failedAt ? 'FAILED at season ' + failedAt : 'completed ' + SEASONS + ' seasons'} in ${total}ms (${(total / SEASONS).toFixed(0)}ms/season avg).`);
 sizes('end');
+if(failureReason)console.error(`Reason: ${failureReason}`);
 process.exit(failedAt ? 1 : 0);
