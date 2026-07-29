@@ -72,9 +72,13 @@ test('[slow] twelve seasons keep population and save size bounded', async () => 
   assert.ok(last.players < first.players * 1.35,
     `player population must stay bounded: ${first.players} → ${last.players}`);
   assert.ok(last.freeAgents <= 200, `free-agent shelf stays bounded (got ${last.freeAgents})`);
-  // Full per-duel match detail is only kept for the recent seasons.
-  assert.ok(last.resultsWithDetail < last.results * 0.5,
-    `old results must be stripped of duel detail (${last.resultsWithDetail}/${last.results})`);
+  // Fixtures are pruned to the recent seasons rather than merely stripped of
+  // their duel detail (2026-07-28), so what matters is that the results array
+  // itself stays bounded — a season is 264 fixtures across both divisions.
+  assert.ok(last.results <= 264 * 2,
+    `stored fixtures must stay bounded (${last.results} after ${sizes.length} seasons)`);
+  assert.ok(last.results <= first.results * 2,
+    `and must not grow with the career (${first.results} → ${last.results})`);
   // The club register is the ONE thing that grows on purpose — one compact row
   // per club per season. Verify it grows exactly that fast and no faster.
   assert.equal(last.clubHistoryRows - first.clubHistoryRows, 24 * (sizes.length - 1),
