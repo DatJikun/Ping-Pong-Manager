@@ -71,6 +71,11 @@ class AutoManager {
   get me() { return this.G.teams.find((t) => t.id === this.myId); }
 
   mine() { return this.G.players.filter((p) => p.teamId === this.myId && !p.retired); }
+  // The challenge club may not sign an adult from anywhere (doNegotiate blocks
+  // it), so every player it loses is gone for good. A manager there hoards:
+  // never sells, never lets a deal lapse, and keeps juniors in reserve rather
+  // than graduating them the moment they turn 19.
+  barredFromMarket() { return (this.me?.traits || []).includes('youthOnly'); }
   seniors() { return this.mine().filter((p) => p.role !== 'youth' && !p.loanedOut); }
 
   // ── preseason: the four gate decisions plus a legal squad ──────────────────
@@ -159,9 +164,13 @@ class AutoManager {
     let guard = 0;
     while ((G.academyProspects || []).length && guard++ < 6) gp.signAcademyProspect(0);
 
-    // 2) Graduate juniors who are old enough to be useful seniors.
-    this.mine().filter((p) => p.role === 'youth' && (p.age || 0) >= 19)
-      .forEach((p) => gp.promoteYouth(p.id));
+    // 2) Graduate juniors who are old enough to be useful seniors. A club that
+    //    cannot buy keeps a reserve in the academy instead of emptying it.
+    const graduationAge = this.barredFromMarket() ? 20 : 19;
+    const keepInAcademy = this.barredFromMarket() && this.seniors().length >= 9 ? 2 : 0;
+    const ready = this.mine().filter((p) => p.role === 'youth' && (p.age || 0) >= graduationAge)
+      .sort((a, b) => (b.age || 0) - (a.age || 0));
+    ready.slice(0, Math.max(0, ready.length - keepInAcademy)).forEach((p) => gp.promoteYouth(p.id));
 
     // 3) Renew EVERY player in his final year. An expired contract means he walks
     //    for free at the season change, and a squad that leaks two or three a year
@@ -219,6 +228,7 @@ class AutoManager {
 
   balanceBooks() {
     const gp = this.gp;
+    if (this.barredFromMarket()) return; // selling here is one-way attrition
     const red = () => (this.me.budget || 0) < 0;
     if (!red() && this.wageBill() <= this.wageCeiling()) return;
     // Sell from the back of the queue. An overdrawn club sells down further than

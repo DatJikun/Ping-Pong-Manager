@@ -87,6 +87,39 @@ test('[slow] twelve seasons keep population and save size bounded', async () => 
 });
 
 
+// The youth-only challenge club is a different game: doNegotiate refuses it every
+// adult signing, so its academy is the ONLY source of players and every departure
+// is permanent. A career there is exactly where a squad-supply bug shows up first.
+test('[slow] the youth-only challenge club survives a long career', async () => {
+  const problems = [];
+  const result = await runCareer({
+    seasons: 12,
+    seed: 1234,
+    countryId: 'PL',
+    clubIdx: 12,
+    afterSeason: (info) => {
+      const found = invariantsOf(info);
+      problems.push(...found.map((p) => `S${info.season}: ${p}`));
+      return found;
+    },
+  });
+  assert.deepEqual(problems, []);
+  assert.equal(result.seasons.length, 12);
+  const G = result.game;
+  const club = G.teams.find((t) => t.id === G.myTeamId);
+  assert.ok((club.traits || []).includes('youthOnly'), 'this really is the challenge club');
+  const squad = G.players.filter((p) => p.teamId === G.myTeamId && !p.retired && p.role !== 'youth');
+  assert.ok(squad.length >= 3,
+    `it must still be able to field a team after twelve seasons (${squad.length} seniors)`);
+  // And it must have built that squad itself: nobody arrived from another club.
+  // (A scouted JUNIOR signing is allowed and is flagged joinedViaTransfer too,
+  // so the club history is what distinguishes the two.)
+  const poached = squad.filter((p) => (p.clubHistory || [])
+    .some((cid) => cid !== G.myTeamId && G.teams.some((t) => t.id === cid)));
+  assert.deepEqual(poached.map((p) => p.name), [],
+    'a youth-only club may not end up with players taken from other clubs');
+});
+
 test('[slow] the same seed replays the same career', async () => {
   const fingerprint = async () => {
     const { result } = await soak(3, 'PL', 90210);
