@@ -1190,6 +1190,10 @@ function acceptClubOffer(clubId){
   store.G.infraAcademy=next.infraAcademy||0;
   store.G.infraMerchandising=next.infraMerchandising||0;
   store.G.clubOffers=[];
+  // The transfer shelf is built around who the player IS: buildMarket() excludes
+  // his own squad. After changing clubs the old shelf described the old manager,
+  // so the new club's own players sat on it — offered for transfer to themselves.
+  buildMarket();
   pushNews('news.managerMoves','hot',{club:next.name,season:store.G.season+1});
   closeModal();render();updateHeader();toast(t('jobs.newClub',{club:next.name}));persistGame();
 }
