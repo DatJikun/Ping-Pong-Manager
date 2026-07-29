@@ -214,7 +214,16 @@ function loanIntegrity(G) {
     if (openLoansByPlayer.has(l.playerId)) problems.push(`"${p.name}" is out on two open loans at once`);
     openLoansByPlayer.set(l.playerId, l);
     if (p.teamId !== l.toTeamId) problems.push(`"${p.name}" is loaned to team ${l.toTeamId} but his teamId is ${p.teamId}`);
-    if (!p.loanedOut) problems.push(`"${p.name}" has an open loan but loanedOut is not set`);
+    // `loanedOut` means "our player, currently away". A player we LENT out carries
+    // the borrower's teamId while still being ours, so the flag stops him showing
+    // up as a transfer target for his own club. A player we BORROWED carries our
+    // teamId and is genuinely ours to field, so the flag must stay off — the two
+    // directions of the same record mean opposite things here.
+    const lentOut = l.fromTeamId === G.myTeamId;
+    if (lentOut && !p.loanedOut) problems.push(`"${p.name}" is out on loan but loanedOut is not set`);
+    if (!lentOut && l.toTeamId === G.myTeamId && p.loanedOut) {
+      problems.push(`"${p.name}" is on loan TO us but is flagged loanedOut`);
+    }
   }
   for (const p of byId.values()) {
     if (p.loanedOut && !openLoansByPlayer.has(p.id)) problems.push(`"${p.name}" is flagged loanedOut with no open loan record`);

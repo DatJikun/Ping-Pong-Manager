@@ -307,7 +307,13 @@ class AutoManager {
         gp.sendScout(idle.id, regions[(G.season || 1) % regions.length]);
       }
     }
-    // 3) Reinvest into the club when genuinely rich, cheapest upgrade first.
+    // 3) Borrow a player in when the squad is thin — the other direction of the
+    //    same loan record, and the one that hands an AI club's player our teamId.
+    if (this.seniors().length < 8) {
+      const offer = (G.transferMarket || []).find((m) => m.type === 'loan');
+      if (offer) gp.doBorrowIn(offer.playerId);
+    }
+    // 4) Reinvest into the club when genuinely rich, cheapest upgrade first.
     for (const [type, level, table] of [
       ['academy', G.infraAcademy || 0, 'INFRA_ACADEMY'],
       ['hall', G.infraHall || 0, 'INFRA_HALL'],

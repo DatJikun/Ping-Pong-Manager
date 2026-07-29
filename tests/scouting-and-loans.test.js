@@ -108,3 +108,58 @@ test('scouting pointers stay valid across repeated season cleanups', () => {
   assert.ok((G().scoutResults || []).length <= 40,
     `scout reports stay bounded (${(G().scoutResults || []).length})`);
 });
+
+// ── loans ────────────────────────────────────────────────────────────────────
+// `loanedOut` means "our player, currently away". The two directions of the same
+// loan record therefore mean opposite things: a player we LENT carries the
+// borrower's teamId and must be flagged (so he is not offered for transfer by
+// his own club); a player we BORROWED carries our teamId, is ours to field, and
+// must NOT be flagged. Getting that backwards is invisible until the season ends.
+test('a borrowed player is ours to field and returns home at the season end', () => {
+  const g = boot(5601);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = () => g.PPM.state.G;
+
+  // Put a loan offer on the shelf from a club that is not ours.
+  const target = G().players.find((p) => p.teamId !== null && p.teamId !== G().myTeamId
+    && !p.retired && (p.contractYears || 0) >= 2);
+  const parent = target.teamId;
+  G().transferMarket.push({ playerId: target.id, type: 'loan', fee: 0, share: 0.6, tier: 'loan' });
+
+  gp.doBorrowIn(target.id);
+
+  assert.equal(target.teamId, G().myTeamId, 'he plays for us now');
+  assert.equal(!!target.loanedOut, false, 'and is not flagged as away from us');
+  assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), [],
+    'the loan record is consistent while he is here');
+
+  gp.returnLoans();
+  assert.equal(target.teamId, parent, 'and he goes back to his club at the season end');
+  assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), [],
+    'and the closed loan leaves nothing dangling');
+});
+
+test('a player we lend out is flagged away and comes back', () => {
+  const g = boot(5602);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = () => g.PPM.state.G;
+
+  const mine = G().players.filter((p) => p.teamId === G().myTeamId && !p.retired);
+  const lent = mine.find((p) => gp.canLoanOut(p.id).ok);
+  assert.ok(lent, 'the squad has someone who can be lent out');
+  const borrower = G().teams.find((t) => t.id !== G().myTeamId);
+
+  // doLoanOut can be refused by the borrowing club; retry until it takes.
+  let guard = 0;
+  while (!lent.loanedOut && guard++ < 40) gp.doLoanOut(lent.id, borrower.id, 0.5);
+  assert.equal(lent.loanedOut, true, 'he is away');
+  assert.equal(lent.teamId, borrower.id, 'carrying the borrower\'s club id');
+  assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), []);
+
+  gp.returnLoans();
+  assert.equal(lent.teamId, G().myTeamId, 'and he is ours again at the season end');
+  assert.equal(lent.loanedOut, false, 'with the flag cleared');
+  assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), []);
+});
