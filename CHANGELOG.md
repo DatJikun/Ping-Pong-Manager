@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-07-29 — Wskaźniki, które przestały wskazywać
+
+**Skauting.** Misja skauta kosztuje, a znaleziony zawodnik trafia do świata jako
+wolny agent. Raport na ekranie to wskaźnik na niego — a limit populacji co sezon
+usuwa nadmiarowych wolnych agentów. Nic tego nie łączyło, więc mogłeś zapłacić za
+misję i znaleźć zawodnika po cichu usuniętego spod własnego raportu, który potem
+zostawał na ekranie na zawsze: kliknięcie nic nie robiło. Teraz wyskautowany
+zawodnik jest chroniony przed limitem, dopóki jego raport żyje, a martwy raport
+znika.
+
+**Wypożyczenia.** Flaga `loanedOut` znaczy „nasz zawodnik, chwilowo gdzie
+indziej", więc dla wypożyczenia „od nas" i „do nas" znaczy co innego. Invariant
+tego nie rozróżniał i zgłosiłby fałszywy błąd przy pierwszym wypożyczeniu do
+siebie. Obie strony mają teraz test prowadzący zawodnika aż do powrotu.
+
+**Kopie zapasowe nie blokują gry.** Nieudany zapis punktu odzyskiwania (pełny
+dysk, limit IndexedDB, tryb prywatny) przerywał całą kolejkę — kariera stawała,
+bo nie udała się *kopia*. Teraz jest best-effort wszędzie.
+
+**Zasięg testów.** Soak używa teraz wypożyczeń, skautingu i rozbudowy
+infrastruktury — trzech podsystemów, o których sto sezonów wcześniej nie
+dowodziło niczego. Invariantów jest 19 (doszły: puchar, nagrody, rywalizacje,
+skauting). Każdy ekran gry renderuje się przez prawdziwe `renderApp()` w obu
+językach. Prawdziwa kariera przechodzi przez menedżer zapisów.
+
 ## 2026-07-29 — Scalenie i decyzja o akademii
 
 **Scalenie.** Praca nad długą karierą z dwóch gałęzi jest już razem: lokalizacja

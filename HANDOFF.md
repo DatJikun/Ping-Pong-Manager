@@ -77,6 +77,25 @@ Before this, an academy deal was three flat years signed at 16–19 against a ga
 at 21, so ~75% of every intake lapsed first and the junior vanished on his
 birthday — at every club, including the player's, with no warning.
 
+### Pointer systems, and the rule they all follow
+A long career prunes things. Anything that stores an **id** rather than the thing
+itself therefore needs someone to keep the two in step, and the failure is always
+silent — a screen that shows the wrong person, or a row that does nothing when
+clicked. The ones that exist, and how each is handled:
+
+| pointer | kept in step by |
+|---|---|
+| `transferMarket.playerId` | `pruneCareerData` + migration |
+| `marketShortlist` / `marketCompare` | `pruneCareerData` |
+| `scoutResults.realId` | the scouted player is **protected from the population cap** while his report is live; a genuinely dead report is dropped |
+| `scoutMissions.scoutId` | must resolve — `checkScoutReturns()` bails otherwise and the mission is money wasted |
+| `loans.playerId` + `loanedOut` | `returnLoans()`; note the flag means opposite things for the two directions |
+| `playerHistory` keys | `pruneCareerData` + the merged-history repair on load |
+| `clubRivalries` | folded before fixtures are pruned |
+
+`tests/lib/invariants.js` has a check for every row above. **If you add another
+pointer, add its check there** — that is the whole point of the file.
+
 ### Recovery checkpoints are best-effort — keep them that way
 `checkpointCareer()` must never be able to stop the game. It used to be awaited
 unguarded in `runMatchday()` and the tournaments, so a storage error made the
