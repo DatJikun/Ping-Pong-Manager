@@ -1573,7 +1573,12 @@ function genYouthPlayer(ownerTeamId=null,countryId=null){
   // Junior wage INCLUDES training cost (owner decision): small, scales with potential
   // and academy level. Band ~ \u20ac500-1500/yr.
   p.salary=clamp(Math.round(300+(ceiling-50)*22+academyLv*60),500,1500);
-  p.contractYears=3;
+  // The academy deal has to reach the graduation gate at 21. A flat 3 years
+  // signed at 16 ran out at 19, so most juniors never finished the academy at
+  // all — they simply vanished on their 21st birthday, at every club including
+  // the player's. The term now covers the academy plus one senior season, which
+  // is when the ordinary "last year of contract" decision takes over.
+  p.contractYears=Math.max(3,22-p.age);
   p.isYouth=true; // in academy until age 21
   p.role='youth';
   p.preferredRole='starter';
@@ -3115,6 +3120,34 @@ function retainForClosedClub(p){
   p.contractYears=1+rnd(1,2);
   p.salary=contractExpect(p,p.teamId).salary;
 }
+// Owner call 2026-07-29: a junior is meant to FINISH the academy. Whether the
+// graduate then stays is the club's decision — some are kept, some are let go —
+// and it depends on what the club needs and how good he turned out.
+//
+// Before this, nobody decided: an academy deal was three flat years signed at
+// 16-19 against a graduation gate at 21, so most contracts simply lapsed and the
+// junior evaporated on his birthday. A club that had paid for an academy was in
+// practice stocking the rest of the league.
+//
+// Returns true when the AI club keeps him. A released graduate is NOT lost —
+// he becomes a free agent, which is exactly how the market stays stocked.
+function aiKeepsGraduate(p,team){
+  if(!team)return false;
+  if((team.traits||[]).includes('youthOnly'))return true; // no other source of players
+  const seniors=store.G.players.filter(x=>x.teamId===team.id&&!x.retired
+    &&x.role!=='youth'&&x.id!==p.id&&(x.contractYears||0)>0);
+  // 1) Need: the squad is short, so anyone able to hold a bat is welcome.
+  const needed=team.league===1?7:6;
+  if(seniors.length<needed)return true;
+  // 2) Merit: he is already worth a place, or his ceiling says he soon will be.
+  const weakest=seniors.reduce((lo,x)=>ovrBase(x)<ovrBase(lo)?x:lo,seniors[0]);
+  if(ovrBase(p)>=ovrBase(weakest))return true;
+  if(playerCeiling(p)>=ovrBase(weakest)+6)return true;
+  // 3) Otherwise it comes down to how the club is run. A youth-focused board
+  //    gives a marginal graduate the benefit of the doubt; most others don't.
+  const patient=team.principal?.strategy==='youth'||team.principal?.strategy==='builder';
+  return Math.random()<(patient?0.5:0.2);
+}
 function applyGrowth(){
   const myId=store.G.myTeamId;
   const coach=store.G.staff.find(s=>s.teamId===myId&&s.type==='coach');
@@ -3171,15 +3204,22 @@ function applyGrowth(){
       const psyM=psychMatchBoost(p.teamId);
       if(psyM.morale)p.morale=Math.min(100,(p.morale||50)+Math.round(psyM.morale*0.4));
     }
-    // Youth at 21+ auto-promote for EVERY club (was player-only).
+    // Graduation at 21, for EVERY club. The academy contract runs to this point
+    // (see genYouthPlayer), so reaching it is normal rather than lucky — what
+    // varies is whether the club keeps him. The manager decides for his own
+    // club the usual way: the graduate joins the reserves and his contract then
+    // enters its final year, which the inbox warns about like any other.
     if(p.role==='youth'&&p.age>=21&&p.teamId!==null){
       const wasMine=p.teamId===myId;
       if(p.contractYears<=0&&clubMustRetainOwnPlayers(p.teamId))retainForClosedClub(p);
-      if(p.contractYears>0){
+      const club=teamById(p.teamId);
+      const keep=p.contractYears>0
+        &&(wasMine||aiKeepsGraduate(p,club));
+      if(keep){
         p.role='reserve';p.isYouth=false;
         if(wasMine)toast(t('season.academyGraduated',{name:p.name,ovr:ovrBase(p)}));
       }else{
-        p.teamId=null;p.role='reserve';p.isYouth=false;
+        p.teamId=null;p.role='reserve';p.isYouth=false;p.contractYears=0;
         if(wasMine)toast(t('season.academyReleased',{name:p.name}));
       }
     }
@@ -4566,7 +4606,7 @@ function aiSignPlayers(){
       const youth=genYouthPlayer(team.id,store.G.countryId);
       youth.teamId=team.id;
       youth.nationality=store.G.countryId;
-      youth.contractYears=3;
+      youth.contractYears=Math.max(3,22-youth.age); // must reach the age-21 gate
       youth.salary=Math.max(300,youth.salary||300);
       store.G.players.push(youth);
       store.G.playerHistory[youth.id]=[snap(youth)];
