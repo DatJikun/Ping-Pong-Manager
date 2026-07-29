@@ -3,10 +3,30 @@ window.PPM = window.PPM || {};
 const render = (...args)=>window.PPM.renderApp?.(...args);
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 
+// A recovery checkpoint is insurance, never a precondition for playing.
+//
+// runMatchday() and the tournaments awaited this unguarded, so a storage error —
+// a full disk, an IndexedDB quota, a browser in private mode — did not merely
+// cost the player a recovery point: the rejection propagated out and the round
+// never ran. The career became unplayable because a BACKUP failed. (endSeason
+// already treated it as best-effort; the two paths simply disagreed.)
+//
+// The autosave path is where a storage problem gets reported to the player, and
+// it has its own once-only notification. Here we log it and carry on.
 function checkpointCareer(kind){
   const manager=window.PPM.saveManager;
   if(!manager?.isInitialized?.()||!manager.getActiveCareerId?.())return Promise.resolve(null);
-  return manager.createCheckpoint(kind,window.PPM.stateApi.serializeGame());
+  let pending;
+  try{
+    pending=manager.createCheckpoint(kind,window.PPM.stateApi.serializeGame());
+  }catch(error){
+    safeLog(`Nie udało się zapisać punktu odzyskiwania (${kind}).`,'bd');
+    return Promise.resolve(null);
+  }
+  return Promise.resolve(pending).catch(()=>{
+    safeLog(`Nie udało się zapisać punktu odzyskiwania (${kind}).`,'bd');
+    return null;
+  });
 }
 function flushCareerSave(){
   return window.PPM.stateApi.flushPersistence?.()||Promise.resolve(true);
