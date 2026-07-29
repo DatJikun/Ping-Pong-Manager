@@ -529,6 +529,32 @@ function awardIntegrity(G) {
   return problems;
 }
 
+// Scouting is a pointer system too: a mission names a scout, a report names a
+// player the scout found. The scouted player is a free agent, so the population
+// cap can cull him — and a report left pointing at nobody sits on the scouting
+// screen forever, clickable with nothing happening.
+function scoutingIntegrity(G) {
+  const problems = [];
+  const playerIds = new Set(arr(G.players).filter((p) => p && isInt(p.id)).map((p) => p.id));
+  const scoutIds = new Set([...arr(G.staff), ...arr(G.scoutPool)]
+    .filter((s) => s && isInt(s.id)).map((s) => s.id));
+  for (const r of arr(G.scoutResults)) {
+    if (!r) { problems.push('scoutResults contains a null report'); continue; }
+    if (!playerIds.has(r.realId)) problems.push(`scout report points at missing player ${r.realId}`);
+    if (r.scoutId !== undefined && !scoutIds.has(r.scoutId)) {
+      problems.push(`scout report ${r.realId} names a scout who is gone (${r.scoutId})`);
+    }
+  }
+  for (const m of arr(G.scoutMissions)) {
+    if (!m) { problems.push('scoutMissions contains a null entry'); continue; }
+    if (!scoutIds.has(m.scoutId)) problems.push(`scout mission names a scout who is gone (${m.scoutId})`);
+    if (!Number.isFinite(m.startMatchday) || !Number.isFinite(m.duration)) {
+      problems.push('a scout mission has a non-finite schedule');
+    }
+  }
+  return problems;
+}
+
 // Money must stay a number. A single NaN budget silently poisons every later
 // transfer, wage and sponsor calculation.
 function financeIntegrity(G) {
@@ -602,6 +628,7 @@ const CHECKS = [
   ['club-rivalries', rivalryLedger],
   ['cup', cupIntegrity],
   ['awards', awardIntegrity],
+  ['scouting', scoutingIntegrity],
   ['finance', financeIntegrity],
   ['player-stats', playerStats],
   ['non-finite', (G) => findNonFinite(G).map((p) => `non-finite value at ${p}`)],

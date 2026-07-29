@@ -80,6 +80,9 @@ class AutoManager {
     this.pickTechPartnership();
     this.pickBoardObjective();
     this.hireCoachIfMissing();
+    this.hireScoutIfMissing();
+    this.signScoutReports();
+    this.clubOperations();
   }
 
   signSponsors() {
@@ -126,6 +129,20 @@ class AutoManager {
     const pick = candidates[0];
     if (!pick) return;
     if ((this.me.budget || 0) < (pick.salary || 0) * 2) return;
+    this.g._staffNegSal = pick.salary;
+    this.g._staffNegYrs = 3;
+    this.g._staffNegBonus = 0;
+    this.gp.doHireStaff(pick.id);
+  }
+
+  // A scout is what makes the scouting subsystem exist at all — without one, a
+  // hundred soak seasons prove nothing about missions, reports or signings.
+  hireScoutIfMissing() {
+    const G = this.G;
+    if (this.gp.getMyScouts().length) return;
+    const pick = (G.scoutPool || []).filter((s) => s.teamId === null && !s.hired)
+      .sort((a, b) => (a.salary || 0) - (b.salary || 0))[0];
+    if (!pick || (this.me.budget || 0) < (pick.salary || 0) * 3) return;
     this.g._staffNegSal = pick.salary;
     this.g._staffNegYrs = 3;
     this.g._staffNegBonus = 0;
@@ -261,6 +278,59 @@ class AutoManager {
     }
   }
 
+  // ── the club operations a soak would otherwise never touch ────────────────
+  // Loans, scouting and infrastructure are real player actions with real
+  // references (a loan moves a player between clubs; a scout mission returns a
+  // generated player who then has to be signable). None of them were exercised
+  // by the season loop, so a hundred seasons proved nothing about them. The
+  // manager now uses each one at a modest, deterministic rate.
+  clubOperations() {
+    const gp = this.gp;
+    const G = this.G;
+    // 1) Loan out one surplus junior a season — the borrower guarantees him games.
+    const loanable = this.mine()
+      .filter((p) => gp.canLoanOut(p.id).ok)
+      .sort((a, b) => (a.age || 0) - (b.age || 0));
+    if (loanable.length && this.seniors().length > 7) {
+      const target = G.teams
+        .filter((t) => t.id !== this.myId && t.league === 2)
+        .sort((a, b) => gp.teamOvr(a.id) - gp.teamOvr(b.id))[0];
+      if (target) gp.doLoanOut(loanable[0].id, target.id, 0.3);
+    }
+    // 2) Keep a scout busy. checkScoutReturns() runs on the matchday tick, and a
+    //    returned report has to resolve to a real, signable player.
+    const scouts = gp.getMyScouts();
+    const regions = this.g.PPM.constants.POLISH_REGIONS;
+    if (scouts.length && regions?.length) {
+      const idle = scouts.find((sc) => !(G.scoutMissions || []).some((m) => m.scoutId === sc.id && !m.done));
+      if (idle && (this.me.budget || 0) > 40000) {
+        gp.sendScout(idle.id, regions[(G.season || 1) % regions.length]);
+      }
+    }
+    // 3) Reinvest into the club when genuinely rich, cheapest upgrade first.
+    for (const [type, level, table] of [
+      ['academy', G.infraAcademy || 0, 'INFRA_ACADEMY'],
+      ['hall', G.infraHall || 0, 'INFRA_HALL'],
+      ['med', G.infraMed || 0, 'INFRA_MED'],
+      ['merch', G.infraMerchandising || 0, 'INFRA_MERCH'],
+    ]) {
+      const next = this.g.PPM.constants[table][level + 1];
+      if (next && (this.me.budget || 0) > next.cost * 2 + 80000) { gp.upgradeInfra(type); break; }
+    }
+  }
+
+  // Signs whatever the scouts brought back — the report has to resolve to a real
+  // player, and signing him goes through the ordinary negotiation.
+  signScoutReports() {
+    const G = this.G;
+    for (const res of (G.scoutResults || []).slice()) {
+      if (!res || res.seen) continue;
+      const p = (G.players || []).find((x) => x.id === res.realId);
+      res.seen = true;
+      if (p && p.teamId === null && this.seniors().length < 11) this.offerContract(p);
+    }
+  }
+
   // ── in-season decisions ────────────────────────────────────────────────────
   // Decision mail BLOCKS the next matchday, so it must be cleared every round.
   // Declining is the stable default: promising a reserve a game creates an
@@ -376,6 +446,8 @@ async function playSeasons(g, seasons, options = {}) {
       ctx.stage = `matchday ${G().matchday + 1}`;
       if (rounds++ > TOTAL_MATCHDAYS + 4) fail(`season did not finish after ${rounds} rounds (stuck at matchday ${G().matchday})`);
 
+      // renderApp() evaluates scout returns in the real game; headless has no render.
+      gp.checkScoutReturns();
       await guarded(`inbox before matchday ${G().matchday + 1}`, () => manager.answerMail());
 
       // Top 12 Masters is due before the final round and blocks auto-play until

@@ -3325,10 +3325,15 @@ function pruneCareerData(){
       const youthBonus=Math.max(0,27-(p.age||27))*0.4;
       return current+upside*0.18+youthBonus;
     };
+    // A scouted player is not surplus: the manager PAID a mission to find him and
+    // his report is sitting on the scouting screen waiting to be signed. Culling
+    // him under the population cap threw away what the club bought.
+    const scouted=new Set((store.G.scoutResults||[]).map(r=>r&&r.realId).filter(id=>id!==undefined));
     const keepIds=new Set([...freeAgents]
       .sort((a,b)=>retentionScore(b)-retentionScore(a)||(a.id||0)-(b.id||0))
       .slice(0,freeAgentLimit)
       .map(p=>p.id));
+    scouted.forEach(id=>keepIds.add(id));
     freeAgents.filter(p=>!keepIds.has(p.id)).forEach(p=>{
       const hasCareer=((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
       if(hasCareer)retirePlayer(p);
@@ -3345,6 +3350,10 @@ function pruneCareerData(){
     if(Array.isArray(store.G.marketShortlist))store.G.marketShortlist=store.G.marketShortlist.filter(id=>live.has(id));
     if(Array.isArray(store.G.marketCompare))store.G.marketCompare=store.G.marketCompare.filter(id=>live.has(id));
     if(Array.isArray(ui.marketCompare))ui.marketCompare=ui.marketCompare.filter(id=>live.has(id));
+    // A scout report is a pointer too. The scouted player is a free agent, so the
+    // population cap can cull him — and the report stayed on the scouting screen
+    // pointing at nobody, clickable forever with nothing happening.
+    if(Array.isArray(store.G.scoutResults))store.G.scoutResults=store.G.scoutResults.filter(r=>r&&live.has(r.realId));
   }
   // 3) Staff history exists to chart people who can still be inspected. Once a
   //    staff member has retired from every role and pool, the snapshots go too.
