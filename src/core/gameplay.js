@@ -3378,7 +3378,7 @@ function applyGrowth(){
 }
 
 function retirePlayer(p){
-  p.retired=true;const wm=p.teamId===store.G.myTeamId;p.teamId=null;
+  p.retired=true;p.retiredSeason=store.G.season;const wm=p.teamId===store.G.myTeamId;p.teamId=null;
   const trophyMap={};(p.awards||[]).forEach(a=>{if(!trophyMap[a.type])trophyMap[a.type]={label:a.displayLabel||a.label,count:0};trophyMap[a.type].count++;});
   store.G.hallOfFame.push({id:p.id,name:p.name,traits:[...p.traits],peakOvr:p.careerOvr||ovrBase(p),
     careerW:p.careerW||0,careerL:p.careerL||0,careerPts:p.careerPts||0,careerSeasons:p.careerSeasons||0,
@@ -3397,16 +3397,65 @@ function hofRankScore(e){
   const titles=Object.values(e.trophyMap||{}).reduce((s,t)=>s+(t.count||0),0);
   return titles*50+(e.wrate||0)+(e.peakOvr||0)*5;
 }
+function freeAgentMarketPolicy(teamCount=store.G?.teams?.length||24,season=store.G?.season||1,countryId=store.G?.countryId||'PL',retirements=0){
+  const clubs=Math.max(8,Number(teamCount)||24);
+  const rng=mulberry32Seed(seedFromString(`free-agent-market:${countryId}:${season}`));
+  const seasonalNoise=Math.floor(rng()*9)-3; // -3..+5: quiet and abundant cohorts
+  const replacement=Math.round(Math.max(0,Number(retirements)||0)*0.45);
+  const externalIntake=clamp(Math.round(clubs*0.22)+seasonalNoise+replacement,2,Math.max(8,Math.round(clubs*0.75)));
+  const marketWave=Math.floor(rng()*41)-20;
+  const softTarget=clamp(Math.round(clubs*4+marketWave+Math.max(0,Number(retirements)||0)*0.15),
+    Math.round(clubs*2.9),Math.round(clubs*5.4));
+  return {externalIntake,softTarget,emergencyCap:Math.max(150,clubs*7)};
+}
+function freeAgentHasCareer(p){
+  return ((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
+}
+function removeFreeAgentFromWorld(p){
+  if(freeAgentHasCareer(p))retirePlayer(p);
+  else{p.retired=true;p.retiredSeason=store.G.season;p.teamId=null;}
+}
+function updateFreeAgentLifecycle(retirements=0){
+  if(!store.G)return;
+  const scouted=new Set((store.G.scoutResults||[]).map(report=>report?.realId).filter(id=>id!==undefined));
+  const freeAgents=(store.G.players||[]).filter(p=>p&&!p.retired&&!p.loanedOut
+    &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId);
+  const policy=freeAgentMarketPolicy(store.G.teams?.length||24,store.G.season,store.G.countryId,retirements);
+  const overcrowding=Math.max(0,(freeAgents.length-policy.softTarget)/Math.max(1,freeAgents.length));
+  (store.G.players||[]).forEach(p=>{
+    if(!p||p.retired)return;
+    const isFree=!p.loanedOut&&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId;
+    if(!isFree){p.marketSeasons=0;return;}
+    p.teamId=null;p.contractYears=0;
+    p.marketSeasons=(p.marketSeasons||0)+1;
+    if(scouted.has(p.id))return;
+    const freshToMarket=p.marketSeasons<=1;
+    if(freshToMarket&&overcrowding<=0.15)return;
+    const current=ovrBase(p);
+    const upside=Math.max(0,playerCeiling(p)-current);
+    const age=p.age||27;
+    const certainExit=p.marketSeasons>=10
+      ||(p.marketSeasons>=7&&age>=27&&current<35)
+      ||(p.marketSeasons>=6&&age>=34&&current<48&&upside<10);
+    const pressure=Math.min(0.82,
+      Math.max(0,p.marketSeasons-2)*0.10
+      +Math.max(0,50-current)*0.012
+      +Math.max(0,age-31)*0.018
+      -Math.min(0.24,upside*0.008)
+      +overcrowding*1.35
+      -(freshToMarket?0.28:0));
+    if(certainExit||Math.random()<pressure)removeFreeAgentFromWorld(p);
+  });
+}
 function pruneCareerData(){
   if(!store.G)return;
-  // 1) Keep a broad but bounded transfer shelf. Five candidates per active club
-  //    gives the player plenty of choice (120 in the current 24-club world) while
-  //    stopping unused free agents from accumulating forever.
+  // 1) Normal market size comes from releases, intake, hiring, and natural exits.
+  //    This ceiling is only an emergency brake for damaged/legacy careers.
   const isFreeAgent=p=>p&&!p.retired&&!p.loanedOut
     &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId;
   const freeAgents=(store.G.players||[]).filter(isFreeAgent);
   freeAgents.forEach(p=>{p.teamId=null;p.contractYears=0;});
-  const freeAgentLimit=Math.max(60,(store.G.teams||[]).length*5);
+  const freeAgentLimit=freeAgentMarketPolicy((store.G.teams||[]).length,store.G.season,store.G.countryId,0).emergencyCap;
   if(freeAgents.length>freeAgentLimit){
     const retentionScore=p=>{
       const current=ovrBase(p);
@@ -3424,9 +3473,7 @@ function pruneCareerData(){
       .map(p=>p.id));
     scouted.forEach(id=>keepIds.add(id));
     freeAgents.filter(p=>!keepIds.has(p.id)).forEach(p=>{
-      const hasCareer=((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
-      if(hasCareer)retirePlayer(p);
-      else p.retired=true;
+      removeFreeAgentFromWorld(p);
     });
   }
   // 2) Retired players survive only as HoF summaries — drop the heavy objects so
@@ -4593,11 +4640,14 @@ function endSeason(){
   store.G.matchNomination=null; // nominations never carry across seasons
   generateInboxForMatchday(); // preseason mail (contract warnings etc.)
   if((store.G.infraAcademy||0)>0&&myTeam())store.G.academyProspects=genAcademyIntake(store.G.myTeamId,store.G.countryId);
-  for(let i=0;i<14;i++){
+  const retiredLastSeason=store.G.players.filter(p=>p.retired&&p.retiredSeason===store.G.season-1).length;
+  const freeAgentPolicy=freeAgentMarketPolicy(store.G.teams.length,store.G.season,store.G.countryId,retiredLastSeason);
+  for(let i=0;i<freeAgentPolicy.externalIntake;i++){
     const p=genPlayer(null,18+rnd(0,16),store.G.countryId);
     p.teamId=null;
     p.contractYears=0;
     p.role='reserve';
+    p.marketSeasons=0;
     p.preferredRole=Math.random()<0.5?'rotation':'starter';
     p.seasonForm=clamp((p.seasonForm||0)+rnd(-1,4),-8,10);
     capFreeAgentProfile(p,getDifficultyConfig().freeAgentCap);
@@ -4609,7 +4659,7 @@ function endSeason(){
   store.G.boardObjective=null;
   store.G.seasonFinance={season:store.G.season,tickets:0,merch:0,prize:0,sponsorIncome:0,tvRights:0,boardReward:0,techPartnership:0,wages:0,playerWages:0,coachWages:0,physioWages:0,psychologistWages:0,scoutWages:0,prDirectorWages:0,maint:0,transfersIn:0,infraCost:0,staffBuyouts:0,prDirectorCost:0,brandCosts:0,other:0};
   genCupBracket();
-  aiSignPlayers();maintainAiRosters();buildMarket();
+  aiSignPlayers();maintainAiRosters();updateFreeAgentLifecycle(retiredLastSeason);buildMarket();
   if(myTeam())genSponsorOffers(calcPrestige());
   updateHeader();
   pruneCareerData();
@@ -5878,5 +5928,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 })();

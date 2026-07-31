@@ -144,3 +144,84 @@ test('fresh and regenerated staff markets follow varied role policies', () => {
   ];
   assert.ok(regeneratedIds.every((id) => !oldIds.has(id)), 'retired candidates are replaced by fresh people');
 });
+
+test('free-agent intake responds to retirements and varies between seasons', () => {
+  const g = boot(760);
+  const gp = g.PPM.gameplay;
+  assert.equal(typeof gp.freeAgentMarketPolicy, 'function', 'simulation exposes free-agent population policy');
+
+  const quietYears = Array.from({ length: 8 }, (_, index) =>
+    gp.freeAgentMarketPolicy(24, index + 1, 'PL', 0));
+  const intakeCounts = quietYears.map((policy) => policy.externalIntake);
+  const softTargets = quietYears.map((policy) => policy.softTarget);
+  const retirementYear = gp.freeAgentMarketPolicy(24, 4, 'PL', 18).externalIntake;
+  assert.ok(new Set(intakeCounts).size >= 4, `quiet-year intake still varies: ${intakeCounts.join(', ')}`);
+  assert.ok(new Set(softTargets).size >= 5, `market comfort range changes visibly: ${softTargets.join(', ')}`);
+  assert.ok(retirementYear > intakeCounts[3], 'a large retirement class attracts more new players');
+  assert.ok(intakeCounts.every((count) => count >= 2 && count <= 18), 'external intake stays plausible');
+  assert.ok(softTargets.every((count) => count >= 70 && count <= 130), 'normal market range stays broad but useful');
+  assert.ok(softTargets.some((count) => count < 100) && softTargets.some((count) => count > 100),
+    'some years are scarce and others abundant');
+  assert.ok(gp.freeAgentMarketPolicy(24, 1, 'PL', 0).emergencyCap > 140,
+    'safety ceiling is well above a normal market and is not the old visible target');
+});
+
+test('free-agent lifecycle protects fresh and scouted players but removes stale weak candidates cleanly', () => {
+  const g = boot(761);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const gp = g.PPM.gameplay;
+  assert.equal(typeof gp.updateFreeAgentLifecycle, 'function', 'simulation exposes yearly market lifecycle');
+  const make = (id, marketSeasons, value) => {
+    const player = gp.genPlayer(null, 32, 'PL');
+    player.id = id;
+    player.teamId = null;
+    player.contractYears = 0;
+    player.marketSeasons = marketSeasons;
+    for (const stat of g.PPM.constants.SK) player[stat] = value;
+    G.players.push(player);
+    G.playerHistory[id] = [{ season: 1, ovr: value }];
+    return player;
+  };
+  const fresh = make(91001, 0, 42);
+  const stale = make(91002, 6, 18);
+  const scouted = make(91003, 6, 18);
+  G.scoutResults.push({ realId: scouted.id, reported: { ...scouted } });
+  G.transferMarket.push({ playerId: stale.id, type: 'fa', fee: 0 });
+  G.marketShortlist = [stale.id];
+  g.PPM.ui.marketCompare = [stale.id];
+
+  gp.updateFreeAgentLifecycle();
+  gp.pruneCareerData();
+
+  assert.ok(G.players.some((player) => player.id === fresh.id), 'freshly released player gets a real chance');
+  assert.ok(G.players.some((player) => player.id === scouted.id), 'paid scouting result cannot disappear');
+  assert.ok(!G.players.some((player) => player.id === stale.id), 'stale weak candidate leaves the active world');
+  assert.equal(G.playerHistory[stale.id], undefined, 'departed player history is removed');
+  assert.ok(!G.transferMarket.some((row) => row.playerId === stale.id), 'departed market row is removed');
+  assert.ok(!G.marketShortlist.includes(stale.id), 'departed shortlist row is removed');
+  assert.ok(!g.PPM.ui.marketCompare.includes(stale.id), 'departed comparison row is removed');
+});
+
+test('an extreme release wave is absorbed organically before the emergency cap', () => {
+  const g = boot(762);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const gp = g.PPM.gameplay;
+  while (G.players.filter((player) => player.teamId === null && !player.retired).length < 300) {
+    const player = gp.genPlayer(null, 29, 'PL');
+    player.teamId = null;
+    player.contractYears = 0;
+    player.marketSeasons = 0;
+    for (const stat of g.PPM.constants.SK) player[stat] = 45;
+    G.players.push(player);
+  }
+  const policy = gp.freeAgentMarketPolicy(G.teams.length, G.season, G.countryId, 0);
+
+  gp.updateFreeAgentLifecycle();
+
+  const remaining = G.players.filter((player) => player.teamId === null && !player.retired).length;
+  assert.ok(remaining < policy.emergencyCap,
+    `natural departures absorb the wave before emergency pruning (${remaining} < ${policy.emergencyCap})`);
+  assert.notEqual(remaining, policy.softTarget, 'soft target creates pressure but is never a hard trim point');
+});
