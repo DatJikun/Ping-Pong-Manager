@@ -612,6 +612,14 @@ function staffOvr(s){
   if(s.type==='pr') return clamp(Math.round(((s.bonus||0)*900)+((s.cooldownReduce||0)*8))+ageMod,10,99);
   return 50;
 }
+// One rating language for every screen. The UI owns the drawing, while the
+// simulation owns the meaning: five slots span the full 0..100 OVR scale and
+// potential can extend the current fill but can never sit below it.
+function ratingProfile(currentOvr,peakOvr=currentOvr){
+  const current=clamp(Number(currentOvr)||0,0,100);
+  const peak=clamp(Math.max(current,Number(peakOvr)||current),0,100);
+  return {currentOvr:current,peakOvr:peak,currentStars:current/20,peakStars:peak/20,slots:5};
+}
 // v13: Progressive staff OVR colors (more granular)
 function staffOvrColor(o){if(o>=85)return'#18a050';if(o>=75)return'var(--g)';if(o>=65)return'#50a030';if(o>=55)return'var(--gold)';if(o>=45)return'var(--orange)';if(o>=35)return'#d06020';return'var(--r)';}
 // sleep(), rnd() and clamp() are provided globally by src/core/utils.js.
@@ -1671,11 +1679,13 @@ function staffEffectiveBonus(s){
   const o=staffOvr(s);
   return Math.pow(o/100,2.0); // exponential multiplier 0..1
 }
-function genStaff(type,countryId=null){
+function genStaff(type,countryId=null,options={}){
   const id=ui._pid++;
   // Owner 2026-07-02: staff OVR must vary WIDELY. Quality is a continuous skewed
   // roll (lots of journeymen, a real tail of elites) instead of 3 tight bands.
-  const q=Math.pow(Math.random(),1.35);          // 0..1, skewed toward low
+  const q=typeof options.quality==='number'
+    ?clamp(options.quality,0,1)
+    :Math.pow(Math.random(),1.35);               // 0..1, skewed toward low
   const level=q>0.72?3:q>0.38?2:1;               // legacy 3-band label kept for UI
   const baseVal=Math.round(20+q*62);             // core quality ~20..82
   const staffAge=28+rnd(0,40);
@@ -1706,15 +1716,15 @@ function genStaff(type,countryId=null){
     extra.accuracy=Math.max(15,Math.min(96,baseVal+rnd(-12,18)));
     extra.network=Math.max(10,Math.min(96,baseVal+rnd(-16,20)));
   }else if(type==='physio'){
-    const pq=Math.round(6+q*46); // physio scale ~6..52
-    extra.injReduction=Math.max(5,Math.min(60,pq+rnd(-4,8)));
-    extra.recovery=Math.max(5,Math.min(60,pq+rnd(-6,10)));
-    extra.prevention=Math.max(5,Math.min(50,Math.round(pq*0.85)+rnd(-4,8)));
+    // All professions share one competence language. Role attributes still
+    // differ, but a 70 OVR physio now means the same calibre as a 70 OVR coach.
+    extra.injReduction=Math.max(10,Math.min(96,baseVal+rnd(-10,14)));
+    extra.recovery=Math.max(10,Math.min(96,baseVal+rnd(-12,16)));
+    extra.prevention=Math.max(10,Math.min(96,baseVal+rnd(-10,12)));
   }else if(type==='psychologist'){
-    const gq=Math.round(10+q*62); // psych scale ~10..72
-    extra.moraleBoost=Math.max(10,Math.min(85,gq+rnd(-8,12)));
-    extra.mentalTraining=Math.max(10,Math.min(85,gq+rnd(-8,10)));
-    extra.pressure=Math.max(10,Math.min(85,gq+rnd(-10,14)));
+    extra.moraleBoost=Math.max(10,Math.min(96,baseVal+rnd(-10,14)));
+    extra.mentalTraining=Math.max(10,Math.min(96,baseVal+rnd(-10,12)));
+    extra.pressure=Math.max(10,Math.min(96,baseVal+rnd(-12,16)));
   }
   const sOvr=staffOvr({type,...extra});
   const sal=type==='scout'?Math.round(staffSalary(sOvr)*1.18):staffSalary(sOvr);
@@ -5803,5 +5813,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 })();
