@@ -80,7 +80,7 @@ function runYouthProbe(seasons) {
   function chargeEconomy() {
     // Explicit player-club economy (the headless harness skips the DOM finance path).
     const wages = mineNow().reduce((s, p) => s + (p.salary || 0), 0) + coachSalary;
-    const upkeep = 11000 + (INFRA_ACADEMY[Math.max(0, Math.min(5, G().infraAcademy || 0))].upkeep || 0);
+    const upkeep = 11000 + (INFRA_ACADEMY[Math.max(0, Math.min(INFRA_ACADEMY.length - 1, G().infraAcademy || 0))].upkeep || 0);
     const income = 42000; // rough L2 income (prize + 3 sponsors + TV + tickets)
     me().budget = Math.max(0, me().budget + income - wages - upkeep);
   }

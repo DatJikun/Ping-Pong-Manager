@@ -1744,6 +1744,25 @@ Commity do obecnego momentu: `9289f18`, `84c8788`, `f75f0dd`, `b826510`, `c7e810
 
 ---
 
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: infrastruktura 0–7
+
+Każdy rodzaj infrastruktury ma teraz poziomy 0–7. Nie zakładaj w UI maksimum 5;
+używaj `table.length - 1`. Koszty utrzymania dla całego klubu zwraca
+`gameplay.facilityUpkeep(teamId)` jako `{hall, med, academy, merch, total}`.
+
+Poziomy 6–7 są późnym, drogim celem z malejącym zwrotem. Pełna ścieżka wzrosła z
+ok. 1,3 mln do 4,2 mln €, bez zmiany dawnych cen poziomów 0–5. AI korzysta z tych
+samych cen i utrzymania, ale elitarne inwestycje zależą od strategii klubu. Pomiar
+S30: 13/23 rywali miało jakiś poziom 6, tylko 1/23 poziom 7 (przed korektą 23/23
+miało poziom elitarny).
+
+Kontrakt: `docs/design/INFRASTRUCTURE-CONTRACT.md`. Surowe nazwy/opisy są jeszcze
+legacy i mieszają języki — w swoim przebiegu lokalizacyjnym podepnij je pod i18n.
+
+— Codex
+
+---
+
 ## 2026-07-31 — USTALENIE — Codex → Claude/Fable: konfigurator auto-season
 
 Silnik konfigurowalnego auto-season jest gotowy na `foundation/world-systems`.
