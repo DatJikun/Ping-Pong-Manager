@@ -147,7 +147,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=21;
+const SAVE_SCHEMA_VERSION=22;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
   if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
@@ -271,6 +271,24 @@ function migrateLoadedGame(parsed){
   });
   (game.staffPool||[]).forEach(s=>{if(s.nationality!==leagueCountryId){s.nationality=leagueCountryId;s.name=randNameForCountry(leagueCountryId);}if(!s.age)s.age=30+rnd(0,35);if(!s.peakAge)s.peakAge=45+rnd(0,15);if(typeof s.ceiling!=='number')s.ceiling=60;});
   (game.scoutPool||[]).forEach(s=>{if(s.nationality!==leagueCountryId){s.nationality=leagueCountryId;s.name=randNameForCountry(leagueCountryId);}if(!s.age)s.age=30+rnd(0,35);if(!s.peakAge)s.peakAge=45+rnd(0,15);if(typeof s.ceiling!=='number')s.ceiling=60;});
+  // v22: physiotherapists used a private ~5..60 attribute scale while every
+  // screen labelled the result as normal 0..100 OVR. Rebase once, preserving
+  // identity, contracts, tenure, and relative rank. Prevention had a 50 cap.
+  if(fromVersion<22){
+    const rebasePhysio=(value,legacyMax)=>{
+      const old=Math.max(5,Math.min(legacyMax,Number(value)||5));
+      return Math.round(10+((old-5)/(legacyMax-5))*86);
+    };
+    [...(game.staff||[]),...(game.staffPool||[])].forEach(s=>{
+      if(!s||s.type!=='physio')return;
+      s.injReduction=rebasePhysio(s.injReduction,60);
+      s.recovery=rebasePhysio(s.recovery,60);
+      s.prevention=rebasePhysio(s.prevention,50);
+      if(s.teamId===null&&typeof staffOvr==='function'&&typeof staffWageForOvr==='function'){
+        s.salary=staffWageForOvr(staffOvr(s));
+      }
+    });
+  }
   (game.players||[]).forEach(p=>{
     if(p.nationality!==leagueCountryId){
       p.nationality=leagueCountryId;

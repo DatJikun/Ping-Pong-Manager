@@ -35,6 +35,44 @@ test('save validation rejects malformed and future career files before migration
   assert.doesNotThrow(() => api.validateSaveText(validSave()));
 });
 
+test('schema 21 physios migrate once onto the shared staff scale without changing identity', () => {
+  const g = boot(2404);
+  const api = g.PPM.stateApi;
+  const physio = (id, teamId, injReduction, recovery, prevention) => ({
+    id, type: 'physio', name: `Legacy Physio ${id}`, nationality: 'PL',
+    age: 45, peakAge: 55, teamId, contractYears: 2, salary: 4321,
+    injReduction, recovery, prevention, ceiling: 60, careerHistory: [{ teamId, startSeason: 1 }],
+  });
+  const raw = JSON.parse(validSave({
+    schemaVersion: 21,
+    staff: [physio(8101, 1, 5, 5, 5)],
+    staffPool: [physio(8102, null, 30, 30, 25), physio(8103, null, 60, 60, 50)],
+    scoutPool: [],
+    prDirectorPool: [],
+  }));
+
+  const migrated = api.migrateLoadedGame(raw);
+  const all = [...migrated.staff, ...migrated.staffPool].sort((a, b) => a.id - b.id);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 22);
+  assert.deepEqual(all.map((staff) => ({
+    id: staff.id, teamId: staff.teamId, contractYears: staff.contractYears,
+    injReduction: staff.injReduction, recovery: staff.recovery, prevention: staff.prevention,
+  })), [
+    { id: 8101, teamId: 1, contractYears: 2, injReduction: 10, recovery: 10, prevention: 10 },
+    { id: 8102, teamId: null, contractYears: 2, injReduction: 49, recovery: 49, prevention: 48 },
+    { id: 8103, teamId: null, contractYears: 2, injReduction: 96, recovery: 96, prevention: 96 },
+  ]);
+  assert.equal(all[0].salary, 4321, 'employed physio contract is untouched');
+  assert.deepEqual(all[0].careerHistory, [{ teamId: 1, startSeason: 1 }], 'tenure history is untouched');
+
+  const once = JSON.stringify(all.map((staff) => [staff.id, staff.injReduction, staff.recovery, staff.prevention]));
+  api.migrateLoadedGame(migrated);
+  const twice = JSON.stringify([...migrated.staff, ...migrated.staffPool]
+    .sort((a, b) => a.id - b.id)
+    .map((staff) => [staff.id, staff.injReduction, staff.recovery, staff.prevention]));
+  assert.equal(twice, once, 'loading the migrated save again does not rebase ratings twice');
+});
+
 test('legacy ppgame becomes one career and is removed only after read-back', async () => {
   const g = boot(2402);
   const adapter = g.PPM.saveStorage.createMemoryAdapter();
