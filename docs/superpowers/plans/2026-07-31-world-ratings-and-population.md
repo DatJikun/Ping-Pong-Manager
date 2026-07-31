@@ -271,3 +271,14 @@ Commit message: `docs: publish rating and population contract`
 3. Infrastructure/economy/AI long-career balance.
 4. Release durability, dependency audit, and final multi-country soak.
 
+## Results — 2026-07-31
+
+- `npm run check`: PASS.
+- `npm test`: 242/242 PASS.
+- Real saves S4, S8, and S11: migration, two further seasons, and reload PASS.
+- 30-season PL soak: every invariant and save/load identity check PASS.
+- Free agents varied from 65 to 124 over the 30-season run; no season snapped to the old 120 or the 168 emergency cap.
+- Total players: 385 at S1, 399 at the local S20 peak, 351 at S30; no population growth leak.
+- Staff candidates: 180 at S1 and 162 at S30, with seasonal movement rather than fixed per-role quotas.
+- Save size: 1.747 MB at S1 to 2.840 MB at S30 (the previous long-career baseline reported about 3.1 MB at S30).
+- Production dependency audit (`npm audit --omit=dev`): 0 vulnerabilities. The separately observed 17 high findings are in development/build dependencies and remain a later packaging audit; no forced update was applied.
