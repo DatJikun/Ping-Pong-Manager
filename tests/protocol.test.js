@@ -84,18 +84,23 @@ test('inbox: reserve request YES promises a match; playing him settles it, bench
   assert.ok(G.inbox.some((m) => m.from === res.name && m.subjectKey === 'mail.disappointedSubject'), 'complaint mail arrived');
 });
 
-test('staff market: pools hold at least 3x-clubs-per-league candidates and regenerate', () => {
+test('staff market: every role stays available without rebuilding to a visible fixed quota', () => {
   const g = boot(45);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const gp = g.PPM.gameplay;
   const marketSize = G.staffPool.length + G.scoutPool.length + G.prDirectorPool.length;
-  assert.ok(marketSize >= 36, `market has ≥36 candidates at newGame (got ${marketSize})`);
+  assert.ok(marketSize >= 60, `market has broad choice at newGame (got ${marketSize})`);
   // Simulate regens: age everyone in the pool to retirement and replenish.
   G.staffPool.forEach((s) => { s.age = 71; });
   const oldIds = new Set(G.staffPool.map((s) => s.id));
   gp.replenishStaffPools();
-  assert.ok(G.staffPool.length >= 34, 'pool refilled to the floor');
+  for (const type of ['coach', 'physio', 'psychologist']) {
+    const count = G.staffPool.filter((s) => s.type === type).length;
+    const policy = gp.staffMarketPolicy(type, G.teams.length, G.season, G.countryId);
+    assert.ok(count >= policy.floor && count <= policy.hardCap, `${type} pool stays safely available`);
+    assert.notEqual(count, 80, `${type} does not snap to the old quota`);
+  }
   assert.ok(G.staffPool.every((s) => !oldIds.has(s.id)), 'retired pool staff replaced by fresh regens');
 });
 
