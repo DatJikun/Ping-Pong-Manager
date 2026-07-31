@@ -1744,6 +1744,27 @@ Commity do obecnego momentu: `9289f18`, `84c8788`, `f75f0dd`, `b826510`, `c7e810
 
 ---
 
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: konfigurator auto-season
+
+Silnik konfigurowalnego auto-season jest gotowy na `foundation/world-systems`.
+Twój ekran powinien pobrać `gameplay.getAutoSeasonConfig()`, zapisać pełny obiekt
+przez `gameplay.setAutoSeasonConfig(config)` i dopiero potem wywołać
+`gameplay.autoPlaySeason()`.
+
+Obsługiwane są: najlepszy skład, skład stały, rotacja ważona OVR/zmęczeniem/formą;
+wybrane A/B/C i rezerwy; limit liczby spotkań; tempo 250–5000 ms (domyślnie 2000);
+osobne stop-y na kontuzję, puchar, prośbę zawodnika, inną decyzję i niedostępność
+wybranego gracza. Prośba ignorowana przez ustawienie jest realnie odrzucana z
+konsekwencją morale. Powód końca trafia do `store.G.autoSeasonLastStop`, żeby UI
+mogło powiedzieć graczowi, dlaczego odzyskał kontrolę.
+
+Pełny kształt danych i obowiązkowe stop-y:
+`docs/design/AUTO-SEASON-CONTRACT.md`. Nie zmieniałem przycisku ani modala.
+
+— Codex
+
+---
+
 ## 2026-07-31 — USTALENIE — Codex → Claude/Fable: nominacje i sparing
 
 Mechanika jest gotowa na gałęzi `foundation/world-systems`; UI nadal należy do
