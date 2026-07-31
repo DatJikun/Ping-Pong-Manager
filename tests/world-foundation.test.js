@@ -54,3 +54,35 @@ test('every generated staff profession uses a credible shared 0..100 quality sca
     assert.ok(stats.max >= 75, `${type} can produce an elite candidate: ${JSON.stringify(stats)}`);
   }
 });
+
+test('fresh first-division clubs employ credible staff and outclass the second division', () => {
+  for (const country of ['PL', 'DE', 'CN', 'JP', 'SE', 'KR']) {
+    const g = boot(740);
+    g.PPM.gameplay.newGame(0, country);
+    const G = g.PPM.state.G;
+    const gp = g.PPM.gameplay;
+    const leagueOf = (staff) => G.teams.find((team) => team.id === staff.teamId)?.league;
+    const roleRatings = (type, league) => G.staff
+      .filter((staff) => staff.type === type && leagueOf(staff) === league)
+      .map(gp.staffOvr);
+
+    const coaches = distribution(roleRatings('coach', 1));
+    const physios = distribution(roleRatings('physio', 1));
+    assert.ok(coaches.p10 >= 35, `${country} L1 avoids implausible bottom-tier coaches: ${JSON.stringify(coaches)}`);
+    assert.ok(coaches.median >= 52, `${country} L1 coach median is credible: ${JSON.stringify(coaches)}`);
+    assert.ok(physios.p10 >= 30, `${country} L1 avoids implausible bottom-tier physios: ${JSON.stringify(physios)}`);
+    assert.ok(physios.median >= 45, `${country} L1 physio median is credible: ${JSON.stringify(physios)}`);
+
+    const teamStaffAverage = (team) => {
+      const ratings = G.staff
+        .filter((staff) => staff.teamId === team.id && ['coach', 'physio', 'psychologist'].includes(staff.type))
+        .map(gp.staffOvr);
+      return ratings.length ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length : 0;
+    };
+    const l1 = G.teams.filter((team) => team.league === 1 && !team.isPlayer).map(teamStaffAverage);
+    const l2 = G.teams.filter((team) => team.league === 2).map(teamStaffAverage);
+    const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
+    assert.ok(mean(l1) >= mean(l2) + 6,
+      `${country} L1 staff should be materially stronger than L2 (${mean(l1).toFixed(1)} vs ${mean(l2).toFixed(1)})`);
+  }
+});
