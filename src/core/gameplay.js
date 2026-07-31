@@ -2548,6 +2548,14 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
   ensurePlayerMeta(ph);ensurePlayerMeta(pa);
   const homeProfile=buildPointSimProfile(ph,hCoach);
   const awayProfile=buildPointSimProfile(pa,aCoach);
+  // Team-only match preparation is intentionally tiny. A well-built bench can
+  // decide a close rubber, but it cannot turn a weak player into a star.
+  const homePreparationBonus=clamp(Number(duelOpts?.homePreparationBonus)||0,0,1.2);
+  const awayPreparationBonus=clamp(Number(duelOpts?.awayPreparationBonus)||0,0,1.2);
+  ['baseATK','baseDEF','baseSRV','baseMEN'].forEach(key=>{
+    homeProfile[key]+=homePreparationBonus;
+    awayProfile[key]+=awayPreparationBonus;
+  });
   const styleEdge=getStyleEdge(ph.playStyle,pa.playStyle);
   // Apply counter once as a modest home-relative lift (do NOT also subtract the
   // full edge from away — that doubled the gap and inverted large OVR favorites).
@@ -2604,7 +2612,8 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
     }
     firstServer=firstServer==='home'?'away':'home';
   }
-  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4)};
+  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4),
+    preparation:{home:homePreparationBonus,away:awayPreparationBonus}};
 }
 
 // ── Real match protocol (owner 2026-07-02, per the league dossier) ─────────────
@@ -2613,23 +2622,81 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
 //   G4: A vs X — either side may field a reserve instead (reserves enter from G4)
 //   G5: DOUBLES — the board-1 nominee (A/X) may NOT play the double; pairs are B+C / Y+Z.
 // Teams nominate 3 base players + up to 2 reserves before the match.
+function matchNominationRules(countryId=store.G?.countryId){
+  const format=(typeof LEAGUE_FORMATS!=='undefined'&&LEAGUE_FORMATS[countryId])||getLeagueFormat();
+  const maxReserves=format.protocol==='superliga'?2:0;
+  return{
+    protocol:format.protocol,
+    requiredBase:3,
+    maxReserves,
+    recommendedTotal:3+maxReserves,
+    reservesUsedInMatch:maxReserves>0,
+  };
+}
 function autoNomination(teamId){
+  const rules=matchNominationRules();
   const healthy=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&p.role!=='youth');
   const starters=healthy.filter(p=>p.role==='starter').sort((a,b)=>(teamId===store.G.myTeamId?(a.boardOrder??99)-(b.boardOrder??99):0)||ovr(b)-ovr(a));
   const bench=healthy.filter(p=>p.role!=='starter').sort((a,b)=>ovr(b)-ovr(a));
   const ordered=[...starters,...bench];
-  return{base:ordered.slice(0,3),reserves:ordered.slice(3,5)};
+  return{base:ordered.slice(0,rules.requiredBase),reserves:ordered.slice(rules.requiredBase,rules.requiredBase+rules.maxReserves)};
 }
 // The player's one-shot nomination from the pre-match modal (consumed per match).
 function getMatchNomination(teamId){
   const nom=store.G.matchNomination;
-  if(teamId===store.G.myTeamId&&nom&&nom.season===store.G.season){
+  const rules=matchNominationRules();
+  if(teamId===store.G.myTeamId&&nom&&nom.season===store.G.season&&nom.matchday===store.G.matchday){
     const byId=id=>store.G.players.find(p=>p.id===id&&p.teamId===teamId&&!p.retired&&!(p.injuredFor>0));
     const base=(nom.base||[]).map(byId).filter(Boolean);
     const reserves=(nom.reserves||[]).map(byId).filter(Boolean);
-    if(base.length===3)return{base,reserves:reserves.slice(0,2)};
+    if(base.length===rules.requiredBase)return{base,reserves:reserves.slice(0,rules.maxReserves)};
   }
   return autoNomination(teamId);
+}
+
+// A readable contract shared by seasonal development and future squad UI.
+// Reserves and academy players are the day-to-day sparring group; mentors may
+// belong to any squad role. Injured players cannot currently contribute.
+function getSparringProfile(teamId){
+  const squad=store.G.players.filter(p=>p.teamId===teamId&&!p.retired);
+  const partners=squad.filter(p=>(p.role==='reserve'||p.role==='youth')&&!(p.injuredFor>0));
+  const averageOvr=partners.length?Number((partners.reduce((sum,p)=>sum+ovrBase(p),0)/partners.length).toFixed(1)):0;
+  const depthFactor=clamp(partners.length/6,0,1);
+  const qualityFactor=partners.length?clamp(averageOvr/70,0.3,1.2):0;
+  const mentorCount=squad.filter(p=>!(p.injuredFor>0)&&p.traits?.includes('MENTOR')).length;
+  const developmentMultiplier=Number((1+depthFactor*qualityFactor*0.18+Math.min(3,mentorCount)*0.10).toFixed(3));
+  return{
+    partnerCount:partners.length,
+    averageOvr,
+    mentorCount,
+    styles:[...new Set(partners.map(p=>p.playStyle).filter(Boolean))],
+    depthFactor:Number(depthFactor.toFixed(3)),
+    qualityFactor:Number(qualityFactor.toFixed(3)),
+    developmentMultiplier,
+    developmentBonusPct:Number(((developmentMultiplier-1)*100).toFixed(1)),
+  };
+}
+
+// Healthy sparring partners who reproduce the likely opponent styles create a
+// modest preparation edge. The 1.2 OVR cap keeps quality and form dominant.
+function getMatchPreparation(teamId,opponentTeamId){
+  const opponentStyles=[...new Set(autoNomination(opponentTeamId).base.map(p=>p.playStyle).filter(Boolean))];
+  const partners=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&(p.role==='reserve'||p.role==='youth'));
+  const partnerStyles=new Set(partners.map(p=>p.playStyle).filter(Boolean));
+  const coveredStyles=opponentStyles.filter(style=>partnerStyles.has(style));
+  const usefulPartners=partners.filter(p=>coveredStyles.includes(p.playStyle));
+  const usefulAverage=usefulPartners.length?usefulPartners.reduce((sum,p)=>sum+ovrBase(p),0)/usefulPartners.length:0;
+  const qualityFactor=usefulPartners.length?clamp(usefulAverage/70,0.3,1.2):0;
+  const ratingBonus=Number(Math.min(1.2,coveredStyles.length*0.3*qualityFactor).toFixed(2));
+  return{
+    targetStyles:opponentStyles,
+    targetStyleCount:opponentStyles.length,
+    coveredStyles,
+    coveredStyleCount:coveredStyles.length,
+    coveragePct:opponentStyles.length?Math.round(coveredStyles.length/opponentStyles.length*100):0,
+    usefulPartnerCount:usefulPartners.length,
+    ratingBonus,
+  };
 }
 // Virtual doubles pair: averaged stats + a small chemistry bonus for mixed styles.
 function makeDoublesPair(p1,p2){
@@ -2645,6 +2712,7 @@ function makeDoublesPair(p1,p2){
 }
 function simTeamMatch(homeId,awayId,isCup){
   const hN=getMatchNomination(homeId),aN=getMatchNomination(awayId);
+  const preparation={home:getMatchPreparation(homeId,awayId),away:getMatchPreparation(awayId,homeId)};
   // consume the player's one-shot nomination once it fed a match involving them
   if(store.G.matchNomination&&(homeId===store.G.myTeamId||awayId===store.G.myTeamId))store.G.matchNomination=null;
   // Forfeit safety: fewer than 3 eligible players = walkower 0:3 (never crash).
@@ -2652,7 +2720,7 @@ function simTeamMatch(homeId,awayId,isCup){
     const bothShort=hN.base.length<3&&aN.base.length<3;
     const homeWin=!bothShort&&aN.base.length<3;
     const hW=bothShort?0:(homeWin?3:0),aW=bothShort?0:(homeWin?0:3);
-    return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin,isDraw:bothShort,score:`${hW}:${aW}`,matchups:[],homePoints:0,awayPoints:0,tiebreak:null,forfeit:true};
+    return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin,isDraw:bothShort,score:`${hW}:${aW}`,matchups:[],homePoints:0,awayPoints:0,tiebreak:null,forfeit:true,preparation};
   }
   const hCoach=getCoach(homeId),aCoach=getCoach(awayId);
   const matchups=[];let hW=0,aW=0;
@@ -2662,7 +2730,8 @@ function simTeamMatch(homeId,awayId,isCup){
   // Per-league protocol (owner dossier 2026-07-03): the game order, set rules and
   // reserve usage all come from the country's real league format.
   const FMT=getLeagueFormat();
-  const duelOpts={goldenPoint:!!FMT.goldenPoint,deciderFrom:FMT.deciderFrom||0,lastSetTo:FMT.lastSetTo||0,lastSetWinBy:FMT.lastSetWinBy||2};
+  const duelOpts={goldenPoint:!!FMT.goldenPoint,deciderFrom:FMT.deciderFrom||0,lastSetTo:FMT.lastSetTo||0,lastSetWinBy:FMT.lastSetWinBy||2,
+    homePreparationBonus:preparation.home.ratingBonus,awayPreparationBonus:preparation.away.ratingBonus};
   // G4 (superliga protocol): a reserve may replace the double-duty board-1 player.
   const pickG4=(nom,dflt)=>{
     const res=nom.reserves[0];
@@ -2689,7 +2758,7 @@ function simTeamMatch(homeId,awayId,isCup){
       {h:[A],a:[X],label:'S1',opts:duelOpts},
       {h:[B],a:[Y],label:'S2',opts:duelOpts},
       {h:[C],a:[Z],label:'S3',opts:duelOpts},
-      {h:[A],a:[X],label:'VICTORY MATCH',opts:{bestOf:1}},
+      {h:[A],a:[X],label:'VICTORY MATCH',opts:{bestOf:1,homePreparationBonus:duelOpts.homePreparationBonus,awayPreparationBonus:duelOpts.awayPreparationBonus}},
     ];
   }else{
     // superliga/TTBL: G1 A-Y, G2 B-X, G3 C-Z, G4 with reserves, G5 double (B+C).
@@ -2774,7 +2843,7 @@ function simTeamMatch(homeId,awayId,isCup){
   // First-to-3 protocol can never tie — the doubles decides a 2:2. No draws.
   const homePoints=matchups.reduce((sum,m)=>sum+(m.micro?.homePoints||0),0);
   const awayPoints=matchups.reduce((sum,m)=>sum+(m.micro?.awayPoints||0),0);
-  return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin:hW>aW,isDraw:false,score:`${hW}:${aW}`,matchups,homePoints,awayPoints,tiebreak:null};
+  return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin:hW>aW,isDraw:false,score:`${hW}:${aW}`,matchups,homePoints,awayPoints,tiebreak:null,preparation};
 }
 
 // ── BACKGROUND CAREER GENERATION (owner backlog #1, 2026-07-03) ───────────────
@@ -2941,7 +3010,7 @@ function openMatchNomination(onConfirm){
   _nomState={sel:def.slice(0,cap),onConfirm};
   renderNominationModal();
 }
-function nominationSlotCount(){return getLeagueFormat().protocol==='superliga'?5:3;}
+function nominationSlotCount(){return matchNominationRules().recommendedTotal;}
 function protocolDescription(){
   const f=getLeagueFormat();
   if(f.protocol==='olympic')return t('match.protocol.olympic',{label:f.label});
@@ -3279,14 +3348,7 @@ function applyGrowth(){
   // squad's training. Bonus scales with reserve/academy DEPTH (up to 6) × their
   // quality → up to ~+18% development. Makes a 4+6 roster genuinely worth the wages.
   const sparringMultByTeam=new Map();
-  store.G.teams.forEach(t=>{
-    const res=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&(p.role==='reserve'||p.role==='youth'));
-    const depth=clamp(res.length/6,0,1);
-    const quality=res.length?clamp((res.reduce((s,p)=>s+ovrBase(p),0)/res.length)/70,0.3,1.2):0;
-    const mentors=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&p.traits?.includes('MENTOR')).length;
-    // MENTOR is a real sparring lever (~+10% dev per mentor, capped influence via count).
-    sparringMultByTeam.set(t.id,1+depth*quality*0.18+Math.min(3,mentors)*0.10);
-  });
+  store.G.teams.forEach(t=>sparringMultByTeam.set(t.id,getSparringProfile(t.id).developmentMultiplier));
   // Hall bonus per team (player uses G.infraHall; AI uses team.infraHall) — parity.
   const hallMultByTeam=new Map();
   store.G.teams.forEach(t=>{
@@ -5928,5 +5990,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 })();
