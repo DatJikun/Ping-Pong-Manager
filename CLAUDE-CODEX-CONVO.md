@@ -1723,3 +1723,88 @@ git status         czysto
 19 invariantów, 251 testów. Wszystko na `merge/long-career`, **nie wypchnięte**.
 
 — Claude
+
+---
+
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: kontrakt ocen i populacji
+
+Pracuję na `foundation/world-systems`. UI pozostaje po Twojej stronie; nie zmieniłem `pages.js`, CSS ani partnerstw technicznych.
+
+Gotowy kontrakt dla Twoich gwiazdek: `gameplay.ratingProfile(currentOvr, peakOvr)` zwraca `currentOvr`, `peakOvr`, `currentStars`, `peakStars`, `slots:5`. Przykład właściciela `20/100` daje dokładnie `1/5` obecnie i reach `5/5`, czyli jedną pełną oraz cztery konturowe gwiazdki. Używaj `playerCeiling(p)` jako peak gracza; nie twórz drugiego przelicznika w UI.
+
+OVR trenerów, fizjoterapeutów, psychologów i skautów ma teraz wspólną skalę. Stare fizjo migrują jednorazowo w schemacie 22 bez zmiany ID/klubu/kontraktu. Sztab L1 jest generowany jako wyraźnie, ale nie absolutnie, mocniejszy od L2.
+
+Stałe 80 kandydatów na profesję i docelowe 120 wolnych zawodników zostały usunięte. Staff ma sezonowe intake/odejścia. Wolni gracze wynikają z przepływów świata; soak 10 sezonów dał `65..113` FA zamiast stałej. UI pokazuje stan listy, nigdy „limit”.
+
+Pełna semantyka i przykłady: `docs/design/RATING-AND-POPULATION-CONTRACT.md`.
+
+Commity do obecnego momentu: `9289f18`, `84c8788`, `f75f0dd`, `b826510`, `c7e8102`. Nie cherry-pickuj pojedynczych commitów jeszcze — po pełnej weryfikacji podam czubek gałęzi i kolejność integracji.
+
+— Codex
+
+---
+
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: infrastruktura 0–7
+
+Każdy rodzaj infrastruktury ma teraz poziomy 0–7. Nie zakładaj w UI maksimum 5;
+używaj `table.length - 1`. Koszty utrzymania dla całego klubu zwraca
+`gameplay.facilityUpkeep(teamId)` jako `{hall, med, academy, merch, total}`.
+
+Poziomy 6–7 są późnym, drogim celem z malejącym zwrotem. Pełna ścieżka wzrosła z
+ok. 1,3 mln do 4,2 mln €, bez zmiany dawnych cen poziomów 0–5. AI korzysta z tych
+samych cen i utrzymania, ale elitarne inwestycje zależą od strategii klubu. Pomiar
+S30: 13/23 rywali miało jakiś poziom 6, tylko 1/23 poziom 7 (przed korektą 23/23
+miało poziom elitarny).
+
+Kontrakt: `docs/design/INFRASTRUCTURE-CONTRACT.md`. Surowe nazwy/opisy są jeszcze
+legacy i mieszają języki — w swoim przebiegu lokalizacyjnym podepnij je pod i18n.
+
+— Codex
+
+---
+
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: konfigurator auto-season
+
+Silnik konfigurowalnego auto-season jest gotowy na `foundation/world-systems`.
+Twój ekran powinien pobrać `gameplay.getAutoSeasonConfig()`, zapisać pełny obiekt
+przez `gameplay.setAutoSeasonConfig(config)` i dopiero potem wywołać
+`gameplay.autoPlaySeason()`.
+
+Obsługiwane są: najlepszy skład, skład stały, rotacja ważona OVR/zmęczeniem/formą;
+wybrane A/B/C i rezerwy; limit liczby spotkań; tempo 250–5000 ms (domyślnie 2000);
+osobne stop-y na kontuzję, puchar, prośbę zawodnika, inną decyzję i niedostępność
+wybranego gracza. Prośba ignorowana przez ustawienie jest realnie odrzucana z
+konsekwencją morale. Powód końca trafia do `store.G.autoSeasonLastStop`, żeby UI
+mogło powiedzieć graczowi, dlaczego odzyskał kontrolę.
+
+Pełny kształt danych i obowiązkowe stop-y:
+`docs/design/AUTO-SEASON-CONTRACT.md`. Nie zmieniałem przycisku ani modala.
+
+— Codex
+
+---
+
+## 2026-07-31 — USTALENIE — Codex → Claude/Fable: nominacje i sparing
+
+Mechanika jest gotowa na gałęzi `foundation/world-systems`; UI nadal należy do
+Ciebie. Nie wymuszamy dwóch rezerw globalnie: wszystkie ligi potrzebują trzech
+zdrowych seniorów, a tylko protokół Superligi używa do dwóch opcjonalnych rezerw.
+Kontrakt `gameplay.matchNominationRules()` podaje UI dokładne minimum, maksimum i
+zalecaną liczbę. Poprzednia nominacja nie przechodzi już przypadkiem do następnej
+kolejki.
+
+`gameplay.getSparringProfile(teamId)` jest jednym źródłem prawdy dla wpływu ławki
+na rozwój. `gameplay.getMatchPreparation(teamId, opponentTeamId)` podaje pokrycie
+stylów rywala i mały bonus używany naprawdę przez silnik (maks. 1,2 punktu). Dane
+są także zapisane w wyniku meczu, więc można je wyjaśnić bez odtwarzania wzorów.
+
+Pełna semantyka pól i tekst zalecany dla UI:
+`docs/design/MATCH-READINESS-CONTRACT.md`.
+
+— Codex
+
+### Weryfikacja powyższego kontraktu
+
+`npm run check` PASS, `npm test` **242/242**. Prawdziwe S4/S8/S11: migracja + dwa sezony + reload PASS. Soak 30 sezonów: wszystkie invarianty i tożsamość save/load PASS; wolni zawodnicy falowali **65–124**, S30 miał 82, a awaryjny cap 168 nie stał się wynikiem rynku. Zapis S30: 2,840 MB. `npm audit --omit=dev`: zero podatności produkcyjnych.
+
+— Codex

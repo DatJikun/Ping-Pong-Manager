@@ -274,21 +274,25 @@ const TECH_PARTNERSHIPS=[
 ];
 
 const INFRA_HALL=[
-  {level:0,name:'Brak hali',desc:'Treningi na podw\u00f3rku',trainingBonus:0,cost:0,capacity:50},
-  {level:1,name:'Sala sportowa',desc:'+10% efektywno\u015bci trenera',trainingBonus:0.10,cost:12000,capacity:150},
-  {level:2,name:'Profesjonalna hala',desc:'+25% efektywno\u015bci trenera',trainingBonus:0.25,cost:28000,capacity:300},
-  {level:3,name:'Centrum olimpijskie',desc:'+50% efektywno\u015bci trenera',trainingBonus:0.50,cost:60000,capacity:500},
-  {level:4,name:'Narodowy kampus TT',desc:'+65% efektywno\u015bci trenera i lepsze przygotowanie meczowe',trainingBonus:0.65,cost:95000,capacity:850},
-  {level:5,name:'Hyper Performance Dome',desc:'+80% efektywno\u015bci trenera i topowe warunki przygotowa\u0144',trainingBonus:0.80,cost:145000,capacity:1300},
+  {level:0,name:'Brak hali',desc:'Treningi na podw\u00f3rku',trainingBonus:0,cost:0,upkeep:0,capacity:50},
+  {level:1,name:'Sala sportowa',desc:'+10% efektywno\u015bci trenera',trainingBonus:0.10,cost:12000,upkeep:1000,capacity:150},
+  {level:2,name:'Profesjonalna hala',desc:'+25% efektywno\u015bci trenera',trainingBonus:0.25,cost:28000,upkeep:2500,capacity:300},
+  {level:3,name:'Centrum olimpijskie',desc:'+50% efektywno\u015bci trenera',trainingBonus:0.50,cost:60000,upkeep:5000,capacity:500},
+  {level:4,name:'Narodowy kampus TT',desc:'+65% efektywno\u015bci trenera i lepsze przygotowanie meczowe',trainingBonus:0.65,cost:95000,upkeep:8000,capacity:850},
+  {level:5,name:'Hyper Performance Dome',desc:'+80% efektywno\u015bci trenera i topowe warunki przygotowa\u0144',trainingBonus:0.80,cost:145000,upkeep:12000,capacity:1300},
+  {level:6,name:'Performance Institute',desc:'+90% efektywno\u015bci trenera; projekt dla sta\u0142ego klubu czo\u0142\u00f3wki',trainingBonus:0.90,cost:260000,upkeep:20000,capacity:1800},
+  {level:7,name:'World Training Campus',desc:'+100% efektywno\u015bci trenera; ko\u0144cowy etap rozwoju zaplecza',trainingBonus:1.00,cost:480000,upkeep:32000,capacity:2500},
 ];
 
 const INFRA_MED=[
-  {level:0,name:'Brak centrum med.',desc:'Standardowy czas leczenia',injBonus:0,cost:0},
-  {level:1,name:'Gabinet medyczny',desc:'-25% czasu kontuzji',injBonus:0.25,cost:8000},
-  {level:2,name:'Centrum rehabilitacji',desc:'-50% czasu kontuzji',injBonus:0.50,cost:20000},
-  {level:3,name:'Centrum medycyny sportu',desc:'-50% czasu kontuzji + mniejsze ryzyko nawrotu',injBonus:0.50,cost:45000},
-  {level:4,name:'Laboratorium przeci\u0105\u017ce\u0144',desc:'-60% czasu kontuzji i wyra\u017anie mniejsze ryzyko urazu',injBonus:0.60,cost:78000},
-  {level:5,name:'Instytut regeneracji',desc:'-70% czasu kontuzji i pe\u0142ne zaplecze odnowy',injBonus:0.70,cost:118000},
+  {level:0,name:'Brak centrum med.',desc:'Standardowy czas leczenia',injBonus:0,cost:0,upkeep:0},
+  {level:1,name:'Gabinet medyczny',desc:'-25% czasu kontuzji',injBonus:0.25,cost:8000,upkeep:1000},
+  {level:2,name:'Centrum rehabilitacji',desc:'-50% czasu kontuzji',injBonus:0.50,cost:20000,upkeep:2000},
+  {level:3,name:'Centrum medycyny sportu',desc:'-50% czasu kontuzji + mniejsze ryzyko nawrotu',injBonus:0.50,cost:45000,upkeep:4000},
+  {level:4,name:'Laboratorium przeci\u0105\u017ce\u0144',desc:'-60% czasu kontuzji i wyra\u017anie mniejsze ryzyko urazu',injBonus:0.60,cost:78000,upkeep:6000},
+  {level:5,name:'Instytut regeneracji',desc:'-70% czasu kontuzji i pe\u0142ne zaplecze odnowy',injBonus:0.70,cost:118000,upkeep:9000},
+  {level:6,name:'Biomechanics Lab',desc:'-76% czasu kontuzji; prewencja oparta na analizie obci\u0105\u017ce\u0144',injBonus:0.76,cost:220000,upkeep:14000},
+  {level:7,name:'Elite Recovery Institute',desc:'-82% czasu kontuzji; najwy\u017cszy standard regeneracji',injBonus:0.82,cost:400000,upkeep:22000},
 ];
 
 // Academy levels (single source of truth \u2014 gameplay.js reads THIS, not a copy).
@@ -304,15 +308,19 @@ const INFRA_ACADEMY=[
   {level:3,name:'Elitarna akademia',desc:'Juniorzy OVR 35-52, peak do ~80',potentialBonus:0.50,cost:55000,upkeep:10000,ovrLo:35,ovrHi:52,ceilLo:64,ceilHi:80,devBonus:0.10},
   {level:4,name:'Centrum rozwoju talent\u00f3w',desc:'Juniorzy OVR 38-58, peak do ~86',potentialBonus:0.64,cost:90000,upkeep:18000,ovrLo:38,ovrHi:58,ceilLo:68,ceilHi:86,devBonus:0.16},
   {level:5,name:'Narodowa ku\u017ania mistrz\u00f3w',desc:'Juniorzy OVR 42-64, peak do ~92',potentialBonus:0.78,cost:138000,upkeep:30000,ovrLo:42,ovrHi:64,ceilLo:72,ceilHi:92,devBonus:0.22},
+  {level:6,name:'International Talent Centre',desc:'Juniorzy OVR 45-66, peak do ~94',potentialBonus:0.86,cost:280000,upkeep:50000,ovrLo:45,ovrHi:66,ceilLo:76,ceilHi:94,devBonus:0.26},
+  {level:7,name:'World Elite Academy',desc:'Juniorzy OVR 48-68, peak do ~96',potentialBonus:0.92,cost:520000,upkeep:80000,ovrLo:48,ovrHi:68,ceilLo:80,ceilHi:96,devBonus:0.30},
 ];
 
 const INFRA_MERCH=[
-  {level:0,name:'Brak sklepu',desc:'Brak przychod\u00f3w z merchandisingu',income:0,cost:0},
-  {level:1,name:'Stragan kibica',desc:'Skromne gad\u017cety. +3% od marketability klubu',income:0.03,cost:15000},
-  {level:2,name:'Sklep Online',desc:'Koszulki i pami\u0105tki. +6% od marketability klubu',income:0.06,cost:32000},
-  {level:3,name:'Megasklep',desc:'Pe\u0142na oferta. +10% od marketability klubu',income:0.10,cost:70000},
-  {level:4,name:'Platforma lifestyle',desc:'Kolekcje klubowe. +14% od marketability klubu',income:0.14,cost:105000},
-  {level:5,name:'Global fan store',desc:'Mi\u0119dzynarodowy sklep premium. +18% od marketability klubu',income:0.18,cost:150000},
+  {level:0,name:'Brak sklepu',desc:'Brak przychod\u00f3w z merchandisingu',income:0,cost:0,upkeep:0},
+  {level:1,name:'Stragan kibica',desc:'Skromne gad\u017cety. +3% od marketability klubu',income:0.03,cost:15000,upkeep:500},
+  {level:2,name:'Sklep Online',desc:'Koszulki i pami\u0105tki. +6% od marketability klubu',income:0.06,cost:32000,upkeep:1000},
+  {level:3,name:'Megasklep',desc:'Pe\u0142na oferta. +10% od marketability klubu',income:0.10,cost:70000,upkeep:2000},
+  {level:4,name:'Platforma lifestyle',desc:'Kolekcje klubowe. +14% od marketability klubu',income:0.14,cost:105000,upkeep:4000},
+  {level:5,name:'Global fan store',desc:'Mi\u0119dzynarodowy sklep premium. +18% od marketability klubu',income:0.18,cost:150000,upkeep:7000},
+  {level:6,name:'International Commerce Hub',desc:'Sprzeda\u017c mi\u0119dzynarodowa. +22% od marketability klubu',income:0.22,cost:270000,upkeep:11000},
+  {level:7,name:'Global Brand Network',desc:'Pe\u0142na sie\u0107 licencyjna. +26% od marketability klubu',income:0.26,cost:470000,upkeep:17000},
 ];
 
 const PR_DIRECTORS=[

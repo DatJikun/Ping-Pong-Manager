@@ -12,12 +12,13 @@ const makeFreeAgent = (g, age = 30) => {
   return p;
 };
 
-test('population cleanup caps free agents and removes every dangling player reference', () => {
+test('population cleanup uses only an emergency ceiling and removes every dangling player reference', () => {
   const g = boot(2001);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
 
-  while (G.players.filter((p) => p.teamId === null && !p.retired).length < 130) {
+  const emergencyCap = g.PPM.gameplay.freeAgentMarketPolicy(G.teams.length, G.season, G.countryId, 0).emergencyCap;
+  while (G.players.filter((p) => p.teamId === null && !p.retired).length < emergencyCap + 10) {
     makeFreeAgent(g);
   }
 
@@ -39,7 +40,8 @@ test('population cleanup caps free agents and removes every dangling player refe
   g.PPM.gameplay.pruneCareerData();
 
   const freeAgents = G.players.filter((p) => !p.retired && p.teamId === null);
-  assert.equal(freeAgents.length, G.teams.length * 5, 'five market players per active club');
+  assert.equal(freeAgents.length, emergencyCap, 'only the emergency safety ceiling trims an oversized market');
+  assert.notEqual(freeAgents.length, G.teams.length * 5, 'market no longer snaps to five players per club');
   for (const id of removedIds) {
     assert.ok(!G.players.some((p) => p.id === id), `removed player ${id} left the active world`);
     assert.equal(G.playerHistory[id], undefined, `history ${id} was deleted`);

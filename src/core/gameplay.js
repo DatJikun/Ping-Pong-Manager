@@ -612,6 +612,14 @@ function staffOvr(s){
   if(s.type==='pr') return clamp(Math.round(((s.bonus||0)*900)+((s.cooldownReduce||0)*8))+ageMod,10,99);
   return 50;
 }
+// One rating language for every screen. The UI owns the drawing, while the
+// simulation owns the meaning: five slots span the full 0..100 OVR scale and
+// potential can extend the current fill but can never sit below it.
+function ratingProfile(currentOvr,peakOvr=currentOvr){
+  const current=clamp(Number(currentOvr)||0,0,100);
+  const peak=clamp(Math.max(current,Number(peakOvr)||current),0,100);
+  return {currentOvr:current,peakOvr:peak,currentStars:current/20,peakStars:peak/20,slots:5};
+}
 // v13: Progressive staff OVR colors (more granular)
 function staffOvrColor(o){if(o>=85)return'#18a050';if(o>=75)return'var(--g)';if(o>=65)return'#50a030';if(o>=55)return'var(--gold)';if(o>=45)return'var(--orange)';if(o>=35)return'#d06020';return'var(--r)';}
 // sleep(), rnd() and clamp() are provided globally by src/core/utils.js.
@@ -823,7 +831,17 @@ function calcLeagueMaint(){const base=myLeague()===1?32000:13000;return base+(st
 // Yearly academy upkeep (NEW): scales with level (€2k→€30k). Charged every season-
 // end as part of maintenance. Downgrading the academy is the escape valve in a cash
 // crisis (downgradeInfra).
-function academyUpkeep(){const lv=clamp(store.G.infraAcademy||0,0,INFRA_ACADEMY.length-1);return INFRA_ACADEMY[lv].upkeep||0;}
+function facilityUpkeep(teamId=store.G?.myTeamId){
+  const team=store.G?.teams?.find(t=>t.id===teamId);
+  const mine=teamId===store.G?.myTeamId;
+  const level=(field,table)=>clamp(mine?(store.G?.[field]||0):(team?.[field]||0),0,table.length-1);
+  const hall=INFRA_HALL[level('infraHall',INFRA_HALL)].upkeep||0;
+  const med=INFRA_MED[level('infraMed',INFRA_MED)].upkeep||0;
+  const academy=INFRA_ACADEMY[level('infraAcademy',INFRA_ACADEMY)].upkeep||0;
+  const merch=INFRA_MERCH[level('infraMerchandising',INFRA_MERCH)].upkeep||0;
+  return{hall,med,academy,merch,total:hall+med+academy+merch};
+}
+function academyUpkeep(){return facilityUpkeep(store.G?.myTeamId).academy;}
 function snap(p){const s={season:store.G.season,age:p.age,ovr:ovr(p),baseOvr:ovrBase(p)};SK.forEach(k=>s[k]=p[k]);return s;}
 function ensureStaffMeta(s){
   if(!s)return s;
@@ -1671,11 +1689,13 @@ function staffEffectiveBonus(s){
   const o=staffOvr(s);
   return Math.pow(o/100,2.0); // exponential multiplier 0..1
 }
-function genStaff(type,countryId=null){
+function genStaff(type,countryId=null,options={}){
   const id=ui._pid++;
   // Owner 2026-07-02: staff OVR must vary WIDELY. Quality is a continuous skewed
   // roll (lots of journeymen, a real tail of elites) instead of 3 tight bands.
-  const q=Math.pow(Math.random(),1.35);          // 0..1, skewed toward low
+  const q=typeof options.quality==='number'
+    ?clamp(options.quality,0,1)
+    :Math.pow(Math.random(),1.35);               // 0..1, skewed toward low
   const level=q>0.72?3:q>0.38?2:1;               // legacy 3-band label kept for UI
   const baseVal=Math.round(20+q*62);             // core quality ~20..82
   const staffAge=28+rnd(0,40);
@@ -1706,15 +1726,15 @@ function genStaff(type,countryId=null){
     extra.accuracy=Math.max(15,Math.min(96,baseVal+rnd(-12,18)));
     extra.network=Math.max(10,Math.min(96,baseVal+rnd(-16,20)));
   }else if(type==='physio'){
-    const pq=Math.round(6+q*46); // physio scale ~6..52
-    extra.injReduction=Math.max(5,Math.min(60,pq+rnd(-4,8)));
-    extra.recovery=Math.max(5,Math.min(60,pq+rnd(-6,10)));
-    extra.prevention=Math.max(5,Math.min(50,Math.round(pq*0.85)+rnd(-4,8)));
+    // All professions share one competence language. Role attributes still
+    // differ, but a 70 OVR physio now means the same calibre as a 70 OVR coach.
+    extra.injReduction=Math.max(10,Math.min(96,baseVal+rnd(-10,14)));
+    extra.recovery=Math.max(10,Math.min(96,baseVal+rnd(-12,16)));
+    extra.prevention=Math.max(10,Math.min(96,baseVal+rnd(-10,12)));
   }else if(type==='psychologist'){
-    const gq=Math.round(10+q*62); // psych scale ~10..72
-    extra.moraleBoost=Math.max(10,Math.min(85,gq+rnd(-8,12)));
-    extra.mentalTraining=Math.max(10,Math.min(85,gq+rnd(-8,10)));
-    extra.pressure=Math.max(10,Math.min(85,gq+rnd(-10,14)));
+    extra.moraleBoost=Math.max(10,Math.min(96,baseVal+rnd(-10,14)));
+    extra.mentalTraining=Math.max(10,Math.min(96,baseVal+rnd(-10,12)));
+    extra.pressure=Math.max(10,Math.min(96,baseVal+rnd(-12,16)));
   }
   const sOvr=staffOvr({type,...extra});
   const sal=type==='scout'?Math.round(staffSalary(sOvr)*1.18):staffSalary(sOvr);
@@ -1783,17 +1803,29 @@ function principalLifecycle(){
   });
   while(store.G.principalPool.length<6)store.G.principalPool.push(genPrincipal(store.G.countryId));
 }
+function clubStaffQuality(team,type){
+  if(!team||!store.G?.teams?.length)return Math.pow(Math.random(),1.35);
+  const peers=store.G.teams.filter(t=>t.league===team.league);
+  const ranked=peers
+    .map(t=>({id:t.id,strength:teamOvr(t.id)}))
+    .sort((a,b)=>a.strength-b.strength||a.id-b.id);
+  const rank=Math.max(0,ranked.findIndex(entry=>entry.id===team.id));
+  const percentile=rank/Math.max(1,ranked.length-1);
+  const leagueBase=team.league===1?0.44:0.24;
+  const roleShift=type==='coach'?0.04:type==='scout'?-0.03:0;
+  return clamp(leagueBase+percentile*0.38+roleShift+rnd(-6,6)/100,0.12,0.96);
+}
 function assignAiStaff(team){
   if(!team||team.isPlayer)return;
   ['coach','physio','psychologist'].forEach(type=>{
     if(type!=='coach'&&team.league===2&&Math.random()<0.25)return;
-    const s=genStaff(type,store.G?.countryId||'PL');
+    const s=genStaff(type,store.G?.countryId||'PL',{quality:clubStaffQuality(team,type)});
     startStaffTenure(s,team.id,store.G?.season||1);
     s.contractYears=1+rnd(0,2);
     store.G.staff.push(s);
   });
   if(Math.random()<0.65){
-    const scout=genStaff('scout',store.G?.countryId||'PL');
+    const scout=genStaff('scout',store.G?.countryId||'PL',{quality:clubStaffQuality(team,'scout')});
     startStaffTenure(scout,team.id,store.G?.season||1);
     scout.hired=true;
     scout.contractYears=1+rnd(0,2);
@@ -1842,28 +1874,80 @@ function genSponsorOffers(prestige){
   }
 }
 
-function genScoutPool(count=SCOUT_POOL_FLOOR){
-  const pool=[];for(let i=0;i<count;i++){const s=genStaff('scout',store.G?.countryId||'PL');pool.push({...s,hired:false,cost:Math.max(s.cost||0,Math.round((s.salary||0)*(1.2+s.level*0.45)))});}
+function staffMarketPolicy(type,teamCount=store.G?.teams?.length||24,season=store.G?.season||1,countryId=store.G?.countryId||'PL'){
+  const clubs=Math.max(8,Number(teamCount)||24);
+  const role=type||'coach';
+  const rng=mulberry32Seed(seedFromString(`staff-market:${countryId}:${season}:${role}`));
+  const config=role==='pr'
+    ?{base:1.02,spread:7,floor:0.58,buffer:0.65}
+    :role==='scout'
+      ?{base:1.28,spread:8,floor:0.68,buffer:0.72}
+      :{base:1.58,spread:9,floor:0.75,buffer:0.78};
+  const floor=Math.max(12,Math.round(clubs*config.floor));
+  const varied=Math.round(clubs*config.base)+(Math.floor(rng()*(config.spread*2+1))-config.spread);
+  const intakeTarget=Math.max(floor+2,varied);
+  const hardCap=intakeTarget+Math.max(12,Math.round(clubs*config.buffer));
+  return {floor,intakeTarget,hardCap};
+}
+function scoutMarketCandidate(countryId){
+  const s=genStaff('scout',countryId||store.G?.countryId||'PL');
+  return {...s,hired:false,marketSeasons:0,cost:Math.max(s.cost||0,Math.round((s.salary||0)*(1.2+s.level*0.45)))};
+}
+function genScoutPool(count=null,countryId=null){
+  const cid=countryId||store.G?.countryId||'PL';
+  const target=count==null?staffMarketPolicy('scout',store.G?.teams?.length||24,store.G?.season||1,cid).intakeTarget:count;
+  const pool=[];for(let i=0;i<target;i++)pool.push(scoutMarketCandidate(cid));
   return pool;
 }
-// Owner 2026-07-02: the staff market must stay DEEP — at least 3 candidates per
-// club in a league (≥36 total) — and regenerate: pool staff age, the old retire,
-// and fresh faces appear every season instead of the same stale handful.
-// Owner 2026-07-03: 80 candidates PER PROFESSION for the two-league pyramid.
-const STAFF_POOL_FLOOR={coach:80,physio:80,psychologist:80};
-const SCOUT_POOL_FLOOR=80;
-const PR_POOL_FLOOR=80;
+function staffMarketRetentionScore(staff){
+  return staffOvr(staff)+Math.max(0,3-(staff.marketSeasons||0))*5-Math.max(0,(staff.age||45)-62)*0.7;
+}
+function marketCandidateStays(staff,maxAge=70){
+  staff.age=(staff.age||40)+1;
+  staff.marketSeasons=(staff.marketSeasons||0)+1;
+  if(staff.age>maxAge)return false;
+  if(staff.marketSeasons<=2)return true;
+  const weak=Math.max(0,48-staffOvr(staff))/100;
+  const stale=Math.min(0.46,(staff.marketSeasons-2)*0.11);
+  const age=Math.max(0,staff.age-62)*0.025;
+  return Math.random()>=Math.min(0.78,weak+stale+age);
+}
 function replenishStaffPools(){
   const cid=store.G.countryId||'PL';
+  const teamCount=store.G.teams?.length||24;
+  const season=store.G.season||1;
   store.G.staffPool=store.G.staffPool||[];
-  // Age the market too; veterans withdraw from the job market.
-  store.G.staffPool.forEach(s=>{s.age=(s.age||40)+1;});
-  store.G.staffPool=store.G.staffPool.filter(s=>(s.age||40)<=70);
-  Object.entries(STAFF_POOL_FLOOR).forEach(([type,floor])=>{
-    while(store.G.staffPool.filter(s=>s.type===type).length<floor){
-      store.G.staffPool.push(genStaff(type,cid));
+  store.G.staffPool=store.G.staffPool.filter(s=>marketCandidateStays(s,70));
+  ['coach','physio','psychologist'].forEach(type=>{
+    const policy=staffMarketPolicy(type,teamCount,season,cid);
+    let role=store.G.staffPool.filter(s=>s.type===type);
+    if(role.length>policy.hardCap){
+      const keep=new Set(role.sort((a,b)=>staffMarketRetentionScore(b)-staffMarketRetentionScore(a)).slice(0,policy.hardCap).map(s=>s.id));
+      store.G.staffPool=store.G.staffPool.filter(s=>s.type!==type||keep.has(s.id));
+      role=store.G.staffPool.filter(s=>s.type===type);
+    }
+    while(role.length<policy.intakeTarget){
+      const fresh=genStaff(type,cid);fresh.marketSeasons=0;
+      store.G.staffPool.push(fresh);role.push(fresh);
     }
   });
+
+  const hiredScouts=(store.G.scoutPool||[]).filter(s=>s.hired||s.teamId!==null);
+  let marketScouts=(store.G.scoutPool||[]).filter(s=>!s.hired&&s.teamId===null&&marketCandidateStays(s,70));
+  const scoutPolicy=staffMarketPolicy('scout',teamCount,season,cid);
+  if(marketScouts.length>scoutPolicy.hardCap)marketScouts=marketScouts
+    .sort((a,b)=>staffMarketRetentionScore(b)-staffMarketRetentionScore(a)).slice(0,scoutPolicy.hardCap);
+  while(marketScouts.length<scoutPolicy.intakeTarget)marketScouts.push(scoutMarketCandidate(cid));
+  store.G.scoutPool=[...hiredScouts,...marketScouts];
+
+  let prs=(store.G.prDirectorPool||[]).filter(pr=>pr.teamId===null&&marketCandidateStays(pr,75));
+  const prPolicy=staffMarketPolicy('pr',teamCount,season,cid);
+  if(prs.length>prPolicy.hardCap)prs=prs
+    .sort((a,b)=>staffMarketRetentionScore(b)-staffMarketRetentionScore(a)).slice(0,prPolicy.hardCap);
+  while(prs.length<prPolicy.intakeTarget){
+    const fresh=finalizePRDirector(genPRDirector(null,cid));fresh.marketSeasons=0;prs.push(fresh);
+  }
+  store.G.prDirectorPool=prs;
 }
 function capFreeAgentProfile(p,maxOvr=85){
   if(!p)return p;
@@ -2071,9 +2155,10 @@ function newGame(clubIdx, countryId){
     players.push(p);
   }
   const staffPool=[];
-  for(let i=0;i<STAFF_POOL_FLOOR.coach;i++)staffPool.push(genStaff('coach',countryId));
-  for(let i=0;i<STAFF_POOL_FLOOR.physio;i++)staffPool.push(genStaff('physio',countryId));
-  for(let i=0;i<STAFF_POOL_FLOOR.psychologist;i++)staffPool.push(genStaff('psychologist',countryId));
+  for(const type of ['coach','physio','psychologist']){
+    const target=staffMarketPolicy(type,teams.length,1,countryId).intakeTarget;
+    for(let i=0;i<target;i++)staffPool.push(genStaff(type,countryId));
+  }
   
   const l1Ids=teams.filter(t=>t.league===1).map(t=>t.id);
   const l2Ids=teams.filter(t=>t.league===2).map(t=>t.id);
@@ -2087,7 +2172,7 @@ function newGame(clubIdx, countryId){
     clubHistory:{},
     marketShortlist:[],
     hallOfFame:[],transferMarket:[],staff:[],staffPool,
-    sponsors:[],sponsorOffers:[],scoutMissions:[],scoutResults:[],scoutPool:genScoutPool(SCOUT_POOL_FLOOR),
+    sponsors:[],sponsorOffers:[],scoutMissions:[],scoutResults:[],scoutPool:genScoutPool(staffMarketPolicy('scout',teams.length,1,countryId).intakeTarget,countryId),
     gameLog:[],
     equipBrand:null,infraHall:0,infraMed:0,infraAcademy:0,infraMerchandising:0,
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
@@ -2101,7 +2186,7 @@ function newGame(clubIdx, countryId){
     boardObjective:null,
     boardObjectiveOptions:[],
     prDirector:null,
-    prDirectorPool:Array.from({length:PR_POOL_FLOOR},()=>finalizePRDirector(genPRDirector(null,countryId))),
+    prDirectorPool:Array.from({length:staffMarketPolicy('pr',teams.length,1,countryId).intakeTarget},()=>finalizePRDirector(genPRDirector(null,countryId))),
     preSignedPlayers:[],
     pendingStaffSignings:[],
     tvRightsBase:clubIdx<12?25000:8000,
@@ -2473,6 +2558,14 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
   ensurePlayerMeta(ph);ensurePlayerMeta(pa);
   const homeProfile=buildPointSimProfile(ph,hCoach);
   const awayProfile=buildPointSimProfile(pa,aCoach);
+  // Team-only match preparation is intentionally tiny. A well-built bench can
+  // decide a close rubber, but it cannot turn a weak player into a star.
+  const homePreparationBonus=clamp(Number(duelOpts?.homePreparationBonus)||0,0,1.2);
+  const awayPreparationBonus=clamp(Number(duelOpts?.awayPreparationBonus)||0,0,1.2);
+  ['baseATK','baseDEF','baseSRV','baseMEN'].forEach(key=>{
+    homeProfile[key]+=homePreparationBonus;
+    awayProfile[key]+=awayPreparationBonus;
+  });
   const styleEdge=getStyleEdge(ph.playStyle,pa.playStyle);
   // Apply counter once as a modest home-relative lift (do NOT also subtract the
   // full edge from away — that doubled the gap and inverted large OVR favorites).
@@ -2529,7 +2622,8 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
     }
     firstServer=firstServer==='home'?'away':'home';
   }
-  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4)};
+  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4),
+    preparation:{home:homePreparationBonus,away:awayPreparationBonus}};
 }
 
 // ── Real match protocol (owner 2026-07-02, per the league dossier) ─────────────
@@ -2538,23 +2632,147 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
 //   G4: A vs X — either side may field a reserve instead (reserves enter from G4)
 //   G5: DOUBLES — the board-1 nominee (A/X) may NOT play the double; pairs are B+C / Y+Z.
 // Teams nominate 3 base players + up to 2 reserves before the match.
-function autoNomination(teamId){
+function matchNominationRules(countryId=store.G?.countryId){
+  const format=(typeof LEAGUE_FORMATS!=='undefined'&&LEAGUE_FORMATS[countryId])||getLeagueFormat();
+  const maxReserves=format.protocol==='superliga'?2:0;
+  return{
+    protocol:format.protocol,
+    requiredBase:3,
+    maxReserves,
+    recommendedTotal:3+maxReserves,
+    reservesUsedInMatch:maxReserves>0,
+  };
+}
+const AUTO_SEASON_DEFAULTS={
+  lineupMode:'best',basePlayerIds:[],reservePlayerIds:[],matchLimit:0,paceMs:2000,
+  stopOn:{injury:true,cup:false,playerRequest:false,otherDecision:true,selectedUnavailable:true},
+};
+let _autoSeasonRuntime=null;
+function normalizeAutoSeasonConfig(raw={}){
+  const ids=value=>{
+    const seen=new Set();
+    return(Array.isArray(value)?value:[]).map(Number).filter(id=>Number.isFinite(id)&&!seen.has(id)&&(seen.add(id),true));
+  };
+  const basePlayerIds=ids(raw.basePlayerIds);
+  const baseSet=new Set(basePlayerIds);
+  const reservePlayerIds=ids(raw.reservePlayerIds).filter(id=>!baseSet.has(id));
+  const stopRaw=raw.stopOn&&typeof raw.stopOn==='object'?raw.stopOn:{};
+  const stopOn={};
+  Object.entries(AUTO_SEASON_DEFAULTS.stopOn).forEach(([key,fallback])=>{
+    stopOn[key]=Object.prototype.hasOwnProperty.call(stopRaw,key)?!!stopRaw[key]:fallback;
+  });
+  return{
+    lineupMode:['best','fixed','rotation'].includes(raw.lineupMode)?raw.lineupMode:AUTO_SEASON_DEFAULTS.lineupMode,
+    basePlayerIds,
+    reservePlayerIds,
+    matchLimit:clamp(Math.round(Number(raw.matchLimit)||0),0,TOTAL_MATCHDAYS),
+    paceMs:clamp(Math.round(Number(raw.paceMs)||AUTO_SEASON_DEFAULTS.paceMs),250,5000),
+    stopOn,
+  };
+}
+function getAutoSeasonConfig(){
+  const cfg=normalizeAutoSeasonConfig(store.G?.autoSeasonConfig||{});
+  if(store.G)store.G.autoSeasonConfig=cfg;
+  return cfg;
+}
+function setAutoSeasonConfig(raw){
+  const cfg=normalizeAutoSeasonConfig(raw);
+  store.G.autoSeasonConfig=cfg;
+  persistGame();
+  return cfg;
+}
+function defaultAutoNomination(teamId){
+  const rules=matchNominationRules();
   const healthy=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&p.role!=='youth');
   const starters=healthy.filter(p=>p.role==='starter').sort((a,b)=>(teamId===store.G.myTeamId?(a.boardOrder??99)-(b.boardOrder??99):0)||ovr(b)-ovr(a));
   const bench=healthy.filter(p=>p.role!=='starter').sort((a,b)=>ovr(b)-ovr(a));
   const ordered=[...starters,...bench];
-  return{base:ordered.slice(0,3),reserves:ordered.slice(3,5)};
+  return{base:ordered.slice(0,rules.requiredBase),reserves:ordered.slice(rules.requiredBase,rules.requiredBase+rules.maxReserves)};
+}
+function selectAutoSeasonNomination(teamId,rawConfig=getAutoSeasonConfig()){
+  const cfg=normalizeAutoSeasonConfig(rawConfig);
+  const rules=matchNominationRules();
+  const eligible=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&p.role!=='youth');
+  const byId=new Map(eligible.map(p=>[p.id,p]));
+  const chosenIds=[...cfg.basePlayerIds,...cfg.reservePlayerIds];
+  const missingSelectedIds=chosenIds.filter(id=>!byId.has(id));
+  if(cfg.lineupMode==='best')return{...defaultAutoNomination(teamId),missingSelectedIds:[]};
+  if(cfg.lineupMode==='rotation'){
+    const selected=chosenIds.map(id=>byId.get(id)).filter(Boolean);
+    const pool=(selected.length>=rules.requiredBase?selected:eligible).slice().sort((a,b)=>{
+      const readiness=p=>ovr(p)-(p.fatigue||0)*0.18+(p.seasonForm||0)*0.8;
+      return readiness(b)-readiness(a);
+    });
+    return{base:pool.slice(0,rules.requiredBase),reserves:pool.slice(rules.requiredBase,rules.requiredBase+rules.maxReserves),missingSelectedIds};
+  }
+  const used=new Set();
+  const take=ids=>ids.map(id=>byId.get(id)).filter(p=>p&&!used.has(p.id)&&(used.add(p.id),true));
+  const base=take(cfg.basePlayerIds).slice(0,rules.requiredBase);
+  const fallback=defaultAutoNomination(teamId).base.concat(eligible).filter(p=>!used.has(p.id));
+  while(base.length<rules.requiredBase&&fallback.length){const p=fallback.shift();if(!used.has(p.id)){used.add(p.id);base.push(p);}}
+  const reserves=take(cfg.reservePlayerIds).slice(0,rules.maxReserves);
+  return{base,reserves,missingSelectedIds};
+}
+function autoNomination(teamId){
+  if(_autoSeasonRuntime&&teamId===store.G.myTeamId)return selectAutoSeasonNomination(teamId,_autoSeasonRuntime.config);
+  return defaultAutoNomination(teamId);
 }
 // The player's one-shot nomination from the pre-match modal (consumed per match).
 function getMatchNomination(teamId){
   const nom=store.G.matchNomination;
-  if(teamId===store.G.myTeamId&&nom&&nom.season===store.G.season){
+  const rules=matchNominationRules();
+  if(teamId===store.G.myTeamId&&nom&&nom.season===store.G.season&&nom.matchday===store.G.matchday){
     const byId=id=>store.G.players.find(p=>p.id===id&&p.teamId===teamId&&!p.retired&&!(p.injuredFor>0));
     const base=(nom.base||[]).map(byId).filter(Boolean);
     const reserves=(nom.reserves||[]).map(byId).filter(Boolean);
-    if(base.length===3)return{base,reserves:reserves.slice(0,2)};
+    if(base.length===rules.requiredBase)return{base,reserves:reserves.slice(0,rules.maxReserves)};
   }
   return autoNomination(teamId);
+}
+
+// A readable contract shared by seasonal development and future squad UI.
+// Reserves and academy players are the day-to-day sparring group; mentors may
+// belong to any squad role. Injured players cannot currently contribute.
+function getSparringProfile(teamId){
+  const squad=store.G.players.filter(p=>p.teamId===teamId&&!p.retired);
+  const partners=squad.filter(p=>(p.role==='reserve'||p.role==='youth')&&!(p.injuredFor>0));
+  const averageOvr=partners.length?Number((partners.reduce((sum,p)=>sum+ovrBase(p),0)/partners.length).toFixed(1)):0;
+  const depthFactor=clamp(partners.length/6,0,1);
+  const qualityFactor=partners.length?clamp(averageOvr/70,0.3,1.2):0;
+  const mentorCount=squad.filter(p=>!(p.injuredFor>0)&&p.traits?.includes('MENTOR')).length;
+  const developmentMultiplier=Number((1+depthFactor*qualityFactor*0.18+Math.min(3,mentorCount)*0.10).toFixed(3));
+  return{
+    partnerCount:partners.length,
+    averageOvr,
+    mentorCount,
+    styles:[...new Set(partners.map(p=>p.playStyle).filter(Boolean))],
+    depthFactor:Number(depthFactor.toFixed(3)),
+    qualityFactor:Number(qualityFactor.toFixed(3)),
+    developmentMultiplier,
+    developmentBonusPct:Number(((developmentMultiplier-1)*100).toFixed(1)),
+  };
+}
+
+// Healthy sparring partners who reproduce the likely opponent styles create a
+// modest preparation edge. The 1.2 OVR cap keeps quality and form dominant.
+function getMatchPreparation(teamId,opponentTeamId){
+  const opponentStyles=[...new Set(autoNomination(opponentTeamId).base.map(p=>p.playStyle).filter(Boolean))];
+  const partners=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&(p.role==='reserve'||p.role==='youth'));
+  const partnerStyles=new Set(partners.map(p=>p.playStyle).filter(Boolean));
+  const coveredStyles=opponentStyles.filter(style=>partnerStyles.has(style));
+  const usefulPartners=partners.filter(p=>coveredStyles.includes(p.playStyle));
+  const usefulAverage=usefulPartners.length?usefulPartners.reduce((sum,p)=>sum+ovrBase(p),0)/usefulPartners.length:0;
+  const qualityFactor=usefulPartners.length?clamp(usefulAverage/70,0.3,1.2):0;
+  const ratingBonus=Number(Math.min(1.2,coveredStyles.length*0.3*qualityFactor).toFixed(2));
+  return{
+    targetStyles:opponentStyles,
+    targetStyleCount:opponentStyles.length,
+    coveredStyles,
+    coveredStyleCount:coveredStyles.length,
+    coveragePct:opponentStyles.length?Math.round(coveredStyles.length/opponentStyles.length*100):0,
+    usefulPartnerCount:usefulPartners.length,
+    ratingBonus,
+  };
 }
 // Virtual doubles pair: averaged stats + a small chemistry bonus for mixed styles.
 function makeDoublesPair(p1,p2){
@@ -2570,6 +2788,7 @@ function makeDoublesPair(p1,p2){
 }
 function simTeamMatch(homeId,awayId,isCup){
   const hN=getMatchNomination(homeId),aN=getMatchNomination(awayId);
+  const preparation={home:getMatchPreparation(homeId,awayId),away:getMatchPreparation(awayId,homeId)};
   // consume the player's one-shot nomination once it fed a match involving them
   if(store.G.matchNomination&&(homeId===store.G.myTeamId||awayId===store.G.myTeamId))store.G.matchNomination=null;
   // Forfeit safety: fewer than 3 eligible players = walkower 0:3 (never crash).
@@ -2577,7 +2796,7 @@ function simTeamMatch(homeId,awayId,isCup){
     const bothShort=hN.base.length<3&&aN.base.length<3;
     const homeWin=!bothShort&&aN.base.length<3;
     const hW=bothShort?0:(homeWin?3:0),aW=bothShort?0:(homeWin?0:3);
-    return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin,isDraw:bothShort,score:`${hW}:${aW}`,matchups:[],homePoints:0,awayPoints:0,tiebreak:null,forfeit:true};
+    return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin,isDraw:bothShort,score:`${hW}:${aW}`,matchups:[],homePoints:0,awayPoints:0,tiebreak:null,forfeit:true,preparation};
   }
   const hCoach=getCoach(homeId),aCoach=getCoach(awayId);
   const matchups=[];let hW=0,aW=0;
@@ -2587,7 +2806,8 @@ function simTeamMatch(homeId,awayId,isCup){
   // Per-league protocol (owner dossier 2026-07-03): the game order, set rules and
   // reserve usage all come from the country's real league format.
   const FMT=getLeagueFormat();
-  const duelOpts={goldenPoint:!!FMT.goldenPoint,deciderFrom:FMT.deciderFrom||0,lastSetTo:FMT.lastSetTo||0,lastSetWinBy:FMT.lastSetWinBy||2};
+  const duelOpts={goldenPoint:!!FMT.goldenPoint,deciderFrom:FMT.deciderFrom||0,lastSetTo:FMT.lastSetTo||0,lastSetWinBy:FMT.lastSetWinBy||2,
+    homePreparationBonus:preparation.home.ratingBonus,awayPreparationBonus:preparation.away.ratingBonus};
   // G4 (superliga protocol): a reserve may replace the double-duty board-1 player.
   const pickG4=(nom,dflt)=>{
     const res=nom.reserves[0];
@@ -2614,7 +2834,7 @@ function simTeamMatch(homeId,awayId,isCup){
       {h:[A],a:[X],label:'S1',opts:duelOpts},
       {h:[B],a:[Y],label:'S2',opts:duelOpts},
       {h:[C],a:[Z],label:'S3',opts:duelOpts},
-      {h:[A],a:[X],label:'VICTORY MATCH',opts:{bestOf:1}},
+      {h:[A],a:[X],label:'VICTORY MATCH',opts:{bestOf:1,homePreparationBonus:duelOpts.homePreparationBonus,awayPreparationBonus:duelOpts.awayPreparationBonus}},
     ];
   }else{
     // superliga/TTBL: G1 A-Y, G2 B-X, G3 C-Z, G4 with reserves, G5 double (B+C).
@@ -2640,6 +2860,7 @@ function simTeamMatch(homeId,awayId,isCup){
       }
       if(won){p.seasonW=(p.seasonW||0)+1;p.careerW=(p.careerW||0)+1;if(isLeagueMatch)p.leagueSeasonW=(p.leagueSeasonW||0)+1;}
       else{p.seasonL=(p.seasonL||0)+1;p.careerL=(p.careerL||0)+1;if(isLeagueMatch)p.leagueSeasonL=(p.leagueSeasonL||0)+1;}
+      p.lastPlayedMatchday=store.G.matchday;
     });
   };
   for(const game of schedule){
@@ -2694,12 +2915,13 @@ function simTeamMatch(homeId,awayId,isCup){
       p.fatigue=Math.max(0,(p.fatigue||0)-restGain);
     }
   });
-  processStarterUsageForTeam(homeId,new Set(hN.base.map(p=>p.id)));
-  processStarterUsageForTeam(awayId,new Set(aN.base.map(p=>p.id)));
+  const actualForTeam=teamId=>new Set([...allPlaying].filter(id=>store.G.players.find(p=>p.id===id)?.teamId===teamId));
+  processStarterUsageForTeam(homeId,actualForTeam(homeId));
+  processStarterUsageForTeam(awayId,actualForTeam(awayId));
   // First-to-3 protocol can never tie — the doubles decides a 2:2. No draws.
   const homePoints=matchups.reduce((sum,m)=>sum+(m.micro?.homePoints||0),0);
   const awayPoints=matchups.reduce((sum,m)=>sum+(m.micro?.awayPoints||0),0);
-  return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin:hW>aW,isDraw:false,score:`${hW}:${aW}`,matchups,homePoints,awayPoints,tiebreak:null};
+  return{homeId,awayId,hTeamW:hW,aTeamW:aW,draws:0,homeWin:hW>aW,isDraw:false,score:`${hW}:${aW}`,matchups,homePoints,awayPoints,tiebreak:null,preparation};
 }
 
 // ── BACKGROUND CAREER GENERATION (owner backlog #1, 2026-07-03) ───────────────
@@ -2809,17 +3031,46 @@ function applyMailDecision(m,yes){
 }
 // Generates the pre-matchday mail. Called after each matchday commit and at the
 // start of the season, so there is something real to decide before pressing play.
+function reserveRequestPolicy(p){
+  const matchday=store.G?.matchday||0;
+  const lastPlayed=typeof p?.lastPlayedMatchday==='number'?p.lastPlayedMatchday:-1;
+  const absentRounds=lastPlayed<0?matchday+1:Math.max(0,matchday-lastPlayed);
+  const lastOwn=(p?._lastReserveRequestSeason===store.G?.season)?p._lastReserveRequestMatchday:-99;
+  const lastSquad=store.G?._lastReserveRequest;
+  const squadGap=lastSquad?.season===store.G?.season?matchday-lastSquad.matchday:99;
+  const form=Number(p?.seasonForm)||0;
+  const reasons=[];
+  if(!p||p.retired||p.role!=='reserve'||(p.injuredFor||0)>0)reasons.push('notAvailableReserve');
+  if(matchday<4)reasons.push('openingRounds');
+  if(form<4)reasons.push('form');
+  if(absentRounds<4)reasons.push('recentlyPlayed');
+  if(matchday-lastOwn<6)reasons.push('playerCooldown');
+  if(squadGap<4)reasons.push('squadCooldown');
+  return{
+    eligible:reasons.length===0,
+    reasons,
+    absentRounds,
+    chance:Number(clamp(0.16+Math.max(0,form-4)*0.03,0.16,0.36).toFixed(2)),
+  };
+}
 function generateInboxForMatchday(){
   const myId=store.G.myTeamId;
-  // Reserve in strong form asks for a chance (decision).
-  const cands=store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.role==='reserve'&&!(p.injuredFor>0)&&(p.seasonForm||0)>=4&&!p._promisedMatch);
+  // A request now follows genuine neglect, form and cooldowns rather than a
+  // 50% coin flip after almost every round.
+  const cands=store.G.players.filter(p=>p.teamId===myId&&!p._promisedMatch&&reserveRequestPolicy(p).eligible);
   const alreadyAsked=new Set((store.G.inbox||[]).filter(m=>m.decision?.kind==='reserveRequest'&&!m.answered).map(m=>m.decision.playerId));
   const fresh=cands.filter(p=>!alreadyAsked.has(p.id));
-  if(fresh.length&&Math.random()<0.5){
-    const p=fresh[rnd(0,fresh.length-1)];
+  if(fresh.length){
+    const p=fresh.slice().sort((a,b)=>reserveRequestPolicy(b).absentRounds-reserveRequestPolicy(a).absentRounds||(b.seasonForm||0)-(a.seasonForm||0))[0];
+    const policy=reserveRequestPolicy(p);
+    if(Math.random()<policy.chance){
     pushMail({type:'decision',from:p.name,subjectKey:'mail.reserveRequestSubject',subjectParams:{name:p.name},
       bodyKey:'mail.reserveRequestBody',bodyParams:{form:seasonFormLabel(p),ovr:ovr(p)},
       decision:{kind:'reserveRequest',playerId:p.id}});
+      p._lastReserveRequestSeason=store.G.season;
+      p._lastReserveRequestMatchday=store.G.matchday;
+      store.G._lastReserveRequest={season:store.G.season,matchday:store.G.matchday,playerId:p.id};
+    }
   }
   // Expiring contracts warning (info, once per player per season).
   const expiring=store.G.players.filter(p=>p.teamId===myId&&!p.retired&&p.contractYears===1&&p.role!=='youth');
@@ -2833,6 +3084,25 @@ function generateInboxForMatchday(){
     const already=(store.G.inbox||[]).find(m=>m.season===store.G.season&&m.matchday===store.G.matchday&&m._tag==='fatigue');
     if(!already)pushMail({fromKey:'mail.medicalTeam',subjectKey:'mail.fatigueSubject',bodyKey:'mail.fatigueBody',bodyParams:{players:tired.map(p=>`${p.name} (${p.fatigue}%)`).join(', ')},_tag:'fatigue'});
   }
+}
+// Resolves only decisions the manager explicitly chose not to stop for. A
+// reserve request is a real refusal (including morale cost), never silent mail
+// deletion. Unknown decisions retain the conservative "stop" default.
+function prepareAutoSeasonDecisions(rawConfig=getAutoSeasonConfig()){
+  const cfg=normalizeAutoSeasonConfig(rawConfig);
+  const pending=pendingDecisions();
+  for(const mail of pending){
+    const isPlayerRequest=mail.decision?.kind==='reserveRequest';
+    if(isPlayerRequest&&cfg.stopOn.playerRequest)return{stopReason:'playerRequest',handled:0,mailId:mail.id};
+    if(!isPlayerRequest&&cfg.stopOn.otherDecision)return{stopReason:'otherDecision',handled:0,mailId:mail.id};
+  }
+  let handled=0;
+  pending.forEach(mail=>{
+    mail.answered=true;mail.read=true;mail.answer=false;
+    applyMailDecision(mail,false);
+    handled++;
+  });
+  return{stopReason:null,handled};
 }
 // After my match: settle reserve promises (kept = bonus, broken = real resentment).
 function settleMatchPromises(playedIds){
@@ -2866,7 +3136,7 @@ function openMatchNomination(onConfirm){
   _nomState={sel:def.slice(0,cap),onConfirm};
   renderNominationModal();
 }
-function nominationSlotCount(){return getLeagueFormat().protocol==='superliga'?5:3;}
+function nominationSlotCount(){return matchNominationRules().recommendedTotal;}
 function protocolDescription(){
   const f=getLeagueFormat();
   if(f.protocol==='olympic')return t('match.protocol.olympic',{label:f.label});
@@ -3204,14 +3474,7 @@ function applyGrowth(){
   // squad's training. Bonus scales with reserve/academy DEPTH (up to 6) × their
   // quality → up to ~+18% development. Makes a 4+6 roster genuinely worth the wages.
   const sparringMultByTeam=new Map();
-  store.G.teams.forEach(t=>{
-    const res=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&(p.role==='reserve'||p.role==='youth'));
-    const depth=clamp(res.length/6,0,1);
-    const quality=res.length?clamp((res.reduce((s,p)=>s+ovrBase(p),0)/res.length)/70,0.3,1.2):0;
-    const mentors=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&p.traits?.includes('MENTOR')).length;
-    // MENTOR is a real sparring lever (~+10% dev per mentor, capped influence via count).
-    sparringMultByTeam.set(t.id,1+depth*quality*0.18+Math.min(3,mentors)*0.10);
-  });
+  store.G.teams.forEach(t=>sparringMultByTeam.set(t.id,getSparringProfile(t.id).developmentMultiplier));
   // Hall bonus per team (player uses G.infraHall; AI uses team.infraHall) — parity.
   const hallMultByTeam=new Map();
   store.G.teams.forEach(t=>{
@@ -3303,7 +3566,7 @@ function applyGrowth(){
 }
 
 function retirePlayer(p){
-  p.retired=true;const wm=p.teamId===store.G.myTeamId;p.teamId=null;
+  p.retired=true;p.retiredSeason=store.G.season;const wm=p.teamId===store.G.myTeamId;p.teamId=null;
   const trophyMap={};(p.awards||[]).forEach(a=>{if(!trophyMap[a.type])trophyMap[a.type]={label:a.displayLabel||a.label,count:0};trophyMap[a.type].count++;});
   store.G.hallOfFame.push({id:p.id,name:p.name,traits:[...p.traits],peakOvr:p.careerOvr||ovrBase(p),
     careerW:p.careerW||0,careerL:p.careerL||0,careerPts:p.careerPts||0,careerSeasons:p.careerSeasons||0,
@@ -3322,16 +3585,65 @@ function hofRankScore(e){
   const titles=Object.values(e.trophyMap||{}).reduce((s,t)=>s+(t.count||0),0);
   return titles*50+(e.wrate||0)+(e.peakOvr||0)*5;
 }
+function freeAgentMarketPolicy(teamCount=store.G?.teams?.length||24,season=store.G?.season||1,countryId=store.G?.countryId||'PL',retirements=0){
+  const clubs=Math.max(8,Number(teamCount)||24);
+  const rng=mulberry32Seed(seedFromString(`free-agent-market:${countryId}:${season}`));
+  const seasonalNoise=Math.floor(rng()*9)-3; // -3..+5: quiet and abundant cohorts
+  const replacement=Math.round(Math.max(0,Number(retirements)||0)*0.45);
+  const externalIntake=clamp(Math.round(clubs*0.22)+seasonalNoise+replacement,2,Math.max(8,Math.round(clubs*0.75)));
+  const marketWave=Math.floor(rng()*41)-20;
+  const softTarget=clamp(Math.round(clubs*4+marketWave+Math.max(0,Number(retirements)||0)*0.15),
+    Math.round(clubs*2.9),Math.round(clubs*5.4));
+  return {externalIntake,softTarget,emergencyCap:Math.max(150,clubs*7)};
+}
+function freeAgentHasCareer(p){
+  return ((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
+}
+function removeFreeAgentFromWorld(p){
+  if(freeAgentHasCareer(p))retirePlayer(p);
+  else{p.retired=true;p.retiredSeason=store.G.season;p.teamId=null;}
+}
+function updateFreeAgentLifecycle(retirements=0){
+  if(!store.G)return;
+  const scouted=new Set((store.G.scoutResults||[]).map(report=>report?.realId).filter(id=>id!==undefined));
+  const freeAgents=(store.G.players||[]).filter(p=>p&&!p.retired&&!p.loanedOut
+    &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId);
+  const policy=freeAgentMarketPolicy(store.G.teams?.length||24,store.G.season,store.G.countryId,retirements);
+  const overcrowding=Math.max(0,(freeAgents.length-policy.softTarget)/Math.max(1,freeAgents.length));
+  (store.G.players||[]).forEach(p=>{
+    if(!p||p.retired)return;
+    const isFree=!p.loanedOut&&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId;
+    if(!isFree){p.marketSeasons=0;return;}
+    p.teamId=null;p.contractYears=0;
+    p.marketSeasons=(p.marketSeasons||0)+1;
+    if(scouted.has(p.id))return;
+    const freshToMarket=p.marketSeasons<=1;
+    if(freshToMarket&&overcrowding<=0.15)return;
+    const current=ovrBase(p);
+    const upside=Math.max(0,playerCeiling(p)-current);
+    const age=p.age||27;
+    const certainExit=p.marketSeasons>=10
+      ||(p.marketSeasons>=7&&age>=27&&current<35)
+      ||(p.marketSeasons>=6&&age>=34&&current<48&&upside<10);
+    const pressure=Math.min(0.82,
+      Math.max(0,p.marketSeasons-2)*0.10
+      +Math.max(0,50-current)*0.012
+      +Math.max(0,age-31)*0.018
+      -Math.min(0.24,upside*0.008)
+      +overcrowding*1.35
+      -(freshToMarket?0.28:0));
+    if(certainExit||Math.random()<pressure)removeFreeAgentFromWorld(p);
+  });
+}
 function pruneCareerData(){
   if(!store.G)return;
-  // 1) Keep a broad but bounded transfer shelf. Five candidates per active club
-  //    gives the player plenty of choice (120 in the current 24-club world) while
-  //    stopping unused free agents from accumulating forever.
+  // 1) Normal market size comes from releases, intake, hiring, and natural exits.
+  //    This ceiling is only an emergency brake for damaged/legacy careers.
   const isFreeAgent=p=>p&&!p.retired&&!p.loanedOut
     &&(p.teamId===null||(p.contractYears||0)<=0)&&p.teamId!==store.G.myTeamId;
   const freeAgents=(store.G.players||[]).filter(isFreeAgent);
   freeAgents.forEach(p=>{p.teamId=null;p.contractYears=0;});
-  const freeAgentLimit=Math.max(60,(store.G.teams||[]).length*5);
+  const freeAgentLimit=freeAgentMarketPolicy((store.G.teams||[]).length,store.G.season,store.G.countryId,0).emergencyCap;
   if(freeAgents.length>freeAgentLimit){
     const retentionScore=p=>{
       const current=ovrBase(p);
@@ -3349,9 +3661,7 @@ function pruneCareerData(){
       .map(p=>p.id));
     scouted.forEach(id=>keepIds.add(id));
     freeAgents.filter(p=>!keepIds.has(p.id)).forEach(p=>{
-      const hasCareer=((p.careerW||0)+(p.careerL||0))>0||(p.awards||[]).length>0;
-      if(hasCareer)retirePlayer(p);
-      else p.retired=true;
+      removeFreeAgentFromWorld(p);
     });
   }
   // 2) Retired players survive only as HoF summaries — drop the heavy objects so
@@ -4118,9 +4428,9 @@ async function runMatchday(){
   
   if(store.G.matchday>=TOTAL_MATCHDAYS){
     addLog(t('matchLog.seasonFinished'),'hl');store.G.phase='transfer';
-    const wages=totalWages();const acadUp=academyUpkeep();const maint=calcLeagueMaint()+acadUp;
+    const wages=totalWages();const facilities=facilityUpkeep(store.G.myTeamId);const maint=calcLeagueMaint()+facilities.total;
     myTeam().budget=Math.max(0,myTeam().budget-wages-maint);
-    addLog(t('matchLog.costs',{wages:formatCurrency(wages),maintenance:formatCurrency(maint),academy:acadUp?t('matchLog.academyCost',{amount:formatCurrency(acadUp)}):''}),'bd');
+    addLog(t('matchLog.costs',{wages:formatCurrency(wages),maintenance:formatCurrency(maint),academy:facilities.academy?t('matchLog.academyCost',{amount:formatCurrency(facilities.academy)}):''}),'bd');
     const srt=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);
     const myPos2=srt.findIndex(t=>t.isPlayer)+1;
     // v13: 150% buffed prize tables
@@ -4219,21 +4529,50 @@ async function autoPlaySeason(){
   if(ui.autoPlay){ui.autoPlay=false;return;} // toggle OFF
   if(ui.running){toast(t('season.waitForMatchday'));return;}
   if(!store.G||store.G.phase!=='pre'){toast(t('season.autoPlayOnly'));return;}
+  const config=getAutoSeasonConfig();
+  _autoSeasonRuntime={config,matchesPlayed:0};
+  let stopCode=null;
+  let knownInjuries=new Set(store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&(p.injuredFor||0)>0).map(p=>p.id));
+  const stop=(code,extra={})=>{
+    stopCode=code;
+    store.G.autoSeasonLastStop={code,matchesPlayed:_autoSeasonRuntime?.matchesPlayed||0,season:store.G.season,matchday:store.G.matchday,...extra};
+  };
   ui.autoPlay=true;updateHeader();
   try{
     while(ui.autoPlay){
-      if(store.G.phase!=='pre')break;                                   // season over / transfer
-      if(shouldPlayTop12(1)||shouldPlayTop12(2))break;                  // Top 12 Masters due
-      if(shouldPlayCup())await playCupRound();                          // cup rounds auto-play (owner #3)
-      if(getEligibleMatchPlayers(store.G.myTeamId).length<3)break; // cannot field a legal squad
-      if(pendingDecisions().length)break;                               // decision mail waits for the manager
+      if(store.G.phase!=='pre'){stop('seasonEnd');break;}
+      // Top 12 still requires a tournament entrant, so it remains a mandatory
+      // manager stop until that separate choice has an automatic policy.
+      if(shouldPlayTop12(1)||shouldPlayTop12(2)){stop('top12');break;}
+      if(shouldPlayCup()){
+        if(config.stopOn.cup){stop('cup');break;}
+        await playCupRound();
+      }
+      if(getEligibleMatchPlayers(store.G.myTeamId).length<matchNominationRules().requiredBase){stop('insufficientPlayers');break;}
+      if(config.lineupMode==='fixed'&&config.stopOn.selectedUnavailable){
+        const selected=selectAutoSeasonNomination(store.G.myTeamId,config);
+        if(selected.missingSelectedIds.length){stop('selectedUnavailable',{playerIds:selected.missingSelectedIds});break;}
+      }
+      const decisions=prepareAutoSeasonDecisions(config);
+      if(decisions.stopReason){stop(decisions.stopReason,{mailId:decisions.mailId});break;}
       const md=store.G.matchday;
       await runMatchday();
-      if(store.G.matchday===md)break; // runMatchday bailed (e.g. injury block) → stop
-      await sleep(30);                // yield so the UI repaints / can be toggled off
+      if(store.G.matchday===md){stop('matchdayBlocked');break;}
+      _autoSeasonRuntime.matchesPlayed++;
+      // Hold the committed result on screen. Fable may expose this setting, but
+      // the simulation always uses the same atomic runMatchday path.
+      await sleep(config.paceMs);
+      const currentInjuries=new Set(store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&(p.injuredFor||0)>0).map(p=>p.id));
+      const newInjuryIds=[...currentInjuries].filter(id=>!knownInjuries.has(id));
+      knownInjuries=currentInjuries;
+      if(config.stopOn.injury&&newInjuryIds.length){stop('injury',{playerIds:newInjuryIds});break;}
+      if(config.matchLimit>0&&_autoSeasonRuntime.matchesPlayed>=config.matchLimit){stop('matchLimit');break;}
     }
+    if(!stopCode&&!ui.autoPlay)stop('user');
   }finally{
+    if(!stopCode)stop(store.G?.phase==='pre'?'stopped':'seasonEnd');
     ui.autoPlay=false;ui.running=false;stopCanvasVME();
+    _autoSeasonRuntime=null;
     if(store.G&&store.G.phase==='pre')closeModal();
     updateHeader();render();persistGame();
   }
@@ -4283,8 +4622,7 @@ function applyAiClubFinances(){
       if(team.prDirector)team.prDirector.salary=Math.max(500,Math.round((team.prDirector.salary||0)*k));
     }
     const wages=teamPayroll(team.id);
-    const acadUp=INFRA_ACADEMY[clamp(team.infraAcademy||0,0,INFRA_ACADEMY.length-1)].upkeep||0;
-    const upkeep=(L===1?30000:11000)+acadUp;
+    const upkeep=(L===1?30000:11000)+facilityUpkeep(team.id).total;
     // Lower-tier commercial reach is smaller even for a well-run club. Without
     // a league-specific treasury ceiling, every L2 club eventually accumulated
     // the same €1.2m as L1 and the whole lower division became equally strong.
@@ -4481,6 +4819,7 @@ function endSeason(){
     p.leagueSeasonW=0;p.leagueSeasonL=0;p.leagueSeasonD=0;
     p.leagueSeasonPointsWon=0;p.leagueSeasonPointsLost=0;
     p.starterBenchStreak=0;
+    p.lastPlayedMatchday=-1;
     p.injuredFor=0;p.fatigue=Math.max(0,(p.fatigue||0)-30);
     p.seasonForm=clamp((p.seasonForm||0)+rnd(-5,5),-10,10);
     p.lastMatchMicro=null;
@@ -4489,12 +4828,13 @@ function endSeason(){
   // only 1-season / expired deals are cleared.
   store.G.sponsors=(store.G.sponsors||[]).filter(s=>s.active&&(s.yearsLeft||0)>0);store.G.scoutMissions=[];store.G.academyUsedThisSeason=false;store.G.academyProspects=[];store.G.academyTrial=[];store.G.academyTrialUsed=false;store.G.cupPlayedThisSeason=false;
   store.G._lastNegMatchday=-1;store.G._lastNegSeason=-1;
+  store.G._lastReserveRequest=null;
   store.G._negotiationLog={};
   const keptScouts=getMyScouts().map(s=>({...s,hired:true}));
-  store.G.scoutPool=[...keptScouts,...genScoutPool().slice(0,Math.max(0,SCOUT_POOL_FLOOR-keptScouts.length))];
+  const keptScoutIds=new Set(keptScouts.map(s=>s.id));
+  store.G.scoutPool=[...keptScouts,...(store.G.scoutPool||[]).filter(s=>!keptScoutIds.has(s.id))];
   store.G.prDirectorPool=(store.G.prDirectorPool||[]).filter(pr=>pr.teamId===null);
-  while(store.G.prDirectorPool.length<PR_POOL_FLOOR)store.G.prDirectorPool.push(finalizePRDirector(genPRDirector(null,store.G.countryId)));
-  replenishStaffPools(); // staff regens: age the market, retire the old, add fresh faces
+  replenishStaffPools(); // staff market ages, loses stale candidates, and receives a varied intake
   // Rubber upkeep (owner 2026-07-03): fresh rubbers are a recurring cost. If the
   // club can't afford the tier anymore, it silently drops one level (with a mail).
   if(myTeam()){
@@ -4518,11 +4858,14 @@ function endSeason(){
   store.G.matchNomination=null; // nominations never carry across seasons
   generateInboxForMatchday(); // preseason mail (contract warnings etc.)
   if((store.G.infraAcademy||0)>0&&myTeam())store.G.academyProspects=genAcademyIntake(store.G.myTeamId,store.G.countryId);
-  for(let i=0;i<14;i++){
+  const retiredLastSeason=store.G.players.filter(p=>p.retired&&p.retiredSeason===store.G.season-1).length;
+  const freeAgentPolicy=freeAgentMarketPolicy(store.G.teams.length,store.G.season,store.G.countryId,retiredLastSeason);
+  for(let i=0;i<freeAgentPolicy.externalIntake;i++){
     const p=genPlayer(null,18+rnd(0,16),store.G.countryId);
     p.teamId=null;
     p.contractYears=0;
     p.role='reserve';
+    p.marketSeasons=0;
     p.preferredRole=Math.random()<0.5?'rotation':'starter';
     p.seasonForm=clamp((p.seasonForm||0)+rnd(-1,4),-8,10);
     capFreeAgentProfile(p,getDifficultyConfig().freeAgentCap);
@@ -4534,7 +4877,7 @@ function endSeason(){
   store.G.boardObjective=null;
   store.G.seasonFinance={season:store.G.season,tickets:0,merch:0,prize:0,sponsorIncome:0,tvRights:0,boardReward:0,techPartnership:0,wages:0,playerWages:0,coachWages:0,physioWages:0,psychologistWages:0,scoutWages:0,prDirectorWages:0,maint:0,transfersIn:0,infraCost:0,staffBuyouts:0,prDirectorCost:0,brandCosts:0,other:0};
   genCupBracket();
-  aiSignPlayers();maintainAiRosters();buildMarket();
+  aiSignPlayers();maintainAiRosters();updateFreeAgentLifecycle(retiredLastSeason);buildMarket();
   if(myTeam())genSponsorOffers(calcPrestige());
   updateHeader();
   pruneCareerData();
@@ -4568,6 +4911,31 @@ function aiBudgetReserve(team){
 }
 function aiAffordableCash(team){
   return Math.max(0,Math.round(((team.budget||0)-aiBudgetReserve(team))*getDifficultyConfig().aiCashMult));
+}
+function aiInfrastructureInvestmentChance(team,key,nextLevel){
+  const baseByField={
+    infraHall:team.league===1?0.24:0.12,
+    infraMed:team.league===1?0.22:0.10,
+    infraAcademy:team.league===1?0.32:0.18,
+    infraMerchandising:team.league===1?0.18:0.08,
+  };
+  const base=baseByField[key]||0;
+  const difficulty=getDifficultyConfig().aiInfraMult;
+  if(nextLevel<=5)return clamp(base*difficulty,0,0.9);
+  // Levels 6–7 express club identity. They are not another automatic rung that
+  // every solvent AI club climbs in lockstep.
+  if(nextLevel>=7&&team.league!==1)return 0;
+  const strategy=team.principal?.strategy||'frugal';
+  const identity={
+    infraAcademy:{youth:1.5,builder:1.5,frugal:1.05,winnow:0.45,gambler:0.55,dealer:0.55},
+    infraMerchandising:{dealer:1.45,gambler:1.3,winnow:1.0,builder:0.75,frugal:0.7,youth:0.6},
+    infraHall:{winnow:1.3,builder:1.15,gambler:1.1,youth:0.75,dealer:0.8,frugal:0.65},
+    infraMed:{builder:1.25,winnow:1.15,frugal:1.0,youth:0.9,dealer:0.75,gambler:0.7},
+  };
+  const strategyFactor=identity[key]?.[strategy]||0.8;
+  const marketFactor=clamp((calcTeamMarketability(team.id)-25)/50,0.45,1.15);
+  const lateFactor=nextLevel===6?0.18:0.07;
+  return Number(clamp(base*lateFactor*strategyFactor*marketFactor*difficulty,0,0.16).toFixed(4));
 }
 function queueFutureStaffSigning(team,staff,years,cost,kind){
   store.G.pendingStaffSignings=store.G.pendingStaffSignings||[];
@@ -4642,13 +5010,13 @@ function aiSignPlayers(){
     // has stockpiled cash. This is the sporting-prestige side of recruitment.
     const maxExternalOvr=team.league===2?Math.min(84,leagueContext.leagueAvgOvr+2):99;
     [
-      {key:'infraHall',levels:INFRA_HALL,chance:team.league===1?0.24:0.12},
-      {key:'infraMed',levels:INFRA_MED,chance:team.league===1?0.22:0.10},
-      {key:'infraAcademy',levels:INFRA_ACADEMY,chance:team.league===1?0.32:0.18},
-      {key:'infraMerchandising',levels:INFRA_MERCH,chance:team.league===1?0.18:0.08},
+      {key:'infraHall',levels:INFRA_HALL},
+      {key:'infraMed',levels:INFRA_MED},
+      {key:'infraAcademy',levels:INFRA_ACADEMY},
+      {key:'infraMerchandising',levels:INFRA_MERCH},
     ].forEach(cfg=>{
       const next=cfg.levels[(team[cfg.key]||0)+1];
-      if(next&&aiAffordableCash(team)>=Math.round(next.cost*0.9)&&Math.random()<cfg.chance*diffCfg.aiInfraMult){
+      if(next&&aiAffordableCash(team)>=Math.round(next.cost*0.9)&&Math.random()<aiInfrastructureInvestmentChance(team,cfg.key,next.level)){
         team.budget-=next.cost;
         team[cfg.key]=(team[cfg.key]||0)+1;
       }
@@ -5803,5 +6171,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, facilityUpkeep, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, normalizeAutoSeasonConfig, getAutoSeasonConfig, setAutoSeasonConfig, selectAutoSeasonNomination, prepareAutoSeasonDecisions, endSeason, startSeason, aiSignPlayers, aiInfrastructureInvestmentChance, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, reserveRequestPolicy, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 })();

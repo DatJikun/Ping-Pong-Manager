@@ -615,6 +615,8 @@ test('new matchday mail and news store semantic localisation keys', () => {
   G.newsFeed = [];
   const reserve = G.players.find(p => p.teamId === G.myTeamId && p.role === 'reserve');
   reserve.seasonForm = 10;
+  reserve.lastPlayedMatchday = -1;
+  G.matchday = 4;
   g.Math.random = () => 0;
 
   g.PPM.gameplay.generateInboxForMatchday();
