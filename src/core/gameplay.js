@@ -5746,7 +5746,11 @@ function openStaffModal(sid){
     || (store.G.prDirectorPool||[]).find(x=>x.id===sid)
     || getRivalPRDirectors().find(x=>x.id===sid);
   if(!s)return;
+  const explicitCeiling=Number.isFinite(s.ceiling)&&s.ceiling>0?s.ceiling:null;
+  const peakKnown=explicitCeiling!==null;
   ensureStaffMeta(s);
+  const current=staffOvr(s);
+  const profile=ratingProfile(current,peakKnown?explicitCeiling:current);
   const hist=(store.G.staffHistory?.[s.id]||[]).slice().reverse();
   const career=(s.careerHistory||[]).slice().reverse();
   const currentTeam=s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):t('staff.freeMarket');
@@ -5766,10 +5770,13 @@ function openStaffModal(sid){
   modal.innerHTML=`<div class="mt2">${roleLabel}: ${s.name} <button class="close-btn" onclick="closeModal()">✕</button></div>
   <div class="flex gp16 aic mb14">
     <img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar xl">
-    <div>
+    <div class="staff-rating-block">
       <div class="syne fs26 b8">${s.name}</div>
       <div class="fs11 ink3">${roleLabel} / ${t('staff.currentClub')}: ${currentTeam}</div>
-      <div class="fs11 ink3 mt-4">${t('staff.profileLine',{age:s.age||'?',years:s.contractYears||0,ovr:staffOvr(s)})}${s.teamId===store.G.myTeamId?` / Peak OVR ${staffCeiling(s)}`:''}</div>
+      ${window.PPM.ratingStars.renderRating(profile,{size:'profile',peakKnown,disclosure:'profile',showCurrentOvr:true})}
+      ${peakKnown?`<div class="pnl-row staff-rating-peak"><div>${t('rating.peakOvrLabel',{peak:profile.peakOvr})}</div></div>`:''}
+      <div class="pc-meta">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?'})}</div>
+      <div class="fs11 ink3 mt-4">${t('staff.profileLine',{years:s.contractYears||0})}</div>
       <div class="fs11 ink3 mt-4">${detail}</div>
     </div>
   </div>
@@ -5817,8 +5824,8 @@ function openStaffNeg(sid){
   window._staffNegYrs=defaultYrs;window._staffNegSid=s.id;window._staffNegSal=s.salary||staffExpSal;window._staffNegBonus=staffDefBonus;
   modal.innerHTML=`<div class="mt2">${typeIcon} ${s.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="flex aic gp16 mb14">
-    <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:40px;color:${staffOvrColor(sOvr)}">${sOvr}</div>
-    <div><div class="fs11 ink3">${t('staff.neg.ageLine',{role:typeLbl,ovr:sOvr,age:s.age||'?',peak:s.peakAge?t('staff.neg.peak',{age:s.peakAge}):'',ceiling:s.teamId===store.G.myTeamId?t('staff.neg.ceiling',{ovr:staffCeiling(s)}):''})}</div><div class="fs11 ink3 mt-2">${formatCurrency(s.salary)} ${t('neg.perYear')}</div></div>
+    ${window.PPM.ratingStars.renderRating(ratingProfile(sOvr,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
+    <div><div class="fs11 ink3">${t('staff.neg.ageLine',{role:typeLbl,age:s.age||'?',peak:s.peakAge?t('staff.neg.peak',{age:s.peakAge}):''})}</div><div class="fs11 ink3 mt-2">${formatCurrency(s.salary)} ${t('neg.perYear')}</div></div>
   </div>
   ${s.type==='coach'?`<div class="pd8-12 bgs2 bb1 r6 fs11 mb10">${t('staff.neg.development',{youth:Math.round((coachDevMultiplier(s.training,true)-1)*100),senior:Math.round((coachDevMultiplier(s.training,false)-1)*100)})}</div>`:''}
   ${(isHiring&&canPreSign)||replaceFee>0?`<div class="neg-block">

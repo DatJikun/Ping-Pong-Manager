@@ -41,6 +41,23 @@ function setControlledRating(player, name, current, ceiling) {
   return player;
 }
 
+function setControlledStaff(staff, name, current, ceiling) {
+  staff.name = name;
+  staff.age = staff.peakAge = 52;
+  if (staff.type === 'coach') {
+    staff.tactics = staff.training = staff.motivation = staff.synergy = current;
+  } else if (staff.type === 'scout') {
+    staff.accuracy = staff.network = current;
+  } else if (staff.type === 'physio') {
+    staff.injReduction = staff.recovery = staff.prevention = current;
+  } else if (staff.type === 'psychologist') {
+    staff.moraleBoost = staff.mentalTraining = staff.pressure = current;
+  }
+  if (ceiling === undefined) delete staff.ceiling;
+  else staff.ceiling = ceiling;
+  return staff;
+}
+
 function ratingAfter(html, name) {
   const start = html.indexOf(name);
   assert.notEqual(start, -1, `${name} is rendered`);
@@ -56,14 +73,20 @@ function visibleText(html) {
 function assertSummaryRating(html, player, current, hiddenPeaks = []) {
   const rating = ratingAfter(html, player.name);
   assert.match(rating, /rating-stars--summary/);
+  assert.equal((rating.match(/rating-stars__slot/g) || []).length, 5);
   assert.match(rating, new RegExp(`rating-stars__ovr">${current}<`));
   const root = rating.match(/<span class="rating-stars[^>]*>/)?.[0] || '';
+  assert.doesNotMatch(root, /\btitle=/);
   const aria = root.match(/aria-label="([^"]*)"/)?.[1] || '';
-  assert.match(aria, new RegExp(`Current OVR ${current}\\b`), `${player.name} names current OVR accessibly`);
+  assert.match(aria, new RegExp(`(?:Current OVR|Aktualne OVR) ${current}\\b`), `${player.name} names current OVR accessibly`);
   for (const peak of hiddenPeaks) {
     assert.doesNotMatch(aria, new RegExp(`\\b${peak}\\b`), `${player.name} hides peak ${peak} from accessibility text`);
   }
   return rating;
+}
+
+function assertNoRawTranslationKey(html) {
+  assert.doesNotMatch(visibleText(html), /\b(?:rating|staff|history)\.[a-z][a-zA-Z.]*\b/);
 }
 
 function assertNoPotentialNumber(html, peak) {
@@ -134,6 +157,127 @@ test('transfer market minimum stars filters on current OVR, not peak OVR', () =>
   setPlayerOvr(player, 59);
   player.ceiling = 100;
   assert.doesNotMatch(g.PPM.pages.pageMarket(), /Current Threshold Player/);
+});
+
+test('staff cards, negotiations and club overview rows use shared summary disclosure', () => {
+  const g = bootWithPages(4206);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  let owned = G.staff.find(staff => staff.teamId === G.myTeamId && staff.type === 'coach');
+  if (!owned) {
+    owned = gp.genStaff('coach', G.countryId);
+    owned.teamId = G.myTeamId;
+    G.staff.push(owned);
+  }
+  setControlledStaff(owned, 'Summary Club Coach', 64, 93);
+  let scout = G.staff.find(staff => staff.teamId === G.myTeamId && staff.type === 'scout');
+  if (!scout) {
+    scout = gp.genStaff('scout', G.countryId);
+    scout.teamId = G.myTeamId;
+    G.staff.push(scout);
+  }
+  setControlledStaff(scout, 'Summary Academy Scout', 63, 94);
+  const external = G.staff.find(staff => staff.teamId !== null && staff.teamId !== G.myTeamId && staff.type === 'coach');
+  assert.ok(external, 'external staff fixture exists');
+  setControlledStaff(external, 'Summary Market Coach', 62, 95);
+  const player = setControlledRating(
+    gp.getClubSeniorPlayers(G.myTeamId)[0], 'Summary Overview Player', 65, 96,
+  );
+  G.staffHistory[owned.id] = [
+    { season: 1, ovr: 61 },
+    { season: 2, ovr: 67 },
+  ];
+
+  const renderSurfaces = () => {
+    g.PPM.ui.squadTab = 'youth';
+    g.PPM.ui.academyTab = 'scouts';
+    g.PPM.ui.marketTypeFilter = 'coach';
+    g.PPM.ui.historyTab = 'coaches';
+    const pages = {
+      owned: g.PPM.pages.pageStaff(),
+      academy: g.PPM.pages.pageSquad(),
+      market: g.PPM.pages.pageMarket(),
+      history: g.PPM.pages.pageHistory(),
+    };
+    gp.openStaffNeg(owned.id);
+    pages.negotiation = g.document.getElementById('modal').innerHTML;
+    gp.openTeamOverview(G.myTeamId);
+    pages.overview = g.document.getElementById('modal').innerHTML;
+    return pages;
+  };
+
+  for (const locale of ['en', 'pl']) {
+    g.PPM.i18n.setLocale(locale);
+    const pages = renderSurfaces();
+    for (const html of Object.values(pages)) assertNoRawTranslationKey(html);
+
+    assertSummaryRating(pages.owned, owned, 64, [93]);
+    assertNoPotentialNumber(pages.owned, 93);
+    assertSummaryRating(pages.academy, scout, 63, [94]);
+    assertNoPotentialNumber(pages.academy, 94);
+    assertSummaryRating(pages.market, external, 62, [95]);
+    assertNoPotentialNumber(pages.market, 95);
+    assertSummaryRating(pages.history, owned, 64, [93]);
+    assertNoPotentialNumber(pages.history, 93);
+    assertSummaryRating(pages.negotiation, owned, 64, [93]);
+    assertNoPotentialNumber(pages.negotiation, 93);
+    assertSummaryRating(pages.overview, player, 65, [96]);
+    assertSummaryRating(pages.overview, owned, 64, [93]);
+    assertNoPotentialNumber(pages.overview, 96);
+    assertNoPotentialNumber(pages.overview, 93);
+
+    assert.match(visibleText(pages.owned), locale === 'en' ? /52 yrs · peak age 52/ : /52 lat · wiek szczytu 52/);
+    assert.match(visibleText(pages.history), locale === 'en'
+      ? /History: 61 → 67 \/ Recorded high OVR 67/
+      : /Historia: 61 → 67 \/ Zapisane najwyższe OVR 67/);
+  }
+});
+
+test('staff profiles disclose only explicit positive persisted ceilings', () => {
+  const g = bootWithPages(4207);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  let known = G.staff.find(staff => staff.teamId === G.myTeamId && staff.type === 'coach');
+  if (!known) {
+    known = gp.genStaff('coach', G.countryId);
+    known.teamId = G.myTeamId;
+    G.staff.push(known);
+  }
+  setControlledStaff(known, 'Known Peak Coach', 64, 92);
+  const unknown = G.staff.find(staff => staff.id !== known.id && staff.teamId !== null && staff.type === 'coach');
+  assert.ok(unknown, 'unknown staff fixture exists');
+  setControlledStaff(unknown, 'Unknown Peak Staff', 63, undefined);
+
+  gp.openStaffModal(known.id);
+  let html = g.document.getElementById('modal').innerHTML;
+  assert.equal((html.match(/<span class="rating-stars [^"]*rating-stars--profile[^"]*"/g) || []).length, 1);
+  assert.equal((html.match(/rating-stars__slot/g) || []).length, 5);
+  assert.match(html, /rating-stars__ovr">64</);
+  assert.equal((visibleText(html).match(/Peak OVR 92/g) || []).length, 1);
+  assert.match(visibleText(html), /52 yrs · peak age 52/);
+  assertNoRawTranslationKey(html);
+
+  gp.openStaffModal(unknown.id);
+  html = g.document.getElementById('modal').innerHTML;
+  assert.equal((html.match(/<span class="rating-stars [^"]*rating-stars--profile[^"]*"/g) || []).length, 1);
+  assert.equal((html.match(/rating-stars__slot/g) || []).length, 5);
+  assert.match(html, /rating-stars__ovr">63</);
+  assert.doesNotMatch(visibleText(html), /Peak OVR \d+/);
+  assert.match(visibleText(html), /52 yrs · peak age 52/);
+  assert.ok(Number.isFinite(unknown.ceiling) && unknown.ceiling > 0,
+    'opening may synthesize metadata without making the original ceiling known');
+
+  unknown.ceiling = 0;
+  gp.openStaffModal(unknown.id);
+  html = g.document.getElementById('modal').innerHTML;
+  assert.doesNotMatch(visibleText(html), /Peak OVR \d+/);
+
+  g.PPM.i18n.setLocale('pl');
+  gp.openStaffModal(known.id);
+  html = g.document.getElementById('modal').innerHTML;
+  assert.equal((visibleText(html).match(/Szczytowe OVR 92/g) || []).length, 1);
+  assert.match(visibleText(html), /52 lat · wiek szczytu 52/);
+  assertNoRawTranslationKey(html);
 });
 
 test('dashboard, squad, academy, loan and league player summaries use shared non-disclosing ratings', () => {

@@ -268,8 +268,8 @@ function pageSquad(){
     <h3>${t('squad.scoutQuestion')}</h3>
     <p class="why">${t('squad.scoutWhy')}</p>
     ${academyScouts.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-      ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const cost=Math.max(2500,Math.round(1800+staffOvr(s)*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
-        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div style="font-size:10px;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)} · peak ${staffCeiling(s)} · ${scoutSpecialtyLabel(s)}</div></div></div><div class="syne b8 fs28 cblue">${staffOvr(s)}</div></div>
+      ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const current=staffOvr(s);const cost=Math.max(2500,Math.round(1800+current*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
+        <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?'})} · ${scoutSpecialtyLabel(s)}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(current,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>
         ${mission?`<div class="tile fs11">${t('squad.inField',{region:mission.region})}<br>${t('squad.remaining',{count:Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)})}<br>${t('squad.missionCost',{amount:formatCurrency(mission.cost||cost)})}</div>`
           :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">${t('squad.send')}</button></div>
              <div class="fs11 ink3 mt-6">${t('squad.missionCost',{amount:formatCurrency(cost)})} · ${t('squad.reportCount')} · ${t('squad.specialty',{name:scoutSpecialtyLabel(s)})}</div>`}
@@ -477,8 +477,8 @@ function pageStaff(){
       <div class="flex jcb aifs mb10">
         <div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="syne b7 fs15">${roleIcon} ${s.name}</div>
         <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(s.salary),years:`${s.contractYears||0} ${t((s.contractYears||0)===1?'common.year':'common.years')}`})}</div>
-        <div class="fs10 mt-2">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?',ovr:staffCeiling(s)})}</div></div></div>
-        <div class="tar"><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:28px;color:${staffOvrColor(sOvr)}">${sOvr}</div><div class="fs9 ink3">OVR</div></div>
+        <div class="fs10 mt-2">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?'})}</div></div></div>
+        ${window.PPM.ratingStars.renderRating(ratingProfile(sOvr,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
       </div>
       <div class="fs11 ink3">${s.type==='coach'?coachStyleLabel(s):s.type==='scout'?scoutSpecialtyLabel(s):s.type==='pr'?t('staff.commerceBonus',{percent:Math.round((s.bonus||0)*100)}):t('staff.clubSpecialist')}</div>
       <div class="btn-row mt-8">
@@ -996,7 +996,7 @@ function pageHistory(){
       ${coachHistory.length?[...coachHistory].sort((a,b)=>b.coachOvr-a.coachOvr||b.season-a.season).slice(0,5).map((h,i)=>`<div class="pnl-row"><div><b>#${i+1} ${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${h.style}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):`<div class="fs12 ink3">${t('history.rankingStarts')}</div>`}
       </div></div>
     <div class="card"><div class="ct">${t('history.currentStaff')}</div>
-      ${store.G.staff.filter(s=>s.teamId===store.G.myTeamId).length?store.G.staff.filter(s=>s.teamId===store.G.myTeamId).sort((a,b)=>staffOvr(b)-staffOvr(a)).map(s=>{const hist=store.G.staffHistory?.[s.id]||[];const vals=hist.map(h=>h.ovr);const best=Math.max(staffOvr(s),...vals,0);return`<div class="pd10 bb1 bgs2 r10 mb10"><div class="row-bet"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${staffRoleLabel(s.type)} / ${s.type==='coach'?coachStyleLabel(s):s.type==='scout'?scoutSpecialtyLabel(s):t('staff.clubSpecialist')} / ${s.age||'?'}</div></div><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${staffOvrColor(staffOvr(s))}">OVR ${staffOvr(s)}</div></div>${miniChart(vals.length>1?vals:[staffOvr(s),staffOvr(s)])}<div class="fs9 ink3 mt-4">${t('history.timeline',{values:(vals.length?vals:[staffOvr(s)]).join(' → ')})} / Peak ${best}</div></div>`;}).join(''):`<div class="fs12 ink3">${t('history.noStaff')}</div>`}
+      ${store.G.staff.filter(s=>s.teamId===store.G.myTeamId).length?store.G.staff.filter(s=>s.teamId===store.G.myTeamId).sort((a,b)=>staffOvr(b)-staffOvr(a)).map(s=>{const current=staffOvr(s);const hist=store.G.staffHistory?.[s.id]||[];const vals=hist.map(h=>h.ovr);const best=Math.max(current,...vals,0);return`<div class="pd10 bb1 bgs2 r10 mb10"><div class="row-bet"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${staffRoleLabel(s.type)} / ${s.type==='coach'?coachStyleLabel(s):s.type==='scout'?scoutSpecialtyLabel(s):t('staff.clubSpecialist')} / ${s.age||'?'}</div></div>${window.PPM.ratingStars.renderRating(ratingProfile(current,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>${miniChart(vals.length>1?vals:[current,current])}<div class="fs9 ink3 mt-4">${t('history.timeline',{values:(vals.length?vals:[current]).join(' → ')})} / ${t('history.recordedHighOvr',{ovr:best})}</div></div>`;}).join(''):`<div class="fs12 ink3">${t('history.noStaff')}</div>`}
     </div>
   </div>`:''}`;
 }

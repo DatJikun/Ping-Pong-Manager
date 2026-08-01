@@ -505,6 +505,7 @@ test('player and staff profile modals follow the active locale', () => {
   const staff = g.PPM.state.G.staff.find(s => s.teamId === g.PPM.state.G.myTeamId && s.type === 'coach')
     || g.PPM.state.G.staffPool.find(s => s.type === 'coach')
     || g.PPM.state.G.staffPool[0];
+  staff.ceiling = 97;
 
   g.PPM.gameplay.openPlayerModal(player.id);
   const englishPlayer = g.document.getElementById('modal').innerHTML;
@@ -515,6 +516,8 @@ test('player and staff profile modals follow the active locale', () => {
   g.PPM.gameplay.openStaffModal(staff.id);
   const englishStaff = g.document.getElementById('modal').innerHTML;
   assert.match(englishStaff, /Club history|Current club/i);
+  assert.match(englishStaff, /Peak OVR 97|peak age/i);
+  assert.doesNotMatch(englishStaff, /rating\.peakOvrLabel|staff\.agePeak/i);
   if (staff.type === 'coach') assert.match(englishStaff, /Attacking|Defensive|All-round|Serve-focused|Mental/i);
   assert.doesNotMatch(englishStaff, /Historia klubów|Wolny rynek/i);
 
@@ -523,6 +526,27 @@ test('player and staff profile modals follow the active locale', () => {
   assert.match(g.document.getElementById('modal').innerHTML, /Sprzęt|Punkty w karierze/i);
   g.PPM.gameplay.openStaffModal(staff.id);
   assert.match(g.document.getElementById('modal').innerHTML, /Historia klubów/i);
+});
+
+test('staff rating disclosure labels follow the active locale', () => {
+  const g = boot(3133);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const staff = g.PPM.state.G.staff.find(s => s.type === 'coach')
+    || g.PPM.state.G.staffPool.find(s => s.type === 'coach');
+  assert.ok(staff, 'coach fixture exists');
+  staff.age = staff.peakAge = 52;
+  staff.ceiling = 97;
+
+  g.PPM.gameplay.openStaffModal(staff.id);
+  const english = g.document.getElementById('modal').innerHTML;
+  assert.match(english, /Peak OVR 97|peak age 52/i);
+  assert.doesNotMatch(english, /rating\.peakOvrLabel|staff\.agePeak/i);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openStaffModal(staff.id);
+  const polish = g.document.getElementById('modal').innerHTML;
+  assert.match(polish, /Szczytowe OVR 97|wiek szczytu 52/i);
+  assert.doesNotMatch(polish, /rating\.peakOvrLabel|staff\.agePeak/i);
 });
 
 test('saved player awards are translated in profiles and Hall of Fame', () => {

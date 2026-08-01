@@ -179,7 +179,7 @@ function getClubHallOfFame(limit=20){
 
 function openTeamOverview(tid){
   const gameplay=window.PPM.gameplay;
-  const { getTeamBranding, getTeamLogoData, ovr, staffOvr, staffOvrColor, teamOvr, teamName, styleLabel } = gameplay;
+  const { getTeamBranding, getTeamLogoData, ovr, staffOvr, teamOvr, teamName, styleLabel, ratingProfile, playerCeiling, staffCeiling } = gameplay;
   const t=store.G.teams.find(x=>x.id===tid);if(!t)return;
   const branding=getTeamBranding(t);
   const players=store.G.players.filter(p=>p.teamId===tid&&!p.retired).sort((a,b)=>ovr(b)-ovr(a));
@@ -227,10 +227,10 @@ function openTeamOverview(tid){
   <div class="g2">
     <div>
       <div class="card"><div class="ct">${tr('clubOverview.squad').toUpperCase()}</div>
-      ${players.slice(0,8).map(p=>`<div class="grid gtc1aa gp8 pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${tr('clubOverview.playerLine',{age:p.age,years:p.contractYears||0,style:styleLabel(p.playStyle)})}</div></div><div class="fs10 ink3">${styleLabel(p.playStyle)}</div><div class="syne b8 cr">${ovr(p)}</div></div>`).join('')||`<div class="ink3">${tr('clubOverview.noData')}</div>`}
+      ${players.slice(0,8).map(p=>`<div class="grid gtc1aa gp8 pd6-0 bdb-s3 cur" onclick="openPlayerModal(${p.id})"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${tr('clubOverview.playerLine',{age:p.age,years:p.contractYears||0,style:styleLabel(p.playStyle)})}</div></div><div class="fs10 ink3">${styleLabel(p.playStyle)}</div>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>`).join('')||`<div class="ink3">${tr('clubOverview.noData')}</div>`}
       </div>
       <div class="card"><div class="ct">${tr('clubOverview.staff').toUpperCase()}</div>
-      ${staff.length?staff.map(s=>`<div class="flex jcb pd6-0 bdb-s3"><div><b>${s.name}</b><div class="fs10 ink3">${staffRole(s.type)}</div></div><div style="font-weight:700;color:${staffOvrColor(staffOvr(s))}">${staffOvr(s)}</div></div>`).join(''):`<div class="ink3">${tr('clubOverview.noStaff')}</div>`}
+      ${staff.length?staff.map(s=>`<div class="flex jcb pd6-0 bdb-s3"><div><b>${s.name}</b><div class="fs10 ink3">${staffRole(s.type)}</div></div>${window.PPM.ratingStars.renderRating(ratingProfile(staffOvr(s),staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>`).join(''):`<div class="ink3">${tr('clubOverview.noStaff')}</div>`}
       </div>
     </div>
     <div>
