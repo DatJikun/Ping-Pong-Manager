@@ -234,6 +234,50 @@ test('player profile shows one translated peak row only when an explicit ceiling
   assert.match(visibleText(profileHtml), /peak 29/i, 'peak age remains visible as age information');
 });
 
+test('player profile treats the generated zero ceiling sentinel as unknown', () => {
+  const g = bootWithPages(9012);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
+  setPlayerOvr(player, 62);
+  player.ceiling = 0;
+  delete player._ceilingEstimated;
+
+  gp.openPlayerModal(player.id);
+  const profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.match(profileHtml, /rating-stars--profile/);
+  assert.match(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 0);
+});
+
+test('rendering dashboard and squad summaries cannot promote a missing ceiling into exact profile disclosure', () => {
+  const g = bootWithPages(9013);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  const player = seniors[0];
+  setPlayerOvr(player, 62);
+  delete player.ceiling;
+  delete player._ceilingEstimated;
+  if (player.academyProfile) delete player.academyProfile.ceiling;
+  G.lastMatchSelection = {
+    base: seniors.slice(0, 3).map(candidate => candidate.id),
+    reserves: seniors.slice(3, 5).map(candidate => candidate.id),
+  };
+
+  const dashboard = g.PPM.pages.pageDash();
+  assert.match(dashboard, new RegExp(`${player.name}[\\s\\S]*?rating-stars--summary`));
+  g.PPM.ui.squadTab = 'squad';
+  const squad = g.PPM.pages.pageSquad();
+  assert.match(squad, new RegExp(`${player.name}[\\s\\S]*?rating-stars--summary`));
+
+  gp.openPlayerModal(player.id);
+  const profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.match(profileHtml, /rating-stars--profile/);
+  assert.match(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 0);
+});
+
 test('[slow] every screen still renders after several seasons of a real career', async () => {
   const { runCareer } = require('./lib/career-driver');
   const result = await runCareer({ seasons: 4, seed: 9004, countryId: 'PL' });
