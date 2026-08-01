@@ -1020,6 +1020,7 @@ function ensurePlayerMeta(p){
   if(!p)return p;
   if(typeof p.seasonForm!=='number')p.seasonForm=rnd(-6,6);
   if(typeof p.stamina!=='number')p.stamina=derivePlayerStamina(p);
+  if(typeof p.ceiling!=='number')p.ceiling=estimatePlayerCeiling(p);
   if(!p.equipment)p.equipment=fitEquipmentToStyle(p);
   if(!p.preferredRole)p.preferredRole='rotation';
   if(!Array.isArray(p.clubHistory))p.clubHistory=p.teamId!==null?[p.teamId]:[];

@@ -251,13 +251,15 @@ test('player profile treats the generated zero ceiling sentinel as unknown', () 
   assert.equal(visiblePeakRows(profileHtml).length, 0);
 });
 
-test('rendering dashboard and squad summaries cannot promote a missing ceiling into exact profile disclosure', () => {
+test('dashboard and squad summaries persist a missing ceiling for exact profile disclosure', () => {
   const g = bootWithPages(9013);
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
   const seniors = gp.getClubSeniorPlayers(G.myTeamId);
   const player = seniors[0];
-  setPlayerOvr(player, 62);
+  setPlayerOvr(player, 68);
+  player.age = 20;
+  player.traits = [];
   delete player.ceiling;
   delete player._ceilingEstimated;
   if (player.academyProfile) delete player.academyProfile.ceiling;
@@ -271,30 +273,44 @@ test('rendering dashboard and squad summaries cannot promote a missing ceiling i
   g.PPM.ui.squadTab = 'squad';
   const squad = g.PPM.pages.pageSquad();
   assert.match(squad, new RegExp(`${player.name}[\\s\\S]*?rating-stars--summary`));
+  assert.equal(player.ceiling, 86, 'the first summary estimate becomes the persisted ceiling');
 
   gp.openPlayerModal(player.id);
   const profileHtml = g.document.getElementById('modal').innerHTML;
   assert.match(profileHtml, /rating-stars--profile/);
-  assert.match(profileHtml, /Potential is unknown/i);
-  assert.equal(visiblePeakRows(profileHtml).length, 0);
+  assert.doesNotMatch(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 1);
+  assert.match(visiblePeakRows(profileHtml)[0], /Peak OVR.*86/i);
 });
 
-test('ceiling estimation adds no provenance field to live players or serialized saves', () => {
+test('the first synthesized ceiling survives player changes and serializes in only the existing field', () => {
   const g = bootWithPages(9014);
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
   const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
+  setPlayerOvr(player, 68);
+  player.age = 20;
+  player.traits = [];
+  delete player.academyProfile;
   delete player.ceiling;
   delete player._ceilingEstimated;
+  const fieldsBeforeEstimate = new Set(Object.keys(player));
 
-  gp.playerCeiling(player);
+  const firstEstimate = gp.playerCeiling(player);
+  player.age = 33;
+  setPlayerOvr(player, 75);
+  const estimateAfterMutation = gp.playerCeiling(player);
   const savedPlayer = JSON.parse(g.PPM.stateApi.serializeGame()).players
     .find(candidate => candidate.id === player.id);
+  const addedFields = Object.keys(player).filter(field => !fieldsBeforeEstimate.has(field));
 
-  assert.deepEqual({
-    live: Object.hasOwn(player, '_ceilingEstimated'),
-    serialized: Object.hasOwn(savedPlayer, '_ceilingEstimated'),
-  }, { live: false, serialized: false });
+  assert.equal(firstEstimate, 86);
+  assert.equal(estimateAfterMutation, 86, 'age and stat changes cannot recalculate potential');
+  assert.equal(player.ceiling, 86);
+  assert.equal(savedPlayer.ceiling, 86);
+  assert.deepEqual(addedFields, ['ceiling']);
+  assert.equal(Object.hasOwn(player, '_ceilingEstimated'), false);
+  assert.equal(Object.hasOwn(savedPlayer, '_ceilingEstimated'), false);
 });
 
 test('an entity-only positive ceiling remains exact after list rendering', () => {
