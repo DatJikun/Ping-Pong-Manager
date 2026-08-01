@@ -32,7 +32,7 @@
 - Produces: save schema 24, `isSeniorPlayer(player)`, `getClubSeniorPlayers(teamId, includeLoanedOut)`, `matchAvailability(player, teamId)`, and `normalizeMatchSelection(raw)`.
 - Produces save field: `lastMatchSelection: { base: [id|null, id|null, id|null], reserves: [id|null, id|null] } | null`.
 
-- [ ] **Step 1: Write failing migration tests**
+- [x] **Step 1: Write failing migration tests**
 
 In `tests/save-migration.test.js`, construct a schema-23 save with four starters
 in explicit `boardOrder`, two reserves, contracts, history, and one outbound loan.
@@ -54,7 +54,7 @@ assert.deepEqual(migrated.players.find((p) => p.id === starterA.id).clubHistory,
 Run migration twice and assert the serialized players and selection are
 unchanged on the second run.
 
-- [ ] **Step 2: Write failing roster and availability tests**
+- [x] **Step 2: Write failing roster and availability tests**
 
 Create `tests/unified-squad.test.js`. Boot a career and assert the public API
 exists. Verify the club roster contains all its seniors, includes an outbound
@@ -71,7 +71,7 @@ assert.deepEqual({ ...gp.matchAvailability(injured, myId) }, {
 assert.equal(gp.matchAvailability(loaned, myId).code, 'loanedOut');
 ```
 
-- [ ] **Step 3: Verify RED**
+- [x] **Step 3: Verify RED**
 
 Run:
 
@@ -81,7 +81,7 @@ node --test tests/save-migration.test.js tests/unified-squad.test.js
 
 Expected: FAIL because schema 24 and the unified roster API do not exist.
 
-- [ ] **Step 4: Implement schema 24 and core roster helpers**
+- [x] **Step 4: Implement schema 24 and core roster helpers**
 
 In `state.js`, capture legacy role and board order before normalization. For
 `fromVersion < 24`, derive `lastMatchSelection` from current nomination or the
@@ -92,13 +92,13 @@ In `gameplay.js`, implement the public helpers with real loan records as the
 ownership source. `matchAvailability()` checks retired, academy, outbound loan,
 registration, and injury in that order and returns stable semantic reason data.
 
-- [ ] **Step 5: Remove legacy roles from creation and transfer entry points**
+- [x] **Step 5: Remove legacy roles from creation and transfer entry points**
 
 Change generated, signed, graduated, returned, and borrowed senior players to
 `role: 'senior'`. Keep `role: 'youth'` only for academy players. Derive missing
 `preferredRole` before changing a legacy role so contract expectations survive.
 
-- [ ] **Step 6: Verify GREEN and commit**
+- [x] **Step 6: Verify GREEN and commit**
 
 Run:
 
@@ -127,7 +127,7 @@ git commit -m "feat: migrate clubs to one senior roster"
 - Consumes: Task 1 roster and availability helpers.
 - Produces: `getLastMatchSelection(teamId)`, `bestMatchSelection(teamId)`, `matchSelectionView(teamId, raw)`, `validateMatchSelection(teamId, raw)`, `nomBest()`, and `nomClear()`.
 
-- [ ] **Step 1: Write failing persistence and vacancy tests**
+- [x] **Step 1: Write failing persistence and vacancy tests**
 
 In `tests/unified-squad.test.js`, manually confirm five deliberately weak
 players in a non-OVR order, advance the matchday, reopen the selection, and
@@ -143,7 +143,7 @@ assert.equal(view.slots[2].player.id, c.id, 'later slots do not compact');
 Call `nomBest()` and independently sort eligible players by OVR to prove that
 only the explicit action rebuilds all five.
 
-- [ ] **Step 2: Write failing 3+2 validation tests**
+- [x] **Step 2: Write failing 3+2 validation tests**
 
 For eligible roster sizes 6, 5, 4, 3, and 2, assert literal required totals
 5, 5, 4, 3, and an unplayable result. Prove a four-player selection is refused
@@ -153,7 +153,7 @@ Update the country table in `tests/match-readiness.test.js` so every country
 returns `requiredBase: 3`, `maxReserves: 2`, and `recommendedTotal: 5`, while
 `reservesUsedInMatch` remains protocol-dependent.
 
-- [ ] **Step 3: Verify RED**
+- [x] **Step 3: Verify RED**
 
 ```powershell
 node --test tests/unified-squad.test.js tests/match-readiness.test.js tests/auto-season-config.test.js tests/protocol.test.js
@@ -162,7 +162,7 @@ node --test tests/unified-squad.test.js tests/match-readiness.test.js tests/auto
 Expected: failures for missing persistence/view/validation helpers and old
 three-slot Olympic/T.League rules.
 
-- [ ] **Step 4: Implement slot-preserving selection state**
+- [x] **Step 4: Implement slot-preserving selection state**
 
 Represent the UI state as exactly five slots. `openMatchNomination()` restores
 the persistent selection; if it is null, call `bestMatchSelection()`. Resolve
@@ -174,14 +174,14 @@ OVR suggestion. `nomConfirm()` calls `validateMatchSelection()` and, only on
 success, writes the exact base/reserve order to both `matchNomination` and
 `lastMatchSelection`.
 
-- [ ] **Step 5: Make every protocol carry a five-player squad**
+- [x] **Step 5: Make every protocol carry a five-player squad**
 
 Change `matchNominationRules()` to return `maxReserves: 2` and
 `recommendedTotal: 5` everywhere. Keep `reservesUsedInMatch` true only when the
 underlying protocol can substitute them. Auto-season selection fills all
 available slots up to five and reports unavailable configured IDs.
 
-- [ ] **Step 6: Block invalid normal matches without silent fallback**
+- [x] **Step 6: Block invalid normal matches without silent fallback**
 
 Before a player-controlled league or Cup match starts, validate the current
 one-shot selection. When invalid, reopen nomination with slot reasons. After a
@@ -189,14 +189,14 @@ Cup consumes `matchNomination`, automatic player fallback uses
 `lastMatchSelection` rather than OVR, preserving the same five for the league
 match. AI retains OVR selection and three-player forfeit safety.
 
-- [ ] **Step 7: Render the five-slot modal and translated reasons**
+- [x] **Step 7: Render the five-slot modal and translated reasons**
 
 Render five visible slot cards, all roster rows including unavailable previous
 players, `Clear`, and `Best lineup`. Disable unavailable rows. Show whether
 R1/R2 can enter under the active protocol. The confirm button reports the exact
 selected/required count and stays disabled until validation succeeds.
 
-- [ ] **Step 8: Verify GREEN and commit**
+- [x] **Step 8: Verify GREEN and commit**
 
 ```powershell
 node --test tests/unified-squad.test.js tests/match-readiness.test.js tests/auto-season-config.test.js tests/protocol.test.js tests/i18n.test.js
@@ -224,12 +224,12 @@ git commit -m "feat: preserve ordered five-player match squads"
 - Consumes: roster, selection, and availability view helpers from Tasks 1–2.
 - Produces: one senior Squad tab, Academy tab, Loans tab, and dashboard match-squad list.
 
-- [ ] **Step 1: Read the frontend-design skill and inspect the current rendered squad page**
+- [x] **Step 1: Read the frontend-design skill and inspect the current rendered squad page**
 
 Use the existing visual language and card primitives. Do not introduce a new
 framework, global palette, or unrelated page redesign.
 
-- [ ] **Step 2: Write failing UI behavior tests**
+- [x] **Step 2: Write failing UI behavior tests**
 
 Load `pages.js` in the VM harness and assert the squad markup:
 
@@ -242,7 +242,7 @@ Load `pages.js` in the VM harness and assert the squad markup:
 Assert the dashboard lists the last selected five in their stored order, even
 when OVR order differs.
 
-- [ ] **Step 3: Verify RED**
+- [x] **Step 3: Verify RED**
 
 ```powershell
 node --test tests/unified-squad.test.js tests/pages-render.test.js tests/i18n.test.js
@@ -250,7 +250,7 @@ node --test tests/unified-squad.test.js tests/pages-render.test.js tests/i18n.te
 
 Expected: old split tabs/actions remain and dashboard uses permanent starters.
 
-- [ ] **Step 4: Build the one-roster squad page**
+- [x] **Step 4: Build the one-roster squad page**
 
 Replace `starter` and `reserve` tabs with one `squad` tab. Sort cards by saved
 selection slot, then availability, then OVR/name. Replace board arrows and
@@ -258,13 +258,13 @@ promotion/demotion buttons with a status line containing selection slot,
 contract expectation, injury/loan reason, and outside-squad state. Preserve
 contract, loan, sale, release, profile, filter, Academy, and Loans actions.
 
-- [ ] **Step 5: Update the dashboard**
+- [x] **Step 5: Update the dashboard**
 
 Rename the permanent “main squad” block to the match squad. Resolve the saved
 five slot-for-slot and display vacant/unavailable entries explicitly. Only a
 never-confirmed career receives the best-five suggestion.
 
-- [ ] **Step 6: Verify GREEN and commit**
+- [x] **Step 6: Verify GREEN and commit**
 
 ```powershell
 node --test tests/unified-squad.test.js tests/pages-render.test.js tests/i18n.test.js
@@ -295,7 +295,7 @@ git commit -m "feat: show one senior squad with match status"
 - Consumes: `isSeniorPlayer`, match selection, and real match result participants.
 - Produces: role-free training, sparring, requests, injuries, awards, transfers, loans, and AI depth.
 
-- [ ] **Step 1: Write failing behavioral tests for former role consumers**
+- [x] **Step 1: Write failing behavioral tests for former role consumers**
 
 Add tests proving:
 
@@ -308,7 +308,7 @@ Add tests proving:
 - AI maintains at least five seniors without assigning starter/reserve roles;
 - loan and transfer choices use depth/OVR, not a reserve flag.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 ```powershell
 node --test tests/unified-squad.test.js tests/match-readiness.test.js tests/player-request-cadence.test.js tests/ai-roster-survival.test.js tests/academy-graduation.test.js tests/scouting-and-loans.test.js tests/owner-feedback.test.js
@@ -316,7 +316,7 @@ node --test tests/unified-squad.test.js tests/match-readiness.test.js tests/play
 
 Expected: old role filters fail the new behavior.
 
-- [ ] **Step 3: Refactor selection, training, sparring, and requests**
+- [x] **Step 3: Refactor selection, training, sparring, and requests**
 
 Make team OVR and legacy `getMatchStarters()` rank available seniors. Define
 sparring as healthy academy players plus healthy seniors outside the base three.
@@ -324,14 +324,14 @@ Give all seniors the normal training multiplier; academy retains its academy
 path. Replace reserve-request eligibility with real absence, form, cooldown,
 availability, and contract expectation.
 
-- [ ] **Step 4: Target post-match injuries and awards correctly**
+- [x] **Step 4: Target post-match injuries and awards correctly**
 
 Extract participant IDs from `result.matchups`, including doubles pairs, and
 pass them to `tryInjuriesForTeam`. Direct diagnostic calls fall back to the
 current base selection. League and Cup squad awards iterate active seniors at
 the winning club, while individual seasonal awards still require appearances.
 
-- [ ] **Step 5: Refactor loans, transfers, graduation, and AI depth**
+- [x] **Step 5: Refactor loans, transfers, graduation, and AI depth**
 
 Use senior counts and OVR ranking for minimum roster checks, surplus loan
 candidates, weakest-player replacement, and AI signing. Graduation changes
@@ -339,13 +339,13 @@ candidates, weakest-player replacement, and AI signing. Graduation changes
 `promoteToStarter`, `demoteToReserve`, and swap actions from exports after all
 callers are gone.
 
-- [ ] **Step 6: Update invariant and career-driver assumptions**
+- [x] **Step 6: Update invariant and career-driver assumptions**
 
 Replace test-driver starter lists with ordered match selections and make world
 invariants require at least three registered seniors, preferring five where the
 club can afford them. Do not weaken identity, loan, or roster-survival checks.
 
-- [ ] **Step 7: Audit role usage and verify GREEN**
+- [x] **Step 7: Audit role usage and verify GREEN**
 
 Run:
 
@@ -372,13 +372,13 @@ git commit -m "refactor: remove permanent lineup roles from gameplay"
 - Consumes: completed unified squad model.
 - Produces: documented Stage 2 baseline safe for the shared rating UI work.
 
-- [ ] **Step 1: Update the contract**
+- [x] **Step 1: Update the contract**
 
 Document one senior roster, mandatory available slots up to five, persistent
 manual order, visible availability reasons, and protocol-specific reserve use.
 Remove the superseded optional-reserve language.
 
-- [ ] **Step 2: Run focused slow/manual and migration tests**
+- [x] **Step 2: Run focused slow/manual and migration tests**
 
 ```powershell
 node --test tests/matchday-manual.test.js tests/save-migration.test.js tests/real-saves.test.js tests/migration-repairs.test.js tests/persistence.test.js
@@ -387,7 +387,7 @@ node --test tests/matchday-manual.test.js tests/save-migration.test.js tests/rea
 Expected: manual 3+2 flow, migrated saves, supplied real saves when present, and
 save round-trips all PASS.
 
-- [ ] **Step 3: Run the stage baseline**
+- [x] **Step 3: Run the stage baseline**
 
 ```powershell
 npm run check
@@ -397,7 +397,7 @@ npm test
 Expected: syntax OK and every non-slow test PASS with no new `undefined`, raw
 translation keys, or console errors.
 
-- [ ] **Step 4: Record evidence and commit**
+- [x] **Step 4: Record evidence and commit**
 
 Check off completed steps, append exact test counts and commit IDs to this plan,
 run `git diff --check`, and commit:
@@ -405,3 +405,18 @@ run `git diff --check`, and commit:
 ```powershell
 git commit -m "docs: record unified squad verification"
 ```
+
+## Verification evidence — 2026-08-01
+
+- Schema and roster helpers: `6f6cebe`.
+- Ordered five-player selection: `d94a269`.
+- Unified squad and dashboard UI: `895f383`.
+- Role-free gameplay, AI, invariants, and long-career driver: `d814ca5`.
+- Manual-season grievance correction and 3+2 slow-path coverage: `a8d3fd7`.
+- Production audit: no `p.role` assignment or condition for `starter` or
+  `reserve`; obsolete promote/demote/swap APIs are absent.
+- `node tests/soak.js --seasons=2`: two seasons completed, all invariants green.
+- Focused manual/migration/real-save package: 24/24 PASS. Each of the three
+  supplied real saves migrated, completed two more seasons, and reloaded.
+- `npm run check`: `syntax OK`.
+- `npm test`: 279/279 PASS, 0 failures, 0 skipped.
