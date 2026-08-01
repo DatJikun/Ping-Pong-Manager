@@ -11,7 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
-const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -748,14 +748,6 @@ function pageSponsors(){
 // is either a filter, a column, or folded into the details strip below.
 // ═══════════════════════════════════════════════════════════════════════════
 
-// OVR -> 0..5 stars. The band is 45..95 rather than 0..100: nobody on this
-// market sits below 45, and a 0..100 map squeezed every professional into
-// three-and-a-half stars.
-function ovrStars(o){return Math.max(0,Math.min(5,(o-45)/10));}
-function starsHtml(value){
-  const pct=Math.round(value/5*1000)/10;
-  return `<span class="stars">★★★★★<i style="width:${pct}%">★★★★★</i></span>`;
-}
 // Favourites work for players and staff alike; they live in different pools, so
 // they are stored separately (and the player list keeps its old save key).
 function marketFavIds(kind){
@@ -791,10 +783,12 @@ function pageMarket(){
     if(!p||p.retired)continue;
     const isFa=item.type==='fa',isPreSign=item.type==='presign',isLoan=item.type==='loan';
     const o=ovr(p);
+    const profile=ratingProfile(o,playerCeiling(p));
+    const currentStars=ratingProfile(o,o).currentStars;
     rows.push({
       kind:'player',role:'player',id:p.id,data:p,item,
       name:p.name,nat:(p.nationality||store.G.countryId||'PL'),age:p.age||0,
-      ovr:o,stars:ovrStars(o),
+      ovr:o,profile,currentStars,
       teamId:p.teamId,club:p.teamId!==null?teamName(p.teamId):'',
       series:p.teamId!==null?t(teamLeague(p.teamId)===1?'league.divisionOne':'league.divisionTwo'):'',
       salary:isLoan?Math.round((p.salary||0)*(item.share||0.6)):contractExpect(p).salary,
@@ -810,13 +804,15 @@ function pageMarket(){
   }
   for(const s of getAllExternalStaffMarket()){
     const o=staffOvr(s);
+    const profile=ratingProfile(o,staffCeiling(s));
+    const currentStars=ratingProfile(o,o).currentStars;
     const mine=s.teamId===store.G.myTeamId;
     const canPreSign=s.teamId!==null&&!mine&&(s.contractYears||0)===1;
     const blocked=s.teamId!==null&&!mine&&!canPreSign;
     rows.push({
       kind:'staff',role:s.type,id:s.id,data:s,
       name:s.name,nat:(s.nationality||store.G.countryId||'PL'),age:s.age||0,
-      ovr:o,stars:ovrStars(o),
+      ovr:o,profile,currentStars,
       teamId:s.teamId,club:s.teamId!==null?teamName(s.teamId):'',
       series:s.teamId!==null?t(teamLeague(s.teamId)===1?'league.divisionOne':'league.divisionTwo'):'',
       salary:s.salary||0,fee:0,until:s.contractYears||0,
@@ -840,7 +836,7 @@ function pageMarket(){
     if(marketSearch&&!text.includes(marketSearch))return false;
     if(favOnly&&!favIdsForRole.includes(r.id))return false;
     if(!ageOk(r))return false;
-    if(minStars&&r.stars<minStars)return false;
+    if(minStars&&r.currentStars<minStars)return false;
     return true;
   });
   const sortVal=r=>({
@@ -867,7 +863,7 @@ function pageMarket(){
       ${compare.map(p=>`<div class="tile tile-lg">
         <div class="flex jcb gp10 aifs mb8">
           <div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age} / ${styleLabel(p.playStyle)}</div></div>
-          <div class="syne b8 fs28 cr">${ovr(p)}</div>
+          ${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
         </div>
         <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
         <div class="fs11 ink3">${t('market.expectedSalary',{amount:formatCurrency(contractExpect(p).salary)})} · +${p.seasonPointsWon||0} / −${p.seasonPointsLost||0}</div>
@@ -900,7 +896,7 @@ function pageMarket(){
           <button class="${minStars?'':'on'}" onclick="ui.mktStars=0;render()">${t('market.everyone')}</button>
           <button class="${minStars?'on':''}" onclick="ui.mktStars=${minStars?minStars:3};render()">${t('market.minimum')}</button>
           <button class="step" onclick="ui.mktStars=Math.max(0,(ui.mktStars||0)-0.5);render()" ${minStars?'':'disabled'}>‹</button>
-          <button class="step" style="flex:0 0 auto;padding:8px 10px" onclick="event.preventDefault()">${starsHtml(minStars)}</button>
+          <button class="step" style="flex:0 0 auto;padding:8px 10px" onclick="event.preventDefault()">${window.PPM.ratingStars.renderRating(ratingProfile(minStars*20,minStars*20),{size:'compact',peakKnown:false,showCurrentOvr:false})}</button>
           <button class="step" onclick="ui.mktStars=Math.min(5,(ui.mktStars||0)+0.5);render()" ${minStars>=5?'disabled':''}>›</button>
         </div>
       </div>
@@ -953,7 +949,7 @@ function pageMarket(){
           <td><span class="face" style="background-image:url('${av}');--ring:${fav?'var(--volt)':'var(--line2)'}"></span><span class="pname">${r.name}</span></td>
           <td><span class="nat">${r.nat}</span></td>
           <td class="n dim">${r.age||'-'}</td>
-          <td>${starsHtml(r.stars)} <span class="dim fs11">${r.ovr}</span></td>
+          <td>${window.PPM.ratingStars.renderRating(r.profile,{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</td>
           <td class="${r.club?'':'dim'}">${r.club||'-'}</td>
           <td class="dim">${r.series||'-'}</td>
           <td class="n">${money(r.salary)}</td>

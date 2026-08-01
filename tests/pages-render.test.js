@@ -31,6 +31,8 @@ function navTargets() {
 function bootWithPages(seed) {
   const g = boot(seed);
   g.PPM.gameplay.newGame(0, 'PL');
+  assert.equal(typeof g.PPM.ratingStars?.renderRating, 'function',
+    'pages load after the shared rating renderer');
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/ui/pages.js'), 'utf8'), g,
     { filename: 'src/ui/pages.js' });
   return g;
