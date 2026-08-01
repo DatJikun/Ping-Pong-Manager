@@ -40,6 +40,68 @@ test('rating profile clamps malformed values and never shows peak below current'
   );
 });
 
+test('physiotherapist attributes are ratings, not literal percentage reductions', () => {
+  const g = boot(734);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const gp = g.PPM.gameplay;
+  const teamId = G.myTeamId;
+  G.staff = G.staff.filter((staff) => staff.teamId !== teamId || staff.type !== 'physio');
+
+  assert.deepEqual(
+    { ...gp.physioEffectProfile(teamId) },
+    {
+      fatigueGainMultiplier: 1,
+      restBonus: 0,
+      injuryChanceReduction: 0,
+      injuryDurationReduction: 0,
+    },
+  );
+
+  const install = (rating) => {
+    G.staff = G.staff.filter((staff) => staff.teamId !== teamId || staff.type !== 'physio');
+    G.staff.push({
+      id: 90000 + rating,
+      type: 'physio',
+      teamId,
+      age: 45,
+      peakAge: 52,
+      recovery: rating,
+      prevention: rating,
+      injReduction: rating,
+    });
+    return gp.physioEffectProfile(teamId);
+  };
+
+  const ordinary = install(50);
+  assert.ok(ordinary.fatigueGainMultiplier >= 0.91 && ordinary.fatigueGainMultiplier <= 0.93,
+    `ordinary physio trims about 8% net fatigue, got ${ordinary.fatigueGainMultiplier}`);
+  assert.equal(ordinary.restBonus, 4);
+  assert.ok(ordinary.injuryChanceReduction >= 0.12 && ordinary.injuryChanceReduction <= 0.14);
+  assert.ok(ordinary.injuryDurationReduction >= 0.16 && ordinary.injuryDurationReduction <= 0.18);
+
+  const elite = install(90);
+  assert.ok(elite.fatigueGainMultiplier >= 0.84 && elite.fatigueGainMultiplier <= 0.86,
+    `elite physio trims about 15% net fatigue, got ${elite.fatigueGainMultiplier}`);
+  assert.equal(elite.restBonus, 7);
+  assert.ok(elite.injuryChanceReduction >= 0.23 && elite.injuryChanceReduction <= 0.25);
+  assert.ok(elite.injuryDurationReduction >= 0.29 && elite.injuryDurationReduction <= 0.31);
+  assert.ok(elite.fatigueGainMultiplier < ordinary.fatigueGainMultiplier);
+  assert.ok(elite.injuryChanceReduction > ordinary.injuryChanceReduction);
+  assert.ok(elite.injuryDurationReduction > ordinary.injuryDurationReduction);
+});
+
+test('medical infrastructure and physiotherapist cannot erase rehabilitation time', () => {
+  const g = boot(735);
+  const gp = g.PPM.gameplay;
+
+  assert.ok(Math.abs(gp.combinedRehabReduction(0.30, 0.20) - 0.44) < 1e-9);
+  assert.equal(gp.combinedRehabReduction(0.82, 0.30), 0.80,
+    'elite staff and infrastructure stop at 80% combined reduction');
+  assert.equal(gp.combinedRehabReduction(2, 2), 0.80,
+    'malformed legacy values cannot bypass the cap');
+});
+
 test('every generated staff profession uses a credible shared 0..100 quality scale', () => {
   const g = boot(733);
   g.PPM.gameplay.newGame(0, 'PL');

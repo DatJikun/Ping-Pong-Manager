@@ -49,6 +49,20 @@ Fresh first-division clubs receive broadly stronger staff than second-division c
 
 Legacy physiotherapists are rebased once by save schema 22. IDs, club, contracts, and tenure history remain stable.
 
+### Physiotherapist effects
+
+Physiotherapist attributes are competence ratings, not literal percentages. UI may
+read `physioEffectProfile(teamId)` when it needs to explain the club's medical
+support; it must not divide the raw attributes by 100 itself.
+
+- an ordinary 50-rated profile reduces net match fatigue by about 8%, adds 4
+  recovery points during rest, lowers injury chance by about 13%, and shortens
+  rehabilitation by about 17%;
+- an elite 90-rated profile reaches about 15%, +7, 24%, and 30% respectively;
+- medical infrastructure and staff combine multiplicatively, with total
+  rehabilitation reduction capped at 80%, so even an elite setup cannot remove
+  injuries from the game.
+
 ## Population is a snapshot, not a quota
 
 Do not present a market count as a supported maximum or promised minimum.
