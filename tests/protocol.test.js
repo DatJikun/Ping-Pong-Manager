@@ -17,7 +17,8 @@ test('nomination: the manager\'s A/B/C order is used for boards 1-3', () => {
   const gp = g.PPM.gameplay;
   const pool = gp.getEligibleMatchPlayers(G.myTeamId).sort((a, b) => gp.ovr(a) - gp.ovr(b));
   const base = pool.slice(0, 3).map((p) => p.id); // deliberately weakest-first
-  G.matchNomination = { season: G.season, matchday: G.matchday, base, reserves: [] };
+  const reserves = pool.slice(3, 5).map((p) => p.id);
+  G.matchNomination = { season: G.season, matchday: G.matchday, base, reserves };
   const opponent = G.teams.find((t) => t.id !== G.myTeamId && t.league === gp.myLeague());
   const r = gp.simTeamMatch(G.myTeamId, opponent.id, true);
   assert.equal(r.matchups[0].homePlayer, base[0], 'G1 home = nominated A');

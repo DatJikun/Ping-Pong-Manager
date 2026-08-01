@@ -83,20 +83,19 @@ test('a player loaned out never appears in his own club\'s transfer market', () 
   }
 });
 
-test('simTeamMatch pairs boards in boardOrder (lineup control is not a no-op)', () => {
+test('simTeamMatch pairs boards in the persisted match selection order', () => {
   const g = boot(16);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const myId = G.myTeamId;
-  const starters = G.players.filter((p) => p.teamId === myId && p.role === 'starter' && !p.retired);
-  assert.ok(starters.length >= 2, 'have starters to reorder');
-  // Reverse of default strongest-first: weakest player on table 1.
-  const byOvrAsc = [...starters].sort((a, b) => g.PPM.gameplay.ovr(a) - g.PPM.gameplay.ovr(b));
-  byOvrAsc.forEach((p, i) => { p.boardOrder = i; });
+  const seniors = g.PPM.gameplay.getEligibleMatchPlayers(myId);
+  assert.ok(seniors.length >= 5, 'have a full match squad to reorder');
+  const byOvrAsc = [...seniors].sort((a, b) => g.PPM.gameplay.ovr(a) - g.PPM.gameplay.ovr(b)).slice(0, 5);
+  G.lastMatchSelection = { base: byOvrAsc.slice(0, 3).map((p) => p.id), reserves: byOvrAsc.slice(3).map((p) => p.id) };
   const opponent = G.teams.find((t) => t.id !== myId && t.league === g.PPM.gameplay.myLeague());
   const r = g.PPM.gameplay.simTeamMatch(myId, opponent.id, true);
-  assert.equal(r.matchups[0].homePlayer, byOvrAsc[0].id, 'table 1 duel uses boardOrder slot 0');
-  assert.equal(r.matchups[1].homePlayer, byOvrAsc[1].id, 'table 2 duel uses boardOrder slot 1');
+  assert.equal(r.matchups[0].homePlayer, byOvrAsc[0].id, 'table 1 duel uses saved slot A');
+  assert.equal(r.matchups[1].homePlayer, byOvrAsc[1].id, 'table 2 duel uses saved slot B');
 });
 
 test('upgradeInfra mirrors the new level onto the player team object', () => {

@@ -51,12 +51,12 @@ test('a reserve fielded in the base three records genuine recent playing time', 
   const G = g.PPM.state.G;
   const eligible = gp.getEligibleMatchPlayers(G.myTeamId);
   const reserve = eligible.find((p) => p.role === 'reserve');
-  const other = eligible.filter((p) => p.id !== reserve.id).slice(0, 2);
+  const other = eligible.filter((p) => p.id !== reserve.id).slice(0, 4);
   G.matchNomination = {
     season: G.season,
     matchday: G.matchday,
-    base: [reserve.id, ...other.map((p) => p.id)],
-    reserves: [],
+    base: [reserve.id, ...other.slice(0, 2).map((p) => p.id)],
+    reserves: other.slice(2, 4).map((p) => p.id),
   };
   const opponent = G.teams.find((t) => t.id !== G.myTeamId && t.league === gp.myLeague());
   reserve.lastPlayedMatchday = -1;

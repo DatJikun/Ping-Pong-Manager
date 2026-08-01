@@ -2243,7 +2243,7 @@ function newGame(clubIdx, countryId){
     equipBrand:null,infraHall:0,infraMed:0,infraAcademy:0,infraMerchandising:0,
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
     academyUsedThisSeason:false,academyProspects:[],_pid:ui._pid,
-    inbox:[],matchNomination:null,rubberTier:0,
+    inbox:[],matchNomination:null,lastMatchSelection:null,rubberTier:0,
     techPartnership:null,ticketPrice:50,newsFeed:[],
     loans:[],
     records:{},
@@ -2700,13 +2700,58 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
 // Teams nominate 3 base players + up to 2 reserves before the match.
 function matchNominationRules(countryId=store.G?.countryId){
   const format=(typeof LEAGUE_FORMATS!=='undefined'&&LEAGUE_FORMATS[countryId])||getLeagueFormat();
-  const maxReserves=format.protocol==='superliga'?2:0;
   return{
     protocol:format.protocol,
     requiredBase:3,
-    maxReserves,
-    recommendedTotal:3+maxReserves,
-    reservesUsedInMatch:maxReserves>0,
+    maxReserves:2,
+    recommendedTotal:5,
+    reservesUsedInMatch:format.protocol==='superliga',
+  };
+}
+function normalizeMatchSelection(raw){
+  const seen=new Set();
+  const normalize=(values,length)=>Array.from({length},(_,index)=>{
+    const value=Array.isArray(values)?values[index]:null;
+    const id=Number(value);
+    if(!Number.isFinite(id)||seen.has(id))return null;
+    seen.add(id);
+    return id;
+  });
+  return{base:normalize(raw?.base,3),reserves:normalize(raw?.reserves,2)};
+}
+function bestMatchSelection(teamId){
+  const players=getEligibleMatchPlayers(teamId).slice().sort((a,b)=>ovr(b)-ovr(a)||a.id-b.id).slice(0,5);
+  return{base:players.slice(0,3).map(p=>p.id),reserves:players.slice(3,5).map(p=>p.id)};
+}
+function getLastMatchSelection(teamId=store.G?.myTeamId){
+  if(!store.G||teamId!==store.G.myTeamId||!store.G.lastMatchSelection)return null;
+  return normalizeMatchSelection(store.G.lastMatchSelection);
+}
+function matchSelectionView(teamId,raw){
+  const source=raw===undefined?(getLastMatchSelection(teamId)||bestMatchSelection(teamId)):raw;
+  const normalized=normalizeMatchSelection(source);
+  const ids=[...normalized.base,...normalized.reserves];
+  const keys=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'];
+  const slots=ids.map((id,index)=>{
+    const previousPlayer=id===null?null:store.G.players.find(p=>p.id===id)||null;
+    const status=id===null
+      ?{available:false,code:'vacant',reasonKey:'match.nom.vacant',reasonParams:{}}
+      :matchAvailability(previousPlayer,teamId);
+    return{index,labelKey:keys[index],previousPlayer,player:status.available?previousPlayer:null,status};
+  });
+  return{selection:normalized,slots,selectedIds:slots.map(slot=>slot.player?.id??null)};
+}
+function validateMatchSelection(teamId,raw){
+  const availableCount=getEligibleMatchPlayers(teamId).length;
+  const requiredTotal=Math.min(5,availableCount);
+  const unplayable=availableCount<3;
+  const view=matchSelectionView(teamId,raw);
+  const selectedCount=view.selectedIds.filter(id=>id!==null).length;
+  const requiredSlotsFilled=!unplayable&&view.selectedIds.slice(0,requiredTotal).every(id=>id!==null);
+  const ok=requiredSlotsFilled&&selectedCount===requiredTotal;
+  return{
+    ok,unplayable,availableCount,requiredBase:3,requiredTotal,selectedCount,view,
+    reasonCode:unplayable?'tooFew':ok?null:'incomplete',
   };
 }
 const AUTO_SEASON_DEFAULTS={
@@ -2748,12 +2793,9 @@ function setAutoSeasonConfig(raw){
   return cfg;
 }
 function defaultAutoNomination(teamId){
-  const rules=matchNominationRules();
-  const healthy=store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&!(p.injuredFor>0)&&p.role!=='youth');
-  const starters=healthy.filter(p=>p.role==='starter').sort((a,b)=>(teamId===store.G.myTeamId?(a.boardOrder??99)-(b.boardOrder??99):0)||ovr(b)-ovr(a));
-  const bench=healthy.filter(p=>p.role!=='starter').sort((a,b)=>ovr(b)-ovr(a));
-  const ordered=[...starters,...bench];
-  return{base:ordered.slice(0,rules.requiredBase),reserves:ordered.slice(rules.requiredBase,rules.requiredBase+rules.maxReserves)};
+  const best=bestMatchSelection(teamId);
+  const byId=id=>store.G.players.find(p=>p.id===id);
+  return{base:best.base.map(byId).filter(Boolean),reserves:best.reserves.map(byId).filter(Boolean)};
 }
 function selectAutoSeasonNomination(teamId,rawConfig=getAutoSeasonConfig()){
   const cfg=normalizeAutoSeasonConfig(rawConfig);
@@ -2777,6 +2819,11 @@ function selectAutoSeasonNomination(teamId,rawConfig=getAutoSeasonConfig()){
   const fallback=defaultAutoNomination(teamId).base.concat(eligible).filter(p=>!used.has(p.id));
   while(base.length<rules.requiredBase&&fallback.length){const p=fallback.shift();if(!used.has(p.id)){used.add(p.id);base.push(p);}}
   const reserves=take(cfg.reservePlayerIds).slice(0,rules.maxReserves);
+  const reserveFallback=defaultAutoNomination(teamId).reserves.concat(eligible);
+  while(reserves.length<rules.maxReserves&&reserveFallback.length){
+    const p=reserveFallback.shift();
+    if(!used.has(p.id)){used.add(p.id);reserves.push(p);}
+  }
   return{base,reserves,missingSelectedIds};
 }
 function autoNomination(teamId){
@@ -2786,12 +2833,20 @@ function autoNomination(teamId){
 // The player's one-shot nomination from the pre-match modal (consumed per match).
 function getMatchNomination(teamId){
   const nom=store.G.matchNomination;
-  const rules=matchNominationRules();
   if(teamId===store.G.myTeamId&&nom&&nom.season===store.G.season&&nom.matchday===store.G.matchday){
-    const byId=id=>store.G.players.find(p=>p.id===id&&p.teamId===teamId&&!p.retired&&!(p.injuredFor>0));
-    const base=(nom.base||[]).map(byId).filter(Boolean);
-    const reserves=(nom.reserves||[]).map(byId).filter(Boolean);
-    if(base.length===rules.requiredBase)return{base,reserves:reserves.slice(0,rules.maxReserves)};
+    const check=validateMatchSelection(teamId,nom);
+    if(check.ok)return{
+      base:check.view.slots.slice(0,3).map(slot=>slot.player),
+      reserves:check.view.slots.slice(3,5).map(slot=>slot.player).filter(Boolean),
+    };
+  }
+  if(teamId===store.G.myTeamId&&store.G.lastMatchSelection){
+    const check=validateMatchSelection(teamId,store.G.lastMatchSelection);
+    if(check.ok)return{
+      base:check.view.slots.slice(0,3).map(slot=>slot.player),
+      reserves:check.view.slots.slice(3,5).map(slot=>slot.player).filter(Boolean),
+    };
+    return{base:[],reserves:[]};
   }
   return autoNomination(teamId);
 }
@@ -3194,14 +3249,11 @@ function settleMatchPromises(playedIds){
 let _nomState=null;
 function openMatchNomination(onConfirm){
   const myId=store.G.myTeamId;
-  const pool=getEligibleMatchPlayers(myId).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
-  if(pool.length<3){toast(t('match.nom.tooFew'));return;}
-  const cap=nominationSlotCount();
-  const def=pool.slice(0,3).map(p=>p.id);
-  // Promised reserves are pre-picked into the reserve slots (keep your word!).
-  pool.filter(p=>p._promisedMatch).forEach(p=>{if(!def.includes(p.id)&&def.length<cap)def.push(p.id);});
-  pool.forEach(p=>{if(!def.includes(p.id)&&def.length<cap)def.push(p.id);});
-  _nomState={sel:def.slice(0,cap),onConfirm};
+  if(getEligibleMatchPlayers(myId).length<3){toast(t('match.nom.tooFew'));return;}
+  const source=getLastMatchSelection(myId)||bestMatchSelection(myId);
+  const view=matchSelectionView(myId,source);
+  const previousIds=[...normalizeMatchSelection(source).base,...normalizeMatchSelection(source).reserves];
+  _nomState={sel:[...view.selectedIds],previousIds,onConfirm};
   renderNominationModal();
 }
 function nominationSlotCount(){return matchNominationRules().recommendedTotal;}
@@ -3213,40 +3265,75 @@ function protocolDescription(){
 }
 function nomToggle(pid){
   if(!_nomState)return;
-  const cap=nominationSlotCount();
   const i=_nomState.sel.indexOf(pid);
-  if(i>=0)_nomState.sel.splice(i,1);
-  else if(_nomState.sel.length<cap)_nomState.sel.push(pid);
-  else{toast(t(cap===5?'match.nom.maxFive':'match.nom.noReserves'));return;}
+  if(i>=0){_nomState.sel[i]=null;_nomState.previousIds[i]=null;}
+  else{
+    const vacancy=_nomState.sel.indexOf(null);
+    if(vacancy<0){toast(t('match.nom.maxFive'));return;}
+    _nomState.sel[vacancy]=pid;
+    _nomState.previousIds[vacancy]=pid;
+  }
+  renderNominationModal();
+}
+function nomClear(){
+  if(!_nomState)return;
+  _nomState.sel=Array(5).fill(null);
+  _nomState.previousIds=Array(5).fill(null);
+  renderNominationModal();
+}
+function nomBest(){
+  if(!_nomState)return;
+  const best=normalizeMatchSelection(bestMatchSelection(store.G.myTeamId));
+  _nomState.sel=[...best.base,...best.reserves];
+  _nomState.previousIds=[..._nomState.sel];
   renderNominationModal();
 }
 function nomConfirm(){
   if(!_nomState)return;
-  if(_nomState.sel.length<3){toast(t('match.nom.chooseThree'));return;}
-  store.G.matchNomination={season:store.G.season,matchday:store.G.matchday,base:_nomState.sel.slice(0,3),reserves:_nomState.sel.slice(3,5)};
+  const selection={base:_nomState.sel.slice(0,3),reserves:_nomState.sel.slice(3,5)};
+  const check=validateMatchSelection(store.G.myTeamId,selection);
+  if(!check.ok){toast(t(check.unplayable?'match.nom.tooFew':'match.nom.chooseThree'));return;}
+  const saved={base:[...selection.base],reserves:[...selection.reserves]};
+  store.G.matchNomination={season:store.G.season,matchday:store.G.matchday,...saved};
+  store.G.lastMatchSelection=saved;
   const cb=_nomState.onConfirm;_nomState=null;
   closeModal();persistGame();
   if(cb)cb();
 }
 function renderNominationModal(){
   const myId=store.G.myTeamId;
-  const pool=getEligibleMatchPlayers(myId).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
-  const fiveSlots=nominationSlotCount()===5;
-  const slots=fiveSlots?['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'].map(key=>t(key)):['match.nom.slotA','match.nom.slotB','match.nom.slotC'].map(key=>t(key));
+  const pool=getClubSeniorPlayers(myId,true).slice().sort((a,b)=>{
+    const aSelected=_nomState.sel.indexOf(a.id),bSelected=_nomState.sel.indexOf(b.id);
+    if(aSelected>=0||bSelected>=0)return(aSelected<0?99:aSelected)-(bSelected<0?99:bSelected);
+    const availableDiff=Number(matchAvailability(b,myId).available)-Number(matchAvailability(a,myId).available);
+    return availableDiff||ovr(b)-ovr(a)||a.name.localeCompare(b.name);
+  });
+  const raw={base:_nomState.previousIds.slice(0,3),reserves:_nomState.previousIds.slice(3,5)};
+  const view=matchSelectionView(myId,raw);
+  const check=validateMatchSelection(myId,{base:_nomState.sel.slice(0,3),reserves:_nomState.sel.slice(3,5)});
+  const slotLabels=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'].map(key=>t(key));
+  const reason=status=>status?.reasonKey?t(status.reasonKey,status.reasonParams):'';
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">${t('match.nom.title',{format:getLeagueFormat().label}).toUpperCase()}</div>
-  <div class="fs11 ink3 mb10 lh16">${protocolDescription()} ${t('match.nom.selectHint',{order:fiveSlots?'A, B, C, R1, R2':'A, B, C'})}</div>
+  <div class="fs11 ink3 mb10 lh16">${protocolDescription()} ${t('match.nom.selectHint',{order:'A, B, C, R1, R2'})}<br>${t(matchNominationRules().reservesUsedInMatch?'match.nom.reservesActive':'match.nom.reservesTravel')}</div>
+  <div class="grid gp6 mb10" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+    ${view.slots.map((slot,index)=>`<div class="pd8-10 r3" style="min-height:58px;border:1px solid ${slot.player?'var(--g)':slot.previousPlayer?'var(--r)':'var(--b1)'};background:var(--s2)">
+      <div class="fs9 b8" style="color:${index<3?'var(--g)':'var(--blue)'}">${slotLabels[index]}</div>
+      <div class="fs11 b7 mt4">${slot.player?.name||slot.previousPlayer?.name||t('match.nom.vacant')}</div>
+      ${!slot.player&&slot.previousPlayer?`<div class="fs9 cr mt4">${reason(slot.status)}</div>`:''}
+    </div>`).join('')}
+  </div>
   <div class="grid gp6 ova" style="max-height:46vh">
-  ${pool.map(p=>{const idx=_nomState.sel.indexOf(p.id);const tag=idx>=0?slots[idx]:null;
-    return `<div onclick="nomToggle(${p.id})" style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid ${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--b1)'};background:${tag?'var(--s2)':'var(--s1)'};border-radius:6px;cursor:pointer">
+  ${pool.map(p=>{const idx=_nomState.sel.indexOf(p.id);const tag=idx>=0?slotLabels[idx]:null;const status=matchAvailability(p,myId);
+    return `<div ${status.available?`onclick="nomToggle(${p.id})"`:''} style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid ${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--b1)'};background:${tag?'var(--s2)':'var(--s1)'};border-radius:6px;cursor:${status.available?'pointer':'not-allowed'};opacity:${status.available?1:.58}">
     <div style="min-width:86px;font-weight:800;font-size:11px;color:${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--ink3)'}">${tag||'—'}</div>
-    <div><div class="b7 fs13">${p.name}${p._promisedMatch?` <span class="fs9 cgold">${t('match.nom.promised')}</span>`:''}${p.role==='reserve'?` <span class="fs9 ink3">${t('match.nom.reserve')}</span>`:''}</div>
-    <div class="fs10 ink3">${t('match.nom.form')}: <b>${seasonFormLabel(p)}</b> / ${t('match.nom.fatigue')}: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / ${t('match.nom.morale')}: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}</div></div>
+    <div><div class="b7 fs13">${p.name}${p._promisedMatch?` <span class="fs9 cgold">${t('match.nom.promised')}</span>`:''}</div>
+    <div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('match.nom.form')}: <b>${seasonFormLabel(p)}</b> / ${t('match.nom.fatigue')}: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / ${t('match.nom.morale')}: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}`:reason(status)}</div></div>
     <div class="fs10 ink3">${t('match.nom.record',{wins:p.seasonW||0,losses:p.seasonL||0})}</div>
     <div class="syne b8 fs22 cr">${ovr(p)}</div>
     </div>`;}).join('')}
   </div>
-  <div class="btn-row mt-12"><button class="btn go" onclick="nomConfirm()" ${_nomState.sel.length>=3?'':'disabled'}>${t('match.nom.confirm',{starters:Math.min(3,_nomState.sel.length),reserves:Math.max(0,_nomState.sel.length-3)}).toUpperCase()}</button></div>`;
+  <div class="btn-row mt-12"><button class="btn" onclick="nomClear()">${t('match.nom.clear').toUpperCase()}</button><button class="btn" onclick="nomBest()">${t('match.nom.best').toUpperCase()}</button><button class="btn go" onclick="nomConfirm()" ${check.ok?'':'disabled'}>${t('match.nom.confirm',{selected:check.selectedCount,required:check.requiredTotal}).toUpperCase()}</button></div>`;
   openModal();
 }
 
@@ -3947,6 +4034,14 @@ async function playCupRound(){
   // without it a re-click played the ENTIRE bracket in one sitting.
   if(!shouldPlayCup())return;
   if(blockForInjuredStarter(store.G.myTeamId,'match.cupBlocked'))return;
+  if(!ui.autoPlay){
+    const current=store.G.matchNomination&&store.G.matchNomination.season===store.G.season&&store.G.matchNomination.matchday===store.G.matchday
+      ?store.G.matchNomination:store.G.lastMatchSelection;
+    if(!current||!validateMatchSelection(store.G.myTeamId,current).ok){
+      openMatchNomination(()=>playCupRound());
+      return;
+    }
+  }
   await checkpointCareer('tournament');
   const result=await runSeededEvent('_cupRoundSeed',playCupRoundBody);
   await flushCareerSave();
@@ -4306,9 +4401,18 @@ async function runMatchday(){
   if(!matches){store.G.phase='transfer';render();return;}
   // Pre-match squad nomination (real TT protocol): pick A/B/C + reserves first.
   // Auto-play uses the automatic nomination instead of interrupting the flow.
-  if(!ui.autoPlay&&!store.G.matchNomination){
-    openMatchNomination(()=>runMatchday());
-    return;
+  if(!ui.autoPlay){
+    const current=store.G.matchNomination&&store.G.matchNomination.season===store.G.season&&store.G.matchNomination.matchday===store.G.matchday
+      ?store.G.matchNomination:store.G.lastMatchSelection;
+    const check=current?validateMatchSelection(store.G.myTeamId,current):null;
+    if(!check?.ok){
+      openMatchNomination(()=>runMatchday());
+      return;
+    }
+    if(!store.G.matchNomination){
+      const saved=normalizeMatchSelection(current);
+      store.G.matchNomination={season:store.G.season,matchday:store.G.matchday,base:saved.base,reserves:saved.reserves};
+    }
   }
   // Owner note #3: a due cup round plays itself before the league matchday —
   // no separate button press per round.
@@ -6241,7 +6345,7 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, compareLeagueTeams, leagueStandings, getLoanedOut, getLoanedIn, isSeniorPlayer, getClubSeniorPlayers, matchAvailability, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, facilityUpkeep, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioEffectProfile, physioFatigueMult, physioRestBonus, combinedRehabReduction, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, normalizeAutoSeasonConfig, getAutoSeasonConfig, setAutoSeasonConfig, selectAutoSeasonNomination, prepareAutoSeasonDecisions, endSeason, startSeason, aiSignPlayers, aiInfrastructureInvestmentChance, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, reserveRequestPolicy, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, compareLeagueTeams, leagueStandings, getLoanedOut, getLoanedIn, isSeniorPlayer, getClubSeniorPlayers, matchAvailability, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, facilityUpkeep, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioEffectProfile, physioFatigueMult, physioRestBonus, combinedRehabReduction, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, normalizeAutoSeasonConfig, getAutoSeasonConfig, setAutoSeasonConfig, selectAutoSeasonNomination, prepareAutoSeasonDecisions, endSeason, startSeason, aiSignPlayers, aiInfrastructureInvestmentChance, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, reserveRequestPolicy, settleMatchPromises, openMatchNomination, nomToggle, nomClear, nomBest, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, normalizeMatchSelection, getLastMatchSelection, bestMatchSelection, matchSelectionView, validateMatchSelection, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 window.PPM.gameplay.offseasonFatigue=offseasonFatigue;
 window.PPM.gameplay.getLeagueStrengthTargets=getLeagueStrengthTargets;
 })();

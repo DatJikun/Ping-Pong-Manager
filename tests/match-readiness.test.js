@@ -12,7 +12,7 @@ test('offseason recovery leaves even a fully exhausted player ready for preseaso
 test('nomination rules follow each country protocol instead of one global reserve requirement', () => {
   const expected = {
     PL: ['superliga', 3, 2, 5], DE: ['superliga', 3, 2, 5], SE: ['superliga', 3, 2, 5],
-    CN: ['olympic', 3, 0, 3], KR: ['olympic', 3, 0, 3], JP: ['tleague', 3, 0, 3],
+    CN: ['olympic', 3, 2, 5], KR: ['olympic', 3, 2, 5], JP: ['tleague', 3, 2, 5],
   };
   for (const [countryId, [protocol, requiredBase, maxReserves, recommendedTotal]] of Object.entries(expected)) {
     const g = boot(510);
@@ -22,6 +22,7 @@ test('nomination rules follow each country protocol instead of one global reserv
     assert.equal(rules.requiredBase, requiredBase, `${countryId} base`);
     assert.equal(rules.maxReserves, maxReserves, `${countryId} reserve slots`);
     assert.equal(rules.recommendedTotal, recommendedTotal, `${countryId} recommended squad`);
+    assert.equal(rules.reservesUsedInMatch, protocol === 'superliga', `${countryId} reserve use`);
     const auto = g.PPM.gameplay.autoNomination(g.PPM.state.G.myTeamId);
     assert.equal(auto.base.length, 3, `${countryId} auto base`);
     assert.ok(auto.reserves.length <= maxReserves, `${countryId} auto nomination respects reserve cap`);
@@ -84,11 +85,14 @@ test('healthy sparring partners create a small capped preparation lift against r
   const ours = G.players.filter((p) => p.teamId === G.myTeamId && !p.retired);
   const theirs = G.players.filter((p) => p.teamId === opponent.id && !p.retired);
   ours.forEach((p) => { p.role = 'starter'; p.injuredFor = 0; });
-  theirs.forEach((p) => { p.role = 'reserve'; p.injuredFor = 0; });
+  theirs.forEach((p) => {
+    p.role = 'reserve'; p.injuredFor = 0;
+    p.fh = p.bh = p.srv = p.ret = p.foot = p.men = 35;
+  });
   theirs.slice(0, 3).forEach((p, i) => {
     p.role = 'starter';
     p.playStyle = ['DEFENDER', 'FH_LOOPER', 'BLOCKER'][i];
-    p.fh = p.bh = p.srv = p.ret = p.men = 60;
+    p.fh = p.bh = p.srv = p.ret = p.foot = p.men = 60;
   });
   ours.slice(3, 5).forEach((p, i) => {
     p.role = 'reserve';

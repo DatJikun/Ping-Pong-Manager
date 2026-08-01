@@ -45,7 +45,13 @@ test('fixed auto-season nomination respects the selected order and protocol rese
 
   G.countryId = 'CN';
   const olympic = gp.selectAutoSeasonNomination(G.myTeamId, cfg);
-  assert.equal(olympic.reserves.length, 0, 'Olympic protocol has no fake reserve slots');
+  assert.deepEqual(Array.from(olympic.reserves, (p) => p.id), reserveIds,
+    'Olympic protocol carries the same two reserves even though it cannot substitute them');
+
+  const baseOnly = gp.selectAutoSeasonNomination(G.myTeamId, {
+    lineupMode: 'fixed', basePlayerIds: baseIds, reservePlayerIds: [],
+  });
+  assert.equal(baseOnly.reserves.length, 2, 'automation fills every available squad slot up to five');
 });
 
 test('rotation mode prefers a rested comparable player over a tired one', () => {
