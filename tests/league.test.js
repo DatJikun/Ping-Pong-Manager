@@ -21,6 +21,15 @@ test('budget→strength is monotonic and league-agnostic', () => {
   assert.ok((f(160000) - f(60000)) > (f(492000) - f(392000)), 'diminishing OVR-per-euro at the top');
 });
 
+test('league strength target contract remains available to UI and diagnostics', () => {
+  const g = boot(2);
+  const gp = g.PPM.gameplay;
+
+  assert.equal(typeof gp.getLeagueStrengthTargets, 'function');
+  const top = gp.leagueStrengthTopForBudget(150000);
+  assert.deepEqual([...gp.getLeagueStrengthTargets(150000)], [top, top - 2, top - 4, top - 6]);
+});
+
 test('League 1 is clearly stronger than League 2, purely from budget', () => {
   const g = boot(7);
   const gp = g.PPM.gameplay;
