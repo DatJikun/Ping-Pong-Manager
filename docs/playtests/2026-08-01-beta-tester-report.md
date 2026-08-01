@@ -1,6 +1,6 @@
 # Raport beta testera — 2026-08-01
 
-Status: **zapisane, jeszcze niezdiagnozowane i nienaprawiane**.
+Status: **sześć zgłoszeń odtworzonych i naprawionych w kandydacie bety**.
 
 Źródło: zewnętrzny beta tester. Nie zapisano jeszcze numeru commita/builda,
 systemu operacyjnego ani pliku kariery, na którym wystąpiły problemy.
@@ -31,4 +31,25 @@ systemu operacyjnego ani pliku kariery, na którym wystąpiły problemy.
 
 Dokument rejestruje wyłącznie obserwacje beta testera. Nie przypisuje przyczyn,
 nie ustala priorytetów implementacyjnych i nie zawiera poprawek w kodzie.
+
+## Zamknięcie zgłoszeń
+
+1. Pulpit korzysta teraz z rzeczywiście wybranego partnera technicznego zamiast
+   z funkcji zwracającej zawsze brak partnera.
+2. Podgląd wiadomości na pulpicie rozwiązuje semantyczne `msgKey` i `msgParams`
+   tak samo jak pełne archiwum wiadomości.
+3. Symulacja historii bez menedżera nie generuje jego poczty, skrzynka jest
+   czyszczona przy przejęciu klubu, a migracja usuwa wyłącznie nieodpowiedziane
+   decyzje starsze niż bieżący sezon.
+4. Licznik pojedynków używa długości rzeczywistego protokołu meczu.
+5. Akademia, przygotowanie sezonu, partnerzy techniczni i poziomy infrastruktury
+   6–7 korzystają z angielskiej warstwy prezentacji, gdy aktywny jest angielski.
+6. Regeneracja między sezonami używa wzoru
+   `round(max(0, fatigue - 30) * 0.20)`; zmęczenie 70/90/100 przechodzi na
+   8/12/14 zamiast na 40/60/70.
+
+Dowody: siedem testów regresji RED→GREEN, `npm run check`, szybki zestaw
+`npm test` — **266/266 PASS** oraz pełny zestaw `npm run test:full` —
+**299/299 PASS**. Raport należy ponownie potwierdzić na paczce `.exe`
+przed publicznym wydaniem na itch.io.
 

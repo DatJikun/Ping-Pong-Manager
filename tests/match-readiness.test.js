@@ -2,6 +2,13 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const { boot } = require('./harness');
 
+test('offseason recovery leaves even a fully exhausted player ready for preseason', () => {
+  const g = boot(509);
+  const recover = g.PPM.gameplay.offseasonFatigue;
+  assert.equal(typeof recover, 'function');
+  assert.deepEqual([0, 30, 70, 90, 100].map(recover), [0, 0, 8, 12, 14]);
+});
+
 test('nomination rules follow each country protocol instead of one global reserve requirement', () => {
   const expected = {
     PL: ['superliga', 3, 2, 5], DE: ['superliga', 3, 2, 5], SE: ['superliga', 3, 2, 5],

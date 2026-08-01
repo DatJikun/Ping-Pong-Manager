@@ -113,6 +113,24 @@ test('every screen renders in both locales', () => {
   assert.deepEqual(broken, []);
 });
 
+test('dashboard resolves the selected technical partner and semantic news', () => {
+  const g = bootWithPages(9010);
+  g.PPM.i18n.setLocale('en');
+  g.PPM.state.G.techPartnership = 'tp_national';
+  g.PPM.state.G.newsFeed = [{
+    msgKey: 'news.newManager',
+    msgParams: { club: 'Test Club', season: 1 },
+    type: 'hot',
+    season: 1,
+    matchday: 0,
+  }];
+
+  const html = renderPage(g, 'dash');
+  assert.match(html, /PulseForge Performance/);
+  assert.match(html, /A new manager takes over Test Club ahead of season 1\./);
+  assert.doesNotMatch(html, /undefined/);
+});
+
 test('[slow] every screen still renders after several seasons of a real career', async () => {
   const { runCareer } = require('./lib/career-driver');
   const result = await runCareer({ seasons: 4, seed: 9004, countryId: 'PL' });

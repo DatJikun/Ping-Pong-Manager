@@ -53,7 +53,7 @@ test('schema 21 physios migrate once onto the shared staff scale without changin
 
   const migrated = api.migrateLoadedGame(raw);
   const all = [...migrated.staff, ...migrated.staffPool].sort((a, b) => a.id - b.id);
-  assert.equal(api.SAVE_SCHEMA_VERSION, 22);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 23);
   assert.deepEqual(all.map((staff) => ({
     id: staff.id, teamId: staff.teamId, contractYears: staff.contractYears,
     injReduction: staff.injReduction, recovery: staff.recovery, prevention: staff.prevention,
@@ -71,6 +71,23 @@ test('schema 21 physios migrate once onto the shared staff scale without changin
     .sort((a, b) => a.id - b.id)
     .map((staff) => [staff.id, staff.injReduction, staff.recovery, staff.prevention]));
   assert.equal(twice, once, 'loading the migrated save again does not rebase ratings twice');
+});
+
+test('migration drops unanswered decisions from past seasons but keeps the current season', () => {
+  const g = boot(2405);
+  const api = g.PPM.stateApi;
+  const decision = (id, season) => ({
+    id, season, matchday: 2, type: 'decision', read: false, answered: false,
+    decision: { kind: 'reserveRequest', playerId: id },
+  });
+  const raw = JSON.parse(validSave({
+    schemaVersion: 22,
+    season: 6,
+    inbox: [decision(1, 4), decision(2, 6), { id: 3, season: 4, type: 'info', read: true }],
+  }));
+
+  const migrated = api.migrateLoadedGame(raw);
+  assert.deepEqual(migrated.inbox.map((mail) => mail.id), [2, 3]);
 });
 
 test('legacy ppgame becomes one career and is removed only after read-back', async () => {

@@ -16,6 +16,7 @@ const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
 const playClick = (...args)=>window.PPM.playClick?.(...args);
+const newsText=n=>n.msgKey?t(n.msgKey,n.msgParams||{}):(n.msg||'');
 
 function statBar(label,val,color,max){
   color=color||'var(--r)';max=max||100;const pct=Math.round(val/max*100);
@@ -148,7 +149,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
         ${canCup?`<div class="fs10 cpurple mt-6 b7">${t('dash.cupNext')}</div>`:`<div class="fs10 ink3 mt-4">${t('dash.nextRound',{number:Math.ceil((store.G.matchday+1)/4)*4})}</div>`}
       </div>`:''}
       <div class="card"><div class="ct">${t('dash.messages').toUpperCase()}</div>
-        ${genNewsFeed().length?genNewsFeed().map(n=>`<div class="news-item ${n.type||''}">${n.msg} <span class="fs9 ink3">(S${n.season}/MD${n.matchday})</span></div>`).join(''):`<div class="fs11 ink3">${t('dash.noMessages')}</div>`}
+        ${genNewsFeed().length?genNewsFeed().map(n=>`<div class="news-item ${n.type||''}">${newsText(n)} <span class="fs9 ink3">(S${n.season}/MD${n.matchday})</span></div>`).join(''):`<div class="fs11 ink3">${t('dash.noMessages')}</div>`}
       </div>
     </div>
   </div>`;
@@ -210,7 +211,7 @@ function pageSquad(){
     </div>`;
   }
   const mt0=myTeam();
-  const ovrRange=store.G.infraAcademy>0?INFRA_ACADEMY[store.G.infraAcademy].desc:t('squad.noAcademy');
+  const ovrRange=store.G.infraAcademy>0?gameDataText('infraAcademy',store.G.infraAcademy,'desc',INFRA_ACADEMY[store.G.infraAcademy].desc):t('squad.noAcademy');
   const academyLevel=store.G.infraAcademy||0;
   const academyBestPeak=youth.length?Math.max(...youth.map(p=>p.academyProfile?.ceiling||playerCeiling(p))):0;
   const academyCandidates=(store.G.academyProspects||[]);
@@ -244,7 +245,7 @@ function pageSquad(){
   </div>
   ${ui.squadTab==='youth'?`
   <div class="g4 mb14">
-    <div class="sb" style="--tone:var(--purple)"><div class="l">${t('squad.academy')}</div><div class="v" style="font-size:20px">${INFRA_ACADEMY[academyLevel].name}</div><div class="sub">${t('squad.level',{current:academyLevel,max:INFRA_ACADEMY.length-1})} · ${ovrRange}</div></div>
+    <div class="sb" style="--tone:var(--purple)"><div class="l">${t('squad.academy')}</div><div class="v" style="font-size:20px">${gameDataText('infraAcademy',academyLevel,'name',INFRA_ACADEMY[academyLevel].name)}</div><div class="sub">${t('squad.level',{current:academyLevel,max:INFRA_ACADEMY.length-1})} · ${ovrRange}</div></div>
     <div class="sb" style="--tone:var(--cyan)"><div class="l">${t('squad.juniors')}</div><div class="v">${youth.length}</div><div class="sub">${t('squad.juniorExit')}</div></div>
     <div class="sb" style="--tone:var(--volt)"><div class="l">${t('squad.bestPeak')}</div><div class="v">${academyBestPeak||'-'}</div><div class="sub">${t('squad.classCeiling')}</div></div>
     <div class="sb"><div class="l">${t('squad.upkeep')}</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div><div class="sub">${t('squad.yearly',{amount:formatCurrency(INFRA_ACADEMY[academyLevel].upkeep||0)})}</div></div>
@@ -1040,7 +1041,6 @@ function pageNews(){
   if(!ui.newsType)ui.newsType='all';
   const filtered=allNews.filter(n=>(ui.newsSeason==='all'||String(n.season)===String(ui.newsSeason))&&(ui.newsType==='all'||(n.type||'')===ui.newsType));
   const typeLabel=type=>t(type==='cup'?'news.cupEvent':type==='hot'?'news.sensation':type==='good'?'news.positive':'news.neutral');
-  const newsText=n=>n.msgKey?t(n.msgKey,n.msgParams||{}):(n.msg||'');
   return`<div class="ph"><div><div class="pt">${t('news.title')}</div><div class="ps">${t('news.archiveCount',{count:allNews.length})}</div></div></div>
   <div class="card mb14">
     <div class="ct">${t('news.filters')}</div>
@@ -1255,7 +1255,7 @@ function pagePreseason(){
         const active=store.G.techPartnership===tp.id;
         const cost=tp.costPerSeason;
         return`<div class="opt ${active?'on':''}" style="${ok?'':'opacity:.45'}" onclick="${ok?`selectTechPartnership('${tp.id}');render()`:''}">
-          <div><b>${tp.name} <span class="pill ${active?'pos':''}">${t('pre.tier',{tier:tp.tier})}</span></b><p>${tp.bonusDesc} · ${t('pre.prestigeRange',{min:tp.prestige[0],max:tp.prestige[1]})}</p></div>
+          <div><b>${tp.name} <span class="pill ${active?'pos':''}">${t('pre.tier',{tier:tp.tier})}</span></b><p>${gameDataText('tech',TECH_PARTNERSHIPS.indexOf(tp),'bonusDesc',tp.bonusDesc)} · ${t('pre.prestigeRange',{min:tp.prestige[0],max:tp.prestige[1]})}</p></div>
           <div class="m ${cost>0?'pos':cost<0?'neg':''}">${cost>0?'+':''}${formatCurrency(cost)}<s>${t('pre.perSeason')}</s></div>
           <button class="btn ${active?'acc pr':''}" ${ok?'':'disabled'}>${t(active?'pre.chosen':ok?'pre.choose':'pre.prestigeTooLow')}</button>
         </div>`;}).join('')}</div>`;
@@ -1274,7 +1274,7 @@ function pagePreseason(){
         <input type="range" min="10" max="200" step="5" value="${price}" class="flx1 accr" oninput="store.G.ticketPrice=+this.value;this.previousElementSibling.textContent=this.value+' €'" onchange="render()">
       </div>
       <div class="g3 mt-14">
-        <div class="sb" style="--tone:var(--cyan)"><div class="l">${t('pre.attendance')}</div><div class="v">${formatNumber(est.attendance)}<span class="dim fs18">/${formatNumber(est.capacity)}</span></div><div class="sub">${t('pre.venueFill',{percent:Math.round(est.fill*100),venue:INFRA_HALL[store.G.infraHall||0].name})}</div></div>
+        <div class="sb" style="--tone:var(--cyan)"><div class="l">${t('pre.attendance')}</div><div class="v">${formatNumber(est.attendance)}<span class="dim fs18">/${formatNumber(est.capacity)}</span></div><div class="sub">${t('pre.venueFill',{percent:Math.round(est.fill*100),venue:gameDataText('infraHall',store.G.infraHall||0,'name',INFRA_HALL[store.G.infraHall||0].name)})}</div></div>
         <div class="sb"><div class="l">${t('pre.gateRevenue')}</div><div class="v g">${Math.round(gate/1000)}k</div><div class="sub">${formatCurrency(gate)} ${t('pre.perSeason')}</div></div>
         <div class="sb" style="--tone:var(--volt)"><div class="l">${t('pre.sensitivity')}</div><div class="v" style="font-size:20px">${formatNumber(cheap.attendance)} / ${formatNumber(dear.attendance)}</div><div class="sub">${t('pre.sensitivityHint')}</div></div>
       </div>`;

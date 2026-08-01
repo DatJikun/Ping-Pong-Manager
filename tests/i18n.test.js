@@ -392,6 +392,35 @@ test('club facilities and their data descriptions follow the active locale', () 
   assert.match(polish, /Treningi na podwórku|Brak hali/i);
 });
 
+test('academy, preseason venue and top facilities never fall back to Polish in English', () => {
+  const g = boot(3128);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  const G = g.PPM.state.G;
+
+  G.infraAcademy = 0;
+  g.PPM.ui.squadTab = 'youth';
+  const academy = g.PPM.pages.pageSquad();
+  assert.match(academy, /No academy/);
+  assert.doesNotMatch(academy, /Brak akademii|Brak szkolenia/);
+
+  G.infraHall = G.infraMed = G.infraAcademy = G.infraMerchandising = 7;
+  const club = g.PPM.pages.pageClub();
+  assert.match(club, /World Training Campus|Elite Recovery Institute|World Elite Academy|Global Brand Network/);
+  assert.match(club, /final stage of facility development|highest recovery standard|ceiling around 96|Full licensing network/);
+  assert.doesNotMatch(club, /końcowy etap|najwyższy standard|Juniorzy|Pełna sieć/);
+
+  g.PPM.ui.preStep = 2;
+  const preseason = g.PPM.pages.pagePreseason();
+  assert.match(preseason, /World Training Campus/);
+  assert.doesNotMatch(preseason, /końcowy etap|Brak hali/);
+
+  g.PPM.ui.preStep = 1;
+  const partners = g.PPM.pages.pagePreseason();
+  assert.match(partners, /\+1 to all ratings|\+1 to all/);
+  assert.doesNotMatch(partners, /do wszystkich|podstawowy sprzęt/);
+});
+
 test('club overview and difficulty details follow the active locale', () => {
   const g = boot(3125);
   g.PPM.gameplay.newGame(0, 'PL');

@@ -60,6 +60,16 @@ test('[slow] the handed-over club is playable, not a shell', async () => {
   } finally { g.__stopGalaClicker(); }
 });
 
+test('[slow] handover exposes only the current-season welcome message', async () => {
+  const g = await preHistory(4101, 5);
+  try {
+    const { inbox, season } = g.PPM.state.G;
+    assert.equal(inbox.length, 1);
+    assert.equal(inbox[0].subjectKey, 'mail.welcomeSubject');
+    assert.equal(inbox[0].season, season);
+  } finally { g.__stopGalaClicker(); }
+});
+
 test('[slow] playing on from pre-history keeps every invariant green', async () => {
   const g = await preHistory(4103, 10);
   try {

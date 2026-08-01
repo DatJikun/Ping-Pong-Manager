@@ -93,10 +93,10 @@ Run `git diff --check`, stage the gameplay, test, contract and plan changes, the
 - Consumes: merged foundation and bounded physiotherapist effects.
 - Produces: trusted baseline for reproducing the six external beta reports.
 
-- [ ] **Step 1: Run the normal suite**
+- [x] **Step 1: Run the normal suite**
 
 Run `npm test`. Expected: all non-slow tests pass.
 
-- [ ] **Step 2: Record exact combined state**
+- [x] **Step 2: Record exact combined state**
 
 Record the passing count and current commit in the next beta-bug plan. Do not diagnose reported UI symptoms against the pre-merge tree.

@@ -2753,6 +2753,8 @@ const englishGameData={
     ['Olympic centre','+50% coach effectiveness'],
     ['National TT campus','+65% coach effectiveness and better match preparation'],
     ['Hyper Performance Dome','+80% coach effectiveness and elite preparation conditions'],
+    ['Performance Institute','+90% coach effectiveness; a project for an established top club'],
+    ['World Training Campus','+100% coach effectiveness; the final stage of facility development'],
   ],
   infraMed:[
     ['No medical centre','Standard recovery time'],
@@ -2761,6 +2763,8 @@ const englishGameData={
     ['Sports medicine centre','−50% injury time and lower recurrence risk'],
     ['Load-management laboratory','−60% injury time and clearly lower injury risk'],
     ['Recovery institute','−70% injury time and complete recovery support'],
+    ['Biomechanics Lab','−76% injury time; load-analysis-driven prevention'],
+    ['Elite Recovery Institute','−82% injury time; the highest recovery standard'],
   ],
   infraAcademy:[
     ['No academy','No youth development'],
@@ -2769,6 +2773,8 @@ const englishGameData={
     ['Elite academy','Juniors OVR 35–52, ceiling around 80'],
     ['Talent development centre','Juniors OVR 38–58, ceiling around 86'],
     ['National champions forge','Juniors OVR 42–64, ceiling around 92'],
+    ['International Talent Centre','Juniors OVR 45–66, ceiling around 94'],
+    ['World Elite Academy','Juniors OVR 48–68, ceiling around 96'],
   ],
   infraMerch:[
     ['No shop','No merchandise income'],
@@ -2777,6 +2783,8 @@ const englishGameData={
     ['Megastore','Full range · +10% of club marketability'],
     ['Lifestyle platform','Club collections · +14% of club marketability'],
     ['Global fan store','International premium shop · +18% of club marketability'],
+    ['International Commerce Hub','International sales · +22% of club marketability'],
+    ['Global Brand Network','Full licensing network · +26% of club marketability'],
   ],
   rubber:[
     ['Stock rubbers','Worn, multi-season rubbers with no bonus'],

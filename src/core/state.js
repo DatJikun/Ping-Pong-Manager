@@ -147,7 +147,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=22;
+const SAVE_SCHEMA_VERSION=23;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
   if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
@@ -415,6 +415,9 @@ function migrateLoadedGame(parsed){
   if(!Array.isArray(game.pendingStaffSignings))game.pendingStaffSignings=[];
   if(!Array.isArray(game.prDirectorPool))game.prDirectorPool=[];
   if(!Array.isArray(game.inbox))game.inbox=[];
+  if(fromVersion<23){
+    game.inbox=game.inbox.filter(mail=>!(mail?.type==='decision'&&!mail.answered&&Number(mail.season)<Number(game.season)));
+  }
   if(game.matchNomination===undefined)game.matchNomination=null;
   if(typeof game.rubberTier!=='number')game.rubberTier=0;
   if(!Array.isArray(game.principalPool))game.principalPool=[];

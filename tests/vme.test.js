@@ -86,3 +86,13 @@ test('match presentation follows the active locale', () => {
   });
   assert.match(polish, /MECZ 1\/4|INICJATYWA|Mikrostatystyki pojedynku|Punkty|Asy|Sety na styku|Morale/i);
 });
+
+test('match counter follows the actual five-duel protocol', () => {
+  const { gp, home, away, r } = setup(9);
+  const matchups = [...r.matchups];
+  while (matchups.length < 5) matchups.push({ ...matchups[matchups.length - 1] });
+  const html = gp.renderVME(home, away, matchups, 4, 2, 2, false, {
+    home: 0, away: 0, setIndex: 0,
+  });
+  assert.match(html, /MATCH 5\/5/);
+});
