@@ -33,26 +33,22 @@ function startedCareer(seed) {
   return g;
 }
 
-// The modal opens pre-filled: openMatchNomination() preselects the first `cap`
-// players in board order. nomToggle() is a toggle, so clearing the selection means
-// clicking off exactly those — which is what a player does. Reproducing the same
-// ordering here keeps the test honest about the flow rather than reaching inside it.
-function preselected(g) {
+function clearSelection(g) {
+  g.PPM.gameplay.nomClear();
+}
+function nameSquad(g, baseIds) {
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
-  const cap = gp.getLeagueFormat().protocol === 'superliga' ? 5 : 3;
-  return gp.getEligibleMatchPlayers(G.myTeamId)
-    .sort((a, b) => (a.boardOrder ?? 99) - (b.boardOrder ?? 99) || gp.ovr(b) - gp.ovr(a))
-    .slice(0, cap)
-    .map((p) => p.id);
-}
-function clearSelection(g) {
-  preselected(g).forEach((id) => g.PPM.gameplay.nomToggle(id));
-}
-function nameSquad(g, ids) {
   clearSelection(g);
-  ids.forEach((id) => g.PPM.gameplay.nomToggle(id));
-  g.PPM.gameplay.nomConfirm();
+  const available = gp.getEligibleMatchPlayers(G.myTeamId);
+  const required = Math.min(5, available.length);
+  const chosen = [...baseIds];
+  available.forEach((player) => {
+    if (chosen.length < required && !chosen.includes(player.id)) chosen.push(player.id);
+  });
+  chosen.forEach((id) => gp.nomToggle(id));
+  gp.nomConfirm();
+  return chosen;
 }
 
 // nomConfirm() calls runMatchday() but does not hand back its promise, so the
@@ -97,8 +93,9 @@ test('[slow] a matchday played the slow way puts the named squad on court', asyn
       .sort((a, b) => gp.ovr(a) - gp.ovr(b));
     assert.ok(eligible.length >= 3, 'there are players to choose from');
     const named = eligible.slice(0, 3).map((p) => p.id);
-    nameSquad(g, named);
+    const selected = nameSquad(g, named);
     assert.deepEqual(G().matchNomination.base, named, 'the modal recorded that squad');
+    assert.equal(selected.length, 5, 'the manager also filled R1/R2');
     await waitFor(() => G().matchday === 1, 'the round to be played');
     const played = playedIds(G());
     assert.ok(played, 'our match was recorded');
@@ -156,7 +153,8 @@ test('[slow] a whole season played the slow way stays consistent', async () => {
       await waitFor(() => G().matchday !== md || G().phase !== 'pre', 'the round to finish');
       if (G().matchday === md) break;
     }
-    assert.equal(G().matchday, 22, 'the season ran to its end without auto-play');
+    assert.equal(G().matchday, 22,
+      `the season ran to its end without auto-play (eligible ${gp.getEligibleMatchPlayers(G().myTeamId).length}, seniors ${gp.getClubSeniorPlayers(G().myTeamId).length})`);
     assert.equal(G().phase, 'transfer');
     assert.deepEqual(checkWorld(G()), [],
       'a season of animated, hand-nominated rounds leaves a clean world');
@@ -176,7 +174,7 @@ test('a nomination of fewer than three players is refused', () => {
     gp.nomToggle(eligible[0].id);
     gp.nomConfirm();
     assert.equal(G().matchNomination, null,
-      'the protocol needs three players, so two cannot be confirmed');
+      'the protocol needs every available slot up to five, so one cannot be confirmed');
     assert.equal(G().matchday, 0, 'and the round has not started');
   } finally { g.__stopGalaClicker(); }
 });

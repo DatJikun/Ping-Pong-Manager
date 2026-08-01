@@ -2478,6 +2478,11 @@ function processSeniorUsageForTeam(teamId,playedIds){
       p.lastPlayedMatchday=store.G.matchday;
       return;
     }
+    // Ordinary squad members use the explicit playing-time request flow. The
+    // stronger automatic grievance is reserved for a current top-three player
+    // or somebody with an explicit key-player promise in his contract.
+    const expectsRegularStarts=p.promisedRole==='starter'||expectsStarterRole(p,teamId);
+    if(!expectsRegularStarts){p.starterBenchStreak=0;return;}
     p.starterBenchStreak=(p.starterBenchStreak||0)+1;
     if(p.starterBenchStreak>=3){
       p.morale=Math.max(0,(p.morale||50)-25);
