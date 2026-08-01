@@ -71,7 +71,7 @@ test('inbox: reserve request YES promises a match; playing him settles it, bench
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const gp = g.PPM.gameplay;
-  const res = G.players.find((p) => p.teamId === G.myTeamId && p.role === 'reserve' && !p.retired);
+  const res = gp.getClubSeniorPlayers(G.myTeamId).at(-1);
   gp.pushMail({ type: 'decision', from: res.name, subject: 'x', body: 'x', decision: { kind: 'reserveRequest', playerId: res.id } });
   const mail = G.inbox[G.inbox.length - 1];
   const moraleBefore = res.morale || 50;

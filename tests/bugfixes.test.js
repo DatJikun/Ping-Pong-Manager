@@ -70,7 +70,7 @@ test('a player loaned out never appears in his own club\'s transfer market', () 
   const g = boot(15);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
-  const p = G.players.find((x) => x.teamId === G.myTeamId && x.role === 'starter');
+  const p = g.PPM.gameplay.getClubSeniorPlayers(G.myTeamId)[0];
   const otherTeam = G.teams.find((t) => t.id !== G.myTeamId);
   // Minimal loan state, as doLoanOut sets it: borrower's teamId + loanedOut flag.
   p.teamId = otherTeam.id;

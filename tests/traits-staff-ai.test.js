@@ -306,17 +306,19 @@ test('physio reduces fatigue gain relative to no physio', () => {
   };
   G.staff.push(phy);
   G.players.filter((p) => p.teamId === myId).forEach((p) => { p.fatigue = 40; });
-  const before = G.players.filter((p) => p.teamId === myId && p.role === 'starter').map((p) => p.fatigue);
+  const trackedIds = gp.getMatchStarters(myId).map((p) => p.id);
+  const tracked = () => trackedIds.map((id) => G.players.find((p) => p.id === id));
+  const before = tracked().map((p) => p.fatigue);
   const opp = G.teams.find((t) => t.league === G.teams.find((x) => x.id === myId).league && t.id !== myId);
   gp.simTeamMatch(myId, opp.id, false);
-  const withPhyAvg = G.players.filter((p) => p.teamId === myId && p.role === 'starter')
+  const withPhyAvg = tracked()
     .reduce((s, p, i) => s + ((p.fatigue || 0) - before[i]), 0);
 
   phy.teamId = null;
   G.players.filter((p) => p.teamId === myId).forEach((p) => { p.fatigue = 40; });
-  const before2 = G.players.filter((p) => p.teamId === myId && p.role === 'starter').map((p) => p.fatigue);
+  const before2 = tracked().map((p) => p.fatigue);
   gp.simTeamMatch(myId, opp.id, false);
-  const noPhyAvg = G.players.filter((p) => p.teamId === myId && p.role === 'starter')
+  const noPhyAvg = tracked()
     .reduce((s, p, i) => s + ((p.fatigue || 0) - before2[i]), 0);
 
   assert.ok(withPhyAvg < noPhyAvg,
@@ -341,7 +343,7 @@ test('AI youth promotes at 21; hall training improves AI growth vs hall 0', () =
   G.players.push(youth);
   gp.applyGrowth();
   assert.strictEqual(youth.age, 21);
-  assert.strictEqual(youth.role, 'reserve', 'AI youth with contract should promote to reserve');
+  assert.strictEqual(youth.role, 'senior', 'AI youth with contract should join the senior squad');
   assert.strictEqual(youth.isYouth, false);
 
   // Hall growth comparison: two clones on two AI clubs with hall 0 vs hall 4
@@ -353,7 +355,7 @@ test('AI youth promotes at 21; hall training improves AI growth vs hall 0', () =
     const p = gp.genPlayer(tid, 19, 'PL');
     p.id = id;
     p.teamId = tid;
-    p.role = 'starter';
+    p.role = 'senior';
     p.isYouth = false;
     p.contractYears = 4;
     p.ceiling = 90;
@@ -381,7 +383,7 @@ test('AI clubs can receive injuries via tryInjuriesForTeam', () => {
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
   const ai = G.teams.find((t) => !t.isPlayer);
-  const starters = G.players.filter((p) => p.teamId === ai.id && p.role === 'starter');
+  const starters = gp.getEligibleMatchPlayers(ai.id);
   assert.ok(starters.length >= 1);
   starters.forEach((p) => { p.fatigue = 95; p.injuredFor = 0; });
   let any = false;
@@ -389,7 +391,7 @@ test('AI clubs can receive injuries via tryInjuriesForTeam', () => {
     starters.forEach((p) => { p.injuredFor = 0; p.fatigue = 95; });
     if (gp.tryInjuriesForTeam(ai.id).length) any = true;
   }
-  assert.ok(any, 'AI starters with high fatigue should eventually roll injuries');
+  assert.ok(any, 'AI match candidates with high fatigue should eventually roll injuries');
 });
 
 test('new traits appear on some generated players over a sample', () => {

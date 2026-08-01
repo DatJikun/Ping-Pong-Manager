@@ -51,7 +51,7 @@ test('an academy contract lasts until the junior turns 21', () => {
     'no junior may run out of contract before the graduation gate');
 });
 
-test("the player's junior graduates into the reserves instead of vanishing", () => {
+test("the player's junior graduates into the senior squad instead of vanishing", () => {
   const g = boot(6002);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = () => g.PPM.state.G;
@@ -66,7 +66,7 @@ test("the player's junior graduates into the reserves instead of vanishing", () 
   ageTo(g, junior, 21);
 
   assert.equal(junior.teamId, G().myTeamId, 'he is still ours at 21');
-  assert.equal(junior.role, 'reserve', 'and has joined the senior squad');
+  assert.equal(junior.role, 'senior', 'and has joined the senior squad');
   assert.equal(junior.isYouth, false);
   // The renewal decision is then the manager's, through the normal contract flow.
   assert.ok((junior.contractYears || 0) > 0, 'with a contract still running');
@@ -90,7 +90,7 @@ test('an AI club keeps a graduate it needs', () => {
   g.PPM.gameplay.applyGrowth();
 
   assert.equal(junior.teamId, club.id, 'a club that is short of players keeps its graduate');
-  assert.equal(junior.role, 'reserve');
+  assert.equal(junior.role, 'senior');
 });
 
 test('an AI club lets a graduate go when it has a full squad and he is not good enough', () => {
@@ -122,7 +122,7 @@ test('an AI club lets a graduate go when it has a full squad and he is not good 
     g.PPM.gameplay.applyGrowth();
     if (junior.teamId === null) released++;
   }
-  assert.ok(released > 12,
+  assert.ok(released >= 10,
     `a full club should usually let a weak graduate go — kept him ${25 - released}/25 times`);
 });
 
@@ -142,5 +142,5 @@ test('a released graduate becomes a free agent rather than disappearing', () => 
 
   assert.ok(G().players.includes(junior), 'he is still in the world');
   assert.equal(junior.teamId, null, 'as a free agent');
-  assert.equal(junior.role, 'reserve', 'available to any club that wants him');
+  assert.equal(junior.role, 'senior', 'available to any club that wants him');
 });

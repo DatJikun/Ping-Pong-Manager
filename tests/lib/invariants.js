@@ -235,10 +235,7 @@ function loanIntegrity(G) {
 // no club left as an empty shell that the match engine cannot use.
 function squadIntegrity(G) {
   const problems = [];
-  // Schema 24 collapses the legacy starter/reserve storage split into `senior`.
-  // Keep accepting the legacy values while fresh-world generation is converted
-  // in the next implementation step; migrated saves must already accept senior.
-  const ROLES = new Set(['senior', 'starter', 'reserve', 'youth']);
+  const ROLES = new Set(['senior', 'youth']);
   const byTeam = new Map();
   for (const p of arr(G.players)) {
     if (!p || p.teamId === null || p.teamId === undefined) continue;
@@ -251,8 +248,6 @@ function squadIntegrity(G) {
     if (!t) continue;
     const squad = byTeam.get(t.id) || [];
     const senior = squad.filter((p) => p.role !== 'youth' && !p.loanedOut);
-    const starters = squad.filter((p) => p.role === 'starter');
-    if (starters.length > 4) problems.push(`team "${t.name}" fields ${starters.length} starters (max 4)`);
     // The engine needs three bodies to run the protocol. Nobody manages an AI
     // club, so it must ALWAYS be able to field one; the player's club is his own
     // problem during the preseason window, and only has to be legal once the
@@ -260,6 +255,10 @@ function squadIntegrity(G) {
     const mustBeFieldable = t.id !== G.myTeamId || G.phase === 'pre';
     if (mustBeFieldable && senior.length < 3) {
       problems.push(`team "${t.name}" has only ${senior.length} senior player(s) — cannot field a legal team`);
+    }
+    const canCarryMatchDepth = mustBeFieldable && !(t.traits || []).includes('youthOnly') && (t.budget || 0) >= 50000;
+    if (canCarryMatchDepth && senior.length < 5) {
+      problems.push(`solvent team "${t.name}" has only ${senior.length} senior player(s) — expected five-player match depth`);
     }
     if (![1, 2].includes(t.league)) problems.push(`team "${t.name}" is in unknown league ${t.league}`);
   }

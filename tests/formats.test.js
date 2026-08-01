@@ -12,7 +12,10 @@ const { boot } = require('./harness');
 function playSeason(g) {
   const G = g.PPM.state.G, gp = g.PPM.gameplay;
   for (const sch of [G.scheduleL1, G.scheduleL2]) {
-    for (const round of sch) for (const f of round) gp.applyResult(gp.simTeamMatch(f.home, f.away, false));
+    for (const round of sch) {
+      for (const f of round) gp.applyResult(gp.simTeamMatch(f.home, f.away, false));
+      gp.tickInjuries();
+    }
   }
 }
 
@@ -49,20 +52,24 @@ test('CN (CTTSL): olympic protocol — double is game 3, points 2/1, nobody play
   g.PPM.gameplay.newGame(0, 'CN');
   const G = g.PPM.state.G, gp = g.PPM.gameplay;
   let checked = 0;
-  for (const round of G.scheduleL1) for (const f of round) {
-    const r = gp.simTeamMatch(f.home, f.away, false);
-    if (r.matchups.length >= 3) {
-      assert.equal(r.matchups[2].type, 'double', 'game 3 is the double');
-      checked++;
+  for (const round of G.scheduleL1) {
+    for (const f of round) {
+      const r = gp.simTeamMatch(f.home, f.away, false);
+      if (r.matchups.length >= 3) {
+        assert.equal(r.matchups[2].type, 'double', 'game 3 is the double');
+        checked++;
+      }
+      // nobody plays more than 2 games
+      const counts = new Map();
+      r.matchups.forEach((mu) => {
+        (mu.homePair || [mu.homePlayer]).forEach((id) => counts.set(id, (counts.get(id) || 0) + 1));
+        (mu.awayPair || [mu.awayPlayer]).forEach((id) => counts.set(id, (counts.get(id) || 0) + 1));
+      });
+      counts.forEach((n, id) => assert.ok(n <= 2, `player ${id} played ${n} games (max 2)`));
+      gp.applyResult(r);
     }
-    // nobody plays more than 2 games
-    const counts = new Map();
-    r.matchups.forEach((mu) => {
-      (mu.homePair || [mu.homePlayer]).forEach((id) => counts.set(id, (counts.get(id) || 0) + 1));
-      (mu.awayPair || [mu.awayPlayer]).forEach((id) => counts.set(id, (counts.get(id) || 0) + 1));
-    });
-    counts.forEach((n, id) => assert.ok(n <= 2, `player ${id} played ${n} games (max 2)`));
-    gp.applyResult(r);
+    gp.tickInjuries();
+    G.players.forEach((player) => { player.injuredFor = 0; });
   }
   assert.ok(checked > 50, 'plenty of matches reached game 3');
   for (const t of G.teams.filter((x) => x.league === 1)) {
@@ -119,7 +126,7 @@ test('equipment: club rubber tier changes player mods and is charged at season e
   const g = boot(66);
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay, G = g.PPM.state.G;
-  const p = G.players.find((x) => x.teamId === G.myTeamId && x.role === 'starter');
+  const p = gp.getClubSeniorPlayers(G.myTeamId)[0];
   const before = gp.equipmentMods(p);
   G.rubberTier = 2;
   const after = gp.equipmentMods(p);

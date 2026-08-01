@@ -30,7 +30,7 @@ test('a fresh squad has no blanket renewal shock', () => {
   const gp = g.PPM.gameplay;
   gp.newGame(0, 'PL');
   const G = g.PPM.state.G;
-  const squad = G.players.filter((p) => p.teamId !== null && !p.retired && p.role === 'starter');
+  const squad = G.players.filter((p) => p.teamId !== null && !p.retired && p.role === 'senior');
   const ratios = squad.map((p) => gp.contractExpect(p, p.teamId).salary / Math.max(1, p.salary));
   const avg = ratios.reduce((a, b) => a + b, 0) / ratios.length;
   // Most renewals should be near parity; the old bug averaged ~2.5-3x.
@@ -44,7 +44,7 @@ test('a generous signing bonus can rescue a slightly-low salary offer', () => {
   const gp = g.PPM.gameplay;
   gp.newGame(0, 'PL');
   const G = g.PPM.state.G;
-  const p = G.players.find((x) => x.teamId !== null && !x.retired && x.role === 'starter');
+  const p = G.players.find((x) => x.teamId !== null && !x.retired && x.role === 'senior');
   const exp = gp.contractExpect(p, p.teamId);
   const lowSal = Math.round(exp.salary * 0.82);
   const noBonus = gp.negResponse(p, lowSal, exp.years, 0, exp.role, p.teamId);

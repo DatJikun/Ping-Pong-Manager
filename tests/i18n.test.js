@@ -612,28 +612,21 @@ test('club job market and post-season gala follow the active locale', async () =
   await polishGalaPromise;
 });
 
-test('loan and squad replacement modals follow the active locale', () => {
+test('loan modal follows the active locale after permanent squad replacement was removed', () => {
   const g = boot(3123);
   g.PPM.gameplay.newGame(0, 'PL');
   const squad = g.PPM.state.G.players.filter(p => p.teamId === g.PPM.state.G.myTeamId && p.role !== 'youth');
   const loanPlayer = squad.find(p => p.contractYears > 1 && !p.injuredFor);
-  const reserve = squad.find(p => p.role === 'reserve') || squad[0];
 
   g.PPM.gameplay.openLoanModal(loanPlayer.id);
   const englishLoan = g.document.getElementById('modal').innerHTML;
   assert.match(englishLoan, /Loan|Choose a destination club|interest/i);
   assert.doesNotMatch(englishLoan, /Wypożyczenie|Wybierz klub docelowy|zainteresowanie/i);
 
-  g.PPM.gameplay.openSwapModal(reserve.id);
-  const englishSwap = g.document.getElementById('modal').innerHTML;
-  assert.match(englishSwap, /first team is full|Choose who to replace|Swap/i);
-  assert.doesNotMatch(englishSwap, /Skład pełny|Wybierz kogo zastąpić|Zamień/i);
-
   g.PPM.i18n.setLocale('pl');
   g.PPM.gameplay.openLoanModal(loanPlayer.id);
   assert.match(g.document.getElementById('modal').innerHTML, /Wypożyczenie|Wybierz klub docelowy/i);
-  g.PPM.gameplay.openSwapModal(reserve.id);
-  assert.match(g.document.getElementById('modal').innerHTML, /Skład pełny|Wybierz kogo zastąpić/i);
+  assert.equal(g.PPM.gameplay.openSwapModal, undefined);
 });
 
 test('new matchday mail and news store semantic localisation keys', () => {
@@ -642,7 +635,7 @@ test('new matchday mail and news store semantic localisation keys', () => {
   const G = g.PPM.state.G;
   G.inbox = [];
   G.newsFeed = [];
-  const reserve = G.players.find(p => p.teamId === G.myTeamId && p.role === 'reserve');
+  const reserve = g.PPM.gameplay.getClubSeniorPlayers(G.myTeamId).at(-1);
   reserve.seasonForm = 10;
   reserve.lastPlayedMatchday = -1;
   G.matchday = 4;

@@ -56,11 +56,15 @@ test('sparring profile is the single readable contract for bench development val
   gp.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const squad = G.players.filter((p) => p.teamId === G.myTeamId && !p.retired);
-  squad.forEach((p) => { p.role = 'starter'; p.traits = []; p.injuredFor = 0; });
+  squad.forEach((p) => { p.role = 'senior'; p.isYouth = false; p.traits = []; p.injuredFor = 2; });
+  const base = squad.slice(0, 3);
   const partners = squad.slice(3, 6);
+  [...base, ...partners].forEach((p) => { p.injuredFor = 0; });
+  G.lastMatchSelection = { base: base.map((p) => p.id), reserves: partners.slice(0, 2).map((p) => p.id) };
   const styles = ['DEFENDER', 'FH_LOOPER', 'BLOCKER'];
   partners.forEach((p, i) => {
-    p.role = i === 2 ? 'youth' : 'reserve';
+    p.role = i === 2 ? 'youth' : 'senior';
+    p.isYouth = i === 2;
     p.playStyle = styles[i];
     p.fh = p.bh = p.srv = p.ret = p.men = 70;
   });
@@ -82,21 +86,20 @@ test('healthy sparring partners create a small capped preparation lift against r
   gp.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const opponent = G.teams.find((t) => t.id !== G.myTeamId && t.league === gp.myLeague());
-  const ours = G.players.filter((p) => p.teamId === G.myTeamId && !p.retired);
-  const theirs = G.players.filter((p) => p.teamId === opponent.id && !p.retired);
-  ours.forEach((p) => { p.role = 'starter'; p.injuredFor = 0; });
+  const ours = gp.getClubSeniorPlayers(G.myTeamId);
+  const theirs = gp.getClubSeniorPlayers(opponent.id);
+  ours.forEach((p) => { p.role = 'senior'; p.injuredFor = 0; });
   theirs.forEach((p) => {
-    p.role = 'reserve'; p.injuredFor = 0;
+    p.role = 'senior'; p.injuredFor = 0;
     p.fh = p.bh = p.srv = p.ret = p.foot = p.men = 35;
   });
   theirs.slice(0, 3).forEach((p, i) => {
-    p.role = 'starter';
     p.playStyle = ['DEFENDER', 'FH_LOOPER', 'BLOCKER'][i];
     p.fh = p.bh = p.srv = p.ret = p.foot = p.men = 60;
   });
-  ours.slice(3, 5).forEach((p, i) => {
-    p.role = 'reserve';
-    p.playStyle = ['DEFENDER', 'FH_LOOPER'][i];
+  G.lastMatchSelection = { base: ours.slice(0, 3).map((p) => p.id), reserves: ours.slice(3, 5).map((p) => p.id) };
+  ours.slice(3).forEach((p, i) => {
+    p.playStyle = ['DEFENDER', 'FH_LOOPER'][i % 2];
     p.fh = p.bh = p.srv = p.ret = p.men = 70;
   });
   const prepared = { ...gp.getMatchPreparation(G.myTeamId, opponent.id) };
@@ -115,6 +118,6 @@ test('healthy sparring partners create a small capped preparation lift against r
     'the point engine consumes the preparation contract',
   );
 
-  ours.filter((p) => p.role === 'reserve' || p.role === 'youth').forEach((p) => { p.injuredFor = 2; });
+  ours.slice(3).forEach((p) => { p.injuredFor = 2; });
   assert.equal(gp.getMatchPreparation(G.myTeamId, opponent.id).ratingBonus, 0, 'injured partners cannot prepare the team');
 });

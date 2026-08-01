@@ -117,6 +117,7 @@ test('simulating a full league season keeps the table consistent', () => {
         const r = gp.simTeamMatch(f.home, f.away, false);
         gp.applyResult(r);
       }
+      gp.tickInjuries();
     }
   };
   playLeague(G.scheduleL1);

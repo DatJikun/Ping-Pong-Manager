@@ -81,7 +81,7 @@ test('player requests can stop auto-season or be explicitly declined with conseq
   stopCase.PPM.gameplay.newGame(0, 'PL');
   const stopG = stopCase.PPM.state.G;
   const stopGp = stopCase.PPM.gameplay;
-  const reserve = stopG.players.find((p) => p.teamId === stopG.myTeamId && p.role === 'reserve');
+  const reserve = stopGp.getClubSeniorPlayers(stopG.myTeamId).at(-1);
   stopGp.pushMail({ type: 'decision', from: reserve.name, subject: 'x', body: 'x', decision: { kind: 'reserveRequest', playerId: reserve.id } });
   const stopCfg = stopGp.setAutoSeasonConfig({ stopOn: { playerRequest: true } });
   const stopped = stopGp.prepareAutoSeasonDecisions(stopCfg);
@@ -92,7 +92,7 @@ test('player requests can stop auto-season or be explicitly declined with conseq
   ignoreCase.PPM.gameplay.newGame(0, 'PL');
   const ignoreG = ignoreCase.PPM.state.G;
   const ignoreGp = ignoreCase.PPM.gameplay;
-  const ignoredReserve = ignoreG.players.find((p) => p.teamId === ignoreG.myTeamId && p.role === 'reserve');
+  const ignoredReserve = ignoreGp.getClubSeniorPlayers(ignoreG.myTeamId).at(-1);
   const moraleBefore = ignoredReserve.morale;
   ignoreGp.pushMail({ type: 'decision', from: ignoredReserve.name, subject: 'x', body: 'x', decision: { kind: 'reserveRequest', playerId: ignoredReserve.id } });
   const ignoreCfg = ignoreGp.setAutoSeasonConfig({ stopOn: { playerRequest: false } });

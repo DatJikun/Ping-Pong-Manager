@@ -151,3 +151,71 @@ test('confirming the modal persists the exact manager-picked 3+2 order', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(G.lastMatchSelection)), expected);
   assert.deepEqual({ base: Array.from(G.matchNomination.base), reserves: Array.from(G.matchNomination.reserves) }, expected);
 });
+
+test('fresh careers store only senior/youth roles and role-like metadata cannot change team strength', () => {
+  const g = boot(4206);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  assert.ok(G.players.every((player) => player.role === 'senior' || player.role === 'youth'));
+  const before = gp.teamOvr(G.myTeamId);
+  gp.getClubSeniorPlayers(G.myTeamId).forEach((player, index) => {
+    player.legacyLineupLabel = index % 2 ? 'reserve' : 'starter';
+    player.preferredRole = index % 2 ? 'rotation' : 'starter';
+  });
+  assert.equal(gp.teamOvr(G.myTeamId), before);
+});
+
+test('healthy seniors outside A/B/C are the sparring group and any neglected senior may request a match', () => {
+  const g = boot(4207);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  seniors.forEach((player) => { player.injuredFor = 0; player.traits = []; });
+  const chosen = seniors.slice(0, 5);
+  G.lastMatchSelection = { base: chosen.slice(0, 3).map((player) => player.id), reserves: chosen.slice(3).map((player) => player.id) };
+  const healthyAcademy = G.players.filter((player) => player.teamId === G.myTeamId
+    && player.role === 'youth' && !player.retired && !player.injuredFor).length;
+  assert.equal(gp.getSparringProfile(G.myTeamId).partnerCount, seniors.length - 3 + healthyAcademy);
+
+  const neglected = seniors.at(-1);
+  neglected.role = 'senior';
+  neglected.seasonForm = 8;
+  neglected.lastPlayedMatchday = -1;
+  G.matchday = 8;
+  G._lastReserveRequest = null;
+  assert.equal(gp.reserveRequestPolicy(neglected).eligible, true);
+});
+
+test('post-match injury rolls target actual participants, not an old permanent lineup', () => {
+  const g = boot(4208);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  seniors.forEach((player) => { player.injuredFor = 0; player.fatigue = 100; player.traits = []; });
+  const participant = seniors.at(-1);
+  const originalRandom = g.Math.random;
+  g.Math.random = () => 0;
+  try {
+    gp.tryInjuriesForTeam(G.myTeamId, new Set([participant.id]));
+  } finally {
+    g.Math.random = originalRandom;
+  }
+  assert.equal(participant.injuredFor > 0, true);
+  assert.equal(seniors.filter((player) => player.id !== participant.id).some((player) => player.injuredFor > 0), false);
+});
+
+test('league champions award every active senior in the winning club', () => {
+  const g = boot(4209);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const club = G.teams.find((team) => team.id === G.myTeamId);
+  G.teams.filter((team) => team.league === club.league).forEach((team) => { team.pts = team.id === club.id ? 99 : 0; });
+  const seniors = gp.getClubSeniorPlayers(club.id);
+  seniors.forEach((player) => { player.awards = []; });
+  gp.giveSeasonAwards();
+  assert.ok(seniors.every((player) => player.awards.some((award) => award.type === 'league_champion')));
+});

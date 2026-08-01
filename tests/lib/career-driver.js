@@ -73,7 +73,7 @@ class AutoManager {
   mine() { return this.G.players.filter((p) => p.teamId === this.myId && !p.retired); }
   // The challenge club may not sign an adult from anywhere (doNegotiate blocks
   // it), so every player it loses is gone for good. A manager there hoards:
-  // never sells, never lets a deal lapse, and keeps juniors in reserve rather
+  // never sells, never lets a deal lapse, and keeps juniors in the academy rather
   // than graduating them the moment they turn 19.
   barredFromMarket() { return (this.me?.traits || []).includes('youthOnly'); }
   seniors() { return this.mine().filter((p) => p.role !== 'youth' && !p.loanedOut); }
@@ -186,9 +186,13 @@ class AutoManager {
     this.balanceBooks();
     this.fillSquad();
 
-    // 5) Best four start; everyone else sits. Keeps the lineup legal after churn.
+    // 5) Every adult remains a senior; seed a legal ordered five after churn.
     const ranked = this.seniors().sort((a, b) => gp.ovr(b) - gp.ovr(a));
-    ranked.forEach((p, i) => { if (p.role !== 'youth') p.role = i < 4 ? 'starter' : 'reserve'; });
+    ranked.forEach((p) => { p.role = 'senior'; });
+    G.lastMatchSelection = {
+      base: ranked.slice(0, 3).map((p) => p.id),
+      reserves: ranked.slice(3, 5).map((p) => p.id),
+    };
   }
 
   // Offers what the agent asked for — the same numbers the negotiation modal
@@ -233,8 +237,12 @@ class AutoManager {
     if (!red() && this.wageBill() <= this.wageCeiling()) return;
     // Sell from the back of the queue. An overdrawn club sells down further than
     // one that is merely over its wage ceiling, but never past a legal squad.
+    const selectedIds = new Set([
+      ...(this.G.lastMatchSelection?.base || []),
+      ...(this.G.lastMatchSelection?.reserves || []),
+    ]);
     const surplus = this.seniors()
-      .filter((p) => p.role !== 'starter')
+      .filter((p) => !selectedIds.has(p.id))
       .sort((a, b) => gp.ovrBase(a) - gp.ovrBase(b));
     for (const p of surplus) {
       const floor = red() ? 4 : 6;
@@ -244,15 +252,18 @@ class AutoManager {
     }
   }
 
-  // Rotate who takes board A/B/C. Only three of the four starters play each
-  // round, and a starter benched three rounds running loses 25 morale — at
-  // morale 15 he tears up his contract and the club pays severance. A manager
-  // who never looks at his lineup bleeds players and money; this one rotates.
+  // Rotate the ordered A/B/C/R1/R2 selection through every available senior.
   rotateBoardOrder() {
-    const starters = this.seniors().filter((p) => p.role === 'starter')
-      .sort((a, b) => (a.boardOrder ?? 99) - (b.boardOrder ?? 99));
-    if (starters.length < 4) return;
-    starters.forEach((p, i) => { p.boardOrder = (i + this.G.matchday) % starters.length; });
+    const available = this.gp.getEligibleMatchPlayers(this.myId)
+      .sort((a, b) => this.gp.ovr(b) - this.gp.ovr(a));
+    if (available.length < 3) return;
+    const offset = this.G.matchday % available.length;
+    const rotated = available.slice(offset).concat(available.slice(0, offset)).slice(0, 5);
+    this.G.lastMatchSelection = {
+      base: rotated.slice(0, 3).map((p) => p.id),
+      reserves: rotated.slice(3, 5).map((p) => p.id),
+    };
+    this.G.matchNomination = null;
   }
 
   // Signs free agents until the squad can survive a season of injuries. Walks the
@@ -364,7 +375,7 @@ class AutoManager {
 
   // ── in-season decisions ────────────────────────────────────────────────────
   // Decision mail BLOCKS the next matchday, so it must be cleared every round.
-  // Declining is the stable default: promising a reserve a game creates an
+  // Declining is the stable default: promising a player a game creates an
   // obligation the auto-nomination cannot be trusted to keep.
   answerMail() {
     const pending = this.gp.pendingDecisions();

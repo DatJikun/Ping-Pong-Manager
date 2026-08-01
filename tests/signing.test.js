@@ -22,17 +22,11 @@ function signFreeAgent(g, player, role) {
   g.PPM.gameplay.doNegotiate(player.id);
 }
 
-test('signing a free agent fills an empty starter slot (B1)', () => {
+test('signing a free agent joins the unified senior squad', () => {
   const g = boot(101);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const myId = G.myTeamId;
-
-  // Make room: drop one of our starters so we field only 3.
-  const myStarters = G.players.filter((p) => p.teamId === myId && p.role === 'starter');
-  assert.ok(myStarters.length >= 4, 'club starts with 4 starters');
-  myStarters[0].role = 'reserve';
-  assert.equal(G.players.filter((p) => p.teamId === myId && p.role === 'starter').length, 3);
 
   // Grab a free agent (no team) and sign them.
   const freeAgent = G.players.find((p) => p.teamId === null && !p.retired && p.role !== 'youth');
@@ -43,24 +37,24 @@ test('signing a free agent fills an empty starter slot (B1)', () => {
   const after = g.PPM.state.G;
   const signed = after.players.find((p) => p.id === freeAgent.id);
   assert.equal(signed.teamId, myId, 'player joined the club');
-  assert.equal(signed.role, 'starter', 'player fills the empty starter slot, not the bench');
-  assert.equal(after.players.filter((p) => p.teamId === myId && p.role === 'starter').length, 4,
-    'club now fields a full 4 starters');
+  assert.equal(signed.role, 'senior');
+  assert.ok(g.PPM.gameplay.getClubSeniorPlayers(myId).some((p) => p.id === signed.id));
 });
 
-test('signing when the starting four is full sends the player to the bench', () => {
+test('a contract role promise does not create a hidden permanent lineup', () => {
   const g = boot(202);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const myId = G.myTeamId;
-  assert.equal(G.players.filter((p) => p.teamId === myId && p.role === 'starter').length, 4);
+  const selectionBefore = JSON.parse(JSON.stringify(G.lastMatchSelection));
 
   const freeAgent = G.players.find((p) => p.teamId === null && !p.retired && p.role !== 'youth');
   G.teams.find((t) => t.id === myId).budget = 10_000_000;
   signFreeAgent(g, freeAgent, 'starter');
 
   const signed = g.PPM.state.G.players.find((p) => p.id === freeAgent.id);
-  assert.equal(signed.role, 'reserve', 'full lineup → new signing benched');
-  assert.equal(g.PPM.state.G.players.filter((p) => p.teamId === myId && p.role === 'starter').length, 4,
-    'still exactly 4 starters');
+  assert.equal(signed.role, 'senior');
+  assert.equal(signed.promisedRole, 'starter');
+  assert.deepEqual(JSON.parse(JSON.stringify(g.PPM.state.G.lastMatchSelection)), selectionBefore,
+    'signing does not silently rewrite the manager-picked five');
 });

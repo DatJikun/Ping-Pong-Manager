@@ -56,7 +56,7 @@ test('#7 league-wide awards carry the club so the gala cannot misattribute them'
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
   // Give one starter a season worth of stats so the pools are non-empty.
-  G.players.filter((p) => p.role === 'starter').forEach((p) => {
+  G.players.filter((p) => p.role === 'senior').forEach((p) => {
     p.leagueSeasonW = 10; p.leagueSeasonL = 2;
     p.leagueSeasonPointsWon = 300; p.leagueSeasonPointsLost = 200;
   });
@@ -90,7 +90,7 @@ test('#10 borrow-in: loan listing → doBorrowIn → returnLoans round-trip', ()
   const g = boot(30);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
-  const p = G.players.find((x) => x.teamId !== null && x.teamId !== G.myTeamId && x.role === 'reserve' && x.contractYears >= 2 && !x.isYouth);
+  const p = G.players.find((x) => x.teamId !== null && x.teamId !== G.myTeamId && x.role === 'senior' && x.contractYears >= 2 && !x.isYouth);
   const fromId = p.teamId;
   G.transferMarket.push({ playerId: p.id, type: 'loan', fee: 0, share: 0.6, tier: 'loan' });
   g.PPM.gameplay.doBorrowIn(p.id);
@@ -105,7 +105,7 @@ test('#10 loaning out a final-contract-year player is blocked', () => {
   const g = boot(31);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
-  const p = G.players.find((x) => x.teamId === G.myTeamId && x.role === 'reserve');
+  const p = g.PPM.gameplay.getClubSeniorPlayers(G.myTeamId).at(-1);
   p.contractYears = 1;
   assert.equal(g.PPM.gameplay.canLoanOut(p.id).ok, false, 'final-year loan-out refused');
 });
