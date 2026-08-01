@@ -53,7 +53,7 @@ test('schema 21 physios migrate once onto the shared staff scale without changin
 
   const migrated = api.migrateLoadedGame(raw);
   const all = [...migrated.staff, ...migrated.staffPool].sort((a, b) => a.id - b.id);
-  assert.equal(api.SAVE_SCHEMA_VERSION, 23);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 24);
   assert.deepEqual(all.map((staff) => ({
     id: staff.id, teamId: staff.teamId, contractYears: staff.contractYears,
     injReduction: staff.injReduction, recovery: staff.recovery, prevention: staff.prevention,
@@ -88,6 +88,77 @@ test('migration drops unanswered decisions from past seasons but keeps the curre
 
   const migrated = api.migrateLoadedGame(raw);
   assert.deepEqual(migrated.inbox.map((mail) => mail.id), [2, 3]);
+});
+
+test('schema 23 starter and reserve roles migrate to one ordered senior squad', () => {
+  const g = boot(2406);
+  const api = g.PPM.stateApi;
+  const senior = (id, role, boardOrder, teamId = 1) => ({
+    id,
+    name: `Legacy Player ${id}`,
+    nationality: 'PL',
+    age: 25,
+    peakAge: 28,
+    teamId,
+    role,
+    boardOrder,
+    contractYears: 2,
+    loanedOut: false,
+    retired: false,
+    isYouth: false,
+    preferredRole: role === 'reserve' ? 'rotation' : 'starter',
+    clubHistory: [{ teamId: 1, startSeason: 1 }],
+    traits: [],
+    fh: 60,
+    bh: 60,
+    srv: 60,
+    ret: 60,
+    foot: 60,
+    men: 60,
+  });
+  const starterA = senior(9101, 'starter', 0);
+  const starterB = senior(9102, 'starter', 1);
+  const starterC = senior(9103, 'starter', 2);
+  const starterD = senior(9104, 'starter', 3);
+  const reserveA = senior(9105, 'reserve', null);
+  const loaned = senior(9106, 'reserve', null, 2);
+  loaned.loanedOut = true;
+  const originalHistory = JSON.stringify(starterA.clubHistory);
+  const raw = JSON.parse(validSave({
+    schemaVersion: 23,
+    customDatabase: { name: 'Migration fixture' },
+    teams: [
+      { id: 1, name: 'Legacy Club', isPlayer: true, league: 1 },
+      { id: 2, name: 'Borrower', isPlayer: false, league: 2 },
+    ],
+    players: [reserveA, starterC, starterA, starterD, loaned, starterB],
+    loans: [{
+      playerId: loaned.id,
+      fromTeamId: 1,
+      toTeamId: 2,
+      seasons: 1,
+      returned: false,
+      originalRole: 'reserve',
+      wageShare: 0.5,
+    }],
+  }));
+
+  const migrated = api.migrateLoadedGame(raw);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 24);
+  assert.ok(migrated.players.filter((player) => player.role !== 'youth')
+    .every((player) => player.role === 'senior'));
+  assert.deepEqual({ ...migrated.lastMatchSelection }, {
+    base: [starterA.id, starterB.id, starterC.id],
+    reserves: [starterD.id, reserveA.id],
+  });
+  assert.equal(migrated.players.find((player) => player.id === loaned.id).loanedOut, true);
+  assert.equal(JSON.stringify(migrated.players.find((player) => player.id === starterA.id).clubHistory), originalHistory);
+  assert.equal(migrated.players.find((player) => player.id === reserveA.id).preferredRole, 'rotation');
+
+  const once = JSON.stringify({ players: migrated.players, selection: migrated.lastMatchSelection });
+  api.migrateLoadedGame(migrated);
+  assert.equal(JSON.stringify({ players: migrated.players, selection: migrated.lastMatchSelection }), once,
+    'unified roster migration is idempotent');
 });
 
 test('legacy ppgame becomes one career and is removed only after read-back', async () => {

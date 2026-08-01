@@ -235,7 +235,10 @@ function loanIntegrity(G) {
 // no club left as an empty shell that the match engine cannot use.
 function squadIntegrity(G) {
   const problems = [];
-  const ROLES = new Set(['starter', 'reserve', 'youth']);
+  // Schema 24 collapses the legacy starter/reserve storage split into `senior`.
+  // Keep accepting the legacy values while fresh-world generation is converted
+  // in the next implementation step; migrated saves must already accept senior.
+  const ROLES = new Set(['senior', 'starter', 'reserve', 'youth']);
   const byTeam = new Map();
   for (const p of arr(G.players)) {
     if (!p || p.teamId === null || p.teamId === undefined) continue;

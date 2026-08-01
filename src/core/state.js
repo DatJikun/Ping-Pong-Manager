@@ -147,7 +147,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=23;
+const SAVE_SCHEMA_VERSION=24;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
   if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
@@ -245,6 +245,8 @@ function migrateLoadedGame(parsed){
   const game = parsed;
   const fromVersion=typeof game.schemaVersion==='number'?game.schemaVersion:0;
   const leagueCountryId=game.countryId||'PL';
+  const legacyRoleByPlayerId=new Map((game.players||[]).map(p=>[p?.id,p?.role]));
+  const legacyPlayerIndex=new Map((game.players||[]).map((p,index)=>[p?.id,index]));
   migrateOfficialIdentityData(game,leagueCountryId);
   const STYLE_MIGRATE={AGRESYWNY:'FH_LOOPER',WSZECHSTRONNY:'TWO_SIDED',CIERPLIWY:'DEFENDER',TECHNICZNY:'BLOCKER'};
   const migrateStyle=v=>STYLE_MIGRATE[v]||v;
@@ -294,7 +296,15 @@ function migrateLoadedGame(parsed){
       p.nationality=leagueCountryId;
       p.name=randNameForCountry(leagueCountryId);
     }
-    if(p.isYouth&&p.role!=='youth')p.role='youth';
+    const legacyRole=legacyRoleByPlayerId.get(p.id);
+    if(!p.preferredRole)p.preferredRole=legacyRole==='reserve'?'rotation':'starter';
+    if(p.isYouth||legacyRole==='youth'){
+      p.role='youth';
+      p.isYouth=true;
+    }else{
+      p.role='senior';
+      p.isYouth=false;
+    }
     if(typeof p.seasonForm!=='number')p.seasonForm=rnd(-6,6);
     // v18: split the old 4 stats (atk/def/srv/men) into the 6 realistic attributes.
     if(typeof p.fh!=='number'){
@@ -334,7 +344,6 @@ function migrateLoadedGame(parsed){
       if(p.academyProfile?.ceiling)ceiling=Math.max(ceiling,p.academyProfile.ceiling);
       p.ceiling=Math.max(Math.round(((p.fh||40)+(p.bh||40)+(p.srv||40)+(p.ret||40)+(p.foot||40)+(p.men||40))/6),Math.min(96,ceiling));
     }
-    if(!p.preferredRole)p.preferredRole=p.role==='reserve'?'rotation':'starter';
     if(!Array.isArray(p.clubHistory))p.clubHistory=p.teamId!==null?[p.teamId]:[];
     if(typeof p.leagueSeasonW!=='number')p.leagueSeasonW=0;
     if(typeof p.leagueSeasonL!=='number')p.leagueSeasonL=0;
@@ -419,6 +428,39 @@ function migrateLoadedGame(parsed){
     game.inbox=game.inbox.filter(mail=>!(mail?.type==='decision'&&!mail.answered&&Number(mail.season)<Number(game.season)));
   }
   if(game.matchNomination===undefined)game.matchNomination=null;
+  const normalizeSelection=selection=>{
+    const knownSeniorIds=new Set((game.players||[]).filter(p=>p&&p.role==='senior').map(p=>p.id));
+    const seen=new Set();
+    const take=(ids,max)=>(Array.isArray(ids)?ids:[]).filter(id=>{
+      if(!knownSeniorIds.has(id)||seen.has(id))return false;
+      seen.add(id);
+      return true;
+    }).slice(0,max);
+    return{base:take(selection?.base,3),reserves:take(selection?.reserves,2)};
+  };
+  if(fromVersion<24&&!game.lastMatchSelection){
+    if(game.matchNomination){
+      game.lastMatchSelection=normalizeSelection(game.matchNomination);
+    }else{
+      const active=(game.players||[]).filter(p=>p&&p.teamId===game.myTeamId&&!p.retired&&!p.loanedOut&&p.role==='senior');
+      const legacyRank=role=>role==='starter'?0:role==='reserve'?1:2;
+      active.sort((a,b)=>{
+        const roleDiff=legacyRank(legacyRoleByPlayerId.get(a.id))-legacyRank(legacyRoleByPlayerId.get(b.id));
+        if(roleDiff)return roleDiff;
+        if(legacyRoleByPlayerId.get(a.id)==='starter'&&legacyRoleByPlayerId.get(b.id)==='starter'){
+          const boardDiff=(Number.isFinite(a.boardOrder)?a.boardOrder:99)-(Number.isFinite(b.boardOrder)?b.boardOrder:99);
+          if(boardDiff)return boardDiff;
+        }
+        return(legacyPlayerIndex.get(a.id)||0)-(legacyPlayerIndex.get(b.id)||0);
+      });
+      const ids=active.map(p=>p.id).slice(0,5);
+      game.lastMatchSelection={base:ids.slice(0,3),reserves:ids.slice(3,5)};
+    }
+  }else if(game.lastMatchSelection){
+    game.lastMatchSelection=normalizeSelection(game.lastMatchSelection);
+  }else{
+    game.lastMatchSelection=null;
+  }
   if(typeof game.rubberTier!=='number')game.rubberTier=0;
   if(!Array.isArray(game.principalPool))game.principalPool=[];
   (game.teams||[]).forEach(t=>{if(t.prDirector===undefined)t.prDirector=null;if(t.prDirector&&!Array.isArray(t.prDirector.careerHistory))t.prDirector.careerHistory=[];if(t.prDirector&&!t.prDirector.bio)t.prDirector.bio=`${t.prDirector.name} zarządza wizerunkiem klubu i relacjami z partnerami.`;});
@@ -567,7 +609,7 @@ function migrateLoadedGame(parsed){
       .sort((a,b)=>(b.age||0)-(a.age||0))
       .forEach(p=>{
         if(seniors>=3)return;
-        p.role='reserve';p.isYouth=false;
+        p.role='senior';p.isYouth=false;
         p.contractYears=Math.max(1,p.contractYears||0);
         seniors++;
       });
