@@ -11,7 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -25,17 +25,9 @@ function statBar(label,val,color,max){
 function teamPointDiff(t){
   return (t.pointsWon||0)-(t.pointsLost||0);
 }
-function compareLeagueTeams(a,b){
-  // Points ONLY — this must mirror the engine exactly (checkGoal, promotion/
-  // relegation, TV rights all sort by b.pts-a.pts over the same array, so a
-  // stable sort yields the same order). Extra tiebreakers here made the table
-  // show a different position than the one rewards/relegation actually used.
-  return (b.pts||0)-(a.pts||0);
-}
-
 function pageDash(){
   const mt=myTeam();const mp=myPlayers();const myL=myLeague();
-  const sorted=store.G.teams.filter(t=>t.league===myL).sort(compareLeagueTeams);
+  const sorted=leagueStandings(myL);
   const pos=sorted.findIndex(t=>t.isPlayer)+1;const pres=calcPrestige();
   const coach=store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach');
   const morale=calcTeamMorale();const brand=getActiveBrand();
@@ -371,7 +363,7 @@ function pageLeague(){
   const tab=ui.leagueTab||'l1';
   const statsTab=ui.leagueStatsTab||'table';
   const league=tab==='l1'?1:2;
-  const sorted=store.G.teams.filter(t=>t.league===league).sort(compareLeagueTeams);
+  const sorted=leagueStandings(league);
   const myId=store.G.myTeamId;
   
   // Gather all starters from this league for stats
@@ -410,11 +402,11 @@ function pageLeague(){
     <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">${t('league.teamPointsAgainst')}</div>
   </div>
   ${statsTab==='table'?`<div class="card"><div class="ct">${t('league.tableTitle',{division:league===1?'I':'II'})}</div>
-  <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>Pts</th></tr>
+  <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>W</th><th>D</th><th>L</th><th>${t('league.duels')}</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>Pts</th></tr>
   ${sorted.map((t,i)=>{
     const isRelegation=league===1&&i>=sorted.length-2;
     const isPromotion=league===2&&i<2;
-    return`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}${isRelegation?' rel':''}${isPromotion?' p1':''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}${isRelegation?' <span class="cr fs9">\u2193</span>':''}${isPromotion?' <span class="cg fs9">\u2191</span>':''}</td><td class="ink3">${teamOvr(t.id)}</td><td>${t.w+(t.d||0)+t.l}</td><td class="cg b7">${t.w}</td><td class="cgold">${t.d||0}</td><td class="cr">${t.l}</td><td class="ink3 fs10">${t.pointsWon||0}:${t.pointsLost||0}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="syne b8 fs14">${t.pts}</td></tr>`;
+    return`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}${isRelegation?' rel':''}${isPromotion?' p1':''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${t.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${t.id})">${t.name}${isRelegation?' <span class="cr fs9">\u2193</span>':''}${isPromotion?' <span class="cg fs9">\u2191</span>':''}</td><td class="ink3">${teamOvr(t.id)}</td><td class="cg b7">${t.w}</td><td class="cgold">${t.d||0}</td><td class="cr">${t.l}</td><td class="ink3 fs10">${t.gf||0}:${t.ga||0}</td><td class="ink3 fs10">${t.pointsWon||0}:${t.pointsLost||0}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="syne b8 fs14">${t.pts}</td></tr>`;
   }).join('')}
   </table>
   ${league===1?`<div class="mt-8 fs10 ink3">\u2b07 ${t('league.relegation')}</div>`:`<div class="mt-8 fs10 ink3">\u2b06 ${t('league.promotion')}</div>`}
@@ -504,7 +496,7 @@ function pageStaff(){
 // PAGE: CLUB (INFRA + EQUIPMENT + ACADEMY)
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function pageClub(){
-  const mt=myTeam();const pres=calcPrestige();const myL=myLeague();const sorted=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);const branding=getTeamBranding(mt);
+  const mt=myTeam();const pres=calcPrestige();const myL=myLeague();const sorted=leagueStandings(myL);const branding=getTeamBranding(mt);
   const techPartnership=getTechPartnership();
   function levelDots(cur,max){let s='<div class="infra-dots">';for(let i=0;i<max;i++)s+=`<div class="infra-dot${i<cur?' on':''}"></div>`;return s+'</div>';}
   function infraBlock(type,label,icon,levels,curLevel){

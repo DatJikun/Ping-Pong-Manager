@@ -102,9 +102,7 @@ function recordClubSeasonHistory(){
   store.G.clubHistory=store.G.clubHistory||{};
   foldSeasonIntoRivalries(store.G.season);
   [1,2].forEach(league=>{
-    // pts-only, like every engine decision (champion, promotion, prizes) — a
-    // different tiebreaker here recorded positions that never actually happened.
-    const sorted=store.G.teams.filter(t=>t.league===league).sort((a,b)=>b.pts-a.pts);
+    const sorted=window.PPM.gameplay.leagueStandings(league);
     sorted.forEach((t,idx)=>{
       store.G.clubHistory[t.id]=store.G.clubHistory[t.id]||[];
       const topPlayers=store.G.players.filter(p=>p.teamId===t.id&&!p.retired&&p.role!=='youth')

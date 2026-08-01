@@ -116,7 +116,7 @@ test('league UI and every sporting system agree on a deterministic full tie', ()
     'relegation order',
   );
 
-  gp.recordClubSeasonHistory();
+  g.PPM.gameplayClubUI.recordClubSeasonHistory();
   assert.deepEqual(
     expected.map((entry) => G.clubHistory[entry.id].at(-1).position),
     expected.map((_, index) => index + 1),
@@ -134,6 +134,8 @@ test('league UI and every sporting system agree on a deterministic full tie', ()
 
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/ui/shell.js'), 'utf8'), g,
     { filename: 'src/ui/shell.js' });
-  g.PPM.updateHeader();
+  g.document.body.style.setProperty = () => {};
+  g.document.body.style.removeProperty = () => {};
+  g.PPM.shell.updateHeader();
   assert.match(g.document.getElementById('h-club-sub').textContent, /#1$/, 'header position');
 });

@@ -263,7 +263,7 @@ function updateHeader(){
   const crest=document.getElementById('h-crest');
   if(crest)crest.src=window.PPM.gameplay.getTeamLogoData(mt);
   const myL=myLeague();
-  const sorted=store.G.teams.filter(t=>t.league===myL).sort((a,b)=>b.pts-a.pts);
+  const sorted=window.PPM.gameplay.leagueStandings(myL);
   const pos=sorted.findIndex(t=>t.isPlayer)+1;const pres=calcPrestige();
   const set=(id,text,color)=>{const el=document.getElementById(id);if(!el)return;el.textContent=text;if(color!==undefined)el.style.color=color;};
   const myStaff=store.G.staff.filter(s=>s.teamId===mt.id);
