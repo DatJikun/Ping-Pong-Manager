@@ -947,11 +947,19 @@ canvas#vme-canvas{display:block;}
 .seg .step{flex:0 0 30px;color:var(--ink3);font-size:13px;}
 
 /* star rating — a data figure, drawn as a clipped overlay so halves are exact */
-.stars{
-  position:relative;display:inline-block;white-space:nowrap;
-  font-size:13px;line-height:1;letter-spacing:2px;color:var(--line2);
-}
-.stars i{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:var(--volt);font-style:normal;}
+.rating-stars{display:inline-flex;align-items:center;gap:5px;line-height:1;}
+.rating-stars__scale{display:inline-flex;flex-wrap:nowrap;gap:var(--rating-star-gap);}
+.rating-stars__slot{position:relative;display:block;flex:none;width:var(--rating-star-size);height:var(--rating-star-size);}
+.rating-stars__glyph{display:block;width:100%;height:100%;}
+.rating-stars__glyph--dim{fill:none;stroke:var(--ink3);stroke-width:2;}
+.rating-stars__glyph--peak{fill:none;stroke:var(--volt);stroke-width:2;}
+.rating-stars__glyph--current{fill:var(--volt);stroke:var(--volt);stroke-width:1;}
+.rating-stars__clip{position:absolute;inset:0 auto 0 0;display:block;overflow:hidden;}
+.rating-stars__clip .rating-stars__glyph{width:var(--rating-star-size);max-width:none;}
+.rating-stars--compact{--rating-star-size:12px;--rating-star-gap:2px;}
+.rating-stars--standard{--rating-star-size:16px;--rating-star-gap:3px;}
+.rating-stars--profile{--rating-star-size:22px;--rating-star-gap:4px;}
+.rating-stars__ovr{font-variant-numeric:tabular-nums;font-weight:700;}
 
 /* nationality: a country code, not a flag — renders identically on every OS */
 .nat{
