@@ -252,16 +252,19 @@ class AutoManager {
     }
   }
 
-  // Rotate the ordered A/B/C/R1/R2 selection through every available senior.
+  // Rotate the three starts through the strongest four available seniors. The
+  // fifth stays in reserve: widening the rotation to the whole squad can bench a
+  // current top-three player for three straight rounds and trigger his release.
   rotateBoardOrder() {
     const available = this.gp.getEligibleMatchPlayers(this.myId)
       .sort((a, b) => this.gp.ovr(b) - this.gp.ovr(a));
     if (available.length < 3) return;
-    const offset = this.G.matchday % available.length;
-    const rotated = available.slice(offset).concat(available.slice(0, offset)).slice(0, 5);
+    const core = available.slice(0, 4);
+    const offset = this.G.matchday % core.length;
+    const rotated = core.slice(offset).concat(core.slice(0, offset));
     this.G.lastMatchSelection = {
       base: rotated.slice(0, 3).map((p) => p.id),
-      reserves: rotated.slice(3, 5).map((p) => p.id),
+      reserves: rotated.slice(3).concat(available.slice(4, 5)).map((p) => p.id),
     };
     this.G.matchNomination = null;
   }
