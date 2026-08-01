@@ -189,13 +189,14 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.doesNotMatch(html, /undefined/);
 });
 
-test('player profile shows one translated peak row only when an explicit ceiling is known', () => {
+test('player profile shows one translated peak row only when a trusted academy ceiling is known', () => {
   const g = bootWithPages(9011);
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
   const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
   setPlayerOvr(player, 62);
   player.ceiling = 84;
+  player.academyProfile = { ...(player.academyProfile || {}), ceiling: 84 };
 
   gp.openPlayerModal(player.id);
   let profileHtml = g.document.getElementById('modal').innerHTML;
@@ -274,6 +275,48 @@ test('rendering dashboard and squad summaries cannot promote a missing ceiling i
   gp.openPlayerModal(player.id);
   const profileHtml = g.document.getElementById('modal').innerHTML;
   assert.match(profileHtml, /rating-stars--profile/);
+  assert.match(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 0);
+});
+
+test('ceiling estimation adds no provenance field to live players or serialized saves', () => {
+  const g = bootWithPages(9014);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
+  delete player.ceiling;
+  delete player._ceilingEstimated;
+
+  gp.playerCeiling(player);
+  const savedPlayer = JSON.parse(g.PPM.stateApi.serializeGame()).players
+    .find(candidate => candidate.id === player.id);
+
+  assert.deepEqual({
+    live: Object.hasOwn(player, '_ceilingEstimated'),
+    serialized: Object.hasOwn(savedPlayer, '_ceilingEstimated'),
+  }, { live: false, serialized: false });
+});
+
+test('an entity-only positive ceiling remains unknown after list rendering because its provenance is ambiguous', () => {
+  const g = bootWithPages(9015);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  const player = seniors[0];
+  setPlayerOvr(player, 62);
+  player.ceiling = 84;
+  delete player._ceilingEstimated;
+  delete player.academyProfile;
+  G.lastMatchSelection = {
+    base: seniors.slice(0, 3).map(candidate => candidate.id),
+    reserves: seniors.slice(3, 5).map(candidate => candidate.id),
+  };
+
+  const dashboard = g.PPM.pages.pageDash();
+  assert.match(dashboard, new RegExp(`${player.name}[\\s\\S]*?rating-stars--summary`));
+  gp.openPlayerModal(player.id);
+  const profileHtml = g.document.getElementById('modal').innerHTML;
+
   assert.match(profileHtml, /Potential is unknown/i);
   assert.equal(visiblePeakRows(profileHtml).length, 0);
 });
