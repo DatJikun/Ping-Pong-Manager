@@ -31,7 +31,7 @@
 - Consumes: current `team` fields `pts`, `gf`, `ga`, `pointsWon`, `pointsLost`, `id`, and `name`.
 - Produces: executable behavior expectations for `compareLeagueTeams(a, b)` and `leagueStandings(league)` plus cross-system agreement.
 
-- [ ] **Step 1: Write the comparator hierarchy test**
+- [x] **Step 1: Write the comparator hierarchy test**
 
 Create `tests/league-ordering.test.js` with a small `team()` factory and assertions that isolate each successive criterion:
 
@@ -66,7 +66,7 @@ test('league comparator applies every tie-break in order', () => {
 });
 ```
 
-- [ ] **Step 2: Write the cross-system consistency test**
+- [x] **Step 2: Write the cross-system consistency test**
 
 In the same file, boot a fresh Polish career, set all Division I clubs to equal ranking counters, reverse their storage order, and use ascending club ID/name as the expected deterministic order. Assert:
 
@@ -93,9 +93,13 @@ assert.deepEqual(expected.map((t) => G.clubHistory[t.id].at(-1).position),
   expected.map((_, index) => index + 1));
 ```
 
-Load `src/ui/pages.js` into the same VM, render `pageLeague()`, and assert the club names occur in expected order in the table markup. Read `src/core/gameplay.js`, `src/core/gameplay.club-ui.js`, `src/ui/pages.js`, and `src/ui/shell.js` and fail if a position path still contains a direct point-only league sort.
+Load `src/ui/pages.js` and `src/ui/shell.js` into the same VM, assert the club
+names occur in expected order in the table markup, and assert the header reports
+the same position. Audit `src/core/gameplay.js`, `src/core/gameplay.club-ui.js`,
+`src/ui/pages.js`, and `src/ui/shell.js` after GREEN for direct point-only league
+sorts; this is a review gate rather than a brittle source-text test.
 
-- [ ] **Step 3: Run the new test and verify RED**
+- [x] **Step 3: Run the new test and verify RED**
 
 Run:
 
@@ -105,7 +109,7 @@ node --test tests/league-ordering.test.js
 
 Expected: FAIL because `compareLeagueTeams` and `leagueStandings` are not exported and point-only consumers disagree with the deterministic order.
 
-- [ ] **Step 4: Commit the failing regression**
+- [x] **Step 4: Commit the failing regression**
 
 ```powershell
 git add -- tests/league-ordering.test.js
@@ -126,7 +130,7 @@ git commit -m "test: expose inconsistent league tie-breaks"
 - Consumes: the ranking contract fixed by Task 1.
 - Produces: `compareLeagueTeams(a, b): number` and `leagueStandings(league): Team[]` on `window.PPM.gameplay`.
 
-- [ ] **Step 1: Implement the minimal shared helpers**
+- [x] **Step 1: Implement the minimal shared helpers**
 
 Near the existing team helpers in `src/core/gameplay.js`, add:
 
@@ -153,15 +157,15 @@ function leagueStandings(league){
 
 Export both helpers through `window.PPM.gameplay`.
 
-- [ ] **Step 2: Route all engine position consumers through the helper**
+- [x] **Step 2: Route all engine position consumers through the helper**
 
 Replace the direct point-only sorts in attendance, merchandise, TV rights, matchday news, sponsor/board objectives and progress, PR-director lifecycle, records, awards, promotion/relegation, season settlement, and AI finances. Each division-specific path becomes `leagueStandings(league)`; the caretaker record path selects `leagueStandings(1)[0]` rather than comparing clubs across divisions.
 
-- [ ] **Step 3: Route history and UI position consumers through the helper**
+- [x] **Step 3: Route history and UI position consumers through the helper**
 
 In `gameplay.club-ui.js`, call `window.PPM.gameplay.leagueStandings(league)`. In `pages.js`, import `leagueStandings`, remove the local `compareLeagueTeams`, and use the helper for dashboard, league, and club pages. In `shell.js`, use `window.PPM.gameplay.leagueStandings(myL)` for the header position.
 
-- [ ] **Step 4: Expose the duel tie-break in the league table**
+- [x] **Step 4: Expose the duel tie-break in the league table**
 
 Add locale keys:
 
@@ -172,7 +176,7 @@ Add locale keys:
 
 Replace the redundant matches-played column with `${t.gf||0}:${t.ga||0}` under that heading. Keep the existing small-points score, difference, and league-points columns unchanged.
 
-- [ ] **Step 5: Run the regression and focused suites to verify GREEN**
+- [x] **Step 5: Run the regression and focused suites to verify GREEN**
 
 Run:
 
@@ -183,7 +187,7 @@ npm run check
 
 Expected: all focused tests PASS and the syntax check prints `syntax OK`.
 
-- [ ] **Step 6: Audit and commit the implementation**
+- [x] **Step 6: Audit and commit the implementation**
 
 Run:
 
@@ -209,7 +213,7 @@ git commit -m "fix: unify league tie-breaks across the game"
 - Consumes: all Stage 1 implementation and regression coverage.
 - Produces: a passing fast baseline before Stage 2 changes roster and nomination semantics.
 
-- [ ] **Step 1: Run the normal suite**
+- [x] **Step 1: Run the normal suite**
 
 ```powershell
 npm test
@@ -217,7 +221,7 @@ npm test
 
 Expected: every non-slow test passes with no new warnings, `undefined`, or console errors.
 
-- [ ] **Step 2: Record completion evidence**
+- [x] **Step 2: Record completion evidence**
 
 Check off completed plan steps, record the focused and normal test counts at the bottom of this file, run `git diff --check`, and commit only the updated plan:
 
@@ -225,3 +229,14 @@ Check off completed plan steps, record the focused and normal test counts at the
 git add -- docs/superpowers/plans/2026-08-01-league-integrity.md
 git commit -m "docs: record league integrity verification"
 ```
+
+## Completion evidence
+
+- RED: `node --test tests/league-ordering.test.js` failed because
+  `compareLeagueTeams` and `leagueStandings` did not exist.
+- GREEN: focused league/UI/history/economy suite passed 22/22.
+- Syntax: `npm run check` printed `syntax OK`.
+- Fast baseline: `npm test` passed 268/268.
+- Audit: no position-dependent point-only league sort remains; the only direct
+  `pts` sorts are statistical leaderboards and historical “best season” choice.
+- Commits: `2aa2836` (RED test) and `5f9d199` (implementation).
