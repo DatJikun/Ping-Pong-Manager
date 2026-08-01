@@ -17,6 +17,10 @@ Nie jest to wyłącznie problem animacji ani brak jednej porównywarki. To probl
 
 ## 1. Rynek transferowy, gwiazdki i potencjał
 
+**Status 2026-08-01:** nadal otwarte w kandydacie bety. Skala ratingu została
+ujednolicona, ale rynek nadal renderuje tylko wypełnienie bieżącego OVR i nie
+pokazuje osobnej złotej obwódki do poziomu `peak OVR`.
+
 - Przy zawodnikach na rynku aktualne, wypełnione złote gwiazdki powinny pokazywać bieżący OVR.
 - „Fantomowe” gwiazdki, widoczne jako sama złota obwódka, powinny od razu pokazywać peak/potencjalny OVR.
 - Intencja przykładu: niewiele pełnych gwiazdek i prawie pełny zakres obwódek oznacza słabego obecnie zawodnika z bardzo wysokim sufitem.
