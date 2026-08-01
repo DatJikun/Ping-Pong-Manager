@@ -138,12 +138,12 @@ test('the squad and academy flows follow the active locale', () => {
   g.PPM.gameplay.newGame(0, 'PL');
   vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
 
-  g.PPM.ui.squadTab = 'starter';
+  g.PPM.ui.squadTab = 'squad';
   const englishSquad = g.PPM.pages.pageSquad();
   assert.match(englishSquad, /Player squad/i);
-  assert.match(englishSquad, /First team/i);
+  assert.match(englishSquad, /Senior squad/i);
   assert.match(englishSquad, /Fatigue/i);
-  assert.doesNotMatch(englishSquad, /Skład główny/i);
+  assert.doesNotMatch(englishSquad, /First team|Skład główny/i);
 
   g.PPM.ui.squadTab = 'youth';
   g.PPM.ui.academyTab = 'intake';
@@ -240,7 +240,7 @@ test('sponsor goals and the sponsor screen follow the active locale', () => {
   vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
 
   assert.equal(g.PPM.gameplay.goalDesc('top4'), 'Top 4 in the league');
-  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Rotation role');
+  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Rotation player');
   const english = g.PPM.pages.pageSponsors();
   assert.match(english, /Sponsors/i);
   assert.match(english, /Active deals/i);
@@ -248,7 +248,7 @@ test('sponsor goals and the sponsor screen follow the active locale', () => {
 
   g.PPM.i18n.setLocale('pl');
   assert.equal(g.PPM.gameplay.goalDesc('top4'), 'Top 4 w lidze');
-  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Rola w rotacji');
+  assert.equal(g.PPM.gameplay.roleGuaranteeLabel('rotation'), 'Zawodnik rotacji');
   const polish = g.PPM.pages.pageSponsors();
   assert.match(polish, /Aktywne umowy/i);
 });
@@ -327,7 +327,7 @@ test('completed English screens reject common Polish UI regressions and raw keys
   vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
   g.PPM.state.G.inbox = [];
   g.PPM.state.G.newsFeed = [];
-  g.PPM.ui.squadTab = 'starter';
+  g.PPM.ui.squadTab = 'squad';
   g.PPM.ui.historyTab = 'seasons';
   g.PPM.ui.leagueStatsTab = 'table';
 

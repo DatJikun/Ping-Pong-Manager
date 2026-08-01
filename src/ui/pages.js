@@ -11,7 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -27,6 +27,8 @@ function teamPointDiff(t){
 }
 function pageDash(){
   const mt=myTeam();const mp=myPlayers();const myL=myLeague();
+  const matchSquad=matchSelectionView(mt.id,getLastMatchSelection(mt.id)||bestMatchSelection(mt.id));
+  const matchSlotLabels=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'];
   const sorted=leagueStandings(myL);
   const pos=sorted.findIndex(t=>t.isPlayer)+1;const pres=calcPrestige();
   const coach=store.G.staff.find(s=>s.teamId===store.G.myTeamId&&s.type==='coach');
@@ -92,7 +94,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
   <div class="g5">
     <div class="sb"><div class="l">${t('dash.position',{league:t(myL===1?'league.divisionOne':'league.divisionTwo')})}</div><div class="v ${pos<=3?'gold':pos<=6?'':'r'} fs34">#${pos}</div><div class="sub">${mt.pts} ${t('dash.points')} / ${mt.w}${t('dash.winShort')}/${mt.d||0}${t('dash.drawShort')}/${mt.l}${t('dash.lossShort')}</div></div>
     <div class="sb"><div class="l">${t('header.budget')}</div><div class="v g fs28">${Math.floor(mt.budget/1000)}k</div><div class="sub">${formatCurrency(mt.budget)}</div></div>
-    <div class="sb"><div class="l">${t('dash.teamOvr')}</div><div class="v fs34">${teamOvr(mt.id)}</div><div class="sub">${t('dash.starters',{count:myStarters().length})}</div></div>
+    <div class="sb"><div class="l">${t('dash.teamOvr')}</div><div class="v fs34">${teamOvr(mt.id)}</div><div class="sub">${t('dash.seniors',{count:getClubSeniorPlayers(mt.id).length})}</div></div>
     <div class="sb"><div class="l">${t('header.prestige')}</div><div class="v gold fs34">${pres}</div></div>
     <div class="sb"><div class="l">${t('dash.morale')}</div><div class="v ${morale>=70?'g':morale>=40?'gold':'r'} fs34">${morale}%</div><div class="sub">${moraleLabel(morale)}</div></div>
   </div>
@@ -118,12 +120,11 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
   </div>
   <div class="g2">
     <div>
-      <div class="card"><div class="ct">${t('dash.mainSquad').toUpperCase()}</div>
-      ${myStarters().slice(0,4).map(p=>{const inj=p.injuredFor>0;return`<div class="grid gp8 aic pd8-0 bdb-s3 cur" style="grid-template-columns:1fr auto auto auto" onclick="openPlayerModal(${p.id})">
-        <div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}${inj?` <span class="cr fs9">\u2695${p.injuredFor}</span>`:''}</div><div class="fs10 ink3">${t('dash.age',{age:p.age})} \u00b7 ${styleLabel(p.playStyle)}</div></div></div>
-        <div class="fs10 ink3">MOR ${p.morale||50}%</div>
-        <div class="fs10 corange">FAT ${p.fatigue||0}%</div>
-        <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:24px;color:${inj?'var(--ink3)':'var(--r)'}">${ovr(p)}</div>
+      <div class="card"><div class="ct">${t('dash.matchSquad').toUpperCase()}</div>
+      ${matchSquad.slots.map((slot,index)=>{const p=slot.player||slot.previousPlayer;const status=slot.status;return`<div class="grid gp8 aic pd8-0 bdb-s3 ${p?'cur':''}" style="grid-template-columns:86px 1fr auto" ${p?`onclick="openPlayerModal(${p.id})"`:''}>
+        <div class="fs9 b8" style="color:${index<3?'var(--g)':'var(--blue)'}">${t(matchSlotLabels[index])}</div>
+        ${p?`<div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}</div><div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('dash.age',{age:p.age})} \u00b7 ${styleLabel(p.playStyle)}`:t(status.reasonKey,status.reasonParams)}</div></div></div><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:24px;color:${status.available?'var(--r)':'var(--ink3)'}">${ovr(p)}</div>`
+          :`<div class="fs11 ink3">${t('match.nom.vacant')}</div><div class="ink3">—</div>`}
       </div>`;}).join('')}
       </div>
       <div class="card"><div class="ct">${t('dash.recentMatches').toUpperCase()}</div>
@@ -151,14 +152,16 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
 // PAGE: SQUAD
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function pageSquad(){
-  const st=myStarters(),res=myReserves(),youth=myYouth();
+  if(ui.squadTab==='starter'||ui.squadTab==='reserve')ui.squadTab='squad';
+  const seniors=getClubSeniorPlayers(store.G.myTeamId,true),youth=myYouth();
+  const selectionView=matchSelectionView(store.G.myTeamId,getLastMatchSelection(store.G.myTeamId)||bestMatchSelection(store.G.myTeamId));
   const academyScouts=getMyScouts();
   const academyReports=(store.G.scoutResults||[]).filter(r=>{
     const real=store.G.players.find(p=>p.id===r.realId);
     return !!real&&real.teamId!==store.G.myTeamId;
   });
   const academyNewReports=academyReports.filter(r=>!r.seen).length;
-  const baseList=ui.squadTab==='starter'?st:ui.squadTab==='reserve'?res:ui.squadTab==='youth'?youth:[];
+  const baseList=ui.squadTab==='squad'?seniors:ui.squadTab==='youth'?youth:[];
   const squadSearch=(ui.squadSearch||'').trim().toLowerCase();
   const squadStyle=ui.squadStyleFilter||'all';
   const list=baseList.filter(p=>{
@@ -166,18 +169,18 @@ function pageSquad(){
     const matchesStyle=squadStyle==='all'||p.playStyle===squadStyle;
     return matchesText&&matchesStyle;
   });
-  // Starter tab: show in board order (boardOrder, then OVR) so board 1-4 is explicit.
-  if(ui.squadTab==='starter')list.sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
-  // Board positions come from the FULL healthy-starter order (the same list
-  // moveLineup operates on) — indexing the filtered display list showed wrong
-  // table numbers and dead arrows whenever a search/style filter was active.
-  const boardList=st.filter(p=>!(p.injuredFor>0)).sort((a,b)=>(a.boardOrder??99)-(b.boardOrder??99)||ovr(b)-ovr(a));
+  if(ui.squadTab==='squad')list.sort((a,b)=>{
+    const slot=player=>selectionView.slots.findIndex(item=>item.previousPlayer?.id===player.id);
+    const aSlot=slot(a),bSlot=slot(b);
+    if(aSlot>=0||bSlot>=0)return(aSlot<0?99:aSlot)-(bSlot<0?99:bSlot);
+    const available=Number(matchAvailability(b,store.G.myTeamId).available)-Number(matchAvailability(a,store.G.myTeamId).available);
+    return available||ovr(b)-ovr(a)||a.name.localeCompare(b.name);
+  });
   const _loanedOut=getLoanedOut();
   if(ui.squadTab==='loans'){
     return`<div class="ph"><div><div class="pt">${t('squad.title')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab" onclick="ui.squadTab='starter';render()">${t('squad.firstTeam')} ${st.length}/4</div>
-    <div class="rtab" onclick="ui.squadTab='reserve';render()">${t('squad.reserve')} (${res.length})</div>
+    <div class="rtab" onclick="ui.squadTab='squad';render()">${t('squad.seniorSquad')} (${seniors.length})</div>
     <div class="rtab" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
     <div class="rtab on" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${_loanedOut.length})</div>
   </div>
@@ -230,8 +233,7 @@ function pageSquad(){
 
   return`<div class="ph"><div><div class="pt">${t('squad.title')}</div><div class="ps">${t('squad.subtitle')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">${t('squad.firstTeam')} ${st.length}/4</div>
-    <div class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">${t('squad.reserve')} (${res.length})</div>
+    <div class="rtab ${ui.squadTab==='squad'?'on':''}" onclick="ui.squadTab='squad';render()">${t('squad.seniorSquad')} (${seniors.length})</div>
     <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
     <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${getLoanedOut().length})</div>
   </div>
@@ -289,12 +291,12 @@ function pageSquad(){
   </div>`
   :`<div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="${t('squad.search')}" style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>${t('squad.allStyles')}</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
     <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-      ${list.length?list.map(p=>squadCard(p,boardList)).join(''):`<div class="empty-state">${t('squad.emptyAcademy')}</div>`}
+      ${list.length?list.map(p=>squadCard(p,selectionView)).join(''):`<div class="empty-state">${t('squad.emptyAcademy')}</div>`}
     </div>`}
   `:`
   <div class="squad-filters"><input value="${ui.squadSearch||''}" oninput="ui.squadSearch=this.value;render()" placeholder="${t('squad.search')}" style="flex:1.2;min-width:160px"><select onchange="ui.squadStyleFilter=this.value;render()" style="flex:.9;min-width:120px"><option value="all" ${squadStyle==='all'?'selected':''}>${t('squad.allStyles')}</option>${PLAYER_STYLES.map(s=>`<option value="${s}" ${squadStyle===s?'selected':''}>${styleLabel(s)}</option>`).join('')}</select></div>
   <div class="grid gp12" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-    ${list.map(p=>squadCard(p,boardList)).join('')}
+    ${list.map(p=>squadCard(p,selectionView)).join('')}
   </div>`}`;
 }
 
@@ -305,12 +307,17 @@ function statTone(v){return v>=85?'var(--g)':v>=75?'var(--blue)':v>=62?'var(--go
 // condition/contract facts and the actions. Numbers that belong to the full
 // profile (marketability, loyalty, preferred role) stay in the player modal,
 // one click away — the card was carrying ten stacked rows of them.
-function squadCard(p,boardList){
-  const o=ovr(p),inj=p.injuredFor>0,isStarterTab=ui.squadTab==='starter';
+function squadCard(p,selectionView){
+  const o=ovr(p),inj=p.injuredFor>0,isYouth=p.role==='youth';
   const styleColor=(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)';
-  const bi=isStarterTab?boardList.findIndex(x=>x.id===p.id):-1;
+  const slotIndex=isYouth?-1:selectionView.slots.findIndex(slot=>slot.previousPlayer?.id===p.id);
+  const slotKeys=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'];
+  const status=isYouth?{available:false,code:'academy',reasonKey:'match.nom.unavailableAcademy',reasonParams:{}}:matchAvailability(p,store.G.myTeamId);
+  const statusText=slotIndex>=0
+    ?`${t(slotKeys[slotIndex])}${status.available?'':` · ${t(status.reasonKey,status.reasonParams)}`}`
+    :status.available?t('squad.outsideMatchSquad'):t(status.reasonKey,status.reasonParams);
   const mor=p.morale||50,fat=p.fatigue||0;
-  return`<div class="pc ${inj?'injured':p.role==='youth'?'':p.role}" onclick="openPlayerModal(${p.id})">
+  return`<div class="pc ${inj?'injured':isYouth?'':status.available?'senior':'unavailable'}" onclick="openPlayerModal(${p.id})">
     <div class="pc-top">
       <div class="pc-head">
         <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar lg">
@@ -325,14 +332,10 @@ function squadCard(p,boardList){
         ${p.teamId===store.G.myTeamId?`<div class="pc-ovr-sub">${t('squad.peak',{value:playerCeiling(p)})}</div>`:''}
       </div>
     </div>
-    ${inj||p.role==='youth'||isStarterTab?`<div class="pc-tags">
+    <div class="pc-tags">
       ${inj?`<span class="pc-tag bad">⚕ ${t('squad.injury',{count:p.injuredFor})}</span>`:''}
-      ${p.role==='youth'?`<span class="pc-tag youth">${t('squad.academyYears',{count:Math.max(0,21-p.age)})}</span>`:''}
-      ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">${t('squad.board',{number:bi+1})}
-        <button class="mini-btn" ${bi===0?'disabled':''} onclick="moveLineup(${p.id},-1)" title="${t('squad.moveUp')}">▲</button>
-        <button class="mini-btn" ${bi>=boardList.length-1?'disabled':''} onclick="moveLineup(${p.id},1)" title="${t('squad.moveDown')}">▼</button></span>`
-      :isStarterTab?`<span class="pc-tag bad">${t('squad.outRotation')}</span>`:''}
-    </div>`:''}
+      ${isYouth?`<span class="pc-tag youth">${t('squad.academyYears',{count:Math.max(0,21-p.age)})}</span>`:`<span class="pc-tag ${status.available?(slotIndex>=0?'board':''):'bad'}">${statusText}</span><span class="pc-tag">${t('squad.expectation',{role:roleGuaranteeLabel(p.preferredRole||'starter')})}</span>`}
+    </div>
     <div class="pc-stats">${SK.map(s=>`<div class="pcs"><span class="l">${SL[s]}</span><span class="bar"><span class="fill" style="width:${p[s]}%;background:${statTone(p[s])}"></span></span><span class="v">${p[s]}</span></div>`).join('')}</div>
     ${p.traits.length?`<div class="traits">${p.traits.map(id=>`<span class="has-tooltip tb ${TRAITS[id]?.type||'men'}">${t(`trait.${id}.label`)}<span class="tip">${t(`trait.${id}.desc`)}</span></span>`).join('')}</div>`:''}
     <div class="pc-cond ${mor>=80?'energy-active':''}">
@@ -346,8 +349,7 @@ function squadCard(p,boardList){
       <span class="k">${t('squad.record')}</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
     </div>
     <div class="pc-actions" onclick="event.stopPropagation()">
-      ${p.role==='youth'?`<button class="btn go sm" onclick="promoteYouth(${p.id})">${t('squad.promoteReserve')}</button>`
-        :p.role==='reserve'?`<button class="btn go sm" onclick="promoteToStarter(${p.id})">${t('squad.promoteSquad')}</button>`:`<button class="btn sm" onclick="demoteToReserve(${p.id})">${t('squad.demoteReserve')}</button>`}
+      ${isYouth?`<button class="btn go sm" onclick="promoteYouth(${p.id})">${t('squad.promoteSenior')}</button>`:''}
       <button class="btn gl sm" onclick="openNegotiate(${p.id})">${t('squad.contract')}</button>
       ${!p.loanedOut?`<button class="btn sm bcb cblue" onclick="openLoanModal(${p.id})" title="${t('squad.loanTitle')}">${t('squad.loan')}</button>`:''}
       ${!p.loanedOut?`<button class="btn sm bcg cg" onclick="sellPlayer(${p.id})" title="${t('squad.sellTitle')}">${t('squad.sell')}</button>`:''}

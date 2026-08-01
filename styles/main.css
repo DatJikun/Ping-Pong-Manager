@@ -519,8 +519,8 @@ input[type=range]{accent-color:var(--club);background:transparent;border:none;pa
   transition:border-color .14s,background .14s;
 }
 .pc:hover{border-color:var(--line2);background:var(--sheen),var(--surf2);}
-.pc.starter{box-shadow:inset 3px 0 0 var(--lime);}
-.pc.reserve{box-shadow:inset 3px 0 0 var(--volt);}
+.pc.senior{box-shadow:inset 3px 0 0 var(--lime);}
+.pc.unavailable{box-shadow:inset 3px 0 0 var(--club);}
 .pc.injured{box-shadow:inset 3px 0 0 var(--club);opacity:.85;}
 .pc.selected{border-color:var(--club);background:var(--tint-bad);}
 .pc .pc-actions{margin-top:auto;}

@@ -52,7 +52,7 @@ const store = { G: null };
 const ui = {
   page: 'dash',
   _pid: 0,
-  squadTab: 'starter',
+  squadTab: 'squad',
   running: false,
   hofTab: 'all',
   hofSort: 'trophies_gold',

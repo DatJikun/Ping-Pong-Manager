@@ -113,6 +113,49 @@ test('every screen renders in both locales', () => {
   assert.deepEqual(broken, []);
 });
 
+test('the squad page and dashboard use one ordered senior match squad', () => {
+  const g = bootWithPages(9004);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId).slice(0, 6);
+  const selected = [seniors[4], seniors[1], seniors[5], seniors[0], seniors[3]];
+  G.lastMatchSelection = {
+    base: selected.slice(0, 3).map((player) => player.id),
+    reserves: selected.slice(3).map((player) => player.id),
+  };
+  selected.forEach((player, index) => {
+    const value = 42 + index;
+    player.fh = player.bh = player.srv = player.ret = player.foot = player.men = value;
+  });
+  selected[1].injuredFor = 2;
+  const loaned = seniors.find((player) => !selected.includes(player));
+  const borrower = G.teams.find((team) => team.id !== G.myTeamId);
+  G.loans.push({ playerId: loaned.id, fromTeamId: G.myTeamId, toTeamId: borrower.id, returned: false, originalRole: 'senior' });
+  loaned.teamId = borrower.id;
+  loaned.loanedOut = true;
+
+  g.PPM.ui.squadTab = 'squad';
+  for (const locale of ['en', 'pl']) {
+    g.PPM.i18n.setLocale(locale);
+    const squad = g.PPM.pages.pageSquad();
+    const visibleText = squad.replace(/<[^>]*>/g, ' ');
+    for (const player of gp.getClubSeniorPlayers(G.myTeamId, true)) {
+      assert.equal(visibleText.split(player.name).length - 1, 1, `${locale}: ${player.name} appears once`);
+    }
+    assert.doesNotMatch(squad, /First team|Skład główny|promoteToStarter|demoteToReserve/);
+    assert.match(squad, /A —|A —/);
+    assert.match(squad, locale === 'en' ? /Injured.*2 round/i : /Kontuzja.*2/i);
+    assert.match(squad, new RegExp(borrower.name));
+    assert.doesNotMatch(squad, />\s*(?:squad|match\.nom)\.[a-zA-Z.]+\s*</);
+  }
+
+  g.PPM.i18n.setLocale('en');
+  const dash = g.PPM.pages.pageDash();
+  const positions = selected.map((player) => dash.indexOf(player.name));
+  assert.ok(positions.every((position) => position >= 0));
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'dashboard keeps A/B/C/R1/R2 order');
+});
+
 test('dashboard resolves the selected technical partner and semantic news', () => {
   const g = bootWithPages(9010);
   g.PPM.i18n.setLocale('en');
