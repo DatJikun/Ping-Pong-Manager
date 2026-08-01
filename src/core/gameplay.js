@@ -1020,7 +1020,6 @@ function ensurePlayerMeta(p){
   if(!p)return p;
   if(typeof p.seasonForm!=='number')p.seasonForm=rnd(-6,6);
   if(typeof p.stamina!=='number')p.stamina=derivePlayerStamina(p);
-  if(typeof p.ceiling!=='number')p.ceiling=estimatePlayerCeiling(p);
   if(!p.equipment)p.equipment=fitEquipmentToStyle(p);
   if(!p.preferredRole)p.preferredRole='rotation';
   if(!Array.isArray(p.clubHistory))p.clubHistory=p.teamId!==null?[p.teamId]:[];
@@ -5422,7 +5421,9 @@ function resolvePlayerProfile(pid,pendingSource,pendingIndex){
 }
 function openPlayerModal(pid,pendingSource,pendingIndex){
   const p=resolvePlayerProfile(pid,pendingSource,pendingIndex);if(!p)return;
-  const explicitCeiling=Number.isFinite(p.academyProfile?.ceiling)&&p.academyProfile.ceiling>0?p.academyProfile.ceiling:null;
+  const entityCeiling=Number.isFinite(p.ceiling)&&p.ceiling>0?p.ceiling:null;
+  const academyCeiling=Number.isFinite(p.academyProfile?.ceiling)&&p.academyProfile.ceiling>0?p.academyProfile.ceiling:null;
+  const explicitCeiling=entityCeiling??academyCeiling;
   const peakKnown=explicitCeiling!==null;
   ensurePlayerMeta(p);
   const o=ovr(p);const wr=(p.careerW||0)+(p.careerL||0)>0?Math.round((p.careerW||0)/((p.careerW||0)+(p.careerL||0))*100):0;

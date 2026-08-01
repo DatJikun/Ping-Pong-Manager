@@ -189,14 +189,14 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.doesNotMatch(html, /undefined/);
 });
 
-test('player profile shows one translated peak row only when a trusted academy ceiling is known', () => {
+test('player profile shows one translated peak row only when a trusted positive ceiling is known', () => {
   const g = bootWithPages(9011);
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
   const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
   setPlayerOvr(player, 62);
   player.ceiling = 84;
-  player.academyProfile = { ...(player.academyProfile || {}), ceiling: 84 };
+  delete player.academyProfile;
 
   gp.openPlayerModal(player.id);
   let profileHtml = g.document.getElementById('modal').innerHTML;
@@ -297,7 +297,7 @@ test('ceiling estimation adds no provenance field to live players or serialized 
   }, { live: false, serialized: false });
 });
 
-test('an entity-only positive ceiling remains unknown after list rendering because its provenance is ambiguous', () => {
+test('an entity-only positive ceiling remains exact after list rendering', () => {
   const g = bootWithPages(9015);
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
@@ -305,7 +305,6 @@ test('an entity-only positive ceiling remains unknown after list rendering becau
   const player = seniors[0];
   setPlayerOvr(player, 62);
   player.ceiling = 84;
-  delete player._ceilingEstimated;
   delete player.academyProfile;
   G.lastMatchSelection = {
     base: seniors.slice(0, 3).map(candidate => candidate.id),
@@ -317,8 +316,9 @@ test('an entity-only positive ceiling remains unknown after list rendering becau
   gp.openPlayerModal(player.id);
   const profileHtml = g.document.getElementById('modal').innerHTML;
 
-  assert.match(profileHtml, /Potential is unknown/i);
-  assert.equal(visiblePeakRows(profileHtml).length, 0);
+  assert.doesNotMatch(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 1);
+  assert.match(visiblePeakRows(profileHtml)[0], /Peak OVR.*84/i);
 });
 
 test('[slow] every screen still renders after several seasons of a real career', async () => {
