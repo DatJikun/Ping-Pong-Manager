@@ -59,6 +59,19 @@ function renderPage(g, page) {
   return captured;
 }
 
+function visibleText(html) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function visiblePeakRows(profileHtml, label = 'Peak OVR') {
+  return visibleText(profileHtml).match(new RegExp(`${label}\\s*:?\\s*\\d+`, 'gi')) || [];
+}
+
+function setPlayerOvr(player, value) {
+  for (const stat of ['fh', 'bh', 'srv', 'ret', 'foot', 'men']) player[stat] = value;
+  player.equipment = { blade: 'ALL', sponge: 'SREDNIA' };
+}
+
 test('every navigation target in index.html renders', () => {
   const g = bootWithPages(9001);
   const targets = navTargets();
@@ -174,6 +187,51 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.match(html, /PulseForge Performance/);
   assert.match(html, /A new manager takes over Test Club ahead of season 1\./);
   assert.doesNotMatch(html, /undefined/);
+});
+
+test('player profile shows one translated peak row only when an explicit ceiling is known', () => {
+  const g = bootWithPages(9011);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const player = gp.getClubSeniorPlayers(G.myTeamId)[0];
+  setPlayerOvr(player, 62);
+  player.ceiling = 84;
+
+  gp.openPlayerModal(player.id);
+  let profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.match(profileHtml, /rating-stars__ovr">62</);
+  assert.equal(visiblePeakRows(profileHtml).length, 1);
+  assert.match(visiblePeakRows(profileHtml)[0], /Peak OVR.*84/i);
+  assert.match(profileHtml, /rating-stars--profile/);
+
+  g.PPM.i18n.setLocale('pl');
+  gp.openPlayerModal(player.id);
+  profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.equal(visiblePeakRows(profileHtml, 'Szczytowe OVR').length, 1);
+  assert.match(visiblePeakRows(profileHtml, 'Szczytowe OVR')[0], /Szczytowe OVR.*84/i);
+  assert.match(profileHtml, /rating-stars--profile/);
+
+  g.PPM.i18n.setLocale('en');
+  const academyKnown = gp.getClubSeniorPlayers(G.myTeamId)[1];
+  setPlayerOvr(academyKnown, 62);
+  delete academyKnown.ceiling;
+  academyKnown.academyProfile = { ...(academyKnown.academyProfile || {}), ceiling: 84 };
+  gp.openPlayerModal(academyKnown.id);
+  profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.equal(visiblePeakRows(profileHtml).length, 1);
+  assert.match(visiblePeakRows(profileHtml)[0], /Peak OVR.*84/i);
+
+  const unknown = gp.getClubSeniorPlayers(G.myTeamId)[2];
+  setPlayerOvr(unknown, 62);
+  unknown.peakAge = 29;
+  delete unknown.ceiling;
+  if (unknown.academyProfile) delete unknown.academyProfile.ceiling;
+  gp.openPlayerModal(unknown.id);
+  profileHtml = g.document.getElementById('modal').innerHTML;
+  assert.match(profileHtml, /rating-stars--profile/);
+  assert.match(profileHtml, /Potential is unknown/i);
+  assert.equal(visiblePeakRows(profileHtml).length, 0);
+  assert.match(visibleText(profileHtml), /peak 29/i, 'peak age remains visible as age information');
 });
 
 test('[slow] every screen still renders after several seasons of a real career', async () => {

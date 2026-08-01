@@ -158,6 +158,17 @@ test('the squad and academy flows follow the active locale', () => {
   assert.match(polishAcademy, /Kogo bierzesz do akademii/i);
 });
 
+test('academy summary labels describe current OVR in both locales', () => {
+  const g = boot(3136);
+  assert.equal(g.PPM.i18n.t('squad.bestCurrentOvr'), 'Best current OVR');
+  assert.equal(g.PPM.i18n.t('squad.classCurrentStrength'), 'strongest current player in this class');
+  assert.match(g.PPM.i18n.t('rating.a11y.summaryKnown', { current: 62 }), /Current OVR 62/);
+  g.PPM.i18n.setLocale('pl');
+  assert.equal(g.PPM.i18n.t('squad.bestCurrentOvr'), 'Najlepsze aktualne OVR');
+  assert.equal(g.PPM.i18n.t('squad.classCurrentStrength'), 'najsilniejszy obecnie zawodnik w tym roczniku');
+  assert.match(g.PPM.i18n.t('rating.a11y.summaryKnown', { current: 62 }), /Aktualne OVR 62/);
+});
+
 test('the club staff screen follows the active locale', () => {
   const g = boot(3108);
   g.PPM.gameplay.newGame(0, 'PL');

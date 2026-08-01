@@ -123,7 +123,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
       <div class="card"><div class="ct">${t('dash.matchSquad').toUpperCase()}</div>
       ${matchSquad.slots.map((slot,index)=>{const p=slot.player||slot.previousPlayer;const status=slot.status;return`<div class="grid gp8 aic pd8-0 bdb-s3 ${p?'cur':''}" style="grid-template-columns:86px 1fr auto" ${p?`onclick="openPlayerModal(${p.id})"`:''}>
         <div class="fs9 b8" style="color:${index<3?'var(--g)':'var(--blue)'}">${t(matchSlotLabels[index])}</div>
-        ${p?`<div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}</div><div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('dash.age',{age:p.age})} \u00b7 ${styleLabel(p.playStyle)}`:t(status.reasonKey,status.reasonParams)}</div></div></div><div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:24px;color:${status.available?'var(--r)':'var(--ink3)'}">${ovr(p)}</div>`
+        ${p?`<div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}</div><div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('dash.age',{age:p.age})} \u00b7 ${styleLabel(p.playStyle)}`:t(status.reasonKey,status.reasonParams)}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}`
           :`<div class="fs11 ink3">${t('match.nom.vacant')}</div><div class="ink3">—</div>`}
       </div>`;}).join('')}
       </div>
@@ -193,7 +193,7 @@ function pageSquad(){
         <div class="fs10 ink3">${t(l.academyLoan?'squad.academyReturn':'squad.autoReturn')}</div>
         <div class="mt-6 grid gtc4 gp4" style="max-width:240px">${SK.map(s=>`<div class="tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
       </div>
-      <div class="syne b8 fs36 cblue">${ovrBase(p)}</div>
+      ${window.PPM.ratingStars.renderRating(ratingProfile(ovrBase(p),p.isYouth&&Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:playerCeiling(p)),{size:'compact',peakKnown:!p.isYouth||Number.isFinite(p.academyProfile?.ceiling),disclosure:'summary',showCurrentOvr:true})}
     </div>`;}).join(''):`<div class="pd40 tac ink3">${t('squad.noLoans')}</div>`}
     ${(()=>{const inn=getLoanedIn();return inn.length?`<div class="ct mt-14">${t('squad.loanedIn')}</div>${inn.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bgs1 bl4-purple r4" style="border:1px solid var(--purple)">
       <div>
@@ -201,14 +201,14 @@ function pageSquad(){
         <div class="fs11 ink3">${t('squad.loanedFrom',{club:teamName(l.fromTeamId)})}</div>
         <div class="fs11 ink3">${t('squad.wageShare',{percent:Math.round((l.wageShare||0.6)*100),amount:formatCurrency(Math.round((p.salary||0)*(l.wageShare||0.6)))})}</div>
       </div>
-      <div class="syne b8 fs36 cpurple">${ovrBase(p)}</div>
+      ${window.PPM.ratingStars.renderRating(ratingProfile(ovrBase(p),p.isYouth&&Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:playerCeiling(p)),{size:'compact',peakKnown:!p.isYouth||Number.isFinite(p.academyProfile?.ceiling),disclosure:'summary',showCurrentOvr:true})}
     </div>`;}).join('')}`:'';})()}
     </div>`;
   }
   const mt0=myTeam();
   const ovrRange=store.G.infraAcademy>0?gameDataText('infraAcademy',store.G.infraAcademy,'desc',INFRA_ACADEMY[store.G.infraAcademy].desc):t('squad.noAcademy');
   const academyLevel=store.G.infraAcademy||0;
-  const academyBestPeak=youth.length?Math.max(...youth.map(p=>p.academyProfile?.ceiling||playerCeiling(p))):0;
+  const academyBestCurrent=youth.length?Math.max(...youth.map(p=>ovrBase(p))):0;
   const academyCandidates=(store.G.academyProspects||[]);
   const academyTrial=(store.G.academyTrial||[]);
   const mtBudgetLow=mt0.budget<10000;
@@ -225,9 +225,9 @@ function pageSquad(){
   if(!acaSteps.some(s=>s[0]===ui.academyTab))ui.academyTab='squad';
   const acaTab=ui.academyTab;
   const prospectCard=(p,i,action,label,pendingSource)=>`<div class="scout-card academy-report cur" onclick="openPlayerModal(${p.id},'${pendingSource}',${i})">
-    <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${p.academyProfile?.region||t('squad.clubAcademy')}</div></div></div><div class="syne b8 fs28 cpurple">${ovrBase(p)}</div></div>
+    <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${p.academyProfile?.region||t('squad.clubAcademy')}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(ovrBase(p),Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:Number.isFinite(p.ceiling)?p.ceiling:ovrBase(p)),{size:'compact',peakKnown:Number.isFinite(p.academyProfile?.ceiling)||Number.isFinite(p.ceiling),disclosure:'summary',showCurrentOvr:true})}</div>
     <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b class="${ovrBase(p)?'':''}">${p[s]}</b></div>`).join('')}</div>
-    <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div><div>Peak: <b>${p.academyProfile?.ceiling||playerCeiling(p)}</b></div></div>
+    <div class="grid gtc2 gp6 fs11 ink3 mb10"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div></div>
     <button class="btn pr sm w100" onclick="event.stopPropagation();${action}">${label}</button>
   </div>`;
 
@@ -241,7 +241,7 @@ function pageSquad(){
   <div class="g4 mb14">
     <div class="sb" style="--tone:var(--purple)"><div class="l">${t('squad.academy')}</div><div class="v" style="font-size:20px">${gameDataText('infraAcademy',academyLevel,'name',INFRA_ACADEMY[academyLevel].name)}</div><div class="sub">${t('squad.level',{current:academyLevel,max:INFRA_ACADEMY.length-1})} · ${ovrRange}</div></div>
     <div class="sb" style="--tone:var(--cyan)"><div class="l">${t('squad.juniors')}</div><div class="v">${youth.length}</div><div class="sub">${t('squad.juniorExit')}</div></div>
-    <div class="sb" style="--tone:var(--volt)"><div class="l">${t('squad.bestPeak')}</div><div class="v">${academyBestPeak||'-'}</div><div class="sub">${t('squad.classCeiling')}</div></div>
+    <div class="sb" style="--tone:var(--volt)"><div class="l">${t('squad.bestCurrentOvr')}</div><div class="v">${academyBestCurrent||'-'}</div><div class="sub">${t('squad.classCurrentStrength')}</div></div>
     <div class="sb"><div class="l">${t('squad.upkeep')}</div><div class="v">${Math.round((INFRA_ACADEMY[academyLevel].upkeep||0)/1000)||'-'}k</div><div class="sub">${t('squad.yearly',{amount:formatCurrency(INFRA_ACADEMY[academyLevel].upkeep||0)})}</div></div>
   </div>
   <div class="substeps">
@@ -283,8 +283,8 @@ function pageSquad(){
     ${academyReports.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyReports.map(res=>{const p=res.reported;const ri=(store.G.scoutResults||[]).findIndex(x=>x.realId===res.realId);const o=ovrBase(p);return`<div class="scout-card result academy-report cur" onclick="openPlayerModal(${res.realId})">
         ${!res.seen?`<span class="pill club mb6">${t('squad.new')}</span>`:''}
-        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${res.region||'?'}</div></div></div><div class="syne b8 fs28 cblue">${o}</div></div>
-        <div class="grid gtc2 gp6 fs11 ink3 mb8"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div><div>${t('squad.form')}: <b>${p.formHint||t('squad.stable')}</b></div><div>Peak: <b>${p.ceilingHint||'?'}</b></div><div>${t('squad.confidence')}: <b>${p.scoutConfidence||0}%</b></div></div>
+        <div class="flex jcb mb6"><div class="staff-head"><img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar"><div><div class="b7">${p.name}</div><div class="fs10 ink3">${p.age} · ${res.region||'?'}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(o,Number.isFinite(p.ceilingHint)?p.ceilingHint:o),{size:'compact',peakKnown:Number.isFinite(p.ceilingHint),disclosure:'summary',showCurrentOvr:true})}</div>
+        <div class="grid gtc2 gp6 fs11 ink3 mb8"><div>${t('squad.style')}: <b>${styleLabel(p.playStyle)}</b></div><div>${t('squad.form')}: <b>${p.formHint||t('squad.stable')}</b></div><div>${t('squad.confidence')}: <b>${p.scoutConfidence||0}%</b></div></div>
         <div class="attrs mb10">${SK.map(s=>`<div class="attr-row"><span>${SL[s]}</span><b>${p[s]}</b></div>`).join('')}</div>
         <button class="btn pr sm w100" onclick="event.stopPropagation();scoutSign(${ri})">${t('squad.negotiate')}</button></div>`;}).join('')}
     </div>`:`<div class="empty-state mt-14">${t('squad.noReports')}</div>`}
@@ -309,6 +309,10 @@ function statTone(v){return v>=85?'var(--g)':v>=75?'var(--blue)':v>=62?'var(--go
 // one click away — the card was carrying ten stacked rows of them.
 function squadCard(p,selectionView){
   const o=ovr(p),inj=p.injuredFor>0,isYouth=p.role==='youth';
+  const current=isYouth?ovrBase(p):o;
+  const academyPeak=Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:null;
+  const peak=isYouth?(academyPeak??current):playerCeiling(p);
+  const peakKnown=!isYouth||academyPeak!==null;
   const styleColor=(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink3)';
   const slotIndex=isYouth?-1:selectionView.slots.findIndex(slot=>slot.previousPlayer?.id===p.id);
   const slotKeys=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'];
@@ -328,8 +332,7 @@ function squadCard(p,selectionView){
         </div>
       </div>
       <div class="pc-ovr-wrap">
-        <div class="pc-ovr">${o}</div>
-        ${p.teamId===store.G.myTeamId?`<div class="pc-ovr-sub">${t('squad.peak',{value:playerCeiling(p)})}</div>`:''}
+        ${window.PPM.ratingStars.renderRating(ratingProfile(current,peak),{size:'standard',peakKnown,disclosure:'summary',showCurrentOvr:true})}
       </div>
     </div>
     <div class="pc-tags">
@@ -383,7 +386,7 @@ function pageLeague(){
     ${players.map((p,i)=>{
       const isMine=p.teamId===myId;
       const val=mode==='won'?(p.leagueSeasonPointsWon||0):(p.leagueSeasonPointsLost||0);
-      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} ${t((p.contractYears||0)===1?'common.year':'common.years')}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td class="ink3">${ovr(p)}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">${t('market.preSign')}</button>`:'-'}</td></tr>`;
+      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} ${t((p.contractYears||0)===1?'common.year':'common.years')}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">${t('market.preSign')}</button>`:'-'}</td></tr>`;
     }).join('')}</table>`;
   }
   function teamStatsTable(teams,statLabel,mode){

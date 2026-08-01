@@ -123,10 +123,14 @@ function openLoanModal(pid){
     const interest=clamp(Math.round(35+needScore-(p.salary/700)+((p.preferredRole==='starter')?8:0)+(isAcademyLoan?10:0)),8,92);
     return{...t,interest};
   }).sort((a,b)=>b.interest-a.interest);
+  const current=ovrBase(p);
+  const academyPeak=Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:null;
+  const peak=isAcademyLoan?(academyPeak??current):playerCeiling(p);
+  const peakKnown=!isAcademyLoan||academyPeak!==null;
   const modal=document.getElementById('modal');modal.className='modal';
   modal.innerHTML=`<div class="mt2">${t(isAcademyLoan?'loan.academyTitle':'loan.title',{name:p.name})} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="pd12 bgs2 r3 mb14 fs12">
-    <b>OVR ${ovrBase(p)}</b> / ${t('loan.age',{age:p.age})}<br>
+    ${window.PPM.ratingStars.renderRating(ratingProfile(current,peak),{size:'compact',peakKnown,disclosure:'summary',showCurrentOvr:true})} / ${t('loan.age',{age:p.age})}<br>
     ${t(isAcademyLoan?'loan.academyInfo':'loan.regularInfo')}<br>
     ${t('loan.termsInfo')}
   </div>
@@ -3350,7 +3354,7 @@ function renderNominationModal(){
     <div><div class="b7 fs13">${p.name}${p._promisedMatch?` <span class="fs9 cgold">${t('match.nom.promised')}</span>`:''}</div>
     <div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('match.nom.form')}: <b>${seasonFormLabel(p)}</b> / ${t('match.nom.fatigue')}: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / ${t('match.nom.morale')}: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}`:reason(status)}</div></div>
     <div class="fs10 ink3">${t('match.nom.record',{wins:p.seasonW||0,losses:p.seasonL||0})}</div>
-    <div class="syne b8 fs22 cr">${ovr(p)}</div>
+    ${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
     </div>`;}).join('')}
   </div>
   <div class="btn-row mt-12"><button class="btn" onclick="nomClear()">${t('match.nom.clear').toUpperCase()}</button><button class="btn" onclick="nomBest()">${t('match.nom.best').toUpperCase()}</button><button class="btn go" onclick="nomConfirm()" ${check.ok?'':'disabled'}>${t('match.nom.confirm',{selected:check.selectedCount,required:check.requiredTotal}).toUpperCase()}</button></div>`;
@@ -4333,7 +4337,11 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
     const label=t(initScore>14?'vme.momentumStrong':initScore>6?'vme.momentumSlight':initScore<-14?'vme.momentumOpponentStrong':initScore<-6?'vme.momentumOpponentSlight':'vme.momentumEven');
     momMeta={pct,color,label};
   }
-  const playerHud=(p,side,won)=>p?`<div class="vme-pcard ${won?'active':''} r18 ovh" style="background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(246,241,234,.92));box-shadow:0 16px 28px rgba(25,18,10,.14);border:1px solid rgba(122,91,52,.14)">
+  const playerHud=(p,side,won)=>{
+    if(!p)return'';
+    const current=ovr(p);
+    const peak=playerCeiling(p);
+    return`<div class="vme-pcard ${won?'active':''} r18 ovh" style="background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(246,241,234,.92));box-shadow:0 16px 28px rgba(25,18,10,.14);border:1px solid rgba(122,91,52,.14)">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 12px 8px 12px;border-bottom:1px solid rgba(122,91,52,.1);background:${side==='home'?'linear-gradient(135deg,rgba(192,40,24,.08),rgba(255,255,255,.55))':'linear-gradient(135deg,rgba(32,112,64,.08),rgba(255,255,255,.55))'}">
           <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="r16" style="width:56px;height:56px;object-fit:cover;border:2px solid rgba(255,255,255,.8);box-shadow:0 6px 14px rgba(0,0,0,.12)">
           <div class="minw0 flx1">
@@ -4341,10 +4349,7 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
             <div class="fs10 ink3 mt-3">${t('vme.playerAgePeak',{age:p.age,peak:p.peakAge||'?'})}</div>
             <div style="font-size:10px;font-weight:700;color:${(PLAYER_STYLE_INFO[p.playStyle]||{}).color||'var(--ink2)'};margin-top:3px">${styleLabel(p.playStyle)}</div>
           </div>
-          <div class="tar">
-            <div class="fs10 ink3 up ls1">OVR</div>
-            <div style="font-family:'Saira Condensed',sans-serif;font-size:28px;line-height:1;font-weight:800;color:${side==='home'?'var(--r)':'var(--g)'}">${ovr(p)}</div>
-          </div>
+          ${window.PPM.ratingStars.renderRating(ratingProfile(current,peak),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
         </div>
         <div style="padding:10px 12px 12px">
           <div style="margin:0 0 7px 0;min-height:22px">${traitHtml(p)}</div>
@@ -4354,7 +4359,8 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
             <div class="fs10 ink3">${t('vme.morale')} <b>${p.morale||50}</b></div>
           </div>
         </div>
-      </div>`:'';
+      </div>`;
+  };
 
   const html=`<div class="vme">
     <div class="vme-scoreboard">
@@ -5323,13 +5329,12 @@ function pullYouth(){
     ${store.G.academyProspects.map((p,i)=>`<div class="pd14 bb1 bt3-purple r12 bgs1">
       <div class="flex jcb gp10 aifs mb8">
         <div><div class="syne b7 fs15">${p.name}</div><div class="fs10 ink3">${t('academy.ageStyle',{age:p.age,style:styleLabel(p.playStyle)})}</div></div>
-        <div class="syne b8 fs28 cpurple">${ovrBase(p)}</div>
+        ${window.PPM.ratingStars.renderRating(ratingProfile(ovrBase(p),Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:Number.isFinite(p.ceiling)?p.ceiling:ovrBase(p)),{size:'compact',peakKnown:Number.isFinite(p.academyProfile?.ceiling)||Number.isFinite(p.ceiling),disclosure:'summary',showCurrentOvr:true})}
       </div>
       <div class="fs10 ink3 mb8">${academyProfileNote(p)}</div>
       <div class="grid gtc2 gp6 fs10 mb10">
         <div><div class="ink3">${t('academy.region')}</div><div class="b7">${p.academyProfile?.region||t('academy.clubRegion')}</div></div>
         <div><div class="ink3">${t('academy.readiness')}</div><div class="b7">${academyReadinessLabel(p.academyProfile?.readiness)}</div></div>
-        <div><div class="ink3">${t('academy.ceiling')}</div><div class="b7">${p.academyProfile?.ceiling||'?'}</div></div>
         <div><div class="ink3">${t('academy.form')}</div><div class="b7">${seasonFormLabel(p)}</div></div>
       </div>
       <div class="flex gp6 fwrap mb10">${SK.map(s=>`<span class="fs10"><span class="ink3">${SL[s]}</span> <b>${p[s]}</b></span>`).join('')}</div>
@@ -5417,8 +5422,11 @@ function resolvePlayerProfile(pid,pendingSource,pendingIndex){
 }
 function openPlayerModal(pid,pendingSource,pendingIndex){
   const p=resolvePlayerProfile(pid,pendingSource,pendingIndex);if(!p)return;
+  const explicitCeiling=Number.isFinite(p.ceiling)?p.ceiling:Number.isFinite(p.academyProfile?.ceiling)?p.academyProfile.ceiling:null;
+  const peakKnown=explicitCeiling!==null;
   ensurePlayerMeta(p);
   const o=ovr(p);const wr=(p.careerW||0)+(p.careerL||0)>0?Math.round((p.careerW||0)/((p.careerW||0)+(p.careerL||0))*100):0;
+  const profile=ratingProfile(o,peakKnown?explicitCeiling:o);
   const exp=contractExpect(p,store.G.myTeamId);
   const marketability=calcPlayerMarketability(p);
   const mods=getPlayerModifierBreakdown(p);
@@ -5442,9 +5450,10 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
     <div>
       <div class="flex aic gp14 mb10">
         <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar xl">
-        <div>
-          <div class="syne b8 fs52 cr lh1 mb6">${o}</div>
-          <div class="pc-meta">${t('player.agePeak',{age:p.age,peak:p.peakAge})} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span>${p.teamId===store.G.myTeamId?` / ${t('player.basePeak',{value:playerCeiling(p)})}`:''}</div>
+        <div class="player-rating-block">
+          ${window.PPM.ratingStars.renderRating(profile,{size:'profile',peakKnown,disclosure:'profile',showCurrentOvr:true})}
+          ${peakKnown?`<div class="pnl-row player-rating-peak"><div>${t('rating.peakOvrLabel',{peak:profile.peakOvr})}</div></div>`:''}
+          <div class="pc-meta">${t('player.agePeak',{age:p.age,peak:p.peakAge})} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span></div>
           <div class="fs11 ink3 mt-4">${t('player.marketability')}: <b class="cgold">${marketability}</b></div>
         </div>
       </div>
@@ -5508,7 +5517,6 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
         ${t('player.biographyText',{name:p.name,age:p.age,top:SL[identity.topStat]||identity.topStat,weak:SL[identity.weakStat]||identity.weakStat})}
       </div>
       <div class="fs11 ink3 mt-8">${t('player.clubPath')}: <b>${clubs.join(' → ')||t('player.currentClubDebut')}</b></div>
-      ${p.teamId===store.G.myTeamId?`<div class="fs11 ink3 mt-6">${t('player.basePeak',{value:`<b>${playerCeiling(p)}</b>`})}</div>`:''}
       <div class="fs11 ink3 mt-6">${t('player.matchEndurance')}: <b>${playerStamina(p)}/100</b> ${playerStamina(p)>=75?t('player.staminaHigh'):playerStamina(p)<=45?t('player.staminaLow'):t('player.staminaNormal')}</div>
       <div class="fs11 ink3 mt-6">${t('player.careerPoints')}: ${t('player.pointsWonLost',{won:`<b>${formatNumber(p.careerPointsWon||0)}</b>`,lost:`<b>${formatNumber(p.careerPointsLost||0)}</b>`})}</div>
     </div>
@@ -5519,7 +5527,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
   </div>
   ${p.academyProfile?`<div class="mb14 pd10-12 r10 fs12" style="border:1px solid var(--purple);background:rgba(104,40,160,.08)">
     <div class="b7 cpurple mb6">${t('player.academyReport')}</div>
-    <div>${t('player.region')}: <b>${p.academyProfile.region||t('player.clubAcademy')}</b> / ${t('player.readiness')}: <b>${academyReadinessLabel(p.academyProfile.readiness)}</b> / Peak OVR: <b>${p.academyProfile.ceiling||'?'}</b></div>
+    <div>${t('player.region')}: <b>${p.academyProfile.region||t('player.clubAcademy')}</b> / ${t('player.readiness')}: <b>${academyReadinessLabel(p.academyProfile.readiness)}</b></div>
     <div class="mt-4 ink3">${academyProfileNote(p)}</div>
   </div>`:''}
   ${p.awards?.length?`<div class="mb14"><div class="fs10 ink3 mb6 up ls1">${t('player.seasonTrophies')}</div><div>${p.awards.map(a=>`<span class="award">${awardLabel(a)}</span>`).join('')}</div></div>`:''}
@@ -5609,11 +5617,13 @@ function openNegotiate(pid){
   const maxBonus=Math.max(10000,Math.round(exp.salary*1.5));
   const maxSal=Math.max(60000,Math.round(exp.salary*3));
   const bonus=Math.min(exp.signingBonus,maxBonus);
+  const current=ovrBase(p);
+  const peak=playerCeiling(p);
   window._negSal=sal;window._negYrs=yrs;window._negBonus=bonus;window._negPid=pid;window._negFee=marketItem?.fee||0;window._negRole=exp.role;
   const isFutureJoin=p.teamId!==null&&p.teamId!==store.G.myTeamId&&p.contractYears>0;
   modal.innerHTML=`<div class="mt2">${t('neg.title',{name:p.name})} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="neg-block">
-    <div class="neg-row"><div class="neg-label">${t('neg.playerOvr')}</div><div class="neg-val syne fs24 cr">${ovrBase(p)}</div></div>
+    <div class="neg-row"><div class="neg-label">${t('neg.playerOvr')}</div><div class="neg-val">${window.PPM.ratingStars.renderRating(ratingProfile(current,peak),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div></div>
     <div class="neg-row"><div class="neg-label">${t('neg.ageLoyalty')}</div><div class="neg-val">${t('neg.ageYears',{age:p.age})} / ${p.loyalty||0}/10</div></div>
     <div class="neg-row"><div class="neg-label">${t('neg.playerMood')}</div><div class="neg-val">${seasonFormLabel(p)} / ${t(exp.interestKey)}</div></div>
     <div class="neg-row"><div class="neg-label">${t('neg.agentProfile')}</div><div class="neg-val">${t(`neg.agent.${exp.profile.agentType}`)} / ${t(exp.profile.summaryKey)}</div></div>
@@ -6179,7 +6189,7 @@ function openTop12Picker(leagueId){
     return`<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid ${i===0?'var(--gold)':'var(--b1)'};background:var(--s1);border-radius:3px">
       <div><div class="b7 fs13">${p.name}${i===0?` <span class="fs9 cgold">${t('top12.recommendation').toUpperCase()}</span>`:''}${p.injuredFor>0?` <span class="fs9 cr">${t('top12.injury').toUpperCase()}</span>`:''}</div>
       <div class="fs10 ink3">${t('top12.seasonLine',{wins:p.leagueSeasonW||0,losses:p.leagueSeasonL||0,diff:(diff>=0?'+':'')+diff,apps})}</div></div>
-      <div class="syne b8 fs22 cr">${ovr(p)}</div>
+      ${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
       <button class="btn pr sm" onclick="store.G.top12Entrant=${p.id};closeModal();runTop12Masters(${leagueId})">${t('top12.enter').toUpperCase()}</button>
     </div>`;}).join('')}
   </div>`;
@@ -6210,7 +6220,7 @@ async function runTop12MastersBody(leagueId){
       <div class="fs9 ink3">#${i+1}</div>
       <div class="b7 fs12">${e.player.name}</div>
       <div class="fs10 ink3">${e.team.name}</div>
-      <div class="syne b8 fs18 cr">${ovr(e.player)}</div>
+      ${window.PPM.ratingStars.renderRating(ratingProfile(ovr(e.player),playerCeiling(e.player)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
     </div>`).join('')}
   </div>
   <div id="t12-bracket" class="mb12"></div>

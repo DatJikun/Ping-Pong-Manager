@@ -32,6 +32,47 @@ function setPlayerCurrentOvr60(player) {
   player.fh = 63;
 }
 
+function setControlledRating(player, name, current, ceiling) {
+  player.name = name;
+  player.equipment = { blade: 'ALL', sponge: 'SREDNIA' };
+  setPlayerOvr(player, current);
+  if (ceiling === undefined) delete player.ceiling;
+  else player.ceiling = ceiling;
+  return player;
+}
+
+function ratingAfter(html, name) {
+  const start = html.indexOf(name);
+  assert.notEqual(start, -1, `${name} is rendered`);
+  const match = html.slice(start).match(/<span class="rating-stars [\s\S]*?<span class="rating-stars__ovr">\d+<\/span><\/span>/);
+  assert.ok(match, `${name} is followed by a shared rating`);
+  return match[0];
+}
+
+function visibleText(html) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function assertSummaryRating(html, player, current, hiddenPeaks = []) {
+  const rating = ratingAfter(html, player.name);
+  assert.match(rating, /rating-stars--summary/);
+  assert.match(rating, new RegExp(`rating-stars__ovr">${current}<`));
+  const root = rating.match(/<span class="rating-stars[^>]*>/)?.[0] || '';
+  const aria = root.match(/aria-label="([^"]*)"/)?.[1] || '';
+  assert.match(aria, new RegExp(`Current OVR ${current}\\b`), `${player.name} names current OVR accessibly`);
+  for (const peak of hiddenPeaks) {
+    assert.doesNotMatch(aria, new RegExp(`\\b${peak}\\b`), `${player.name} hides peak ${peak} from accessibility text`);
+  }
+  return rating;
+}
+
+function assertNoPotentialNumber(html, peak) {
+  assert.doesNotMatch(
+    visibleText(html),
+    new RegExp(`(?:peak(?: OVR)?|potential|ceiling|szczytowe OVR|sufit)[^0-9]{0,12}${peak}\\b`, 'i'),
+  );
+}
+
 test('transfer rows show current rating with a non-disclosing peak outline', () => {
   const g = bootWithPages(4201);
   const G = g.PPM.state.G;
@@ -93,4 +134,159 @@ test('transfer market minimum stars filters on current OVR, not peak OVR', () =>
   setPlayerOvr(player, 59);
   player.ceiling = 100;
   assert.doesNotMatch(g.PPM.pages.pageMarket(), /Current Threshold Player/);
+});
+
+test('dashboard, squad, academy, loan and league player summaries use shared non-disclosing ratings', () => {
+  const g = bootWithPages(4203);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  const senior = setControlledRating(seniors[0], 'Summary Senior', 62, 84);
+  G.lastMatchSelection = {
+    base: seniors.slice(0, 3).map(player => player.id),
+    reserves: seniors.slice(3, 5).map(player => player.id),
+  };
+
+  const dashboard = g.PPM.pages.pageDash();
+  assertSummaryRating(dashboard, senior, 62, [84]);
+  assertNoPotentialNumber(dashboard, 84);
+
+  g.PPM.ui.squadTab = 'squad';
+  const squad = g.PPM.pages.pageSquad();
+  assertSummaryRating(squad, senior, 62, [84]);
+  assertNoPotentialNumber(squad, 84);
+
+  const youth = setControlledRating(gp.genYouthPlayer(G.myTeamId, G.countryId), 'Summary Youth', 61, 86);
+  youth.teamId = G.myTeamId;
+  youth.role = 'youth';
+  youth.isYouth = true;
+  youth.academyProfile = { ...(youth.academyProfile || {}), ceiling: 86, region: 'Test Region' };
+  G.players.push(youth);
+  g.PPM.ui.squadTab = 'youth';
+  g.PPM.ui.academyTab = 'squad';
+  const academySquad = g.PPM.pages.pageSquad();
+  assertSummaryRating(academySquad, youth, 61, [86]);
+  assertNoPotentialNumber(academySquad, 86);
+
+  const prospect = setControlledRating(gp.genYouthPlayer(G.myTeamId, G.countryId), 'Summary Prospect', 60, 88);
+  prospect.academyProfile = { ...(prospect.academyProfile || {}), ceiling: 88, region: 'Intake Region' };
+  G.infraAcademy = 1;
+  G.academyProspects = [prospect];
+  g.PPM.ui.academyTab = 'intake';
+  const intake = g.PPM.pages.pageSquad();
+  assertSummaryRating(intake, prospect, 60, [88]);
+  assertNoPotentialNumber(intake, 88);
+
+  const reportReal = G.players.find(player => player.teamId !== G.myTeamId && player.role !== 'youth');
+  setControlledRating(reportReal, 'Hidden Real Prospect', 62, 91);
+  const reported = { ...reportReal, name: 'Estimated Scout Prospect', ceilingHint: 83 };
+  setPlayerOvr(reported, 62);
+  G.scoutResults = [{ realId: reportReal.id, reported, region: 'Report Region', seen: true }];
+  g.PPM.ui.academyTab = 'reports';
+  const report = g.PPM.pages.pageSquad();
+  const reportRating = assertSummaryRating(report, reported, 62, [83, 91]);
+  assert.match(reportRating, /rating-stars__clip--peak" style="width:15%"/,
+    'the fifth outline uses the reported 83 estimate, not the real 91 ceiling');
+  assertNoPotentialNumber(report, 83);
+  assertNoPotentialNumber(report, 91);
+
+  senior.leagueSeasonPointsWon = 999;
+  const myLeague = G.teams.find(team => team.id === G.myTeamId).league;
+  g.PPM.ui.leagueTab = myLeague === 1 ? 'l1' : 'l2';
+  g.PPM.ui.leagueStatsTab = 'points_for';
+  const league = g.PPM.pages.pageLeague();
+  assertSummaryRating(league, senior, 62, [84]);
+  assertNoPotentialNumber(league, 84);
+});
+
+test('loaned-out and loaned-in squad cards retain base OVR through shared ratings', () => {
+  const g = bootWithPages(4204);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const borrower = G.teams.find(team => team.id !== G.myTeamId);
+  const lender = G.teams.find(team => team.id !== G.myTeamId && team.id !== borrower.id);
+  const loanedOut = setControlledRating(gp.getClubSeniorPlayers(G.myTeamId)[0], 'Shared Loan Out', 63, 87);
+  const loanedIn = setControlledRating(
+    G.players.find(player => player.teamId === lender.id && player.role !== 'youth'),
+    'Shared Loan In', 64, 89,
+  );
+  loanedOut.teamId = borrower.id;
+  loanedOut.loanedOut = true;
+  loanedIn.teamId = G.myTeamId;
+  G.loans = [
+    { playerId: loanedOut.id, fromTeamId: G.myTeamId, toTeamId: borrower.id, returned: false },
+    { playerId: loanedIn.id, fromTeamId: lender.id, toTeamId: G.myTeamId, returned: false, wageShare: 0.6 },
+  ];
+  g.PPM.ui.squadTab = 'loans';
+  const loans = g.PPM.pages.pageSquad();
+  assertSummaryRating(loans, loanedOut, 63, [87]);
+  assertSummaryRating(loans, loanedIn, 64, [89]);
+  assertNoPotentialNumber(loans, 87);
+  assertNoPotentialNumber(loans, 89);
+});
+
+test('runtime player modals, live HUD and Top-12 cards use shared summary disclosure', async () => {
+  const g = bootWithPages(4205);
+  const gp = g.PPM.gameplay;
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  const player = setControlledRating(seniors[0], 'Runtime Summary Player', 62, 84);
+  player.contractYears = 3;
+  player.injuredFor = 0;
+  player.leagueSeasonW = 999;
+  player.leagueSeasonL = 0;
+  player.leagueSeasonD = 0;
+
+  gp.openMatchNomination(() => {});
+  let html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, player, 62, [84]);
+  assertNoPotentialNumber(html, 84);
+
+  gp.openLoanModal(player.id);
+  html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, player, 62, [84]);
+  assertNoPotentialNumber(html, 84);
+
+  const freeAgent = setControlledRating(
+    G.players.find(candidate => candidate.teamId === null && !candidate.retired),
+    'Runtime Negotiation Player', 64, 90,
+  );
+  gp.openNegotiate(freeAgent.id);
+  html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, freeAgent, 64, [90]);
+  assertNoPotentialNumber(html, 90);
+
+  const opponent = G.teams.find(team => team.league === gp.myLeague() && team.id !== G.myTeamId);
+  const opponentPlayer = G.players.find(candidate => candidate.teamId === opponent.id && candidate.role !== 'youth');
+  const hud = gp.renderVME(
+    G.teams.find(team => team.id === G.myTeamId), opponent,
+    [{ homePlayer: player.id, awayPlayer: opponentPlayer.id, setScores: [{ home: 11, away: 8 }], homeWin: true }],
+    0, 0, 0, true, { setIndex: 0, home: 0, away: 0 },
+  );
+  assertSummaryRating(hud, player, 62, [84]);
+  assertNoPotentialNumber(hud, 84);
+
+  G.phase = 'pre';
+  G.matchday = 21;
+  G.top12MastersDone = { 1: false, 2: false };
+  const leagueId = gp.myLeague();
+  gp.openTop12Picker(leagueId);
+  html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, player, 62, [84]);
+  assertNoPotentialNumber(html, 84);
+
+  g.setTimeout = callback => { callback(); return 0; };
+  await gp.runTop12Masters(leagueId);
+  html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, player, 62, [84]);
+  assertNoPotentialNumber(html, 84);
+
+  const prospect = setControlledRating(gp.genYouthPlayer(G.myTeamId, G.countryId), 'Legacy Intake Player', 60, 88);
+  prospect.academyProfile = { ...(prospect.academyProfile || {}), ceiling: 88 };
+  G.infraAcademy = 1;
+  G.academyProspects = [prospect];
+  gp.pullYouth();
+  html = g.document.getElementById('modal').innerHTML;
+  assertSummaryRating(html, prospect, 60, [88]);
+  assertNoPotentialNumber(html, 88);
 });
