@@ -4063,12 +4063,12 @@ function getCupClubStatus(teamId){
   const path=[];let last=null;
   for(let index=0;index<(cup.rounds||[]).length;index++){
     const match=(cup.rounds[index]||[]).find(entry=>entry.home?.id===teamId||entry.away?.id===teamId);if(!match)continue;
-    const opponent=match.home?.id===teamId?match.away:match.home;const result=match.result||null;const row={roundIndex:cup.finished&&cup.winner?.id===teamId?4:index,opponent,result};
+    const opponent=match.home?.id===teamId?match.away:match.home;const result=match.result||null;const row={roundIndex:index,opponent,result};
     if(result)path.push(row);last=row;
     if(result&&result.winner?.id!==teamId)return{state:'eliminated',nextTrigger:null,...row,path};
-    if(cup.finished&&cup.winner?.id===teamId)return{state:'champion',nextTrigger:null,...row,path};
     if(index===cup.currentRound&&!result){const nextTrigger=(index+1)*4;return{state:shouldPlayCup()?'due':index?'alive':'waiting',nextTrigger,roundIndex:row.roundIndex,path,opponent,result};}
   }
+  if(cup.finished&&cup.winner?.id===teamId)return{state:'champion',nextTrigger:null,roundIndex:last?.roundIndex??0,path,opponent:last?.opponent||null,result:last?.result||null};
   return{state:cup.finished?'eliminated':'waiting',nextTrigger:cup.finished?null:(cup.currentRound+1)*4,roundIndex:last?.roundIndex??cup.currentRound??0,path,opponent:last?.opponent||null,result:last?.result||null};
 }
 function shouldPlayCup(){

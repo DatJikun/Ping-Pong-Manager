@@ -433,7 +433,7 @@ function pageCup(){
   ${canPlay?`<div class="fs11 cpurple b7">${t('cup.next')}</div>`:''}
   </div>
   ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>${t('cup.winner',{name:cup.winner.name})}</div>`:''}
-  <div class="card mb14"><div class="fs12 ink3">${t('cup.format')}</div><div class="fs11 mt-6">${t('cup.prizes')}</div>${(()=>{const status=window.PPM.gameplay.getCupClubStatus(myId);return`<div class="fs11 mt-6 b7">${t(`cup.status.${status.state}`)}${status.nextTrigger!==null?` ${t('cup.nextTrigger',{matchday:status.nextTrigger})}`:''}</div>`;})()}</div>
+  <div class="card mb14"><div class="fs12 ink3">${t('cup.format')}</div><div class="fs11 mt-6">${t('cup.prizes',{winner:formatCurrency(window.PPM.gameplay.CUP_PRIZES.winner),finalist:formatCurrency(window.PPM.gameplay.CUP_PRIZES.finalist),semifinalist:formatCurrency(window.PPM.gameplay.CUP_PRIZES.semifinalist),quarterfinalist:formatCurrency(window.PPM.gameplay.CUP_PRIZES.quarterfinalist)})}</div>${(()=>{const status=window.PPM.gameplay.getCupClubStatus(myId);const names=['1/16','1/8',t('cup.quarterfinal'),t('cup.semifinal'),t('cup.final')];const path=status.path.map(row=>`${names[row.roundIndex]}: ${row.opponent?.name||t('common.none')}${row.result?` ${row.result.score}`:''}`).join(' · ');return`<div class="fs11 mt-6 b7">${t(`cup.status.${status.state}`)}${status.nextTrigger!==null?` ${t('cup.nextTrigger',{matchday:status.nextTrigger})}`:''}</div>${path?`<div class="fs11 mt-4">${t('cup.path',{path})}</div>`:''}`;})()}</div>
   <div class="cup-bracket">
     ${cup.rounds.map((round,ri)=>`<div class="cup-round">
       <div class="cup-round-title">${roundNames[Math.min(ri,roundNames.length-1)]}</div>

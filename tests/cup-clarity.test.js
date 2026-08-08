@@ -96,9 +96,11 @@ test('National Cup status reports a champion and exposes the shared reward ladde
   gp.newGame(0, 'PL');
   const G = g.PPM.state.G;
   const mine = club(G.myTeamId, 'My Club');
-  const opponent = club(99907, 'Final Opponent');
+  const first = club(99907, 'First Opponent');
+  const opponent = club(99908, 'Final Opponent');
+  const firstResult = { score: '3-1', winner: mine, loser: first };
   const result = { score: '3-0', winner: mine, loser: opponent };
-  setCup(g, [[{ home: mine, away: opponent, result }]], 1, true, mine);
+  setCup(g, [[{ home: mine, away: first, result: firstResult }], [], [], [], [{ home: mine, away: opponent, result }]], 5, true, mine);
 
   assert.deepEqual(gp.CUP_PRIZES, {
     winner: 35000,
@@ -110,7 +112,7 @@ test('National Cup status reports a champion and exposes the shared reward ladde
     state: 'champion',
     nextTrigger: null,
     roundIndex: 4,
-    path: [{ roundIndex: 4, opponent, result }],
+    path: [{ roundIndex: 0, opponent: first, result: firstResult }, { roundIndex: 4, opponent, result }],
     opponent,
     result,
   });
