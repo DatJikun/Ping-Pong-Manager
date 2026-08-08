@@ -214,6 +214,29 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.doesNotMatch(html, /undefined/);
 });
 
+test('sponsor screens localize semantic and historic tier values', () => {
+  const g = bootWithPages(9012);
+  const G = g.PPM.state.G;
+  G.sponsors = [];
+  G.sponsorOffers = [
+    { id: 8001, name: 'Test Local', tier: 'Lokalny', goal: 'none', reward: 20000, maxYears: 1 },
+    { id: 8002, name: 'Test Elite', tier: 'elite', goal: 'top3', reward: 90000, maxYears: 2 },
+  ];
+
+  g.PPM.i18n.setLocale('en');
+  const english = `${g.PPM.pages.pageSponsors()} ${g.PPM.pages.pagePreseason()}`;
+  assert.match(english, /Test Local[^]*Local/);
+  assert.match(english, /Test Elite[^]*Elite/);
+  assert.doesNotMatch(english, /Lokalny|Regionalny|Krajowy|Elitarny/);
+  assert.doesNotMatch(english, /sponsor\.tier\./);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = `${g.PPM.pages.pageSponsors()} ${g.PPM.pages.pagePreseason()}`;
+  assert.match(polish, /Test Local[^]*Lokalny/);
+  assert.match(polish, /Test Elite[^]*Elitarny/);
+  assert.doesNotMatch(polish, /sponsor\.tier\./);
+});
+
 test('Club defers contract choices to preseason instead of offering midseason signing', () => {
   const g = bootWithPages(9013);
   g.PPM.i18n.setLocale('en');

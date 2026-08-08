@@ -1938,7 +1938,7 @@ function genSponsorOffers(prestige){
     const reward=Math.min(rewardCap,Math.round(raw/500)*500);
     const hardMin=Math.round(reward*0.65/500)*500;
     const cooldown=diff>=2.0?0:diff>=1.3?1:2;
-    const tier=diff>=2.0?'Elite':diff>=1.4?'Premium':diff>=1.0?'Krajowy':diff>=0.7?'Regionalny':'Lokalny';
+    const tier=diff>=2.0?'elite':diff>=1.4?'premium':diff>=1.0?'national':diff>=0.7?'regional':'local';
     // How long the sponsor is willing to commit (the player picks 1..maxYears at
     // signing). Bigger/steadier brands offer longer terms.
     const maxYears=diff>=1.4?3:diff>=0.8?2:pick([1,1,2]);

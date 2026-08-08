@@ -169,42 +169,79 @@ const PSYCHNAMES=['Jan Wi\u015bniewski','Zofia Adamska','Krzysztof Lis','Irena M
  'El\u017cbieta Kowal','Marek Zaj\u0105c','Barbara Nowak','\u0141ukasz Mroczek','Helena Doma\u0144ska',
  'Szymon Dobek','Alicja G\u0105sior','Wiktor Kuc','Monika K\u0142os','Rafa\u0142 Biernat','Teresa So\u0142tys'];
 
-function makeSponsorPool(roots,sectors){
-  return roots.flatMap(root=>sectors.map(sector=>`${root} ${sector}`));
-}
 // Fictional by design: official builds never imply a licence or endorsement.
 // Community databases remain free to provide their own club and sponsor names.
-const SPONSOR_ROOTS={
-  PL:['Asteron','Cedrava','Deltaris','Elaris','Falkora','Grovex','Helvara','Iveron','Jantaro','Korveta','Lumaro','Novaris'],
-  DE:['Rhevara','Nordkern','Alpenwerk','Silberhain','Westbruck','Kronfeld','Elboria','Falkenau','Morgenrot','Steinwald','Lichtberg','Tannwerk'],
-  CN:['Jade River','Azure Peak','Golden Crane','Red Cedar','Silver Lotus','Eastern Gate','Dragon Well','Moon Harbor','Bright Field','Cloud Bridge','Long River','Pearl Summit'],
-  JP:['Hikari Wave','Aozora','Kizuna','Takumi','Koyo','Shinsei','Yamabiko','Mizuhana','Akatsuki','Sorakaze','Hinode','Seiryu'],
-  SE:['Nordljus','Fjällvind','Sjöform','Eldmark','Bergnova','Iskrona','Tallvik','Solhamn','Norrsken','Kustlinje','Malmglöd','Vinterbro'],
-  KR:['Hanul','Baram','Nuri','Saebit','Gureum','Areum','Haedam','Pureun','Onbit','Dalmae','Garam','Mirinae'],
+const COUNTRY_SPONSORS={
+  PL:[
+    'Asteron','Cedrava','Deltaris','Elaris','Falkora','Grovex','Helvara','Iveron',
+    'Jantaro','Korveta','Lumaro','Novaris','Brzegon','Miodra','Nurtel','Zawira',
+    'Bursztynowy Szlak','Cicha Kuźnia','Dębowy Znak','Górna Fala','Jasny Horyzont','Kresowy Most','Leśny Splot','Miedziana Przystań',
+    'Niebieski Kłos','Orla Dolina','Polna Latarnia','Rzeczny Warsztat','Srebrny Brzeg','Tatrzański Rytm','Wolny Trakt','Zielona Iskra',
+    'Bałtycki Pion','Czerwona Nić','Dobry Kierunek','Gliniany Krąg','Kasztanowy Dom','Lubelski Żuraw','Mazurski Świt','Nadwiślański Puls',
+    'Opolska Wstęga','Pomorski Kompas','Roztoczańska Perła','Sudecki Węzeł','Śląski Motyw','Warmiński Ogród','Wielkopolski Zdrój','Żywiecki Lampion',
+  ],
+  DE:[
+    'Rhevara','Nordkern','Alpenwerk','Silberhain','Westbruck','Kronfeld','Elboria','Falkenau',
+    'Morgenrot','Steinwald','Lichtberg','Tannwerk','Adlerquell','Bergfuge','Dornkreis','Eichenstrom',
+    'Felsenbogen','Goldpfad','Hafenfunke','Himmelsteg','Kernwiese','Kupferhain','Lindenflug','Nebelkranz',
+    'Quellenrad','Rosenwerk','Schieferglanz','Sonnenfurt','Talbrücke','Waldanker','Winterspur','Zinnpfad',
+    'Abendquell','Birkenstern','Elsterbogen','Falkenlicht','Flusskrone','Gartenhall','Harzlinie','Kieselmond',
+    'Mühlenfeder','Ostfeder','Regenhain','Schwalbensteg','Tautal','Uferglanz','Wiesenklang','Zechenblau',
+  ],
+  SE:[
+    'Nordljus','Fjällvind','Sjöform','Eldmark','Bergnova','Iskrona','Tallvik','Solhamn',
+    'Norrsken','Kustlinje','Malmglöd','Vinterbro','Älvspår','Björkton','Daggvik','Ekhimmel',
+    'Frosthamn','Glimmerdal','Havslöv','Isfågel','Kopparstig','Ljusåker','Månbrygga','Näverring',
+    'Orrfjäll','Pärlstrand','Rimskog','Skärgårdsblå','Stjärnmyr','Tallbacka','Uddglans','Vindkälla',
+    'Åsgryning','Brisverk','Dalfackla','Eldsjö','Forsmåne','Granvåg','Hjortronspår','Klintsol',
+    'Lärkflöde','Mosskrona','Nattvik','Rönnlyra','Silvermyr','Tjärnbris','Vårfjäll','Öreskimmer',
+  ],
+  JP:[
+    'Aonagi','Harukaze','Kizunori','Takumira','Koyosha','Shinseki','Yamabana','Mizunoe',
+    'Akatsuno','Sorakinu','Hinotori','Seiranka','Asahane','Chiyomori','Fuyutsuki','Hoshinawa',
+    'Irohana','Kaedori','Kazanami','Kumonagi','Midoraku','Nagisora','Okurane','Raikado',
+    'Sakuragiwa','Tsukihara','Umekasa','Yorukawa','Zenmori','Akiyori','Benihoshi','Daichika',
+    'Enokaze','Fujiroha','Ginmatsu','Hayamichi','Itsukado','Junomizu','Kasumori','Koharune',
+    'Masunagi','Nijiwara','Rinshodo','Satomine','Tokihana','Uminose','Wakabira','Yuzunari',
+  ],
+  CN:[
+    'Amber Reed','Azure Kiln','Bamboo Crest','Bright Loom','Cedar Lantern','Cloud Compass','Copper Heron','Crimson Orchard',
+    'Dawn Pavilion','Eastern Quill','Emerald Ferry','Golden Terrace','Harbor Peony','Ivory Current','Jade Sparrow','Lake Meridian',
+    'Lotus Foundry','Maple Pagoda','Moon Canopy','Pearl Workshop','Plum Horizon','Porcelain Vale','Red Willow','River Laurel',
+    'Silk Beacon','Silver Banyan','Spring Citadel','Stone Swallow','Sunrise Arch','Tea Gardenia','Vermilion Bridge','White Camellia',
+    'Autumn Kite','Blue Ginkgo','Celadon Path','Dragonfly Court','Firefly Quay','Glazed Summit','Harmony Wheel','Inkstone Field',
+    'Lacquer Grove','Morning Fan','Orchid Harbor','Pine Scroll','Rain Bell','Saffron Gate','Willow Prism','Winter Crane',
+  ],
+  KR:[
+    'Hanulbit','Baramgil','Nurimaru','Saebyeol','Gureumsae','Areumbit','Haedamun','Pureunsol',
+    'Onbitna','Dalmaeul','Garamchae','Mirinaeon','Achimnoe','Boramgyeol','Chorokdam','Dasomgil',
+    'Eunhasu','Geumsae','Haneulmok','Iseulbit','Jayeonro','Kkotnuri','Mulgyeol','Neulbom',
+    'Ongimaru','Parangil','Raonchae','Saeromun','Taeyangol','Urihane','Woorimok','Yeoreumbit',
+    'Aramgyeol','Badaon','Cheongsol','Dodamuri','Eutteumsae','Gounmaru','Harupeum','Jinbaram',
+    'Kkumnara','Maeumgil','Naraeon','Oreumchae','Puleunmok','Sarangbit','Ttaseum','Yunseul',
+  ],
 };
-const SPONSOR_SECTORS={
-  PL:['Energia','Finanse','Żywność','Technologie','Logistyka'],
-  DE:['Energie','Finanz','Mobilität','Technik','Versand'],
-  CN:['Energy','Finance','Foods','Digital','Logistics'],
-  JP:['Energy','Finance','Foods','Digital','Transit'],
-  SE:['Energi','Finans','Mat','Teknik','Transport'],
-  KR:['Energy','Finance','Foods','Digital','Mobility'],
-};
-const COUNTRY_SPONSORS=Object.fromEntries(COUNTRY_IDS.map(id=>[
-  id,
-  makeSponsorPool(SPONSOR_ROOTS[id],SPONSOR_SECTORS[id]),
-]));
 const SNAMES=COUNTRY_SPONSORS.PL;
 
 const SGOALS=['top2','top3','top4','top6','top8','win4','win6','win8','win10','win12','win14','win16'];
 
 const SPONSOR_TIERS=[
-  {minPrestige:0,  rewardMult:0.5,  cooldown:2,label:'Lokalny'},
-  {minPrestige:20, rewardMult:0.85, cooldown:1,label:'Regionalny'},
-  {minPrestige:40, rewardMult:1.0,  cooldown:1,label:'Krajowy'},
-  {minPrestige:65, rewardMult:1.4,  cooldown:0,label:'Premium'},
-  {minPrestige:85, rewardMult:2.0,  cooldown:0,label:'Elite'},
+  {id:'local',minPrestige:0,rewardMult:0.5,cooldown:2},
+  {id:'regional',minPrestige:20,rewardMult:0.85,cooldown:1},
+  {id:'national',minPrestige:40,rewardMult:1.0,cooldown:1},
+  {id:'premium',minPrestige:65,rewardMult:1.4,cooldown:0},
+  {id:'elite',minPrestige:85,rewardMult:2.0,cooldown:0},
 ];
+const SPONSOR_TIER_ALIASES={
+  local:'local',lokalny:'local',
+  regional:'regional',regionalny:'regional',
+  national:'national',krajowy:'national',
+  premium:'premium',
+  elite:'elite',elitarny:'elite',
+};
+function normalizeSponsorTier(value){
+  return SPONSOR_TIER_ALIASES[String(value??'').trim().toLowerCase()]||'local';
+}
 
 const COACH_STYLES={
   OFENSYWNY:{id:'OFENSYWNY',label:'Ofensywny',icon:'\u2694',desc:'Wzmacnia zawodnik\u00f3w ATK/SRV.',statFocus:'atk',synergy:'FH_LOOPER'},
@@ -403,5 +440,5 @@ if(typeof window!=='undefined'&&window.PPM_NAMES){
     const lset=new Set(LN);(window.PPM_NAMES.PL.last||[]).forEach(n=>{if(!lset.has(n))LN.push(n);});
   }
 }
-const constants = { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, LEAGUE_FORMATS, EQUIPMENT, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, COUNTRY_SPONSORS, SGOALS, SFULL, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS, CLUB_IDENTITIES };
+const constants = { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, LEAGUE_FORMATS, EQUIPMENT, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, COUNTRY_SPONSORS, SGOALS, SFULL, SPONSOR_TIERS, normalizeSponsorTier, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS, CLUB_IDENTITIES };
 window.PPM.constants = constants;

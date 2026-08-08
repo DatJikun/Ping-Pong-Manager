@@ -1,6 +1,6 @@
 ﻿(function(){
 window.PPM = window.PPM || {};
-const { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
+const { COUNTRIES, COUNTRY_IDS, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, normalizeSponsorTier, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
 const styleLabel=id=>t(`style.${id}`)||id||'?';
 const coachStyleLabel=s=>{
   const id=s.styleId||Object.values(COACH_STYLES).find(style=>style.label===s.styleName)?.id;
@@ -11,6 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
+const sponsorTierLabel=tier=>t(`sponsor.tier.${normalizeSponsorTier(tier)}`);
 const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechContract, getTechPartnership, formatTechContractEffects, techContractAnnualCashflow, techContractBreakFee, terminateTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
@@ -725,7 +726,7 @@ function pageSponsors(){
     </div>
     <div class="card"><div class="ct">${t('sponsors.offers')} <span class="cgold">${pres}/100</span></div>
     ${active.length>=3?`<div class="ink3 fs12">${t('sponsors.maximum')}</div>`:
-      offers.length?offers.map(s=>`<div class="spon"><div class="flex jcb"><div><div class="spon-name">${s.name} <span class="fs10 ink3">[${s.tier}]</span></div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${formatCurrency(s.reward)}${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${t('sponsors.seasons',{count:s.yearsLeft})})</span>`:''}</div></div><button class="btn pr sm mt-6" onclick="signSponsor(${s.id})">${t('sponsors.sign')}</button></div>`).join(''):`<div class="ink3 fs12">${t('sponsors.noOffers')}</div>`}
+      offers.length?offers.map(s=>`<div class="spon"><div class="flex jcb"><div><div class="spon-name">${s.name} <span class="fs10 ink3">[${sponsorTierLabel(s.tier)}]</span></div><div class="spon-goal">${goalDesc(s.goal)}</div></div><div class="spon-reward">${formatCurrency(s.reward)}${(s.yearsLeft||1)>1?` <span class="fs9 ink3">(${t('sponsors.seasons',{count:s.yearsLeft})})</span>`:''}</div></div><button class="btn pr sm mt-6" onclick="signSponsor(${s.id})">${t('sponsors.sign')}</button></div>`).join(''):`<div class="ink3 fs12">${t('sponsors.noOffers')}</div>`}
     </div>
   </div>`;
 }
@@ -1218,7 +1219,7 @@ function pagePreseason(){
       <p class="why">${t('pre.sponsorWhy')}</p>
       ${activeSponsors.length?`<div class="mt-14">${activeSponsors.map(s=>`<div class="opt on"><div><b>${s.name}</b><p>${goalDesc(s.goal)}${(s.yearsLeft||1)>1?` · ${t('pre.seasons',{count:s.yearsLeft})}`:''}</p></div><div class="m pos">${formatCurrency(s.reward)}<s>${t('pre.perSeason')}</s></div><span class="pill pos">${t('pre.signed')}</span></div>`).join('')}</div>`:''}
       ${sponsorCount<3?`<div class="mt-14">${offers.length?offers.map(s=>`<div class="opt">
-        <div><b>${s.name} <span class="pill">${s.tier}</span></b><p>${goalDesc(s.goal)}</p></div>
+        <div><b>${s.name} <span class="pill">${sponsorTierLabel(s.tier)}</span></b><p>${goalDesc(s.goal)}</p></div>
         <div class="m pos">${formatCurrency(s.reward)}<s>${t('pre.perSeason')}</s></div>
         <div class="tools" onclick="event.stopPropagation()">
           ${(s.maxYears||1)>1?`<select id="spy-${s.id}">${Array.from({length:s.maxYears},(_,i)=>i+1).map(y=>`<option value="${y}">${t('pre.seasons',{count:y})}</option>`).join('')}</select>`:''}

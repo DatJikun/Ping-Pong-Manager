@@ -11,6 +11,18 @@ const REAL_IDENTITIES = [
   'tibhar','toyota','volkswagen','volvo','xiom','xiaomi','yasaka',
 ];
 
+const OLD_CARTESIAN_SPONSORS = [
+  'Asteron Energia', 'Asteron Finanse', 'Rhevara Energie', 'Rhevara Finanz',
+  'Jade River Energy', 'Jade River Finance', 'Hikari Wave Energy',
+  'Hikari Wave Finance', 'Nordljus Energi', 'Nordljus Finans',
+  'Hanul Energy', 'Hanul Finance',
+];
+
+function identityKey(value) {
+  return String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
 function shippedIdentityText(constants) {
   const clubs = Object.values(constants.COUNTRIES)
     .flatMap(country => [...country.l1Names, ...country.l2Names]);
@@ -36,6 +48,20 @@ test('every country ships 24 unique clubs and a deep fictional sponsor pool', ()
     assert.equal(new Set(clubs).size, 24, `${country.id} unique clubs`);
     assert.ok(sponsors.length >= 48, `${country.id} sponsor depth`);
     assert.equal(new Set(sponsors).size, sponsors.length, `${country.id} unique sponsors`);
+    assert.equal(new Set(sponsors.map(identityKey)).size, sponsors.length,
+      `${country.id} sponsors remain unique after case/accent/punctuation normalization`);
+
+    const tokenCounts = new Map();
+    sponsors.flatMap(name => identityKey(name).split(' ')).filter(Boolean).forEach(token => {
+      tokenCounts.set(token, (tokenCounts.get(token) || 0) + 1);
+    });
+    const mostRepeated = [...tokenCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    assert.ok(!mostRepeated || mostRepeated[1] <= 4,
+      `${country.id} sponsor token "${mostRepeated?.[0]}" repeats only ${mostRepeated?.[1]} times`);
+
+    for (const oldName of OLD_CARTESIAN_SPONSORS) {
+      assert.ok(!sponsors.includes(oldName), `${country.id} removed Cartesian sponsor ${oldName}`);
+    }
   }
 });
 
