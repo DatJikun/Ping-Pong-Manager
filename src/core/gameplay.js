@@ -2255,7 +2255,7 @@ function newGame(clubIdx, countryId){
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
     academyUsedThisSeason:false,academyProspects:[],_pid:ui._pid,
     inbox:[],matchNomination:null,lastMatchSelection:null,rubberTier:0,
-    techPartnership:null,ticketPrice:50,newsFeed:[],
+    techPartnership:null,techContract:null,ticketPrice:50,newsFeed:[],
     loans:[],
     records:{},
     top12MastersDone:{1:false,2:false},

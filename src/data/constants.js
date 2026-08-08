@@ -265,12 +265,12 @@ const PLAYER_STYLE_INFO={
 };
 
 const TECH_PARTNERSHIPS=[
-  {id:'tp_local',name:'Baseline Gearworks',tier:1,prestige:[0,22],costPerSeason:-2000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.00,bonusDesc:'+1 do wszystkich (podstawowy sprzęt)',desc:'Podstawowy pakiet sprzętowy dostępny dla KAŻDEGO klubu — wszyscy grają uczciwym sprzętem. Lekko odciąża budżet.',icon:'🏓'},
-  {id:'tp_regional',name:'RallyLab Regional',tier:2,prestige:[16,38],costPerSeason:-500,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.06,bonusDesc:'+1 do wszystkich · +6% marketability',desc:'Ten sam sprzęt bazowy, ale marka zaczyna Cię promować — więcej merchu i frekwencji.',icon:'🧪'},
-  {id:'tp_national',name:'PulseForge Performance',tier:3,prestige:[30,58],costPerSeason:1000,bonus:{fh:1,bh:1,srv:1,ret:1,foot:1,men:1},mktBonus:0.12,bonusDesc:'+1 do wszystkich · +12% marketability',desc:'Krajowy kontrakt marketingowy. Sprzęt bez zmian, ale co-branding napędza przychody.',icon:'⚡'},
-  {id:'tp_pro',name:'IronLoop Pro Circuit',tier:4,prestige:[48,74],costPerSeason:3000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.18,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +18% marketability',desc:'Pakiet zawodniczy: DROBNY dodatek ofensywny plus mocna promocja marki — za opłatą.',icon:'🚀'},
-  {id:'tp_elite',name:'Jade Arc Elite',tier:5,prestige:[64,88],costPerSeason:6000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.26,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +26% marketability',desc:'Elitarny partner. Marginalny edge sprzętowy, ale duży strumień marketingowy — za wysoką opłatą.',icon:'💎'},
-  {id:'tp_world',name:'BlackArc Signature',tier:6,prestige:[82,100],costPerSeason:10000,bonus:{fh:2,bh:1,srv:2,ret:1,foot:1,men:1},mktBonus:0.35,bonusDesc:'+1 do wszystkich, +1 ATK/SRV · +35% marketability',desc:'Kontrakt premium dla topu. Przewaga na korcie MINIMALNA i płatna — realna wartość to globalny marketing.',icon:'🌍'},
+  {id:'tp_local',name:'Baseline Gearworks',tier:1,prestige:[0,100],costPerSeason:-1000,bonus:{men:1},mktBonus:0.02,developmentBonus:0.05,profileId:'development',rubberId:'development',bonusDesc:'+1 mentalności · +5% rozwoju · +2% marketability',desc:'Podstawowy kontrakt rozwojowy dostępny dla każdego klubu.',icon:'🏓'},
+  {id:'tp_regional',name:'RallyLab Regional',tier:2,prestige:[16,100],costPerSeason:-800,bonus:{ret:1,men:1},mktBonus:0.03,developmentBonus:0,profileId:'control',rubberId:'control',bonusDesc:'+1 odbioru i mentalności · +3% marketability',desc:'Regionalny partner stawiający na kontrolę.',icon:'🧪'},
+  {id:'tp_national',name:'PulseForge Performance',tier:3,prestige:[30,100],costPerSeason:-1200,bonus:{bh:1,foot:1},mktBonus:0.04,developmentBonus:0,profileId:'speed',rubberId:'speed',bonusDesc:'+1 backhandu i szybkości · +4% marketability',desc:'Krajowy partner dla dynamicznych zespołów.',icon:'⚡'},
+  {id:'tp_pro',name:'IronLoop Pro Circuit',tier:4,prestige:[48,100],costPerSeason:-1600,bonus:{fh:1,srv:1},mktBonus:0.04,developmentBonus:0,profileId:'offensive',rubberId:'offensive',bonusDesc:'+1 forhendu i serwisu · +4% marketability',desc:'Profesjonalny partner ofensywny.',icon:'🚀'},
+  {id:'tp_elite',name:'Jade Arc Elite',tier:5,prestige:[64,100],costPerSeason:1200,bonus:{},mktBonus:0.07,developmentBonus:0,profileId:'commercial',rubberId:'balanced',bonusDesc:'Zbalansowany sprzęt · +7% marketability',desc:'Elitarny kontrakt o zbalansowanym profilu sprzętowym.',icon:'💎'},
+  {id:'tp_world',name:'BlackArc Signature',tier:6,prestige:[82,100],costPerSeason:3500,bonus:{},mktBonus:0.15,developmentBonus:0,profileId:'commercial',rubberId:'commercial',bonusDesc:'+15% marketability',desc:'Globalny kontrakt nastawiony na siłę marki.',icon:'🌍'},
 ];
 
 const INFRA_HALL=[
@@ -365,6 +365,14 @@ const LEAGUE_FORMATS={
 // replace it. Rubber freshness is a CLUB-level, recurring investment (rubbers
 // wear out), blades/sponges are the player's personal setup.
 const EQUIPMENT={
+  rubberProfiles:{
+    offensive:{id:'offensive',mods:{fh:1,srv:1},fitStyles:['FH_LOOPER','TWO_SIDED']},
+    control:{id:'control',mods:{ret:1,men:1},fitStyles:['BLOCKER','DEFENDER','FISHER']},
+    speed:{id:'speed',mods:{bh:1,foot:1},fitStyles:['TWO_SIDED','BLOCKER']},
+    development:{id:'development',mods:{men:1},fitStyles:PLAYER_STYLES},
+    balanced:{id:'balanced',mods:{fh:1,bh:1},fitStyles:['TWO_SIDED']},
+    commercial:{id:'commercial',mods:{},fitStyles:PLAYER_STYLES},
+  },
   blades:{
     OFF:{id:'OFF',label:'Deska ofensywna (carbon)',desc:'Sztywna i szybka — mocniejszy atak, trudniejszy odbiór.',mods:{fh:2,bh:1,ret:-1}},
     ALL:{id:'ALL',label:'Deska allround (5-warstwowa)',desc:'Zbalansowana — kontrola serwisu i odbioru.',mods:{srv:1,ret:1}},

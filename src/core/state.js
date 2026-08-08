@@ -147,7 +147,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=24;
+const SAVE_SCHEMA_VERSION=25;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
   if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
@@ -373,6 +373,20 @@ function migrateLoadedGame(parsed){
   }
   if(!game.techPartnership)game.techPartnership=null;
   game.equipBrand=null;
+  if(fromVersion<25){
+    const legacyRubberIds=['legacy_stock','legacy_tournament','legacy_pro'];
+    if(game.techPartnership){
+      const partner=TECH_PARTNERSHIPS.find(entry=>entry.id===game.techPartnership)
+        ||TECH_PARTNERSHIPS.find(entry=>entry.id==='tp_regional');
+      game.techPartnership=partner.id;
+      const rubberTier=Number.isInteger(game.rubberTier)?game.rubberTier:0;
+      game.techContract={partnerId:partner.id,rubberId:legacyRubberIds[rubberTier]||'legacy_stock',termYears:1,yearsLeft:1,signedSeason:game.season||1,annualCashflow:partner.costPerSeason};
+    }else{
+      game.techContract=null;
+    }
+  }else if(game.techContract===undefined){
+    game.techContract=null;
+  }
   if(!game.ticketPrice)game.ticketPrice=50;
   if(!game.newsFeed)game.newsFeed=[];
   if(!game.loans)game.loans=[];
