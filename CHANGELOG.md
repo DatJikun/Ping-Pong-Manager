@@ -7,7 +7,8 @@ materiałów itch.io. Numer paczki to teraz `17.0.0-beta.1`, przy zachowaniu sta
 tożsamości aplikacji i zgodności zapisów. Kandydat obejmuje też spójny skład z
 nominacją 3+2, czytelne OVR i Peak OVR, kontrakty sprzętowe, wyjaśniony Puchar
 Krajowy, naturalne marki sponsorów oraz poprawki wypożyczeń i historii nominacji.
-Finalny build i jego suma kontrolna są jeszcze przed bramką wydaniową.
+Finalny przenośny build przeszedł test startu; paczka dla testera ma opublikowaną
+sumę SHA-256 w notatkach wydania.
 
 ## 2026-07-29 — Ścieżki, których nikt nie sprawdzał
 

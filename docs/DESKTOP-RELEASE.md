@@ -34,6 +34,14 @@ application launched, and `app.asar` contained only the game runtime, local
 fonts, licences and desktop entry point. Production dependencies reported zero
 known vulnerabilities with `npm audit --omit=dev`.
 
+## Verified beta.1 candidate
+
+On 2026-08-08 version `17.0.0-beta.1` passed 336/336 non-slow tests and the
+syntax gate, built as an x64 portable executable with the approved Windows icon,
+and stayed alive for a 12-second isolated-profile startup smoke test. The final
+friend ZIP is 88,403,846 bytes with SHA-256
+`DBEB9410C98945420F6221FB2A60126CE0C37941FDD0808BEC7350DE95C1141B`.
+
 ## Required before a public store build
 
 - Add Windows code signing; unsigned downloads trigger SmartScreen warnings.

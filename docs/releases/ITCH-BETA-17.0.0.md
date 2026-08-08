@@ -40,9 +40,16 @@ dodatkowo wyeksportować ważną karierę z menu gry.
 
 ## Weryfikacja wydania
 
-Finalny pełny zestaw testów, wielosezonowy soak, build Windows, test startu,
-rozmiar paczki i suma SHA-256 zostaną uzupełnione po zbudowaniu kandydackiego
-ZIP-a. Na tym etapie finalna weryfikacja paczki jest **w toku**.
+- `npm run check` — PASS;
+- `npm test` — 336/336 PASS na wersji z brandingiem;
+- pięć sezonów kariery po końcowych poprawkach rozgrywki — PASS wraz z corocznym
+  zapisem, walidacją i ponownym wczytaniem;
+- przenośny build Windows x64 — PASS;
+- `app.asar` zawiera komplet pięciu zatwierdzonych materiałów brandingu;
+- test startu — proces aplikacji aktywny po 12 sekundach na osobnym profilu;
+- ZIP: 88 403 846 bajtów;
+- SHA-256 ZIP: `DBEB9410C98945420F6221FB2A60126CE0C37941FDD0808BEC7350DE95C1141B`;
+- SHA-256 EXE: `738D66BE4C4A5D4A1E27BBA9E4ACEA1F4236378446548EABE640B2A0B0F210AB`.
 
 ## Znane ograniczenia
 
