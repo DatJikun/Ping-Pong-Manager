@@ -67,6 +67,42 @@ function visiblePeakRows(profileHtml, label = 'Peak OVR') {
   return visibleText(profileHtml).match(new RegExp(`${label}\\s*:?\\s*\\d+`, 'gi')) || [];
 }
 
+test('budget names legacy brand costs as equipment contract termination fees', () => {
+  const g = bootWithPages(9016);
+  g.PPM.state.G.seasonFinance.brandCosts = 1234;
+  g.PPM.ui.budgetShowZero = true;
+
+  g.PPM.i18n.setLocale('en');
+  assert.match(visibleText(g.PPM.pages.pageBudget()), /Equipment contract termination fees/i);
+  assert.doesNotMatch(visibleText(g.PPM.pages.pageBudget()), /Legacy equipment costs/i);
+
+  g.PPM.i18n.setLocale('pl');
+  assert.match(visibleText(g.PPM.pages.pageBudget()), /Opłaty za zerwanie kontraktów sprzętowych/i);
+  assert.doesNotMatch(visibleText(g.PPM.pages.pageBudget()), /Koszty starego sprzętu/i);
+});
+
+test('dashboard shows a missing nomination snapshot without making it clickable', () => {
+  const g = bootWithPages(9017);
+  const G = g.PPM.state.G;
+  const seniors = g.PPM.gameplay.getEligibleMatchPlayers(G.myTeamId).slice(0, 5);
+  const missing = seniors[0];
+  G.lastMatchSelection = {
+    base: seniors.slice(0, 3).map((player) => player.id),
+    reserves: seniors.slice(3).map((player) => player.id),
+  };
+  G.lastMatchSelectionSnapshots = {
+    base: seniors.slice(0, 3).map((player) => ({ id: player.id, name: player.name })),
+    reserves: seniors.slice(3).map((player) => ({ id: player.id, name: player.name })),
+  };
+  G.players = G.players.filter((player) => player.id !== missing.id);
+
+  const html = g.PPM.pages.pageDash();
+  assert.match(visibleText(html), new RegExp(missing.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(visibleText(html), new RegExp(g.t('match.nom.unavailableMissing'), 'i'));
+  assert.doesNotMatch(html, new RegExp(`openPlayerModal\\(${missing.id}\\)`),
+    'a compact snapshot has no live profile to open');
+});
+
 function setPlayerOvr(player, value) {
   for (const stat of ['fh', 'bh', 'srv', 'ret', 'foot', 'men']) player[stat] = value;
   player.equipment = { blade: 'ALL', sponge: 'SREDNIA' };

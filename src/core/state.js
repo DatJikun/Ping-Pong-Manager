@@ -147,7 +147,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=25;
+const SAVE_SCHEMA_VERSION=26;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('save.mustBeObject'));
   if(!Number.isFinite(parsed.season))throw new Error(t('save.invalidSeason'));
@@ -444,13 +444,14 @@ function migrateLoadedGame(parsed){
   }
   if(game.matchNomination===undefined)game.matchNomination=null;
   const normalizeSelection=selection=>{
-    const knownSeniorIds=new Set((game.players||[]).filter(p=>p&&p.role==='senior').map(p=>p.id));
     const seen=new Set();
-    const take=(ids,max)=>(Array.isArray(ids)?ids:[]).filter(id=>{
-      if(!knownSeniorIds.has(id)||seen.has(id))return false;
+    const take=(ids,length)=>Array.from({length},(_,index)=>{
+      const value=Array.isArray(ids)?ids[index]:null;
+      const id=value===null||value===undefined||value===''?NaN:Number(value);
+      if(!Number.isFinite(id)||seen.has(id))return null;
       seen.add(id);
-      return true;
-    }).slice(0,max);
+      return id;
+    });
     return{base:take(selection?.base,3),reserves:take(selection?.reserves,2)};
   };
   if(fromVersion<24&&!game.lastMatchSelection){
@@ -471,10 +472,36 @@ function migrateLoadedGame(parsed){
       const ids=active.map(p=>p.id).slice(0,5);
       game.lastMatchSelection={base:ids.slice(0,3),reserves:ids.slice(3,5)};
     }
-  }else if(game.lastMatchSelection){
+  }
+  if(game.lastMatchSelection){
     game.lastMatchSelection=normalizeSelection(game.lastMatchSelection);
   }else{
     game.lastMatchSelection=null;
+  }
+  if(game.matchNomination){
+    game.matchNomination={...game.matchNomination,...normalizeSelection(game.matchNomination)};
+  }
+  const livePlayersById=new Map((game.players||[]).filter(Boolean).map(player=>[player.id,player]));
+  const priorSnapshots=game.lastMatchSelectionSnapshots||{};
+  const snapshotSlots=(selectionIds,prior,max)=>Array.from({length:max},(_,index)=>{
+    const id=selectionIds[index];
+    if(id===null)return null;
+    const player=livePlayersById.get(id);
+    if(player&&typeof player.name==='string')return{id,name:player.name};
+    const snapshot=Array.isArray(prior)?prior[index]:null;
+    return snapshot&&snapshot.id===id&&typeof snapshot.name==='string'
+      ?{id,name:snapshot.name}:null;
+  });
+  const selected=game.lastMatchSelection||{base:[null,null,null],reserves:[null,null]};
+  game.lastMatchSelectionSnapshots={
+    base:snapshotSlots(selected.base,priorSnapshots.base,3),
+    reserves:snapshotSlots(selected.reserves,priorSnapshots.reserves,2),
+  };
+  if(fromVersion<26){
+    const normalizeTier=window.PPM.constants.normalizeSponsorTier;
+    [...(game.sponsors||[]),...(game.sponsorOffers||[])].forEach(sponsor=>{
+      if(sponsor)sponsor.tier=normalizeTier(sponsor.tier);
+    });
   }
   if(!Array.isArray(game.principalPool))game.principalPool=[];
   (game.teams||[]).forEach(t=>{if(t.prDirector===undefined)t.prDirector=null;if(t.prDirector&&!Array.isArray(t.prDirector.careerHistory))t.prDirector.careerHistory=[];if(t.prDirector&&!t.prDirector.bio)t.prDirector.bio=`${t.prDirector.name} zarządza wizerunkiem klubu i relacjami z partnerami.`;});

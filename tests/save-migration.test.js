@@ -29,7 +29,7 @@ test('schema 24 equipment choices migrate into one transitional contract', () =>
   const g = boot(2507);
   const migrated = g.PPM.stateApi.migrateLoadedGame(makeSchema24Game());
 
-  assert.equal(migrated.schemaVersion, 25);
+  assert.equal(migrated.schemaVersion, 26);
   assert.deepEqual(migrated.techContract, {
     partnerId: 'tp_pro',
     rubberId: 'legacy_pro',
@@ -101,7 +101,7 @@ test('schema 21 physios migrate once onto the shared staff scale without changin
 
   const migrated = api.migrateLoadedGame(raw);
   const all = [...migrated.staff, ...migrated.staffPool].sort((a, b) => a.id - b.id);
-  assert.equal(api.SAVE_SCHEMA_VERSION, 25);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 26);
   assert.deepEqual(all.map((staff) => ({
     id: staff.id, teamId: staff.teamId, contractYears: staff.contractYears,
     injReduction: staff.injReduction, recovery: staff.recovery, prevention: staff.prevention,
@@ -192,7 +192,7 @@ test('schema 23 starter and reserve roles migrate to one ordered senior squad', 
   }));
 
   const migrated = api.migrateLoadedGame(raw);
-  assert.equal(api.SAVE_SCHEMA_VERSION, 25);
+  assert.equal(api.SAVE_SCHEMA_VERSION, 26);
   assert.ok(migrated.players.filter((player) => player.role !== 'youth')
     .every((player) => player.role === 'senior'));
   assert.deepEqual({ ...migrated.lastMatchSelection }, {
@@ -207,6 +207,51 @@ test('schema 23 starter and reserve roles migrate to one ordered senior squad', 
   api.migrateLoadedGame(migrated);
   assert.equal(JSON.stringify({ players: migrated.players, selection: migrated.lastMatchSelection }), once,
     'unified roster migration is idempotent');
+});
+
+test('schema 25 keeps nomination slots positional and creates compact snapshots', () => {
+  const g = boot(2601);
+  const api = g.PPM.stateApi;
+  const player = (id, name) => ({
+    id, name, role: 'senior', teamId: 1, nationality: 'PL', contractYears: 2,
+    retired: false, loanedOut: false, isYouth: false,
+  });
+  const raw = JSON.parse(validSave({
+    schemaVersion: 25,
+    customDatabase: { name: 'Schema 25 fixture' },
+    players: [player(0, 'Zero Zawodnik'), player(102, 'Beata Block')],
+    lastMatchSelection: { base: [null, 0, 102], reserves: [0, 999] },
+    sponsors: [{ id: 1, name: 'Sponsor A', tier: 'Krajowy' }],
+    sponsorOffers: [{ id: 2, name: 'Sponsor B', tier: 'Regionalny' }],
+  }));
+
+  const migrated = api.migrateLoadedGame(raw);
+
+  assert.equal(migrated.schemaVersion, 26);
+  assert.deepEqual({ ...migrated.lastMatchSelection }, {
+    base: [null, 0, 102],
+    reserves: [null, 999],
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(migrated.lastMatchSelectionSnapshots)), {
+    base: [null, { id: 0, name: 'Zero Zawodnik' }, { id: 102, name: 'Beata Block' }],
+    reserves: [null, null],
+  });
+  assert.equal(migrated.sponsors[0].tier, 'national');
+  assert.equal(migrated.sponsorOffers[0].tier, 'regional');
+
+  const once = JSON.stringify({
+    selection: migrated.lastMatchSelection,
+    snapshots: migrated.lastMatchSelectionSnapshots,
+    sponsors: migrated.sponsors,
+    offers: migrated.sponsorOffers,
+  });
+  api.migrateLoadedGame(migrated);
+  assert.equal(JSON.stringify({
+    selection: migrated.lastMatchSelection,
+    snapshots: migrated.lastMatchSelectionSnapshots,
+    sponsors: migrated.sponsors,
+    offers: migrated.sponsorOffers,
+  }), once, 'schema 26 migration is idempotent');
 });
 
 test('legacy ppgame becomes one career and is removed only after read-back', async () => {

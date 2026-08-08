@@ -163,3 +163,41 @@ test('a player we lend out is flagged away and comes back', () => {
   assert.equal(lent.loanedOut, false, 'with the flag cleared');
   assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), []);
 });
+
+test('the loan mutator rechecks stale eligibility before randomness or mutation', () => {
+  const scenarios = [
+    ['final contract year', (player) => { player.contractYears = 1; }, 'loan.finalYear'],
+    ['new injury', (player) => { player.injuredFor = 2; }, 'loan.injured'],
+  ];
+
+  for (const [label, makeIneligible, reasonKey] of scenarios) {
+    const g = boot(label === 'final contract year' ? 5603 : 5604);
+    const gp = g.PPM.gameplay;
+    gp.newGame(0, 'PL');
+    const G = g.PPM.state.G;
+    const player = gp.getClubSeniorPlayers(G.myTeamId).find((candidate) => {
+      candidate.contractYears = 2;
+      candidate.injuredFor = 0;
+      candidate.joinedViaTransfer = false;
+      return gp.canLoanOut(candidate.id).ok;
+    });
+    assert.ok(player, `${label}: fixture starts eligible`);
+    const borrower = G.teams.find((team) => team.id !== G.myTeamId);
+    const beforePlayer = JSON.stringify(player);
+    const beforeLoans = JSON.stringify(G.loans);
+    let randomCalls = 0;
+    let toastMessage = null;
+    g.Math.random = () => { randomCalls += 1; return 0; };
+    g.toast = (message) => { toastMessage = message; };
+
+    makeIneligible(player);
+    const expectedPlayer = JSON.stringify(player);
+    gp.doLoanOut(player.id, borrower.id, 0.5);
+
+    assert.notEqual(expectedPlayer, beforePlayer, `${label}: stale modal state changed after opening`);
+    assert.equal(JSON.stringify(player), expectedPlayer, `${label}: rejected player state stays unchanged`);
+    assert.equal(JSON.stringify(G.loans), beforeLoans, `${label}: no loan record is added`);
+    assert.equal(randomCalls, 0, `${label}: eligibility is checked before negotiation randomness`);
+    assert.equal(toastMessage, g.t(reasonKey), `${label}: mutator surfaces the canonical refusal reason`);
+  }
+});

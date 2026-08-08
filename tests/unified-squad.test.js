@@ -149,7 +149,52 @@ test('confirming the modal persists the exact manager-picked 3+2 order', () => {
 
   const expected = { base: picked.slice(0, 3).map((player) => player.id), reserves: picked.slice(3).map((player) => player.id) };
   assert.deepEqual(JSON.parse(JSON.stringify(G.lastMatchSelection)), expected);
+  assert.deepEqual(JSON.parse(JSON.stringify(G.lastMatchSelectionSnapshots)), {
+    base: picked.slice(0, 3).map((player) => ({ id: player.id, name: player.name })),
+    reserves: picked.slice(3).map((player) => ({ id: player.id, name: player.name })),
+  });
   assert.deepEqual({ base: Array.from(G.matchNomination.base), reserves: Array.from(G.matchNomination.reserves) }, expected);
+});
+
+test('retirement prune and reload preserve the missing nominee name until replacement', () => {
+  const g = boot(4210);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const picked = gp.getEligibleMatchPlayers(G.myTeamId).slice(0, 5);
+  const replacement = gp.getEligibleMatchPlayers(G.myTeamId)[5];
+  assert.ok(replacement, 'fixture has a replacement player');
+
+  gp.openMatchNomination();
+  gp.nomClear();
+  picked.forEach((player) => gp.nomToggle(player.id));
+  gp.nomConfirm();
+  const departed = picked[0];
+  gp.retirePlayer(departed);
+  gp.pruneCareerData();
+
+  assert.equal(G.players.some((player) => player.id === departed.id), false, 'retired object is pruned');
+  let view = gp.matchSelectionView(G.myTeamId, G.lastMatchSelection);
+  assert.deepEqual({ ...view.slots[0].previousPlayer }, { id: departed.id, name: departed.name });
+  assert.equal(view.slots[0].status.code, 'missing');
+  assert.equal(view.slots[0].player, null, 'snapshot is display-only');
+  assert.equal(view.selectedIds[0], null, 'snapshot is never eligible');
+
+  const loaded = g.PPM.stateApi.loadGameFromText(g.PPM.stateApi.serializeGame());
+  view = gp.matchSelectionView(loaded.myTeamId, loaded.lastMatchSelection);
+  assert.deepEqual({ ...view.slots[0].previousPlayer }, { id: departed.id, name: departed.name });
+  assert.equal(view.slots[0].status.code, 'missing');
+
+  gp.openMatchNomination();
+  gp.nomToggle(replacement.id);
+  gp.nomConfirm();
+  assert.equal(loaded.lastMatchSelection.base[0], replacement.id);
+  assert.deepEqual({ ...loaded.lastMatchSelectionSnapshots.base[0] }, {
+    id: replacement.id,
+    name: replacement.name,
+  });
+  assert.equal(JSON.stringify(loaded.lastMatchSelectionSnapshots).includes(departed.name), false,
+    'replacement removes the stale name from the aligned snapshot');
 });
 
 test('fresh careers store only senior/youth roles and role-like metadata cannot change team strength', () => {

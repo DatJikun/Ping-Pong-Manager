@@ -154,6 +154,8 @@ function openLoanModal(pid){
 }
 
 function doLoanOut(pid, toTeamId, share){
+  const check=canLoanOut(pid);
+  if(!check.ok){toast(check.reason);return;}
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
   const loanShare=clamp(share||0.3,0.15,0.5);
   const target=store.G.teams.find(t=>t.id===toTeamId);if(!target)return;
@@ -2253,6 +2255,7 @@ function newGame(clubIdx, countryId){
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
     academyUsedThisSeason:false,academyProspects:[],_pid:ui._pid,
     inbox:[],matchNomination:null,lastMatchSelection:null,
+    lastMatchSelectionSnapshots:{base:[null,null,null],reserves:[null,null]},
     techPartnership:null,techContract:null,ticketPrice:50,newsFeed:[],
     loans:[],
     records:{},
@@ -2330,7 +2333,12 @@ function moveLineup(pid,dir){
   const idx=ids.indexOf(pid),next=idx+dir;
   if(idx<0||next<0||next>=ids.length)return;
   [ids[idx],ids[next]]=[ids[next],ids[idx]];
+  const prior=store.G.lastMatchSelectionSnapshots||{};
+  const snapshots=[...(prior.base||[]),...(prior.reserves||[])];
+  [snapshots[idx],snapshots[next]]=[snapshots[next]||null,snapshots[idx]||null];
   store.G.lastMatchSelection={base:ids.slice(0,3),reserves:ids.slice(3,5)};
+  store.G.lastMatchSelectionSnapshots={base:snapshots.slice(0,3),reserves:snapshots.slice(3,5)};
+  refreshLastMatchSelectionSnapshots();
   render();updateHeader();persistGame();
 }
 function getBestAvailablePlayer(teamId){
@@ -2725,12 +2733,33 @@ function normalizeMatchSelection(raw){
   const seen=new Set();
   const normalize=(values,length)=>Array.from({length},(_,index)=>{
     const value=Array.isArray(values)?values[index]:null;
-    const id=Number(value);
+    const id=value===null||value===undefined||value===''?NaN:Number(value);
     if(!Number.isFinite(id)||seen.has(id))return null;
     seen.add(id);
     return id;
   });
   return{base:normalize(raw?.base,3),reserves:normalize(raw?.reserves,2)};
+}
+function buildMatchSelectionSnapshots(raw,prior=store.G?.lastMatchSelectionSnapshots){
+  const selection=normalizeMatchSelection(raw);
+  const previous=prior||{};
+  const make=(ids,snapshots,length)=>Array.from({length},(_,index)=>{
+    const id=ids[index];
+    if(id===null)return null;
+    const player=store.G?.players?.find(candidate=>candidate.id===id);
+    if(player&&typeof player.name==='string')return{id,name:player.name};
+    const snapshot=Array.isArray(snapshots)?snapshots[index]:null;
+    return snapshot&&snapshot.id===id&&typeof snapshot.name==='string'
+      ?{id,name:snapshot.name}:null;
+  });
+  return{
+    base:make(selection.base,previous.base,3),
+    reserves:make(selection.reserves,previous.reserves,2),
+  };
+}
+function refreshLastMatchSelectionSnapshots(){
+  if(!store.G)return;
+  store.G.lastMatchSelectionSnapshots=buildMatchSelectionSnapshots(store.G.lastMatchSelection);
 }
 function bestMatchSelection(teamId){
   const players=getEligibleMatchPlayers(teamId).slice().sort((a,b)=>ovr(b)-ovr(a)||a.id-b.id).slice(0,5);
@@ -2744,13 +2773,17 @@ function matchSelectionView(teamId,raw){
   const source=raw===undefined?(getLastMatchSelection(teamId)||bestMatchSelection(teamId)):raw;
   const normalized=normalizeMatchSelection(source);
   const ids=[...normalized.base,...normalized.reserves];
+  const snapshots=teamId===store.G.myTeamId
+    ?[...(store.G.lastMatchSelectionSnapshots?.base||[]),...(store.G.lastMatchSelectionSnapshots?.reserves||[])]:[];
   const keys=['match.nom.slotA','match.nom.slotB','match.nom.slotC','match.nom.slotR1','match.nom.slotR2'];
   const slots=ids.map((id,index)=>{
-    const previousPlayer=id===null?null:store.G.players.find(p=>p.id===id)||null;
+    const livePlayer=id===null?null:store.G.players.find(p=>p.id===id)||null;
+    const snapshot=snapshots[index];
+    const previousPlayer=livePlayer||(snapshot&&snapshot.id===id?{id:snapshot.id,name:snapshot.name}:null);
     const status=id===null
       ?{available:false,code:'vacant',reasonKey:'match.nom.vacant',reasonParams:{}}
-      :matchAvailability(previousPlayer,teamId);
-    return{index,labelKey:keys[index],previousPlayer,player:status.available?previousPlayer:null,status};
+      :matchAvailability(livePlayer,teamId);
+    return{index,labelKey:keys[index],previousPlayer,player:status.available?livePlayer:null,status};
   });
   return{selection:normalized,slots,selectedIds:slots.map(slot=>slot.player?.id??null)};
 }
@@ -3319,6 +3352,7 @@ function nomConfirm(){
   const saved={base:[...selection.base],reserves:[...selection.reserves]};
   store.G.matchNomination={season:store.G.season,matchday:store.G.matchday,...saved};
   store.G.lastMatchSelection=saved;
+  refreshLastMatchSelectionSnapshots();
   const cb=_nomState.onConfirm;_nomState=null;
   closeModal();persistGame();
   if(cb)cb();
@@ -3854,6 +3888,7 @@ function pruneCareerData(){
   // 2) Retired players survive only as HoF summaries — drop the heavy objects so
   //    the active roster array can't balloon to thousands over a long career.
   if(Array.isArray(store.G.players)){
+    refreshLastMatchSelectionSnapshots();
     store.G.players=store.G.players.filter(p=>!p.retired);
     const live=new Set(store.G.players.map(p=>p.id));
     if(store.G.playerHistory)Object.keys(store.G.playerHistory).forEach(k=>{if(!live.has(Number(k)))delete store.G.playerHistory[k];});
