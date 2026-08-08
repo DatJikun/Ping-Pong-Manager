@@ -193,15 +193,56 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.doesNotMatch(html, /undefined/);
 });
 
-test('club contract terms show the annual cashflow that each choice will sign', () => {
+test('Club defers contract choices to preseason instead of offering midseason signing', () => {
   const g = bootWithPages(9013);
   g.PPM.i18n.setLocale('en');
   g.PPM.state.G.seasonHistory = [{ position: 1 }];
 
   const club = g.PPM.pages.pageClub();
-  assert.match(club, /1 season\s*\(-€1,000\)/);
-  assert.match(club, /2 seasons\s*\(-€960\)/);
-  assert.match(club, /3 seasons\s*\(-€920\)/);
+  assert.match(club, /Sign a partner during preseason/i);
+  assert.doesNotMatch(club, /selectTechPartnership\(/);
+});
+
+test('technical contracts render one active Club summary and preseason-only term choices', () => {
+  const g = bootWithPages(9015);
+  const G = g.PPM.state.G;
+  g.PPM.i18n.setLocale('en');
+
+  const noDeal = g.PPM.pages.pageClub();
+  assert.match(noDeal, /Sign a partner during preseason/i);
+  assert.doesNotMatch(noDeal, /selectTechPartnership\(/);
+  assert.doesNotMatch(noDeal, /Club rubbers|setRubberTier/);
+
+  g.PPM.ui.preStep = 1;
+  const offers = g.PPM.pages.pagePreseason();
+  assert.match(offers, /Choose a contract length/i);
+  assert.match(offers, /id="tpy-tp_local"/);
+  assert.match(offers, /1 season\s*\(-€1,000\)/);
+  assert.match(offers, /2 seasons\s*\(-€960\)/);
+  assert.match(offers, /3 seasons\s*\(-€920\)/);
+  assert.match(offers, /selectTechPartnership\('tp_local',\(document\.getElementById\('tpy-tp_local'\)/);
+
+  G.techContract = {
+    partnerId: 'tp_pro', rubberId: 'offensive', termYears: 2, yearsLeft: 1,
+    signedSeason: 1, annualCashflow: -1600,
+  };
+  G.techPartnership = 'tp_pro';
+  const active = g.PPM.pages.pageClub();
+  assert.match(active, /Offensive profile/);
+  assert.match(active, /Offensive rubber/);
+  assert.match(active, /Best fit:.*Forehand looper.*Two-winged attacker/i);
+  assert.match(active, /FH \+1\s*\/\s*SRV \+1/);
+  assert.match(active, /Annual cost\/income:.*-€1,600/i);
+  assert.match(active, /1 of 2 seasons remaining/i);
+  assert.match(active, /Termination fee:.*€2,500/i);
+  assert.match(active, /terminateTechPartnership\(\)/);
+  assert.doesNotMatch(active, /tech-card|selectTechPartnership\(/);
+  assert.doesNotMatch(active, /undefined|(?:club|pre|equipment)\.[a-z.]+/i);
+
+  const carried = g.PPM.pages.pagePreseason();
+  assert.match(carried, /carries over from the previous season/i);
+  assert.doesNotMatch(carried, /id="tpy-/);
+  assert.doesNotMatch(carried, /selectTechPartnership\(/);
 });
 
 test('player modifier explanation uses the contract rubber profile, including legacy packages', () => {
@@ -217,6 +258,9 @@ test('player modifier explanation uses the contract rubber profile, including le
 
   g.PPM.gameplay.openPlayerModal(player.id);
   const legacy = g.document.getElementById('modal').innerHTML;
+  assert.match(legacy, /Personal blade and sponge:/);
+  assert.match(legacy, /Partner rubber: Pro rubber/);
+  assert.match(legacy, /Partner-rubber modifiers: FH \+2.*SRV \+1.*RET \+1/);
   assert.match(legacy, /FH \+2/);
   assert.match(legacy, /RET \+1/);
 

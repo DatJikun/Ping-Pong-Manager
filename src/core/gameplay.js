@@ -5424,6 +5424,15 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
   const profileLabel=isPolish?(p.profileTag||identity.label):t('player.profile');
   const profileNote=isPolish?(p.signatureNote||identity.note):t('player.profileNote',{top:SL[identity.topStat]||identity.topStat,weak:SL[identity.weakStat]||identity.weakStat});
   const techStatText=Object.entries(mods.techStats).filter(([,val])=>val>0).map(([key,val])=>`${SL[key]} +${val}`).join(' / ');
+  const formatEquipmentMods=mods=>SK.filter(stat=>mods?.[stat]).map(stat=>`${SL[stat]} ${mods[stat]>0?'+':''}${mods[stat]}`).join(' / ')||t('player.neutralSetup');
+  const personalEquipmentMods=SK.reduce((out,stat)=>{
+    const blade=EQUIPMENT.blades[p.equipment?.blade]?.mods?.[stat]||0;
+    const sponge=EQUIPMENT.sponges[p.equipment?.sponge]?.mods?.[stat]||0;
+    if(blade+sponge)out[stat]=blade+sponge;
+    return out;
+  },{});
+  const partnerRubber=p.teamId===store.G.myTeamId?getTechContract()?.rubberId:null;
+  const partnerRubberMods=EQUIPMENT.rubberProfiles[partnerRubber]?.mods||{};
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">${p.name} <button class="close-btn" onclick="closeModal()">\u2715</button></div>
   <div class="g2 gp12 mb14">
@@ -5444,8 +5453,9 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
       </div>
       ${p.equipment?`<div class="mt-8 pd8-10 bb1 r10 bgs1 fs11">
         <div class="b7 mb3">${t('player.equipment')}</div>
-        <div class="ink3">${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)} + ${p.teamId===store.G.myTeamId?(getTechPartnership()?.name||t('common.none')):t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>
-        <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):t('player.neutralSetup');})()}</div>
+        <div class="ink3">${t('player.personalEquipment')}: ${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)}</div>
+        <div class="mt-3">${t('player.personalModifiers')}: ${formatEquipmentMods(personalEquipmentMods)}</div>
+        ${p.teamId===store.G.myTeamId?`<div class="mt-3 ink3">${t('player.partnerRubber')}: ${partnerRubber?t(`equipment.rubber.${partnerRubber}`):t('common.none')}${partnerRubber?` (${getTechPartnership()?.name||t('common.none')})`:''}</div><div class="mt-3">${t('player.partnerRubberModifiers')}: ${formatEquipmentMods(partnerRubberMods)}</div>`:`<div class="mt-3 ink3">${t('player.clubRubber')}: ${t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>`}
       </div>`:''}
       <div class="traits mt-8">${p.traits.map(trait=>`<span class="has-tooltip tb ${TRAITS[trait]?.type||'men'}">${t(`trait.${trait}.label`)}<span class="tip">${t(`trait.${trait}.desc`)}</span></span>`).join('')||`<span class="fs10 ink3">${t('player.noTraits')}</span>`}</div>
       <div class="grid gtc3 gp8 mt-12">

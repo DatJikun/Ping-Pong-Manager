@@ -29,6 +29,22 @@ test('locale dictionaries have identical keys and interpolate parameters', () =>
   assert.equal(t('missing.key'), 'missing.key');
 });
 
+test('equipment contract labels use stable profile and rubber identifiers in both locales', () => {
+  const g = boot(3131);
+  const { t, setLocale } = g.PPM.i18n;
+  setLocale('en');
+  assert.equal(t('equipment.profile.offensive'), 'Offensive profile');
+  assert.equal(t('equipment.rubber.offensive'), 'Offensive rubber');
+  assert.match(t('pre.techTermBenefit'), /4%/);
+  assert.match(t('club.noTechContract'), /preseason/i);
+
+  setLocale('pl');
+  assert.equal(t('equipment.profile.offensive'), 'Profil ofensywny');
+  assert.equal(t('equipment.rubber.offensive'), 'Okładzina ofensywna');
+  assert.match(t('pre.techTermBenefit'), /4%/);
+  assert.match(t('club.noTechContract'), /przygotowawczym/i);
+});
+
 test('player styles, traits and career state use semantic translation keys', () => {
   const g = boot(3110);
   assert.equal(g.PPM.i18n.t('style.DEFENDER'), 'Modern defender');
@@ -428,8 +444,8 @@ test('academy, preseason venue and top facilities never fall back to Polish in E
 
   g.PPM.ui.preStep = 1;
   const partners = g.PPM.pages.pagePreseason();
-  assert.match(partners, /\+1 to all ratings|\+1 to all/);
-  assert.doesNotMatch(partners, /do wszystkich|podstawowy sprzęt/);
+  assert.match(partners, /Development profile|Development rubber|MEN \+1/);
+  assert.doesNotMatch(partners, /Profil rozwojowy|Okładzina rozwojowa|Modyfikatory sprzętu/);
 });
 
 test('club overview and difficulty details follow the active locale', () => {
