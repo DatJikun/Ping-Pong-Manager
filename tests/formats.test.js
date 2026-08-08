@@ -135,13 +135,17 @@ test('equipment: an active contract supplies the club rubber profile', () => {
   assert.equal(G.techContract.rubberId, 'offensive');
 });
 
-test('AI clubs get a rubber tier from their budget', () => {
+test('external players only receive personal blade and sponge modifiers', () => {
   const g = boot(67);
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay, G = g.PPM.state.G;
   const rich = G.teams.filter((t) => !t.isPlayer).sort((a, b) => b.budget - a.budget)[0];
   const poor = G.teams.filter((t) => !t.isPlayer).sort((a, b) => a.budget - b.budget)[0];
-  assert.ok(gp.clubRubberTier(rich.id) >= gp.clubRubberTier(poor.id), 'richer club ⇒ at least as fresh rubbers');
+  const equipment = { blade: 'ALL', sponge: 'SREDNIA' };
+  const richMods = gp.equipmentMods({ teamId: rich.id, equipment });
+  const poorMods = gp.equipmentMods({ teamId: poor.id, equipment });
+  assert.deepEqual(richMods, poorMods, 'club budget does not add hidden equipment modifiers');
+  assert.deepEqual(richMods, { srv: 1, ret: 1 }, 'only personal blade and sponge modifiers apply');
 });
 
 test('region age curves: Asian players peak 21-26 and decline earlier than Europeans', () => {

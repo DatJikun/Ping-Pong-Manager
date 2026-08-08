@@ -387,6 +387,7 @@ function migrateLoadedGame(parsed){
   }else if(game.techContract===undefined){
     game.techContract=null;
   }
+  delete game.rubberTier;
   if(!game.ticketPrice)game.ticketPrice=50;
   if(!game.newsFeed)game.newsFeed=[];
   if(!game.loans)game.loans=[];
@@ -475,7 +476,6 @@ function migrateLoadedGame(parsed){
   }else{
     game.lastMatchSelection=null;
   }
-  if(typeof game.rubberTier!=='number')game.rubberTier=0;
   if(!Array.isArray(game.principalPool))game.principalPool=[];
   (game.teams||[]).forEach(t=>{if(t.prDirector===undefined)t.prDirector=null;if(t.prDirector&&!Array.isArray(t.prDirector.careerHistory))t.prDirector.careerHistory=[];if(t.prDirector&&!t.prDirector.bio)t.prDirector.bio=`${t.prDirector.name} zarządza wizerunkiem klubu i relacjami z partnerami.`;});
   if(game.prDirector&&typeof game.prDirector==='string'){

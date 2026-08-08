@@ -272,6 +272,18 @@ test('player modifier explanation uses the contract rubber profile, including le
   assert.match(balanced, /BH \+1/);
 });
 
+test('external player profiles show personal equipment without a hidden club rubber', () => {
+  const g = bootWithPages(9016);
+  g.PPM.i18n.setLocale('en');
+  const G = g.PPM.state.G;
+  const external = G.players.find((player) => player.teamId !== null && player.teamId !== G.myTeamId);
+
+  g.PPM.gameplay.openPlayerModal(external.id);
+  const profile = g.document.getElementById('modal').innerHTML;
+  assert.match(profile, /Personal blade and sponge/i);
+  assert.doesNotMatch(profile, /Club rubber/i);
+});
+
 test('player profile shows one translated peak row only when a trusted positive ceiling is known', () => {
   const g = bootWithPages(9011);
   const gp = g.PPM.gameplay;

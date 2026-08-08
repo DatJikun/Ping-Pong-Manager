@@ -23,6 +23,9 @@ test('new careers begin without an equipment contract', () => {
   g.PPM.gameplay.newGame(0, 'PL');
 
   assert.equal(g.PPM.state.G.techContract, null);
+  assert.equal(Object.hasOwn(g.PPM.state.G, 'rubberTier'), false);
+  assert.equal(g.PPM.constants.EQUIPMENT.rubberTiers, undefined);
+  assert.equal(g.PPM.gameplay.clubRubberTier, undefined);
 });
 
 test('contract terms adjust annual cashflow and snapshot the selected partner', () => {

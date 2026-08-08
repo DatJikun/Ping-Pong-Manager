@@ -38,6 +38,7 @@ test('schema 24 equipment choices migrate into one transitional contract', () =>
     signedSeason: 4,
     annualCashflow: -1600,
   });
+  assert.equal(Object.hasOwn(migrated, 'rubberTier'), false);
 });
 
 test('schema 24 migration normalizes unknown and missing equipment partners once', () => {
@@ -55,6 +56,8 @@ test('schema 24 migration normalizes unknown and missing equipment partners once
     annualCashflow: -800,
   });
   assert.equal(missing.techContract, null);
+  assert.equal(Object.hasOwn(unknown, 'rubberTier'), false);
+  assert.equal(Object.hasOwn(missing, 'rubberTier'), false);
 
   const once = JSON.stringify(unknown.techContract);
   api.migrateLoadedGame(unknown);

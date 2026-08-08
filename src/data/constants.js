@@ -386,11 +386,6 @@ const EQUIPMENT={
     SREDNIA:{id:'SREDNIA',label:'Gąbka 1.9 mm',desc:'Kompromis prędkość/kontrola.',mods:{}},
     CIENKA:{id:'CIENKA',label:'Gąbka 1.5 mm',desc:'Kontrola i czucie — wybór defensorów i blokerów.',mods:{ret:1,men:1,fh:-1}},
   },
-  rubberTiers:[
-    {tier:0,label:'Okładziny magazynowe',desc:'Zużyte, wielosezonowe — bez bonusu.',mods:{},costPerPlayer:0},
-    {tier:1,label:'Okładziny turniejowe',desc:'Świeże okładziny klasy turniejowej.',mods:{fh:1,srv:1},costPerPlayer:900},
-    {tier:2,label:'Okładziny PRO',desc:'Topowe, wymieniane co miesiąc jak u zawodowców.',mods:{fh:2,srv:1,ret:1},costPerPlayer:2600},
-  ],
 };
 
 // ── 10x name pools (owner 2026-07-02) ─────────────────────────────────────────
