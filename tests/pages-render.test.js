@@ -128,6 +128,27 @@ test('every screen renders in both locales', () => {
   assert.deepEqual(broken, []);
 });
 
+test('Cup and dashboard explain the club Cup state and reward ladder in English and Polish', () => {
+  const g = bootWithPages(9019);
+  const G = g.PPM.state.G;
+  const mine = { id: G.myTeamId, name: 'My Club', isReal: true };
+  const opponent = { id: 9919, name: 'Cup Opponent', isReal: true };
+  G.cup = { rounds: [[{ home: mine, away: opponent, result: null }]], currentRound: 0, finished: false, winner: null };
+  G.matchday = 3;
+  G.cupPlayedThisSeason = false;
+
+  for (const [locale, expected] of Object.entries({
+    en: ['32-team single-elimination', 'After matchdays 4, 8, 12, 16 and 20', 'Winner: €35,000', 'Next round after matchday 4'],
+    pl: ['32 drużyny w systemie pucharowym', 'Po kolejkach 4, 8, 12, 16 i 20', 'Zwycięzca: 35 000 €', 'Następna runda po kolejce 4'],
+  })) {
+    g.PPM.i18n.setLocale(locale);
+    const cup = visibleText(renderPage(g, 'cup'));
+    const dash = visibleText(renderPage(g, 'dash'));
+    for (const text of expected) assert.match(cup, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} Cup page: ${text}`);
+    assert.match(dash, new RegExp(expected[3].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} dashboard: next trigger`);
+  }
+});
+
 test('the squad page and dashboard use one ordered senior match squad', () => {
   const g = bootWithPages(9004);
   const gp = g.PPM.gameplay;
@@ -240,7 +261,7 @@ test('technical contracts render one active Club summary and preseason-only term
   assert.doesNotMatch(active, /undefined|(?:club|pre|equipment)\.[a-z.]+/i);
 
   const carried = g.PPM.pages.pagePreseason();
-  assert.match(carried, /carries over from the previous season/i);
+  assert.match(carried, /continues from the previous season; replace it through Club with paid termination/i);
   assert.doesNotMatch(carried, /id="tpy-/);
   assert.doesNotMatch(carried, /selectTechPartnership\(/);
 });
@@ -295,9 +316,9 @@ test('preseason distinguishes newly signed and carried technical contracts in bo
   };
 
   for (const [locale, newCopy, carriedCopy, policyCopy] of [
-    ['en', /signed this preseason/i, /carries over from the previous season/i,
+    ['en', /signed this preseason/i, /continues from the previous season; replace it through Club with paid termination/i,
       /one active contract at a time[\s\S]*1–3 seasons[\s\S]*paid termination through Club/i],
-    ['pl', /podpisano w tym okresie przygotowawczym/i, /przechodzi z poprzedniego sezonu/i,
+    ['pl', /podpisano w tym okresie przygotowawczym/i, /trwa z poprzedniego sezonu/i,
       /jedna aktywna umowa[\s\S]*1–3 sezony[\s\S]*płatnego rozwiązania.*Klub/i],
   ]) {
     g.PPM.i18n.setLocale(locale);

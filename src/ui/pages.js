@@ -137,10 +137,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
       ${sorted.slice(0,6).map((t,i)=>`<tr class="${t.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${t.isPlayer?700:400};font-size:12px">${t.name}</td><td class="syne b8">${t.pts}</td><td class="fs10 ink3">${t.w}-${t.d||0}-${t.l}</td><td style="font-weight:700;color:${teamPointDiff(t)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(t)>=0?'+':''}${teamPointDiff(t)}</td><td class="ink3">${teamOvr(t.id)}</td></tr>`).join('')}
       </table>
       </div>
-      ${store.G.cup&&!store.G.cup.finished?`<div class="card"><div class="ct">${t('dash.cup').toUpperCase()}</div>
-        <div class="fs12 ink3">${t('dash.roundPlayed',{current:store.G.cup.currentRound+1,total:store.G.cup.rounds.length})}</div>
-        ${canCup?`<div class="fs10 cpurple mt-6 b7">${t('dash.cupNext')}</div>`:`<div class="fs10 ink3 mt-4">${t('dash.nextRound',{number:Math.ceil((store.G.matchday+1)/4)*4})}</div>`}
-      </div>`:''}
+      ${store.G.cup?(()=>{const status=window.PPM.gameplay.getCupClubStatus(mt.id);return`<div class="card"><div class="ct">${t('dash.cup').toUpperCase()}</div><div class="fs12 ink3">${t(`cup.status.${status.state}`)}</div>${status.nextTrigger!==null?`<div class="fs10 cpurple mt-6 b7">${t('cup.nextTrigger',{matchday:status.nextTrigger})}</div>`:''}</div>`;})():''}
       <div class="card"><div class="ct">${t('dash.messages').toUpperCase()}</div>
         ${genNewsFeed().length?genNewsFeed().map(n=>`<div class="news-item ${n.type||''}">${newsText(n)} <span class="fs9 ink3">(S${n.season}/MD${n.matchday})</span></div>`).join(''):`<div class="fs11 ink3">${t('dash.noMessages')}</div>`}
       </div>
@@ -436,6 +433,7 @@ function pageCup(){
   ${canPlay?`<div class="fs11 cpurple b7">${t('cup.next')}</div>`:''}
   </div>
   ${cup.finished&&cup.winner?`<div class="banner" style="border-left-color:var(--gold)"><div class="dot" style="background:var(--gold)"></div>${t('cup.winner',{name:cup.winner.name})}</div>`:''}
+  <div class="card mb14"><div class="fs12 ink3">${t('cup.format')}</div><div class="fs11 mt-6">${t('cup.prizes')}</div>${(()=>{const status=window.PPM.gameplay.getCupClubStatus(myId);return`<div class="fs11 mt-6 b7">${t(`cup.status.${status.state}`)}${status.nextTrigger!==null?` ${t('cup.nextTrigger',{matchday:status.nextTrigger})}`:''}</div>`;})()}</div>
   <div class="cup-bracket">
     ${cup.rounds.map((round,ri)=>`<div class="cup-round">
       <div class="cup-round-title">${roundNames[Math.min(ri,roundNames.length-1)]}</div>
