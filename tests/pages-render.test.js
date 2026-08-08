@@ -193,6 +193,41 @@ test('dashboard resolves the selected technical partner and semantic news', () =
   assert.doesNotMatch(html, /undefined/);
 });
 
+test('club contract terms show the annual cashflow that each choice will sign', () => {
+  const g = bootWithPages(9013);
+  g.PPM.i18n.setLocale('en');
+  g.PPM.state.G.seasonHistory = [{ position: 1 }];
+
+  const club = g.PPM.pages.pageClub();
+  assert.match(club, /1 season\s*\(-€1,000\)/);
+  assert.match(club, /2 seasons\s*\(-€960\)/);
+  assert.match(club, /3 seasons\s*\(-€920\)/);
+});
+
+test('player modifier explanation uses the contract rubber profile, including legacy packages', () => {
+  const g = bootWithPages(9014);
+  g.PPM.i18n.setLocale('en');
+  const G = g.PPM.state.G;
+  const player = g.PPM.gameplay.getClubSeniorPlayers(G.myTeamId)[0];
+  G.techContract = {
+    partnerId: 'tp_pro', rubberId: 'legacy_pro', termYears: 1, yearsLeft: 1,
+    signedSeason: 1, annualCashflow: -1600,
+  };
+  G.techPartnership = 'tp_pro';
+
+  g.PPM.gameplay.openPlayerModal(player.id);
+  const legacy = g.document.getElementById('modal').innerHTML;
+  assert.match(legacy, /FH \+2/);
+  assert.match(legacy, /RET \+1/);
+
+  G.techContract = { ...G.techContract, partnerId: 'tp_elite', rubberId: 'balanced' };
+  G.techPartnership = 'tp_elite';
+  g.PPM.gameplay.openPlayerModal(player.id);
+  const balanced = g.document.getElementById('modal').innerHTML;
+  assert.match(balanced, /FH \+1/);
+  assert.match(balanced, /BH \+1/);
+});
+
 test('player profile shows one translated peak row only when a trusted positive ceiling is known', () => {
   const g = bootWithPages(9011);
   const gp = g.PPM.gameplay;

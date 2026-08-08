@@ -2363,8 +2363,9 @@ function getPlayerModifierBreakdown(p){
   ensurePlayerMeta(p);
   const teamId=p.teamId;
   const coach=teamId!==null&&teamId!==undefined?getCoach(teamId):null;
-  const tech=getTechPartnershipBonus(teamId);
-  const techLabel=getTechPartnership()?.name||t('common.none');
+  const techContract=teamId===store.G?.myTeamId?getTechContract():null;
+  const tech=EQUIPMENT.rubberProfiles[techContract?.rubberId]?.mods||{};
+  const techLabel=techContract?(getTechPartnership()?.name||techContract.partnerId):t('common.none');
   const hasSynergy=!!(coach&&p.playStyle&&coach.styleSynergy&&p.playStyle===coach.styleSynergy);
   const oppositeStyle=!!(coach&&p.playStyle&&coach.styleSynergy&&OPPOSITE_STYLE[coach.styleSynergy]===p.playStyle);
   let coachSynergy=0;
@@ -5443,7 +5444,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
       </div>
       ${p.equipment?`<div class="mt-8 pd8-10 bb1 r10 bgs1 fs11">
         <div class="b7 mb3">${t('player.equipment')}</div>
-        <div class="ink3">${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)} + ${t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>
+        <div class="ink3">${t(`equipment.blade.${p.equipment.blade}`)} + ${t(`equipment.sponge.${p.equipment.sponge}`)} + ${p.teamId===store.G.myTeamId?(getTechPartnership()?.name||t('common.none')):t(`equipment.rubber.${clubRubberTier(p.teamId)}`)}</div>
         <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):t('player.neutralSetup');})()}</div>
       </div>`:''}
       <div class="traits mt-8">${p.traits.map(trait=>`<span class="has-tooltip tb ${TRAITS[trait]?.type||'men'}">${t(`trait.${trait}.label`)}<span class="tip">${t(`trait.${trait}.desc`)}</span></span>`).join('')||`<span class="fs10 ink3">${t('player.noTraits')}</span>`}</div>
