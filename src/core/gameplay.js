@@ -97,15 +97,17 @@ function matchAvailability(player,teamId){
 function canLoanOut(pid){
   const p=store.G.players.find(x=>x.id===pid);
   if(!p)return{ok:false,reason:t('loan.noPlayer')};
-  if(p.role==='youth'&&!p.isYouth)return{ok:false,reason:t('loan.notEligible')};
+  if(p.retired)return{ok:false,reason:t('loan.retired')};
+  if(getLoanedIn().find(l=>l.playerId===pid))return{ok:false,reason:t('loan.alreadyBorrowed')};
+  const already=getLoanedOut().find(l=>l.playerId===pid);
+  if(already)return{ok:false,reason:t('loan.alreadyOut')};
+  if(p.teamId!==store.G.myTeamId)return{ok:false,reason:t('loan.notOwned')};
+  if(!isSeniorPlayer(p)&&!p.isYouth)return{ok:false,reason:t('loan.notEligible')};
   if(p.injuredFor>0)return{ok:false,reason:t('loan.injured')};
   if(p.joinedSeason===store.G.season&&p.joinedViaTransfer)return{ok:false,reason:t('loan.newSigning')};
   // Final contract year: the deal would expire DURING the loan, so the player
   // "returns" straight into free agency \u2014 reads like he never came back.
   if((p.contractYears||0)<=1)return{ok:false,reason:t('loan.finalYear')};
-  if(getLoanedIn().find(l=>l.playerId===pid))return{ok:false,reason:t('loan.alreadyBorrowed')};
-  const already=getLoanedOut().find(l=>l.playerId===pid);
-  if(already)return{ok:false,reason:t('loan.alreadyOut')};
   if(isSeniorPlayer(p)&&getClubSeniorPlayers(store.G.myTeamId).filter(x=>x.id!==pid).length<3){
     return{ok:false,reason:t('loan.minimumSquad')};
   }
@@ -157,12 +159,16 @@ function doLoanOut(pid, toTeamId, share){
   const check=canLoanOut(pid);
   if(!check.ok){toast(check.reason);return;}
   const p=store.G.players.find(x=>x.id===pid);if(!p)return;
+  const sourceTeamId=p.teamId;
+  const target=store.G.teams.find(t=>t.id===toTeamId);
+  if(!target||target.id===sourceTeamId||target.id===store.G.myTeamId||target.league!==2||target.isPlayer){
+    toast(t('loan.invalidBorrower'));return;
+  }
   const loanShare=clamp(share||0.3,0.15,0.5);
-  const target=store.G.teams.find(t=>t.id===toTeamId);if(!target)return;
   const interest=clamp(Math.round(35+Math.max(0,72-teamOvr(target.id))+Math.max(0,24-p.age)+Math.max(0,ovrBase(p)-teamOvr(target.id))-(p.salary/700)+loanShare*30+(p.isYouth?10:0)),5,95);
   if(Math.random()*100>interest){toast(t('loan.rejected',{club:target.name,name:p.name}));return;}
   store.G.loans=store.G.loans||[];
-  store.G.loans.push({playerId:pid, fromTeamId:store.G.myTeamId, toTeamId, seasons:1, returned:false, originalRole:p.role, wageShare:loanShare, academyLoan:!!p.isYouth});
+  store.G.loans.push({playerId:pid, fromTeamId:sourceTeamId, toTeamId, seasons:1, returned:false, originalRole:p.role, wageShare:loanShare, academyLoan:!!p.isYouth});
   p.teamId=toTeamId;
   p.role='senior';
   p.loanedOut=true;

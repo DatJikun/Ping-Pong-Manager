@@ -149,13 +149,15 @@ test('a player we lend out is flagged away and comes back', () => {
   const mine = G().players.filter((p) => p.teamId === G().myTeamId && !p.retired);
   const lent = mine.find((p) => gp.canLoanOut(p.id).ok);
   assert.ok(lent, 'the squad has someone who can be lent out');
-  const borrower = G().teams.find((t) => t.id !== G().myTeamId);
+  const borrower = G().teams.find((t) => t.id !== G().myTeamId && t.league === 2 && !t.isPlayer);
 
   // doLoanOut can be refused by the borrowing club; retry until it takes.
   let guard = 0;
   while (!lent.loanedOut && guard++ < 40) gp.doLoanOut(lent.id, borrower.id, 0.5);
   assert.equal(lent.loanedOut, true, 'he is away');
   assert.equal(lent.teamId, borrower.id, 'carrying the borrower\'s club id');
+  assert.equal(G().loans.find((loan) => loan.playerId === lent.id).fromTeamId, G().myTeamId,
+    'the loan records the validated owner as its source');
   assert.deepEqual(checkWorld(G()).filter((p) => p.includes('[loans]')), []);
 
   gp.returnLoans();
@@ -200,4 +202,68 @@ test('the loan mutator rechecks stale eligibility before randomness or mutation'
     assert.equal(randomCalls, 0, `${label}: eligibility is checked before negotiation randomness`);
     assert.equal(toastMessage, g.t(reasonKey), `${label}: mutator surfaces the canonical refusal reason`);
   }
+});
+
+test('only current club players can be offered for an outgoing loan', () => {
+  const g = boot(5605);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const aiPlayer = G.players.find((player) => player.teamId !== null && player.teamId !== G.myTeamId && !player.retired);
+  const retiredMine = gp.getClubSeniorPlayers(G.myTeamId)[0];
+  retiredMine.retired = true;
+
+  assert.deepEqual({ ...gp.canLoanOut(aiPlayer.id) }, { ok: false, reason: g.t('loan.notOwned') });
+  assert.deepEqual({ ...gp.canLoanOut(retiredMine.id) }, { ok: false, reason: g.t('loan.retired') });
+
+  const validBorrower = G.teams.find((team) => team.league === 2 && !team.isPlayer);
+  const beforeAi = JSON.stringify(aiPlayer);
+  const beforeLoans = JSON.stringify(G.loans);
+  let randomCalls = 0;
+  let message = null;
+  g.Math.random = () => { randomCalls += 1; return 0; };
+  g.toast = (value) => { message = value; };
+  gp.doLoanOut(aiPlayer.id, validBorrower.id, 0.5);
+  assert.equal(JSON.stringify(aiPlayer), beforeAi);
+  assert.equal(JSON.stringify(G.loans), beforeLoans);
+  assert.equal(randomCalls, 0);
+  assert.equal(message, g.t('loan.notOwned'));
+});
+
+test('the loan mutator rejects invalid borrowers before randomness or state changes', () => {
+  const g = boot(5606);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const player = gp.getClubSeniorPlayers(G.myTeamId).find((candidate) => {
+    candidate.contractYears = 2;
+    candidate.injuredFor = 0;
+    candidate.joinedViaTransfer = false;
+    return gp.canLoanOut(candidate.id).ok;
+  });
+  assert.ok(player);
+  const l1 = G.teams.find((team) => team.league === 1 && team.id !== G.myTeamId);
+  const l2PlayerTeam = G.teams.find((team) => team.league === 2 && team.id !== G.myTeamId);
+  l2PlayerTeam.isPlayer = true;
+  const invalidTargets = [
+    ['source club', G.myTeamId],
+    ['player-controlled club', l2PlayerTeam.id],
+    ['Division I club', l1.id],
+    ['missing club', 987654],
+  ];
+  let randomCalls = 0;
+  const messages = [];
+  g.Math.random = () => { randomCalls += 1; return 0; };
+  g.toast = (message) => { messages.push(message); };
+  const beforePlayer = JSON.stringify(player);
+  const beforeLoans = JSON.stringify(G.loans);
+
+  for (const [label, targetId] of invalidTargets) {
+    gp.doLoanOut(player.id, targetId, 0.5);
+    assert.equal(JSON.stringify(player), beforePlayer, `${label}: player is unchanged`);
+    assert.equal(JSON.stringify(G.loans), beforeLoans, `${label}: loans are unchanged`);
+  }
+
+  assert.equal(randomCalls, 0);
+  assert.deepEqual(messages, invalidTargets.map(() => g.t('loan.invalidBorrower')));
 });

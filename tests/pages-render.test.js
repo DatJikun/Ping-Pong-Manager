@@ -67,17 +67,17 @@ function visiblePeakRows(profileHtml, label = 'Peak OVR') {
   return visibleText(profileHtml).match(new RegExp(`${label}\\s*:?\\s*\\d+`, 'gi')) || [];
 }
 
-test('budget names legacy brand costs as equipment contract termination fees', () => {
+test('budget names historic brand costs inclusively as equipment and termination fees', () => {
   const g = bootWithPages(9016);
   g.PPM.state.G.seasonFinance.brandCosts = 1234;
   g.PPM.ui.budgetShowZero = true;
 
   g.PPM.i18n.setLocale('en');
-  assert.match(visibleText(g.PPM.pages.pageBudget()), /Equipment contract termination fees/i);
+  assert.match(visibleText(g.PPM.pages.pageBudget()), /Equipment costs and contract termination fees/i);
   assert.doesNotMatch(visibleText(g.PPM.pages.pageBudget()), /Legacy equipment costs/i);
 
   g.PPM.i18n.setLocale('pl');
-  assert.match(visibleText(g.PPM.pages.pageBudget()), /Opłaty za zerwanie kontraktów sprzętowych/i);
+  assert.match(visibleText(g.PPM.pages.pageBudget()), /Koszty sprzętu i opłaty za zerwanie kontraktów/i);
   assert.doesNotMatch(visibleText(g.PPM.pages.pageBudget()), /Koszty starego sprzętu/i);
 });
 
@@ -207,6 +207,28 @@ test('Cup and dashboard explain the club Cup state and reward ladder in English 
     const dash = visibleText(renderPage(g, 'dash'));
     for (const text of expected) assert.match(cup, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} Cup page: ${text}`);
     assert.match(dash, new RegExp(expected[3].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} dashboard: next trigger`);
+  }
+});
+
+test('a Cup tie due now does not repeat its current matchday as a future trigger', () => {
+  const g = bootWithPages(9020);
+  const G = g.PPM.state.G;
+  const mine = { id: G.myTeamId, name: 'My Club', isReal: true };
+  const opponent = { id: 9920, name: 'Cup Opponent', isReal: true };
+  G.cup = { rounds: [[{ home: mine, away: opponent, result: null }]], currentRound: 0, finished: false, winner: null };
+  G.matchday = 4;
+  G.cupPlayedThisSeason = false;
+
+  for (const [locale, dueNow, futureTrigger] of [
+    ['en', 'Your Cup tie is due now.', 'Next round after matchday 4'],
+    ['pl', 'Twój mecz pucharowy jest do rozegrania teraz.', 'Następna runda po kolejce 4'],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    for (const [surface, html] of [['dashboard', renderPage(g, 'dash')], ['Cup page', renderPage(g, 'cup')]]) {
+      const text = visibleText(html);
+      assert.match(text, new RegExp(dueNow.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} ${surface}`);
+      assert.doesNotMatch(text, new RegExp(futureTrigger.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${locale} ${surface}`);
+    }
   }
 });
 
