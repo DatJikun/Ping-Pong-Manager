@@ -173,15 +173,15 @@ const PSYCHNAMES=['Jan Wi\u015bniewski','Zofia Adamska','Krzysztof Lis','Irena M
 // Community databases remain free to provide their own club and sponsor names.
 const COUNTRY_SPONSORS={
   PL:[
-    'Asteron','Cedrava','Deltaris','Elaris','Falkora','Grovex','Helvara','Iveron',
-    'Jantaro','Korveta','Lumaro','Novaris','Brzegon','Miodra','Nurtel','Zawira',
+    'Jutrzenna Kuźnia','Cedrava','Deltaris','Błękitny Azymut','Falkora','Grovex','Helvara','Iveron',
+    'Jantaro','Korveta','Lumaro','Miedziany Puls','Brzegon','Miodra','Nurtel','Zawira',
     'Bursztynowy Szlak','Cicha Kuźnia','Dębowy Znak','Górna Fala','Jasny Horyzont','Kresowy Most','Leśny Splot','Miedziana Przystań',
     'Niebieski Kłos','Orla Dolina','Polna Latarnia','Rzeczny Warsztat','Srebrny Brzeg','Tatrzański Rytm','Wolny Trakt','Zielona Iskra',
     'Bałtycki Pion','Czerwona Nić','Dobry Kierunek','Gliniany Krąg','Kasztanowy Dom','Lubelski Żuraw','Mazurski Świt','Nadwiślański Puls',
     'Opolska Wstęga','Pomorski Kompas','Roztoczańska Perła','Sudecki Węzeł','Śląski Motyw','Warmiński Ogród','Wielkopolski Zdrój','Żywiecki Lampion',
   ],
   DE:[
-    'Rhevara','Nordkern','Alpenwerk','Silberhain','Westbruck','Kronfeld','Elboria','Falkenau',
+    'Rhevara','Nordfunken','Alpenglimm','Silberhain','Westbruck','Kronfeld','Elboria','Falkenau',
     'Morgenrot','Steinwald','Lichtberg','Tannwerk','Adlerquell','Bergfuge','Dornkreis','Eichenstrom',
     'Felsenbogen','Goldpfad','Hafenfunke','Himmelsteg','Kernwiese','Kupferhain','Lindenflug','Nebelkranz',
     'Quellenrad','Rosenwerk','Schieferglanz','Sonnenfurt','Talbrücke','Waldanker','Winterspur','Zinnpfad',

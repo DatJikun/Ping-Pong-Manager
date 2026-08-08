@@ -218,15 +218,29 @@ function migrateOfficialIdentityData(game,countryId){
     if(typeof team.name==='string'&&team.name!==nextName)replacements.set(team.name,nextName);
     team.name=nextName;
   });
+  const sponsorRecords=[...(game.sponsors||[]),...(game.sponsorOffers||[])];
+  const reservedSponsorNames=new Set(sponsorRecords
+    .filter(sponsor=>sponsor&&typeof sponsor.name==='string'&&sponsorPool.includes(sponsor.name))
+    .map(sponsor=>sponsor.name));
+  const migratedSponsorNames=new Map();
   const migrateSponsor=sponsor=>{
     if(!sponsor||typeof sponsor.name!=='string'||sponsorPool.includes(sponsor.name))return;
     const oldName=sponsor.name;
-    const nextName=sponsorPool[stableStringHash(`${country.id}:${oldName}`)%sponsorPool.length];
+    let nextName=migratedSponsorNames.get(oldName);
+    if(!nextName){
+      const start=stableStringHash(`${country.id}:${oldName}`)%sponsorPool.length;
+      nextName=sponsorPool[start];
+      for(let offset=0;offset<sponsorPool.length;offset++){
+        const candidate=sponsorPool[(start+offset)%sponsorPool.length];
+        if(!reservedSponsorNames.has(candidate)){nextName=candidate;break;}
+      }
+      migratedSponsorNames.set(oldName,nextName);
+      reservedSponsorNames.add(nextName);
+    }
     replacements.set(oldName,nextName);
     sponsor.name=nextName;
   };
-  (game.sponsors||[]).forEach(migrateSponsor);
-  (game.sponsorOffers||[]).forEach(migrateSponsor);
+  sponsorRecords.forEach(migrateSponsor);
   replaceSaveStrings(game,replacements);
   // Re-assert canonical slot names after replacing historical prose. This also
   // handles promoted clubs that happened to exchange old names across slots.

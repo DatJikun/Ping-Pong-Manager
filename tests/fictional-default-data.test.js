@@ -4,11 +4,12 @@ const { boot } = require('./harness');
 
 const REAL_IDENTITIES = [
   'adidas','allegro','alibaba','allianz','amazon','andro','audi','butterfly',
+  'asteron','elaris',
   'bmw','bosch','byd','canon','cornilleau','dhl','dhs','donic','ericsson',
   'huawei','hyundai','ikea','inpost','joola','kia','klarna','lenovo','lg',
-  'lidl','lotte','mizuno','nintendo','nittaku','orlen','panasonic','pko',
+  'lidl','lotte','mizuno','nintendo','nittaku','nordkern','novaris','orlen','panasonic','pko',
   'puma','rossmann','samsung','siemens','sony','spotify','stiga','tencent',
-  'tibhar','toyota','volkswagen','volvo','xiom','xiaomi','yasaka',
+  'tibhar','toyota','volkswagen','volvo','xiom','xiaomi','yasaka','alpenwerk',
 ];
 
 const OLD_CARTESIAN_SPONSORS = [
@@ -28,7 +29,7 @@ function shippedIdentityText(constants) {
     .flatMap(country => [...country.l1Names, ...country.l2Names]);
   const sponsors = Object.values(constants.COUNTRY_SPONSORS).flat();
   const partners = constants.TECH_PARTNERSHIPS.map(partner => partner.name);
-  return [...clubs, ...sponsors, ...partners].join('\n').toLowerCase();
+  return [...clubs, ...sponsors, ...partners].map(identityKey).join('\n');
 }
 
 test('the official database contains no blocked real-world identities', () => {
@@ -116,4 +117,56 @@ test('official legacy saves are debranded while custom databases are preserved',
   const customMigrated = g.PPM.stateApi.migrateLoadedGame(custom);
   assert.equal(customMigrated.teams[0].name, 'Community Club');
   assert.equal(customMigrated.sponsors[0].name, 'Community Sponsor');
+});
+
+test('official legacy sponsor remapping keeps every deal distinct and preserves its terms', () => {
+  const g = boot(2804);
+  const formerNames = [
+    'Asteron Energia', 'Asteron Finanse', 'Asteron Żywność', 'Asteron Technologie', 'Asteron Logistyka',
+    'Cedrava Energia', 'Cedrava Finanse', 'Cedrava Żywność', 'Cedrava Technologie', 'Cedrava Logistyka',
+    'Deltaris Energia', 'Deltaris Finanse', 'Deltaris Żywność', 'Deltaris Technologie', 'Deltaris Logistyka',
+  ];
+  const makeDeal = (name, index, active) => ({
+    id: 700 + index,
+    name,
+    active,
+    pending: !active,
+    reward: 20000 + index * 500,
+    goal: index % 2 ? 'top4' : 'win6',
+    tier: index % 2 ? 'Krajowy' : 'Regionalny',
+    customNote: `legacy-${index}`,
+  });
+  const raw = {
+    season: 4,
+    schemaVersion: 25,
+    countryId: 'PL',
+    myTeamId: 0,
+    teams: [],
+    players: [],
+    sponsors: [
+      { id: 699, name: 'Helvara', active: true, reward: 19000, goal: 'top3', tier: 'Krajowy', customNote: 'canonical' },
+      ...formerNames.slice(0, 3).map((name, index) => makeDeal(name, index, true)),
+    ],
+    sponsorOffers: formerNames.slice(3).map((name, index) => makeDeal(name, index + 3, false)),
+  };
+
+  const migrated = g.PPM.stateApi.migrateLoadedGame(raw);
+  const deals = [...migrated.sponsors, ...migrated.sponsorOffers];
+  const pool = new Set(g.PPM.constants.COUNTRY_SPONSORS.PL);
+
+  assert.equal(migrated.sponsors[0].name, 'Helvara', 'an existing canonical sponsor keeps its identity');
+  assert.equal(deals.length, 16);
+  assert.equal(new Set(deals.map(deal => deal.name)).size, deals.length,
+    'legacy records receive distinct canonical sponsor names');
+  assert.ok(deals.every(deal => pool.has(deal.name)), 'every migrated name belongs to the canonical pool');
+  assert.deepEqual(
+    deals.slice(1).map(({ id, reward, goal, customNote }) => ({ id, reward, goal, customNote })),
+    formerNames.map((name, index) => ({
+      id: 700 + index,
+      reward: 20000 + index * 500,
+      goal: index % 2 ? 'top4' : 'win6',
+      customNote: `legacy-${index}`,
+    })),
+    'migration changes identity fields without changing contract terms',
+  );
 });
