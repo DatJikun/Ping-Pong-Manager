@@ -1,9 +1,10 @@
 # DESIGN — Equipment & kit deals (rework proposal)
 
-> **Status: PROPOSAL, not built.** Owner asked (2026-07-24): *"the kits system for
-> the players sucks, it's just a free boost of money, stats and marketability —
-> it needs better variety."* This is the redesign. **Numbers need owner sign-off
-> before any code**, per the working rule in `HANDOFF.md`.
+> **Status: implemented and superseded (2026-08-08).** The current equipment and
+> partnership implementation is specified in
+> [`docs/superpowers/specs/2026-08-08-equipment-partnerships-design.md`](docs/superpowers/specs/2026-08-08-equipment-partnerships-design.md).
+> This document remains as the original 2026-07-24 design exploration and historical
+> context; its proposed mechanics and numbers are not the current release contract.
 
 ---
 

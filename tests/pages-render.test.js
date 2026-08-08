@@ -224,7 +224,7 @@ test('technical contracts render one active Club summary and preseason-only term
 
   G.techContract = {
     partnerId: 'tp_pro', rubberId: 'offensive', termYears: 2, yearsLeft: 1,
-    signedSeason: 1, annualCashflow: -1600,
+    signedSeason: 0, annualCashflow: -1600,
   };
   G.techPartnership = 'tp_pro';
   const active = g.PPM.pages.pageClub();
@@ -243,6 +243,76 @@ test('technical contracts render one active Club summary and preseason-only term
   assert.match(carried, /carries over from the previous season/i);
   assert.doesNotMatch(carried, /id="tpy-/);
   assert.doesNotMatch(carried, /selectTechPartnership\(/);
+});
+
+test('technical-contract effects show exact localized development and commercial benefits', () => {
+  const g = bootWithPages(9017);
+  const G = g.PPM.state.G;
+  const local = {
+    partnerId: 'tp_local', rubberId: 'development', termYears: 1, yearsLeft: 1,
+    signedSeason: G.season, annualCashflow: -1000,
+  };
+  const world = {
+    partnerId: 'tp_world', rubberId: 'commercial', termYears: 1, yearsLeft: 1,
+    signedSeason: G.season, annualCashflow: 3500,
+  };
+
+  for (const [locale, development, marketability] of [
+    ['en', /5% player development/i, /15% marketability/i],
+    ['pl', /5% rozwoju zawodników/i, /15% marketingu/i],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    G.techContract = null;
+    G.techPartnership = null;
+    g.PPM.ui.preStep = 1;
+    const offers = g.PPM.pages.pagePreseason();
+    assert.match(offers, development, `${locale}: development offer shows its exact bonus`);
+    assert.match(offers, marketability, `${locale}: world offer shows its exact bonus`);
+
+    G.techContract = world;
+    G.techPartnership = 'tp_world';
+    assert.match(g.PPM.pages.pageClub(), marketability,
+      `${locale}: active Club summary shows the commercial bonus`);
+  }
+
+  let toast = '';
+  g.toast = value => { toast = value; };
+  g.PPM.i18n.setLocale('en');
+  G.techContract = null;
+  G.techPartnership = null;
+  assert.equal(g.PPM.gameplay.selectTechPartnership('tp_local', 1), true);
+  assert.match(toast, /5% player development/i);
+  assert.doesNotMatch(toast, /mentalności|rozwoju|okładzina/i,
+    'English success toast contains no leaked Polish partner description');
+});
+
+test('preseason distinguishes newly signed and carried technical contracts in both locales', () => {
+  const g = bootWithPages(9018);
+  const G = g.PPM.state.G;
+  const contract = {
+    partnerId: 'tp_local', rubberId: 'development', termYears: 2, yearsLeft: 2,
+    signedSeason: G.season, annualCashflow: -960,
+  };
+
+  for (const [locale, newCopy, carriedCopy, policyCopy] of [
+    ['en', /signed this preseason/i, /carries over from the previous season/i,
+      /one active contract at a time[\s\S]*1–3 seasons[\s\S]*paid termination through Club/i],
+    ['pl', /podpisano w tym okresie przygotowawczym/i, /przechodzi z poprzedniego sezonu/i,
+      /jedna aktywna umowa[\s\S]*1–3 sezony[\s\S]*płatnego rozwiązania.*Klub/i],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    G.techContract = { ...contract, signedSeason: G.season };
+    G.techPartnership = 'tp_local';
+    g.PPM.ui.preStep = 1;
+    const current = g.PPM.pages.pagePreseason();
+    assert.match(current, newCopy, `${locale}: current-season signing is new`);
+    assert.doesNotMatch(current, carriedCopy, `${locale}: current-season signing is not carried`);
+    assert.match(current, policyCopy, `${locale}: contract policy explains terms and termination`);
+
+    G.techContract = { ...contract, signedSeason: G.season - 1 };
+    const carried = g.PPM.pages.pagePreseason();
+    assert.match(carried, carriedCopy, `${locale}: earlier signing carries over`);
+  }
 });
 
 test('player modifier explanation uses the contract rubber profile, including legacy packages', () => {
@@ -282,6 +352,25 @@ test('external player profiles show personal equipment without a hidden club rub
   const profile = g.document.getElementById('modal').innerHTML;
   assert.match(profile, /Personal blade and sponge/i);
   assert.doesNotMatch(profile, /Club rubber/i);
+});
+
+test('external player profiles do not attribute personal equipment to a technical partner', () => {
+  const g = bootWithPages(9019);
+  const G = g.PPM.state.G;
+  const external = G.players.find((player) => player.teamId !== null && player.teamId !== G.myTeamId);
+  external.equipment = { blade: 'OFF', sponge: 'GRUBA' };
+
+  for (const [locale, equipmentLabel, partnerLabel] of [
+    ['en', /Total match-equipment effect/i, /Technical partner/i],
+    ['pl', /Łączny wpływ sprzętu meczowego/i, /Partner techniczny/i],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    g.PPM.gameplay.openPlayerModal(external.id);
+    const profile = g.document.getElementById('modal').innerHTML;
+    assert.match(profile, equipmentLabel, `${locale}: aggregate equipment effect is named truthfully`);
+    assert.doesNotMatch(profile, partnerLabel,
+      `${locale}: personal blade and sponge are not credited to a technical partner`);
+  }
 });
 
 test('player profile shows one translated peak row only when a trusted positive ceiling is known', () => {

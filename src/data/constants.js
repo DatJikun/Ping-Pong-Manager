@@ -362,8 +362,8 @@ const LEAGUE_FORMATS={
 
 // ── EQUIPMENT: blade / rubber / sponge (owner research file 2026-07-03) ───────
 // Small, readable stat modifiers — the setup fits the play style, it does not
-// replace it. Rubber freshness is a CLUB-level, recurring investment (rubbers
-// wear out), blades/sponges are the player's personal setup.
+// replace it. A technical contract supplies the club-wide rubber profile;
+// blades and sponges remain each player's personal setup.
 const EQUIPMENT={
   rubberProfiles:{
     offensive:{id:'offensive',mods:{fh:1,srv:1},fitStyles:['FH_LOOPER','TWO_SIDED']},
