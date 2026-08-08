@@ -197,6 +197,39 @@ test('retirement prune and reload preserve the missing nominee name until replac
     'replacement removes the stale name from the aligned snapshot');
 });
 
+test('an unknown saved nominee stays a missing reference instead of becoming a vacant slot', () => {
+  const g = boot(4211);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const live = gp.getEligibleMatchPlayers(G.myTeamId).slice(0, 3);
+  const unknownId = 987654;
+  G.lastMatchSelection = { base: [unknownId, live[0].id, live[1].id], reserves: [live[2].id, null] };
+  G.lastMatchSelectionSnapshots = { base: [null, null, null], reserves: [null, null] };
+
+  const view = gp.matchSelectionView(G.myTeamId, G.lastMatchSelection);
+  assert.equal(view.slots[0].referenceId, unknownId);
+  assert.equal(view.slots[0].hasReference, true);
+  assert.equal(view.slots[0].previousPlayer, null);
+  assert.equal(view.slots[0].player, null);
+  assert.equal(view.slots[0].status.code, 'missing');
+  assert.equal(view.slots[4].referenceId, null);
+  assert.equal(view.slots[4].hasReference, false);
+  assert.equal(view.slots[4].status.code, 'vacant');
+
+  for (const [locale, formerLabel] of [
+    ['en', 'Former player (details unavailable)'],
+    ['pl', 'Były zawodnik (brak danych)'],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    gp.openMatchNomination();
+    const text = g.document.getElementById('modal').innerHTML.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+    assert.match(text, new RegExp(formerLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(text, new RegExp(g.t('match.nom.unavailableMissing'), 'i'));
+    assert.match(text, new RegExp(g.t('match.nom.vacant'), 'i'), 'true null remains visibly vacant');
+  }
+});
+
 test('fresh careers store only senior/youth roles and role-like metadata cannot change team strength', () => {
   const g = boot(4206);
   const gp = g.PPM.gameplay;

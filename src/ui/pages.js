@@ -126,6 +126,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
         <div class="fs9 b8" style="color:${index<3?'var(--g)':'var(--blue)'}">${t(matchSlotLabels[index])}</div>
         ${live?`<div class="flex aic gp10 minw0"><img src="${getAvatarData(live,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${live.name}</div><div class="fs10 ${status.available?'ink3':'cr'}">${status.available?`${t('dash.age',{age:live.age})} \u00b7 ${styleLabel(live.playStyle)}`:t(status.reasonKey,status.reasonParams)}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(live),playerCeiling(live)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}`
           :p?`<div class="minw0"><div class="b7 fs13">${p.name}</div><div class="fs10 cr">${t(status.reasonKey,status.reasonParams)}</div></div><div class="ink3">—</div>`
+          :slot.hasReference?`<div class="minw0"><div class="b7 fs13">${t('match.nom.formerPlayerUnknown')}</div><div class="fs10 cr">${t(status.reasonKey,status.reasonParams)}</div></div><div class="ink3">—</div>`
           :`<div class="fs11 ink3">${t('match.nom.vacant')}</div><div class="ink3">—</div>`}
       </div>`;}).join('')}
       </div>

@@ -103,6 +103,31 @@ test('dashboard shows a missing nomination snapshot without making it clickable'
     'a compact snapshot has no live profile to open');
 });
 
+test('dashboard distinguishes an unnamed saved reference from a genuinely vacant slot in both locales', () => {
+  const g = bootWithPages(9018);
+  const G = g.PPM.state.G;
+  const seniors = g.PPM.gameplay.getEligibleMatchPlayers(G.myTeamId).slice(0, 3);
+  const unknownId = 987654;
+  G.lastMatchSelection = {
+    base: [unknownId, seniors[0].id, seniors[1].id],
+    reserves: [seniors[2].id, null],
+  };
+  G.lastMatchSelectionSnapshots = { base: [null, null, null], reserves: [null, null] };
+
+  for (const [locale, formerLabel] of [
+    ['en', 'Former player (details unavailable)'],
+    ['pl', 'Były zawodnik (brak danych)'],
+  ]) {
+    g.PPM.i18n.setLocale(locale);
+    const html = g.PPM.pages.pageDash();
+    const text = visibleText(html);
+    assert.match(text, new RegExp(formerLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(text, new RegExp(g.t('match.nom.unavailableMissing'), 'i'));
+    assert.match(text, new RegExp(g.t('match.nom.vacant'), 'i'), 'true null still renders as vacant');
+    assert.doesNotMatch(html, new RegExp(`openPlayerModal\\(${unknownId}\\)`));
+  }
+});
+
 function setPlayerOvr(player, value) {
   for (const stat of ['fh', 'bh', 'srv', 'ret', 'foot', 'men']) player[stat] = value;
   player.equipment = { blade: 'ALL', sponge: 'SREDNIA' };

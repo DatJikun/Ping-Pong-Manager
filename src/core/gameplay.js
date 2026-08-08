@@ -2783,7 +2783,7 @@ function matchSelectionView(teamId,raw){
     const status=id===null
       ?{available:false,code:'vacant',reasonKey:'match.nom.vacant',reasonParams:{}}
       :matchAvailability(livePlayer,teamId);
-    return{index,labelKey:keys[index],previousPlayer,player:status.available?livePlayer:null,status};
+    return{index,labelKey:keys[index],referenceId:id,hasReference:id!==null,previousPlayer,player:status.available?livePlayer:null,status};
   });
   return{selection:normalized,slots,selectedIds:slots.map(slot=>slot.player?.id??null)};
 }
@@ -3374,10 +3374,10 @@ function renderNominationModal(){
   modal.innerHTML=`<div class="mt2">${t('match.nom.title',{format:getLeagueFormat().label}).toUpperCase()}</div>
   <div class="fs11 ink3 mb10 lh16">${protocolDescription()} ${t('match.nom.selectHint',{order:'A, B, C, R1, R2'})}<br>${t(matchNominationRules().reservesUsedInMatch?'match.nom.reservesActive':'match.nom.reservesTravel')}</div>
   <div class="grid gp6 mb10" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
-    ${view.slots.map((slot,index)=>`<div class="pd8-10 r3" style="min-height:58px;border:1px solid ${slot.player?'var(--g)':slot.previousPlayer?'var(--r)':'var(--b1)'};background:var(--s2)">
+    ${view.slots.map((slot,index)=>`<div class="pd8-10 r3" style="min-height:58px;border:1px solid ${slot.player?'var(--g)':slot.hasReference?'var(--r)':'var(--b1)'};background:var(--s2)">
       <div class="fs9 b8" style="color:${index<3?'var(--g)':'var(--blue)'}">${slotLabels[index]}</div>
-      <div class="fs11 b7 mt4">${slot.player?.name||slot.previousPlayer?.name||t('match.nom.vacant')}</div>
-      ${!slot.player&&slot.previousPlayer?`<div class="fs9 cr mt4">${reason(slot.status)}</div>`:''}
+      <div class="fs11 b7 mt4">${slot.player?.name||slot.previousPlayer?.name||(slot.hasReference?t('match.nom.formerPlayerUnknown'):t('match.nom.vacant'))}</div>
+      ${!slot.player&&slot.hasReference?`<div class="fs9 cr mt4">${reason(slot.status)}</div>`:''}
     </div>`).join('')}
   </div>
   <div class="grid gp6 ova" style="max-height:46vh">
