@@ -1,6 +1,6 @@
 {
   "name": "pingpong-manager",
-  "version": "17.0.0",
+  "version": "17.0.0-beta.1",
   "private": true,
   "author": "DatJikun",
   "main": "desktop/main.cjs",
@@ -38,6 +38,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "assets/branding/pingpong-manager.ico",
       "target": [
         "portable"
       ],

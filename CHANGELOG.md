@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-08 — Kandydat beta.1
+
+Beta otrzymała docelowe logo, wielorozmiarową ikonę Windows, favicon i komplet
+materiałów itch.io. Numer paczki to teraz `17.0.0-beta.1`, przy zachowaniu stałej
+tożsamości aplikacji i zgodności zapisów. Kandydat obejmuje też spójny skład z
+nominacją 3+2, czytelne OVR i Peak OVR, kontrakty sprzętowe, wyjaśniony Puchar
+Krajowy, naturalne marki sponsorów oraz poprawki wypożyczeń i historii nominacji.
+Finalny build i jego suma kontrolna są jeszcze przed bramką wydaniową.
+
 ## 2026-07-29 — Ścieżki, których nikt nie sprawdzał
 
 **Zapis wczytany dwa razy musi dać to samo.** Wczytywanie nie jest tylko

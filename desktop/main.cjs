@@ -11,6 +11,7 @@ function createMainWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: '#101319',
+    icon: path.join(__dirname, '..', 'assets', 'branding', 'pingpong-manager-icon-512.png'),
     autoHideMenuBar: true,
     show: false,
     webPreferences: {

@@ -19,6 +19,14 @@ The portable executable is written to `dist/`. An NSIS installer can be built
 with `npm run dist:win:installer`. Build outputs are intentionally ignored by
 Git.
 
+## Branding assets
+
+The Windows executable uses `assets/branding/pingpong-manager.ico`, which
+contains 16, 24, 32, 48, 64, 128 and 256 pixel layers. The desktop window and
+browser favicon use the opaque 512 pixel PNG. Approved source logo and itch.io
+artwork are kept alongside their derived release assets in `assets/branding/`
+and are included by the existing `assets/**/*` package rule.
+
 ## Verified baseline
 
 On 2026-07-28 the x64 portable target built successfully, its unpacked
@@ -28,7 +36,6 @@ known vulnerabilities with `npm audit --omit=dev`.
 
 ## Required before a public store build
 
-- Replace Electron's default icon with final game artwork.
 - Add Windows code signing; unsigned downloads trigger SmartScreen warnings.
 - Set final publisher/company metadata.
 - Test install, update, save persistence and uninstall on a clean Windows user.
