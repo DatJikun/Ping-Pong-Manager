@@ -23,14 +23,15 @@ function basePlayer(id, overrides = {}) {
   };
 }
 
-test('engineStats includes equipment mods (rubber + blade + sponge)', () => {
+test('engineStats includes contract rubber, blade, and sponge mods', () => {
   const g = boot(42);
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
 
-  // Player club gets PRO rubber tier; bare free agent has warehouse tier.
-  G.rubberTier = 2;
+  // The player club gets offensive contract rubber; the free agent gets no club package.
+  G.seasonHistory = [{ position: 1 }];
+  gp.selectTechPartnership('tp_pro', 1);
   const myId = G.myTeamId;
   const withGear = basePlayer(90001, {
     teamId: myId,
@@ -43,7 +44,7 @@ test('engineStats includes equipment mods (rubber + blade + sponge)', () => {
 
   const esGear = gp.engineStats(withGear);
   const esBare = gp.engineStats(bare);
-  // OFF blade + GRUBA sponge + PRO rubber should raise attack/serve vs bare.
+  // OFF blade + GRUBA sponge + contract rubber should raise attack/serve vs bare.
   assert.ok(esGear.atk > esBare.atk, `atk with gear ${esGear.atk} > bare ${esBare.atk}`);
   assert.ok(esGear.srv > esBare.srv, `srv with gear ${esGear.srv} > bare ${esBare.srv}`);
   // OVR display and engine must agree that gear helps.
@@ -55,7 +56,8 @@ test('better equipment measurably improves duel win rate at equal base stats', (
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay;
   const G = g.PPM.state.G;
-  G.rubberTier = 2;
+  G.seasonHistory = [{ position: 1 }];
+  gp.selectTechPartnership('tp_pro', 1);
 
   const strong = basePlayer(90101, {
     teamId: G.myTeamId,

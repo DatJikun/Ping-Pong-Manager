@@ -450,21 +450,22 @@ test('club overview and difficulty details follow the active locale', () => {
   assert.match(g.PPM.gameplay.difficultyEffectsSummary('hard').join(' '), /Kluby AI|Wolni zawodnicy|Negocjacje/i);
 });
 
-test('equipment and infrastructure actions report in the active locale', () => {
+test('equipment-contract and infrastructure actions report in the active locale', () => {
   const g = boot(3127);
   g.PPM.gameplay.newGame(0, 'PL');
   let message = '';
   g.toast = value => { message = value; };
-  g.PPM.gameplay.setRubberTier(1);
-  assert.match(message, /Club rubbers/i);
+  g.PPM.state.G.phase = 'season';
+  g.PPM.gameplay.selectTechPartnership('tp_local', 1);
+  assert.match(message, /preseason/i);
 
   g.PPM.state.G.infraHall = 1;
   g.PPM.gameplay.downgradeInfra('hall');
   assert.match(message, /Downgraded to/i);
 
   g.PPM.i18n.setLocale('pl');
-  g.PPM.gameplay.setRubberTier(0);
-  assert.match(message, /Okładziny klubowe/i);
+  g.PPM.gameplay.selectTechPartnership('tp_local', 1);
+  assert.match(message, /okresie przygotowawczym/i);
 });
 
 test('academy intake and Top 12 selection follow the active locale', () => {

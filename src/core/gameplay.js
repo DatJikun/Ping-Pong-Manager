@@ -505,17 +505,22 @@ function generateMatchdayNews(results,myId){
 }
 
 
-function getTechPartnership(){if(!store.G||!store.G.techPartnership)return null;return TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership)||null;}
+function getTechContract(){
+  const contract=store.G?.techContract;
+  return contract&&Number(contract.yearsLeft)>0?contract:null;
+}
+function getTechPartnership(){
+  const partnerId=getTechContract()?.partnerId;
+  return partnerId?TECH_PARTNERSHIPS.find(t=>t.id===partnerId)||null:null;
+}
 function getTechPartnershipBonus(teamId){
   if(!store.G)return{};
   if(teamId!==store.G.myTeamId)return{};
   return getTechPartnership()?.bonus||{};
 }
-// ── EQUIPMENT (owner research 2026-07-03): blade + sponge are the player's
-// personal setup (fitted to his style at generation); rubber freshness is a
-// CLUB-level tier (rubbers wear out → recurring seasonal cost; AI clubs get a
-// tier from their budget). Mods flow through getPlayerAdjustedStats, so OVR,
-// the match engine and every display see the same numbers.
+// ── EQUIPMENT: blade + sponge are personal setups; the player club's rubber
+// profile comes from its active technical contract. Mods flow through adjusted
+// stats, so OVR, the match engine and every display see the same numbers.
 function fitEquipmentToStyle(p){
   const st=p?.playStyle;
   const blade=(st==='DEFENDER'||st==='FISHER')?'DEF':st==='BLOCKER'?'ALL':st==='FH_LOOPER'?'OFF':(Math.random()<0.5?'OFF':'ALL');
@@ -551,25 +556,13 @@ function equipmentMods(p){
   const add=m=>{if(m)SK.forEach(k=>{if(m[k])out[k]=(out[k]||0)+m[k];});};
   add(EQUIPMENT.blades[p.equipment.blade]?.mods);
   add(EQUIPMENT.sponges[p.equipment.sponge]?.mods);
-  add(EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.mods);
+  if(p.teamId===store.G?.myTeamId)add(EQUIPMENT.rubberProfiles[getTechContract()?.rubberId]?.mods);
+  else if(p.teamId!==null&&p.teamId!==undefined)add(EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.mods);
   return out;
 }
-function setRubberTier(tier){
-  const tierData=EQUIPMENT.rubberTiers[tier];if(!tierData)return;
-  const label=t(`equipment.rubber.${tier}`);
-  const squad=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth').length;
-  const cost=tierData.costPerPlayer*squad;
-  if(tier>(store.G.rubberTier||0)&&cost>0){
-    if(!confirm(t('equipment.rubberConfirm',{label,costPerPlayer:formatCurrency(tierData.costPerPlayer),squad,cost:formatCurrency(cost)})))return;
-  }
-  store.G.rubberTier=tier;
-  toast(t('equipment.rubberSet',{label}));
-  render();updateHeader();persistGame();
-}
 function getPlayerAdjustedStats(p,teamId){
-  const bonus=getTechPartnershipBonus(teamId??p?.teamId);
   const eq=equipmentMods(p);
-  const out={};SK.forEach(s=>{out[s]=(p?.[s]||0)+(bonus[s]||0)+(eq[s]||0);});
+  const out={};SK.forEach(s=>{out[s]=(p?.[s]||0)+(eq[s]||0);});
   return out;
 }
 // OVR from the 6 realistic attributes (fh/bh lead, srv, ret, foot, men).
@@ -3721,6 +3714,7 @@ function applyGrowth(){
     if(p.teamId!==null)devMult*=(hallMultByTeam.get(p.teamId)||1);
     if(isYouthAcademy)devMult*=(1+(INFRA_ACADEMY[clamp(store.G.infraAcademy||0,0,INFRA_ACADEMY.length-1)].devBonus||0));
     devMult*=(sparringMultByTeam.get(p.teamId)||1); // sparring depth bonus
+    if(p.teamId===myId)devMult*=1+(getTechPartnership()?.developmentBonus||0);
     const roleMult=isYouthAcademy?0.8:1.0;
     applyAgingTo(p,devMult,roleMult);
     p.careerOvr=Math.max(p.careerOvr||0,ovrBase(p));
@@ -4903,22 +4897,26 @@ function endSeason(){
   principalLifecycle();
   applyGrowth();
   applyPendingPromotionRelegation();
-  // v15: Tech partnership cost/income
-  if(store.G.techPartnership){
-    const tp=TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership);
-    if(tp){
-      const delta=tp.costPerSeason;// negative = you pay, positive = they pay you
-      myTeam().budget+=delta;
-      const finance=ensureSeasonFinance();
-      if(finance)finance.techPartnership+=delta;
-      const lastBudgetEntry=(store.G.budgetLog||[])[(store.G.budgetLog||[]).length-1];
-      if(lastBudgetEntry&&lastBudgetEntry.season===store.G.season){
-        lastBudgetEntry.techPartnership=(lastBudgetEntry.techPartnership||0)+delta;
-        lastBudgetEntry.net=(lastBudgetEntry.net||0)+delta;
-      }
-      if(delta>0)safeLog(t('season.techPartnershipLog',{name:tp.name,amount:`+${formatCurrency(delta)}`}),'gd');
-      else if(delta<0)safeLog(t('season.techPartnershipLog',{name:tp.name,amount:formatCurrency(delta)}),'bd');
+  // A contract settles its signed cashflow once per season and remains active
+  // until all signed years have been consumed. Never re-read catalogue prices:
+  // existing careers retain the deal they actually signed.
+  const techContract=getTechContract();
+  if(techContract){
+    const delta=Number(techContract.annualCashflow)||0;
+    const partner=TECH_PARTNERSHIPS.find(entry=>entry.id===techContract.partnerId);
+    myTeam().budget+=delta;
+    const finance=ensureSeasonFinance();
+    if(finance)finance.techPartnership+=delta;
+    const lastBudgetEntry=(store.G.budgetLog||[])[(store.G.budgetLog||[]).length-1];
+    if(lastBudgetEntry&&lastBudgetEntry.season===store.G.season){
+      lastBudgetEntry.techPartnership=(lastBudgetEntry.techPartnership||0)+delta;
+      lastBudgetEntry.net=(lastBudgetEntry.net||0)+delta;
     }
+    if(delta>0)safeLog(t('season.techPartnershipLog',{name:partner?.name||techContract.partnerId,amount:`+${formatCurrency(delta)}`}),'gd');
+    else if(delta<0)safeLog(t('season.techPartnershipLog',{name:partner?.name||techContract.partnerId,amount:formatCurrency(delta)}),'bd');
+    techContract.yearsLeft=Math.max(0,Math.trunc(Number(techContract.yearsLeft)||0)-1);
+    if(techContract.yearsLeft>0)store.G.techPartnership=techContract.partnerId;
+    else{store.G.techContract=null;store.G.techPartnership=null;}
   }
   // v15: Staff aging and retirement
   const myId=store.G.myTeamId;
@@ -5016,7 +5014,6 @@ function endSeason(){
     }
   });
   store.G.season++;store.G.matchday=0;store.G.phase='preseason';store.G.top12MastersDone={1:false,2:false};store.G._top12Bonus=false;store.G.top12Entrant=null;
-  store.G.techPartnership=null;// reset - must choose new one each season
   store.G.teams.forEach(t=>{t.w=0;t.d=0;t.l=0;t.pts=0;t.gf=0;t.ga=0;t.pointsWon=0;t.pointsLost=0;});
   const l1Ids=store.G.teams.filter(t=>t.league===1).map(t=>t.id);
   const l2Ids=store.G.teams.filter(t=>t.league===2).map(t=>t.id);
@@ -5045,26 +5042,6 @@ function endSeason(){
   store.G.scoutPool=[...keptScouts,...(store.G.scoutPool||[]).filter(s=>!keptScoutIds.has(s.id))];
   store.G.prDirectorPool=(store.G.prDirectorPool||[]).filter(pr=>pr.teamId===null);
   replenishStaffPools(); // staff market ages, loses stale candidates, and receives a varied intake
-  // Rubber upkeep (owner 2026-07-03): fresh rubbers are a recurring cost. If the
-  // club can't afford the tier anymore, it silently drops one level (with a mail).
-  if(myTeam()){
-    const tier=EQUIPMENT.rubberTiers[clamp(store.G.rubberTier||0,0,EQUIPMENT.rubberTiers.length-1)];
-    const squad=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth').length;
-    const cost=(tier?.costPerPlayer||0)*squad;
-    if(cost>0){
-      if((myTeam().budget||0)>=cost){
-        myTeam().budget-=cost;
-        const fin=ensureSeasonFinance();if(fin)fin.brandCosts+=cost;
-        safeLog(t('season.rubberCost',{label:t(`equipment.rubber.${store.G.rubberTier||0}`),cost:formatCurrency(cost)}),'bd');
-      }else{
-        store.G.rubberTier=Math.max(0,(store.G.rubberTier||0)-1);
-        pushMail({fromKey:'mail.sportingDirector',subjectKey:'mail.rubberUnaffordableSubject',bodyKey:'mail.rubberUnaffordableBody',bodyParams:{
-          tier:t(`equipment.rubber.${Math.min(store.G.rubberTier+1,EQUIPMENT.rubberTiers.length-1)}`),
-          cost:formatCurrency(cost),lowerTier:t(`equipment.rubber.${store.G.rubberTier}`),
-        }});
-      }
-    }
-  }
   store.G.matchNomination=null; // nominations never carry across seasons
   generateInboxForMatchday(); // preseason mail (contract warnings etc.)
   if((store.G.infraAcademy||0)>0&&myTeam())store.G.academyProspects=genAcademyIntake(store.G.myTeamId,store.G.countryId);
@@ -5099,12 +5076,12 @@ function endSeason(){
     .then(()=>{persistGame();return flushCareerSave();});
 }
 
-// v13: Require exactly 3 sponsors to start season
-// v15: Require exactly 3 sponsors + tech partnership to start season
+// v13: Require exactly 3 sponsors. A multi-year equipment contract carries into
+// preseason and therefore fulfils the technical-partnership requirement itself.
 function startSeason(){
   const activeSponsors=store.G.sponsors.filter(s=>s.active).length;
   if(activeSponsors<3){toast(t('season.needSponsors',{count:activeSponsors}));return;}
-  if(!store.G.techPartnership){toast(t('season.needTechPartner'));return;}
+  if(!getTechContract()){toast(t('season.needTechPartner'));return;}
   if(!store.G.boardObjective){toast(t('season.needBoardGoal'));return;}
   store.G.phase='pre';ui.page='dash';render();updateHeader();
   toast(t('season.started',{season:store.G.season,division:myLeague()===1?'I':'II'}));
@@ -6036,15 +6013,49 @@ function sellPlayer(pid){
   buildMarket();render();updateHeader();persistGame();
 }
 
-function selectTechPartnership(tpId){
-  const tp=TECH_PARTNERSHIPS.find(t=>t.id===tpId);if(!tp)return;
+function techContractAnnualCashflow(partner,termYears){
+  const years=clamp(Math.round(Number(termYears)||1),1,3);
+  const base=Number(partner?.annualCashflow??partner?.costPerSeason)||0;
+  const multiplier=base<0?1-(years-1)*0.04:1+(years-1)*0.03;
+  return Math.round(base*multiplier);
+}
+function techContractBreakFee(contract){
+  if(!contract)return 0;
+  const yearsLeft=Math.max(0,Math.trunc(Number(contract.yearsLeft)||0));
+  const base=Math.max(2500,Math.abs(Number(contract.annualCashflow)||0)*0.75+1000*yearsLeft);
+  return Math.ceil(base/500)*500;
+}
+function terminateTechPartnership(){
+  const contract=getTechContract();
+  if(!contract)return false;
+  const fee=techContractBreakFee(contract);
+  if(!confirm(t('sponsor.techTerminationConfirm',{fee:formatCurrency(fee)})))return false;
+  const club=myTeam();
+  if(!club||(club.budget||0)<fee){toast(t('sponsor.techTerminationInsufficient',{fee:formatCurrency(fee)}));return false;}
+  club.budget-=fee;
+  const finance=ensureSeasonFinance();if(finance)finance.brandCosts+=fee;
+  store.G.techContract=null;store.G.techPartnership=null;
+  render();updateHeader();toast(t('sponsor.techTerminated',{fee:formatCurrency(fee)}));persistGame();
+  return true;
+}
+function selectTechPartnership(tpId,years=1){
+  const tp=TECH_PARTNERSHIPS.find(entry=>entry.id===tpId);if(!tp)return false;
+  if(store.G.phase!=='preseason'){toast(t('sponsor.techPreseasonOnly'));return false;}
+  if(store.G.techContract){toast(t('sponsor.techContractLocked'));return false;}
   const pres=calcPrestige();
-  if(pres<tp.prestige[0]||pres>tp.prestige[1]){toast(t('sponsor.prestigeMismatch',{prestige:pres}));return;}
-  store.G.techPartnership=tpId;
+  if(pres<tp.prestige[0]||pres>tp.prestige[1]){toast(t('sponsor.prestigeMismatch',{prestige:pres}));return false;}
+  const termYears=clamp(Math.round(Number(years)||1),1,3);
+  store.G.techContract={
+    partnerId:tp.id,rubberId:tp.rubberId,termYears,yearsLeft:termYears,
+    signedSeason:store.G.season,annualCashflow:techContractAnnualCashflow(tp,termYears),
+  };
+  store.G.techPartnership=tp.id;
   render();
-  const costStr=tp.costPerSeason>0?'+'+formatCurrency(tp.costPerSeason):formatCurrency(tp.costPerSeason);
+  const cashflow=store.G.techContract.annualCashflow;
+  const costStr=cashflow>0?'+'+formatCurrency(cashflow):formatCurrency(cashflow);
   toast(t('sponsor.partnershipSelected',{name:tp.name,bonus:tp.bonusDesc,cost:costStr}));
   persistGame();
+  return true;
 }
 
 // Sign a sponsor for a chosen term (1..maxYears). A longer commitment carries a
@@ -6360,7 +6371,7 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { sleep, rnd, compareLeagueTeams, leagueStandings, getLoanedOut, getLoanedIn, isSeniorPlayer, getClubSeniorPlayers, matchAvailability, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, facilityUpkeep, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioEffectProfile, physioFatigueMult, physioRestBonus, combinedRehabReduction, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, normalizeAutoSeasonConfig, getAutoSeasonConfig, setAutoSeasonConfig, selectAutoSeasonNomination, prepareAutoSeasonDecisions, endSeason, startSeason, aiSignPlayers, aiInfrastructureInvestmentChance, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, reserveRequestPolicy, settleMatchPromises, openMatchNomination, nomToggle, nomClear, nomBest, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, normalizeMatchSelection, getLastMatchSelection, bestMatchSelection, matchSelectionView, validateMatchSelection, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons, maintainAiRosters };
+window.PPM.gameplay = { sleep, rnd, compareLeagueTeams, leagueStandings, getLoanedOut, getLoanedIn, isSeniorPlayer, getClubSeniorPlayers, matchAvailability, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechContract, getTechPartnership, techContractAnnualCashflow, techContractBreakFee, terminateTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, facilityUpkeep, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, clubStaffQuality, genSponsorOffers, genScoutPool, staffMarketPolicy, freeAgentMarketPolicy, updateFreeAgentLifecycle, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioEffectProfile, physioFatigueMult, physioRestBonus, combinedRehabReduction, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, matchdayModalTitle, runMatchday, safeCloseMatchday, autoPlaySeason, normalizeAutoSeasonConfig, getAutoSeasonConfig, setAutoSeasonConfig, selectAutoSeasonNomination, prepareAutoSeasonDecisions, endSeason, startSeason, aiSignPlayers, aiInfrastructureInvestmentChance, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, showPostSeasonGala, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, reserveRequestPolicy, settleMatchPromises, openMatchNomination, nomToggle, nomClear, nomBest, nomConfirm, getMatchNomination, autoNomination, matchNominationRules, normalizeMatchSelection, getLastMatchSelection, bestMatchSelection, matchSelectionView, validateMatchSelection, getSparringProfile, getMatchPreparation, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, fitEquipmentToStyle, clubRubberTier, simulateBackgroundSeasons, maintainAiRosters };
 window.PPM.gameplay.offseasonFatigue=offseasonFatigue;
 window.PPM.gameplay.getLeagueStrengthTargets=getLeagueStrengthTargets;
 })();

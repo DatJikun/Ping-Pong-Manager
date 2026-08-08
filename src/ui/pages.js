@@ -11,7 +11,7 @@ const scoutSpecialtyLabel=s=>{
   return id?t(`scoutSpecialty.${id}`):t('squad.general');
 };
 const staffRoleLabel=type=>type==='coach'?t('staff.coach'):type==='physio'?t('staff.physio'):type==='psychologist'?t('staff.psychologist'):type==='scout'?t('staff.scout'):type==='pr'?t('staff.prDirector'):type;
-const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, getClubSeniorPlayers, matchAvailability, getLastMatchSelection, bestMatchSelection, matchSelectionView, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechContract, getTechPartnership, terminateTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, ratingProfile, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, awardLabel, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, leagueStandings } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -503,6 +503,7 @@ function pageStaff(){
 function pageClub(){
   const mt=myTeam();const pres=calcPrestige();const myL=myLeague();const sorted=leagueStandings(myL);const branding=getTeamBranding(mt);
   const techPartnership=getTechPartnership();
+  const techContract=getTechContract();
   function levelDots(cur,max){let s='<div class="infra-dots">';for(let i=0;i<max;i++)s+=`<div class="infra-dot${i<cur?' on':''}"></div>`;return s+'</div>';}
   function infraBlock(type,label,icon,levels,curLevel){
     const cur=levels[curLevel];const next=levels[curLevel+1];
@@ -543,18 +544,6 @@ function pageClub(){
       <div class="history-badge">${t('club.facilityLevel',{level:Math.max(store.G.infraHall||0,store.G.infraMed||0,store.G.infraAcademy||0,store.G.infraMerchandising||0)})}</div>
     </div>
   </div>
-  <div class="card"><div class="ct">${t('club.rubbers')}</div>
-    <div class="fs11 ink3 mb10">${t('club.rubberHint')}</div>
-    <div class="grid gtcfit220 gp10">
-    ${EQUIPMENT.rubberTiers.map(tier=>{const active=(store.G.rubberTier||0)===tier.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
-      <div class="b8 fs13">${gameDataText('rubber',tier.tier,'label',tier.label)}${active?` <span class="fs9 cg">${t('club.active')}</span>`:''}</div>
-      <div class="fs10 ink3" style="margin:4px 0 6px">${gameDataText('rubber',tier.tier,'desc',tier.desc)}</div>
-      <div class="fs10 mb8">${Object.keys(tier.mods).length?Object.entries(tier.mods).map(([k,v])=>`<b>${SL[k]||k} ${v>0?'+':''}${v}</b>`).join(' / '):t('club.noBonus')}</div>
-      <div class="fs10 ink3 mb8">${t('club.cost',{amount:`<b>${tier.costPerPlayer?t('club.perPlayer',{amount:formatCurrency(tier.costPerPlayer),total:formatCurrency(tier.costPerPlayer*squad)}):t('club.free')}</b>`})}</div>
-      ${active?'':`<button class="btn pr sm" onclick="setRubberTier(${tier.tier})">${t('club.set')}</button>`}
-    </div>`;}).join('')}
-    </div>
-  </div>
   <div class="g4 mb14">
     ${infraBlock('hall',t('club.trainingHall'),'',INFRA_HALL,store.G.infraHall||0)}
     ${infraBlock('med',t('club.medicalCentre'),'',INFRA_MED,store.G.infraMed||0)}
@@ -580,13 +569,14 @@ function pageClub(){
   </div>
   <div class="card"><div class="ct">${t('club.techPartnership')} <span class="fs9">${t('club.prestige',{value:pres})}</span></div>
   <div class="panel-muted mb12">${t('club.techHint')}</div>
-  ${techPartnership?`<div class="academy-inline-banner mb12">${t('club.activePartner',{name:`<b>${techPartnership.name}</b>`,bonus:gameDataText('tech',TECH_PARTNERSHIPS.findIndex(tp=>tp.id===techPartnership.id),'bonusDesc',techPartnership.bonusDesc),cost:formatCurrency(techPartnership.costPerSeason||0)})}</div>`:''}
+  ${techPartnership?`<div class="academy-inline-banner mb12">${t('club.activePartner',{name:`<b>${techPartnership.name}</b>`,bonus:gameDataText('tech',TECH_PARTNERSHIPS.findIndex(tp=>tp.id===techPartnership.id),'bonusDesc',techPartnership.bonusDesc),cost:formatCurrency(techContract?.annualCashflow||0)})}<div class="mt-8 fs10">${t('club.contractTerm',{left:techContract.yearsLeft,total:techContract.termYears})}</div><button class="btn rd sm mt-8" onclick="terminateTechPartnership()">${t('club.terminatePartnership')}</button></div>`:''}
   <div class="grid gp10" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
     ${TECH_PARTNERSHIPS.map((tp,tpIndex)=>{
-      const isActive=store.G.techPartnership===tp.id;
+      const isActive=techContract?.partnerId===tp.id;
       const inRange=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
       const seasonMoney=formatCurrency(tp.costPerSeason||0);
-      return`<div class="tech-card ${isActive?'active':''}" onclick="${isActive?'':'selectTechPartnership(\''+tp.id+'\')'}" style="opacity:${inRange||isActive?1:.6}">
+      const selectable=inRange&&!techContract;
+      return`<div class="tech-card ${isActive?'active':''}" style="opacity:${inRange||isActive?1:.6}">
         ${isActive?`<div class="brand-badge">${t('club.active')}</div>`:''}
         <div class="fs26 mb4">${tp.icon}</div>
         <div class="syne b7 fs16 mb4">${tp.name}</div>
@@ -594,7 +584,7 @@ function pageClub(){
         <div class="fs10 ink3 mb6">${t('club.prestigeRange',{min:tp.prestige[0],max:tp.prestige[1]})} · ${seasonMoney}</div>
         <div class="fs11 ink2">${gameDataText('tech',tpIndex,'desc',tp.desc)}</div>
         ${!inRange&&!isActive?`<div class="mt-8 fs10 cr">${t('club.requiresPrestige',{min:tp.prestige[0],max:tp.prestige[1]})}</div>`:''}
-        ${inRange&&!isActive?`<button class="btn pr sm w100 mt-10">${t('sponsors.sign')}</button>`:''}
+        ${selectable?`<div class="mt-10"><div class="fs10 ink3 mb6">${t('club.techTerm')}</div><div class="btn-row"><button class="btn pr sm" onclick="selectTechPartnership('${tp.id}',1)">${t('club.oneSeason')}</button><button class="btn bl sm" onclick="selectTechPartnership('${tp.id}',2)">${t('club.twoSeasons')}</button><button class="btn bl sm" onclick="selectTechPartnership('${tp.id}',3)">${t('club.threeSeasons')}</button></div></div>`:''}
       </div>`;}).join('')}
   </div></div>`;
 }
@@ -1203,12 +1193,13 @@ function pagePreseason(){
   const mt=myTeam();const offers=store.G.sponsorOffers||[];
   const activeSponsors=store.G.sponsors.filter(s=>s.active);
   const sponsorCount=activeSponsors.length;
-  const hasTech=!!store.G.techPartnership;
+  const techContract=getTechContract();
+  const hasTech=!!techContract;
   const pres=calcPrestige();
   if(!(store.G.boardObjectiveOptions||[]).length)store.G.boardObjectiveOptions=window.PPM.gameplay.generateBoardObjectiveChoices(store.G.myTeamId);
   const boardObjective=getBoardObjective();
   const boardOptions=store.G.boardObjectiveOptions||[];
-  const activeTp=store.G.techPartnership?TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership):null;
+  const activeTp=techContract?TECH_PARTNERSHIPS.find(t=>t.id===techContract.partnerId):null;
 
   const steps=[
     {id:'sponsors',label:t('pre.sponsors'),done:sponsorCount>=3,status:`${sponsorCount}/3`},
@@ -1245,9 +1236,9 @@ function pagePreseason(){
       <p class="why">${t('pre.techWhy',{prestige:`<b class="cgold">${pres}</b>`})}</p>
       <div class="mt-14">${TECH_PARTNERSHIPS.map(tp=>{
         const ok=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
-        const active=store.G.techPartnership===tp.id;
+        const active=techContract?.partnerId===tp.id;
         const cost=tp.costPerSeason;
-        return`<div class="opt ${active?'on':''}" style="${ok?'':'opacity:.45'}" onclick="${ok?`selectTechPartnership('${tp.id}');render()`:''}">
+        return`<div class="opt ${active?'on':''}" style="${ok?'':'opacity:.45'}" onclick="${ok&&!techContract?`selectTechPartnership('${tp.id}',1);render()`:''}">
           <div><b>${tp.name} <span class="pill ${active?'pos':''}">${t('pre.tier',{tier:tp.tier})}</span></b><p>${gameDataText('tech',TECH_PARTNERSHIPS.indexOf(tp),'bonusDesc',tp.bonusDesc)} · ${t('pre.prestigeRange',{min:tp.prestige[0],max:tp.prestige[1]})}</p></div>
           <div class="m ${cost>0?'pos':cost<0?'neg':''}">${cost>0?'+':''}${formatCurrency(cost)}<s>${t('pre.perSeason')}</s></div>
           <button class="btn ${active?'acc pr':''}" ${ok?'':'disabled'}>${t(active?'pre.chosen':ok?'pre.choose':'pre.prestigeTooLow')}</button>

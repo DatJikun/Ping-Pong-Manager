@@ -174,6 +174,10 @@ test('the squad page and dashboard use one ordered senior match squad', () => {
 test('dashboard resolves the selected technical partner and semantic news', () => {
   const g = bootWithPages(9010);
   g.PPM.i18n.setLocale('en');
+  g.PPM.state.G.techContract = {
+    partnerId: 'tp_national', rubberId: 'speed', termYears: 1, yearsLeft: 1,
+    signedSeason: 1, annualCashflow: -1200,
+  };
   g.PPM.state.G.techPartnership = 'tp_national';
   g.PPM.state.G.newsFeed = [{
     msgKey: 'news.newManager',

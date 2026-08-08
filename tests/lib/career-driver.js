@@ -107,7 +107,7 @@ class AutoManager {
   }
 
   pickTechPartnership() {
-    if (this.G.techPartnership) return;
+    if (this.G.techContract) return;
     const pres = this.gp.calcPrestige();
     const tiers = this.g.PPM.constants.TECH_PARTNERSHIPS;
     // costPerSeason is signed: negative means the club pays. Take the best deal
@@ -116,7 +116,7 @@ class AutoManager {
     // cannot field a team.
     const inRange = tiers.filter((t) => pres >= t.prestige[0] && pres <= t.prestige[1])
       .sort((a, b) => b.costPerSeason - a.costPerSeason);
-    if (inRange.length) this.gp.selectTechPartnership(inRange[0].id);
+    if (inRange.length) this.gp.selectTechPartnership(inRange[0].id, 1);
   }
 
   pickBoardObjective() {

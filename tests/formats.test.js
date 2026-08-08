@@ -122,26 +122,17 @@ test('equipment: setup fits the style and mods flow into adjusted OVR', () => {
   }
 });
 
-test('equipment: club rubber tier changes player mods and is charged at season end', () => {
+test('equipment: an active contract supplies the club rubber profile', () => {
   const g = boot(66);
   g.PPM.gameplay.newGame(0, 'PL');
   const gp = g.PPM.gameplay, G = g.PPM.state.G;
   const p = gp.getClubSeniorPlayers(G.myTeamId)[0];
   const before = gp.equipmentMods(p);
-  G.rubberTier = 2;
+  G.seasonHistory = [{ position: 1 }];
+  gp.selectTechPartnership('tp_pro', 1);
   const after = gp.equipmentMods(p);
-  assert.ok((after.fh || 0) > (before.fh || 0), 'PRO rubbers add FH');
-  // Seasonal charge: play a season, endSeason, check brandCosts in the ledger
-  const mt = G.teams.find((t) => t.id === G.myTeamId);
-  mt.budget = 500000;
-  playSeason(g);
-  G.matchday = 22;
-  gp.endSeason();
-  const squad = G.players.filter((x) => x.teamId === G.myTeamId && !x.retired && x.role !== 'youth').length;
-  assert.ok(G.seasonFinance || true, 'season rolled');
-  // After rollover the fresh seasonFinance is new; the charge landed on the budget:
-  assert.ok(mt.budget < 500000 + 10000000, 'budget accounted (smoke)');
-  assert.equal(G.rubberTier, 2, 'tier persists when affordable');
+  assert.ok((after.fh || 0) > (before.fh || 0), 'offensive contract rubber adds FH');
+  assert.equal(G.techContract.rubberId, 'offensive');
 });
 
 test('AI clubs get a rubber tier from their budget', () => {
