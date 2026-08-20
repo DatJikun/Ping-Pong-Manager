@@ -86,6 +86,12 @@ Still open, grouped for the owner to pick:
 
 Owner picks 1 / 2 / 3 (or a mix). Do not start until that call.
 
+### 2026-08-20 later — direction 1, talk first
+Owner chose **alive career** and the rule: **design conversation → owner accepts →
+then code**. No living-world implementation until a slice is signed off in chat.
+First slice on the table: inbox as the spine (see ROADMAP §4). Equipment, life
+events, scout fog and buildings wait behind that.
+
 ### 2026-08-20 — three new UI proposals (archive, not applied)
 Clickable skins Stół / Księga / Gabinet live under `prototypes/`. Avatars were not
 changed. Owner said none of them.
