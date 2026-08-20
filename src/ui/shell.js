@@ -147,6 +147,7 @@ function openSettings(){
       <div class="settings-label">Gra i pliki</div>
       <div class="settings-desc">Zapis do pliku, wczytanie kopii zapasowej albo własnej bazy klubów.</div>
       <div class="settings-segment">
+        <button class="btn sm" onclick="openGuide()">PRZEWODNIK</button>
         <button class="btn sm" onclick="saveGame()">ZAPISZ DO PLIKU</button>
         <button class="btn sm" onclick="document.getElementById('fi').click()">WCZYTAJ ZAPIS</button>
         <button class="btn sm" onclick="document.getElementById('dbi').click()">WCZYTAJ DATABASE</button>
@@ -203,56 +204,59 @@ function playPong(freq){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // GUIDE MODAL
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-function openGuide(){
+function openGuide(tab){
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   const SI=(window.PPM.constants&&window.PPM.constants.PLAYER_STYLE_INFO)||{};
   const STYLE_IDS=(window.PPM.constants&&window.PPM.constants.PLAYER_STYLES)||[];
   const styleLbl=x=>(SI[x]||{}).label||x;
+  if(tab)ui._guideTab=tab;
+  const cur=ui._guideTab||'play';
+  const tabBtn=(id,label)=>`<button class="btn sm ${cur===id?'pr':''}" onclick="openGuide('${id}')">${label}</button>`;
   const styleCard=id=>{const s=SI[id];if(!s)return'';
-    return `<div style="border:1px solid var(--b1);border-left:4px solid ${s.color};border-radius:6px;padding:8px 10px;margin:6px 0">
-      <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:13px;color:${s.color}">${s.label}</div>
-      <div class="fs10 ink3 mb4">Uchwyt: ${s.grip}</div>
-      <div class="mb4">${s.desc}</div>
-      <div class="fs12 cg">\u2713 ${s.strengths.join(' \u00b7 ')}</div>
-      <div class="fs12 cr">\u2715 ${s.weaknesses.join(' \u00b7 ')}</div>
-      <div class="fs12 mt-3">\u25b2 Dobry przeciw: <b>${s.beats.map(styleLbl).join(', ')}</b> &nbsp; \u25bc S\u0142aby przeciw: <b>${s.losesTo.map(styleLbl).join(', ')}</b></div>
+    return `<div style="border:1px solid var(--b1);border-left:4px solid ${s.color};padding:8px 10px;margin:6px 0">
+      <div class="b8 fs13" style="color:${s.color}">${s.label}</div>
+      <div class="fs11 ink3 mb4">${s.desc}</div>
+      <div class="fs11">Dobry przeciw: <b>${(s.beats||[]).map(styleLbl).join(', ')}</b> · Słaby przeciw: <b>${(s.losesTo||[]).map(styleLbl).join(', ')}</b></div>
     </div>`;};
-  const stylesSection=`<h3 class="h-sub">STYLE GRY</h3>
-  <p>Ka\u017cdy zawodnik ma jeden z 5 realnych styl\u00f3w tenisa sto\u0142owego. Style tworz\u0105 \u201epi\u0119ciok\u0105t kontr\u201d: ka\u017cdy jest <b>dobry przeciw 2</b> stylom i <b>s\u0142aby przeciw 2</b> innym. Dobieraj sk\u0142ad pod rywala \u2014 trener z pasuj\u0105c\u0105 synergi\u0105 dodatkowo wzmacnia dany styl.</p>
-  ${STYLE_IDS.map(styleCard).join('')}`;
+  let body='';
+  if(cur==='play'){
+    body=`<h3 class="h-sub">JAK GRAĆ</h3>
+    <p>Nie grasz piłek. Ustawiasz klub, żeby wygrywał. Sezon to pętla: <b>przedsezon → kolejki → rozliczenie</b>.</p>
+    <ol style="line-height:1.7;padding-left:18px">
+      <li><b>Przedsezon:</b> 3 sponsorów, partner techniczny, cel zarządu i <b>kontrakt okładzin (1–5 lat)</b>. Bez tego sezon się nie startuje.</li>
+      <li><b>Kolejka:</b> najpierw skrzynka (0–3 sprawy; cisza jest OK). Nierozstrzygnięta decyzja blokuje mecz. Potem nominacja stołów i mecz.</li>
+      <li><b>Skład:</b> zmęczenie i urazy rosną u tych, którzy grali. Rotuj. Rezerwa z gwarancją pierwszego składu napisze, jeśli łamie kontrakt.</li>
+      <li><b>Rynek:</b> OVR widać zawsze. Cechy obcych to pasma, peak to <b>?</b>, dopóki nie zeskautujesz, nie zagracie albo nie podpiszesz.</li>
+    </ol>
+    <p class="fs12 ink3">Cechy i style są w sąsiednich zakładkach. W karierze ten sam przewodnik jest pod „Pomoc” w szynie.</p>`;
+  }else if(cur==='match'){
+    body=`<h3 class="h-sub">CECHY → WYNIK MECZU</h3>
+    <p>Sześć liczb na karcie to nie ozdoba. Silnik składa je w <b>cztery kanały</b>, które widać na karcie pojedynku (ATK / ODB / SRV / GŁOWA) i w zdaniu „dlaczego ten wynik” po secie.</p>
+    <table class="tbl" style="width:100%"><thead><tr><th>Kanał</th><th>Z cech</th><th>Na korcie</th></tr></thead><tbody>
+      <tr><td><b>ATK</b></td><td>silniejsze skrzydło FH/BH</td><td>winnery, tempo ataku</td></tr>
+      <tr><td><b>ODB</b></td><td>noga + BH + odbiór (RET)</td><td>dłuższe wymiany, mniej dziur w bloku</td></tr>
+      <tr><td><b>SRV</b></td><td>serwis</td><td>asy, presja na odbiorcę</td></tr>
+      <tr><td><b>GŁOWA</b></td><td>MEN</td><td>błędy, gdy set jest na styku</td></tr>
+    </tbody></table>
+    <p>OVR to średnia ważona cech (FH i BH ważą najwięcej). Styl kontruje styl — nawet przy równym OVR. Zmęczenie &gt; 70% i niska forma obcinają to, co widzisz na karcie.</p>
+    <p class="fs12 ink3">Po meczu to samo zdanie ląduje w profilu zawodnika („ostatni pojedynek”).</p>`;
+  }else if(cur==='club'){
+    body=`<h3 class="h-sub">KLUB</h3>
+    <p><b>Okładziny:</b> rodzina (tensor / tacky / control / kipy) to tożsamość, nie drabinka mocy. Klasa tylko skaluje efekt. Zmiana tylko w przedsezonie, na 1–5 lat. Gwiazda może zażądać swoich — TAK to obietnica na przedsezon.</p>
+    <p><b>Skrzynka:</b> 0–3 sprawy. Rezerwa prosi o stół według roli w kontrakcie. Życie: uraz, wypalenie, rodzina, mentor, szum, złamana gwarancja.</p>
+    <p><b>Skaut:</b> 2000 € za pełny raport, potrzebny skaut na etacie. Mecz przeciwko komuś też odkrywa jego stół.</p>
+    <p><b>Budynki:</b> po poziomie 5 kupujesz projekty (trybuny, internat), nie kolejny plus do OVR. Akademia nie podnosi sufitu peak — tylko szansę na górę skali 56–92.</p>`;
+  }else{
+    body=`<h3 class="h-sub">STYLE</h3>
+    <p>Pięć stylów. Każdy bije dwa i przegrywa z dwoma. Dobieraj stół pod rywala; trener z tą samą synergią dokłada bonus.</p>
+    ${STYLE_IDS.map(styleCard).join('')}`;
+  }
   modal.innerHTML=`<div class="mt2">PRZEWODNIK <button class="close-btn" onclick="closeModal()">\u2715</button></div>
-  <div class="fs13 ink2" style="line-height:1.8">
-  ${stylesSection}
-  <h3 class="h-sub">PRESTI\u017b</h3>
-  <p>Presti\u017c (0-100) zale\u017cy od pozycji w tabeli z ostatnich 5 sezon\u00f3w. I Liga daje premi\u0119, II Liga kar\u0119. Wy\u017cszy presti\u017c = lepsze oferty sponsor\u00f3w, lepsze marki sprz\u0119towe i \u0142atwiejsze rozmowy z mocnymi zawodnikami. Dyrektor PR nie podbija ju\u017c presti\u017cu bezpo\u015brednio, tylko lekko poprawia stron\u0119 komercyjn\u0105 klubu.</p>
-  <h3 class="h-sub">PRESEASON</h3>
-  <p>Po wyborze klubu zawsze wchodzisz najpierw w faz\u0119 preseason. Przed 1. kolejk\u0105 musisz domkn\u0105\u0107 3 sponsor\u00f3w oraz partnera technicznego. W tym samym czasie zarz\u0105d wyznacza cel sezonu zale\u017cny od OVR Twojej dru\u017cyny, a realizacja celu daje premi\u0119 finansow\u0105 i chroni reputacj\u0119 trenera.</p>
-  <h3 class="h-sub">ZM\u0118CZENIE</h3>
-  <p>Ro\u015bnie po ka\u017cdym meczu (zale\u017cy od intensywno\u015bci trenera). Zawodnik zm\u0119czony > 70% dostaje kar\u0119 do OVR i ryzykuje kontuzj\u0119. Zm\u0119czenie spada o 8 pkt u zawodnik\u00f3w kt\u00f3rzy nie grali, o 30 pkt mi\u0119dzy sezonami.</p>
-  <h3 class="h-sub">KOMERCJA</h3>
-  <p>Strefa kibica i merchandising dzia\u0142aj\u0105 procentowo od aktualnej marketability klubu i zawodnik\u00f3w, wi\u0119c najmocniej korzystaj\u0105 na tym rozpoznawalne sk\u0142ady. Dyrektor PR daje tylko niewielki bonus do sprzeda\u017cy koszulek, bilet\u00f3w i ekspozycji sponsorskiej. Na najwy\u017cszym poziomie centrum medyczne skraca kontuzje o 50%, nie bardziej.</p>
-  <h3 class="h-sub">CECHY CHARAKTERU</h3>
-  <p><b>Wunderkind:</b>Ukryty wysoki peakOVR. Jedyna wskaz\u00f3wka o wybitnym talencie.<br>
-  <b>Gor\u0105ca G\u0142owa:</b> +ATK gdy wygrywa sety, ale MEN spada za ka\u017cdy przegrany set. Niestabilny pod presj\u0105.<br>
-  <b>Comeback Kid:</b>Bonus w decyduj\u0105cych setach (3:3 lub 4:4).<br>
-  <b>Taktyk:</b>Bonus przy wyr\u00f3wnanym starciu (r\u00f3\u017cnica OVR &lt; 8).<br>
-  <b>D\u0142ugowieczny:</b>Wolniejszy spadek statystyk po szczycie kariery.</p>
-  <h3 class="h-sub">EKONOMIA</h3>
-  <p>Doch\u00f3d z bilet\u00f3w generowany jest w meczach domowych, a sprzeda\u017c gad\u017cet\u00f3w ro\u015bnie wraz z rozpoznawalno\u015bci\u0105 sk\u0142adu. W sekcji ligi mo\u017cesz te\u017c ju\u017c \u015bledzi\u0107 kontrakty rywali i podpisywa\u0107 pre-kontrakty z zawodnikami, kt\u00f3rym zosta\u0142 tylko rok umowy.</p>
-  <h3 class="h-sub">SZTAB</h3>
-  <p>Trenerzy, fizjoterapeuci, psychologowie i skauci pracuj\u0105 na kontraktach z roczn\u0105 pensj\u0105. Mocnych pracownik\u00f3w mo\u017cesz podebra\u0107 z innych klub\u00f3w, ale wymaga to negocjacji i zwykle op\u0142aty za wykupienie ich z obecnej umowy. Skaut nie jest ju\u017c jednorazowym zakupem.</p>
-  <h3 class="h-sub">WYPO\u017bYCZENIA I DATABASE</h3>
-  <p>Wypo\u017cyczenia s\u0105 negocjowane z innym klubem: rywal mo\u017ce odrzuci\u0107 ofert\u0119 albo nie by\u0107 zainteresowany czasowym oddaniem gracza. Nie ma ju\u017c prostego arbitra\u017cu na pensjach. Na ekranie startowym mo\u017cesz tak\u017ce wczyta\u0107 plik database JSON z gotowym zestawem klub\u00f3w i zawodnik\u00f3w zamiast generowania losowego \u015bwiata.</p>
-  <h3 class="h-sub">TABELA LIGOWA</h3>
-  <p>22 kolejki, awans/spadek po 2 dru\u017cyny mi\u0119dzy I i II Lig\u0105. II Liga jest w pe\u0142ni symulowana z rozwojem zawodnik\u00f3w, transferami AI i nagrodami. Nazwy klub\u00f3w w lidze s\u0105 klikalne, wi\u0119c mo\u017cesz podejrze\u0107 histori\u0119, sk\u0142ad, sztab i infrastruktur\u0119 rywali.</p>
-  </div>
+  <div class="btn-row mb12 fwrap">${tabBtn('play','Jak grać')}${tabBtn('match','Cechy i mecz')}${tabBtn('club','Klub')}${tabBtn('styles','Style')}</div>
+  <div class="fs13 ink2" style="line-height:1.7">${body}</div>
   <div class="mt-14"><button class="btn pr" onclick="closeModal()">ZAMKNIJ</button></div>`;
   openModal();
 }
-
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-// NEWS FEED GENERATION
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 function updateHeader(){
   if(!store.G)return;

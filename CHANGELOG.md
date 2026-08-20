@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-20 — Przewodnik w menu i cechy na meczu
+
+- Menu startowe (i przycisk w nagłówku) otwiera krótki przewodnik: jak grać, cechy→mecz, klub, style.
+- Na karcie pojedynku widać cztery kanały (ATK / ODB / SRV / GŁOWA) i po secie zdanie, czemu padł taki wynik. To samo w profilu po meczu.
+
+## 2026-08-20 — Okładziny: przedsezon, kontrakt 1–5 lat, dłuższa adaptacja
+
+- Rodzinę i klasę zmieniasz tylko w przedsezonie. Klubowa rodzina to kontrakt na 1–5 lat.
+- Adaptacja po zmianie: 4–6 kolejek. Żądanie gwiazdy to obietnica na przedsezon, nie wymiana w kolejce.
+
+## 2026-08-20 — Rodziny okładzin i pełny skaut
+
+- Okładziny to teraz **rodzina + klasa**, nie drabinka „płać więcej = lepszy”. Tensor / tacky / control / krótki kip / długi kip mają plusy i minusy. Magazyn / turniej / PRO tylko skalują wybrany efekt i zużycie.
+- Świeżość spada po meczach. Zmiana rodziny = 2–4 kolejki adaptacji. Gwiazda może zażądać swoich okładzin w skrzynce. Kluby AI mają własną rodzinę.
+- Rynek: OVR widać zawsze. Cechy obcych to pasma, peak to `?`, dopóki nie zeskautujesz (2000 €, skaut na etacie), nie zagracie meczu albo nie podpiszesz. Własny skład jest zawsze odkryty.
+
+## 2026-08-20 — Katalog życia w skrzynce
+
+- Mały katalog: opieka po urazie, wypalenie, sprawa rodzinna, mentorship, szum okołoklubowy, złamana gwarancja pierwszego składu.
+- Nadal 0–3 sprawy, ciche kolejki, skutek TAK/NIE przed kliknięciem. Pauza (rodzina/wypalenie) wyłącza zawodnika z najbliższego meczu.
+
+## 2026-08-20 — Żywa kariera: skrzynka, budynki, akademia
+
+- Skrzynka: 0–3 sprawy, ciche kolejki OK. Rezerwa prosi o stół według roli w kontrakcie (projekt / rotacja / pierwszy skład), nie 50% przy formie ≥4. Skutek TAK/NIE widać przed kliknięciem.
+- Budynki: miękki sufit mocy na korcie. Po poziomie 5 kupujesz projekty (trybuny, internat, odnowa, merch), nie kolejny plus do OVR. Medycyna skraca i rzadzi uraz u tych, którzy grali. Nazwy bliżej klubu TT.
+- Akademia: ten sam zakres peak OVR (56–92) na każdym poziomie. Upgrade podnosi szansę na górę skali, nie sam sufit. Schema zapisów 22 (`infraProjects`).
+- Rynek: kolumna Peak — liczba u swoich, `?` u obcych (pełna mgła skauta później).
+
 ## 2026-07-28 — Fictional official database
 
 - Replaced shipped real-world club, sponsor and technical-partner identities

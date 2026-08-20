@@ -104,22 +104,23 @@ stress (can a youth-only club reach L1?).
 
 ---
 
-## IMPLEMENTED (2026-06-30) — agreed numbers, now shipped
-Owner approved the economy + levels below (4-fork decision); coded as a vertical
-slice with `tests/academy.test.js` (8 tests, suite 52 green) + a balance probe
-(`node tests/stress.js youth`).
+## IMPLEMENTED (2026-06-30, peakChance 2026-08-20)
 
-**Levels (6, single source of truth in `constants.js` `INFRA_ACADEMY`).** Reconciled
-a latent bug: `gameplay.js` held a 4-level copy that shadowed the UI's 6-level table,
-so upgrading past L3 read `INFRA_ACADEMY[4]=undefined` and crashed. Now one table:
+Owner approved the economy + levels; coded as a vertical slice with
+`tests/academy.test.js` + a balance probe (`node tests/stress.js youth`).
 
-| Lvl | Build | Upkeep/sezon | Intake OVR | Peak/ceiling | Dev bonus |
-|-----|-------|--------------|-----------|--------------|-----------|
-| 1 | €10k | €2k | 25–38 | 56–66 | +0% |
-| 2 | €25k | €5k | 30–45 | 60–72 | +5% |
-| 3 | €55k | €10k | 35–52 | 64–80 | +10% |
-| 4 | €90k | €18k | 38–58 | 68–86 | +16% |
-| 5 | €138k | €30k | 42–64 | 72–92 | +22% |
+**2026-08-20:** peak RANGE is **56–92 at every level**. Upgrade raises `peakChance`
+(0.08→0.58), intake OVR and `devBonus` — not a higher ceiling.
+
+**Levels (6, `constants.js` `INFRA_ACADEMY`):**
+
+| Lvl | Build | Upkeep/sezon | Intake OVR | Peak range | Szansa na 78+ | Dev bonus |
+|-----|-------|--------------|-----------|------------|---------------|-----------|
+| 1 | €10k | €2k | 25–38 | 56–92 | 8% | +0% |
+| 2 | €25k | €5k | 30–45 | 56–92 | 16% | +5% |
+| 3 | €55k | €10k | 35–52 | 56–92 | 28% | +10% |
+| 4 | €90k | €18k | 38–58 | 56–92 | 42% | +16% |
+| 5 | €138k | €30k | 42–64 | 56–92 | 58% | +22% |
 
 **Intake:** fixed **1–2 juniors/season** (level drives QUALITY, not throughput).
 Plus scout missions (unchanged) and the **mini-tournament** (€10k, 3 candidates,

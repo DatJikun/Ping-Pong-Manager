@@ -278,43 +278,39 @@ const TECH_PARTNERSHIPS=[
 const INFRA_HALL=[
   {level:0,name:'Brak hali',desc:'Treningi na podw\u00f3rku',trainingBonus:0,cost:0,capacity:50},
   {level:1,name:'Sala sportowa',desc:'+10% efektywno\u015bci trenera',trainingBonus:0.10,cost:12000,capacity:150},
-  {level:2,name:'Profesjonalna hala',desc:'+25% efektywno\u015bci trenera',trainingBonus:0.25,cost:28000,capacity:300},
-  {level:3,name:'Centrum olimpijskie',desc:'+50% efektywno\u015bci trenera',trainingBonus:0.50,cost:60000,capacity:500},
-  {level:4,name:'Narodowy kampus TT',desc:'+65% efektywno\u015bci trenera i lepsze przygotowanie meczowe',trainingBonus:0.65,cost:95000,capacity:850},
-  {level:5,name:'Hyper Performance Dome',desc:'+80% efektywno\u015bci trenera i topowe warunki przygotowa\u0144',trainingBonus:0.80,cost:145000,capacity:1300},
+  {level:2,name:'Hala klubowa',desc:'+25% efektywno\u015bci trenera',trainingBonus:0.25,cost:28000,capacity:300},
+  {level:3,name:'Hala z trybunami',desc:'+45% efektywno\u015bci trenera',trainingBonus:0.45,cost:60000,capacity:500},
+  {level:4,name:'Kampus klubowy',desc:'+55% efektywno\u015bci trenera, wi\u0119cej miejsc',trainingBonus:0.55,cost:95000,capacity:850},
+  {level:5,name:'Hala widowiskowa',desc:'Sufit przygotowa\u0144. Dalej kupujesz trybuny, nie moc na korcie.',trainingBonus:0.60,cost:145000,capacity:1300},
 ];
 
 const INFRA_MED=[
-  {level:0,name:'Brak centrum med.',desc:'Standardowy czas leczenia',injBonus:0,cost:0},
-  {level:1,name:'Gabinet medyczny',desc:'-25% czasu kontuzji',injBonus:0.25,cost:8000},
-  {level:2,name:'Centrum rehabilitacji',desc:'-50% czasu kontuzji',injBonus:0.50,cost:20000},
-  {level:3,name:'Centrum medycyny sportu',desc:'-50% czasu kontuzji + mniejsze ryzyko nawrotu',injBonus:0.50,cost:45000},
-  {level:4,name:'Laboratorium przeci\u0105\u017ce\u0144',desc:'-60% czasu kontuzji i wyra\u017anie mniejsze ryzyko urazu',injBonus:0.60,cost:78000},
-  {level:5,name:'Instytut regeneracji',desc:'-70% czasu kontuzji i pe\u0142ne zaplecze odnowy',injBonus:0.70,cost:118000},
+  {level:0,name:'Brak zaplecza med.',desc:'Standardowy czas i ryzyko urazu',injBonus:0,injRisk:0,cost:0},
+  {level:1,name:'Gabinet fizjo',desc:'Kr\u00f3tszy uraz, troch\u0119 rzadszy',injBonus:0.22,injRisk:0.12,cost:8000},
+  {level:2,name:'Centrum rehabilitacji',desc:'Wyra\u017anie kr\u00f3tszy i rzadszy uraz',injBonus:0.38,injRisk:0.22,cost:20000},
+  {level:3,name:'Medycyna sportu',desc:'Mniej nawrot\u00f3w, szybszy powr\u00f3t',injBonus:0.50,injRisk:0.34,cost:45000},
+  {level:4,name:'Pe\u0142ne zaplecze fizjo',desc:'Rzadkie urazy u tych, kt\u00f3rzy grali',injBonus:0.58,injRisk:0.44,cost:78000},
+  {level:5,name:'Klinika klubowa',desc:'Sufit medycyny. Dalej: sezonowa odnowa, nie kolejny plus do OVR',injBonus:0.64,injRisk:0.52,cost:118000},
 ];
 
-// Academy levels (single source of truth \u2014 gameplay.js reads THIS, not a copy).
-// Per level: potentialBonus (legacy ceiling nudge), cost (one-off build), upkeep
-// (NEW: charged every season-end), intake OVR band [ovrLo,ovrHi], peak/ceiling band
-// [ceilLo,ceilHi], devBonus (extra development multiplier in applyGrowth). Higher
-// level = better juniors AND faster development, but a heavier yearly upkeep \u2192
-// a real reason to upgrade, and a real reason to downgrade in a cash crisis.
+// Academy: the peak RANGE is the same at every level (56–92). Upgrade raises the
+// CHANCE of rolling the top of that range, plus intake OVR and development speed.
 const INFRA_ACADEMY=[
-  {level:0,name:'Brak akademii',desc:'Brak szkolenia junior\u00f3w',potentialBonus:0,cost:0,upkeep:0,ovrLo:0,ovrHi:0,ceilLo:0,ceilHi:0,devBonus:0},
-  {level:1,name:'Sekcja juniorska',desc:'Juniorzy OVR 25-38, peak do ~66',potentialBonus:0.15,cost:10000,upkeep:2000,ovrLo:25,ovrHi:38,ceilLo:56,ceilHi:66,devBonus:0},
-  {level:2,name:'Akademia m\u0142odzie\u017cowa',desc:'Juniorzy OVR 30-45, peak do ~72',potentialBonus:0.30,cost:25000,upkeep:5000,ovrLo:30,ovrHi:45,ceilLo:60,ceilHi:72,devBonus:0.05},
-  {level:3,name:'Elitarna akademia',desc:'Juniorzy OVR 35-52, peak do ~80',potentialBonus:0.50,cost:55000,upkeep:10000,ovrLo:35,ovrHi:52,ceilLo:64,ceilHi:80,devBonus:0.10},
-  {level:4,name:'Centrum rozwoju talent\u00f3w',desc:'Juniorzy OVR 38-58, peak do ~86',potentialBonus:0.64,cost:90000,upkeep:18000,ovrLo:38,ovrHi:58,ceilLo:68,ceilHi:86,devBonus:0.16},
-  {level:5,name:'Narodowa ku\u017ania mistrz\u00f3w',desc:'Juniorzy OVR 42-64, peak do ~92',potentialBonus:0.78,cost:138000,upkeep:30000,ovrLo:42,ovrHi:64,ceilLo:72,ceilHi:92,devBonus:0.22},
+  {level:0,name:'Brak akademii',desc:'Brak szkolenia junior\u00f3w',potentialBonus:0,cost:0,upkeep:0,ovrLo:0,ovrHi:0,ceilLo:56,ceilHi:92,peakChance:0,devBonus:0},
+  {level:1,name:'Sekcja juniorska',desc:'Juniorzy OVR 25-38. Peak 56–92, rzadko g\u00f3ra skali',potentialBonus:0.15,cost:10000,upkeep:2000,ovrLo:25,ovrHi:38,ceilLo:56,ceilHi:92,peakChance:0.08,devBonus:0},
+  {level:2,name:'Akademia m\u0142odzie\u017cowa',desc:'Juniorzy OVR 30-45. Cz\u0119\u015bciej wysoki peak',potentialBonus:0.30,cost:25000,upkeep:5000,ovrLo:30,ovrHi:45,ceilLo:56,ceilHi:92,peakChance:0.16,devBonus:0.05},
+  {level:3,name:'Elitarna akademia',desc:'Juniorzy OVR 35-52. Szansa na g\u00f3r\u0119 skali ro\u015bnie',potentialBonus:0.50,cost:55000,upkeep:10000,ovrLo:35,ovrHi:52,ceilLo:56,ceilHi:92,peakChance:0.28,devBonus:0.10},
+  {level:4,name:'Centrum rozwoju talent\u00f3w',desc:'Juniorzy OVR 38-58. Wysoki peak cz\u0119sty, nie pewny',potentialBonus:0.64,cost:90000,upkeep:18000,ovrLo:38,ovrHi:58,ceilLo:56,ceilHi:92,peakChance:0.42,devBonus:0.16},
+  {level:5,name:'Ku\u017ania klubu',desc:'Juniorzy OVR 42-64. Najwi\u0119ksza szansa na peak 78+, sufit ten sam',potentialBonus:0.78,cost:138000,upkeep:30000,ovrLo:42,ovrHi:64,ceilLo:56,ceilHi:92,peakChance:0.58,devBonus:0.22},
 ];
 
 const INFRA_MERCH=[
   {level:0,name:'Brak sklepu',desc:'Brak przychod\u00f3w z merchandisingu',income:0,cost:0},
   {level:1,name:'Stragan kibica',desc:'Skromne gad\u017cety. +3% od marketability klubu',income:0.03,cost:15000},
-  {level:2,name:'Sklep Online',desc:'Koszulki i pami\u0105tki. +6% od marketability klubu',income:0.06,cost:32000},
-  {level:3,name:'Megasklep',desc:'Pe\u0142na oferta. +10% od marketability klubu',income:0.10,cost:70000},
-  {level:4,name:'Platforma lifestyle',desc:'Kolekcje klubowe. +14% od marketability klubu',income:0.14,cost:105000},
-  {level:5,name:'Global fan store',desc:'Mi\u0119dzynarodowy sklep premium. +18% od marketability klubu',income:0.18,cost:150000},
+  {level:2,name:'Sklep klubowy',desc:'Koszulki i pami\u0105tki. +6% od marketability klubu',income:0.06,cost:32000},
+  {level:3,name:'Sklep + online',desc:'Pe\u0142na oferta. +10% od marketability klubu',income:0.10,cost:70000},
+  {level:4,name:'Sklep z kolekcjami',desc:'Kolekcje klubowe. +13% od marketability',income:0.13,cost:105000},
+  {level:5,name:'Dom kibica',desc:'Sufit merchu. Dalej: kolekcje sezonowe, nie +OVR',income:0.16,cost:150000},
 ];
 
 const PR_DIRECTORS=[
@@ -369,12 +365,21 @@ const EQUIPMENT={
     SREDNIA:{id:'SREDNIA',label:'Gąbka 1.9 mm',desc:'Kompromis prędkość/kontrola.',mods:{}},
     CIENKA:{id:'CIENKA',label:'Gąbka 1.5 mm',desc:'Kontrola i czucie — wybór defensorów i blokerów.',mods:{ret:1,men:1,fh:-1}},
   },
+  // Club grade (old "tier"): scales the chosen FAMILY. Money buys freshness/scale, not a free all-stats boost.
   rubberTiers:[
-    {tier:0,label:'Okładziny magazynowe',desc:'Zużyte, wielosezonowe — bez bonusu.',mods:{},costPerPlayer:0},
-    {tier:1,label:'Okładziny turniejowe',desc:'Świeże okładziny klasy turniejowej.',mods:{fh:1,srv:1},costPerPlayer:900},
-    {tier:2,label:'Okładziny PRO',desc:'Topowe, wymieniane co miesiąc jak u zawodowców.',mods:{fh:2,srv:1,ret:1},costPerPlayer:2600},
+    {tier:0,grade:0,label:'Magazynowe',desc:'Połowa efektu rodziny. Tanie, wolniej się zużywają.',scale:0.5,costPerPlayer:0,wear:4,mods:{}},
+    {tier:1,grade:1,label:'Turniejowe',desc:'Pełny efekt rodziny. Standard sezonu.',scale:1,costPerPlayer:900,wear:6,mods:{}},
+    {tier:2,grade:2,label:'PRO',desc:'+30% efektu rodziny, szybsze zużycie.',scale:1.3,costPerPlayer:2600,wear:8,mods:{}},
   ],
+  rubberFamilies:{
+    TENSOR:{id:'TENSOR',label:'Tensor speed',desc:'Prędkość forhendu. Krzywdzi blok i obronę.',mods:{fh:3,srv:1,ret:-2},suits:['FH_LOOPER','TWO_SIDED'],hurts:['BLOCKER','DEFENDER']},
+    TACKY:{id:'TACKY',label:'Tacky spin',desc:'Rotacja i serwis. Słabszy odbiór i noga.',mods:{srv:3,fh:1,foot:-1,ret:-1},suits:['TWO_SIDED','FH_LOOPER'],hurts:['BLOCKER']},
+    CONTROL:{id:'CONTROL',label:'All-round control',desc:'Odbiór i głowa. Zabiera ostrość ataku.',mods:{ret:2,men:1,fh:-1},suits:['BLOCKER','FISHER'],hurts:['FH_LOOPER']},
+    SHORT_PIPS:{id:'SHORT_PIPS',label:'Krótki kip',desc:'Kontra i blok. Boli napastników.',mods:{ret:2,men:2,srv:-1,fh:-1},suits:['BLOCKER','FISHER'],hurts:['FH_LOOPER','TWO_SIDED']},
+    LONG_PIPS:{id:'LONG_PIPS',label:'Długi kip / anti',desc:'Broń defensora. Prawie wszystkim innym szkodzi.',mods:{ret:4,men:1,fh:-3,srv:-2},suits:['DEFENDER'],hurts:['TWO_SIDED','FH_LOOPER','BLOCKER']},
+  },
 };
+EQUIPMENT.rubberGrades=EQUIPMENT.rubberTiers;
 
 // ── 10x name pools (owner 2026-07-02) ─────────────────────────────────────────
 // src/data/names.js (loaded just before this file) defines window.PPM_NAMES with

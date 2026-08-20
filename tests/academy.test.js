@@ -1,10 +1,10 @@
 // =============================================================================
 // tests/academy.test.js — the academy system (vertical slice).
 //
-// Locks the owner-agreed design: intake quality scales with the academy LEVEL
-// (not throughput), juniors carry a banded ceiling + small training-baked wage,
-// ~10% bust, the 3-group age curve (physical fades first, mental/technical hold),
-// per-level upkeep with a free downgrade escape valve, and youth sales.
+// Locks the owner-agreed design: intake OVR and peak CHANCE scale with academy
+// LEVEL (peak RANGE stays 56–92), juniors carry a ceiling + small training-baked
+// wage, ~10% bust, the 3-group age curve, per-level upkeep with a free downgrade,
+// and youth sales.
 // =============================================================================
 
 const { test } = require('node:test');
@@ -18,18 +18,24 @@ function freshGame(seed) {
 }
 const avg = (a) => a.reduce((s, x) => s + x, 0) / a.length;
 
-test('intake quality scales with the academy LEVEL (band, not a single optimum)', () => {
+test('academy level shares the same peak range and only raises the chance of a high peak', () => {
   const g = freshGame(11);
   const gp = g.PPM.gameplay, G = g.PPM.state.G, myId = G.myTeamId;
-  function batchCeil(lv) {
+  const A = g.PPM.constants.INFRA_ACADEMY;
+  assert.equal(A[1].ceilLo, A[5].ceilLo, 'peak floor is shared');
+  assert.equal(A[1].ceilHi, A[5].ceilHi, 'peak ceiling is shared');
+  assert.ok(A[5].peakChance > A[3].peakChance && A[3].peakChance > A[1].peakChance, 'peakChance rises with level');
+  function batch(lv) {
     G.infraAcademy = lv;
     const c = [];
-    for (let i = 0; i < 60; i++) c.push(gp.genYouthPlayer(myId, 'PL').ceiling);
-    return avg(c);
+    for (let i = 0; i < 180; i++) c.push(gp.genYouthPlayer(myId, 'PL').ceiling);
+    return c;
   }
-  const lo = batchCeil(1), mid = batchCeil(3), hi = batchCeil(5);
-  assert.ok(hi > mid && mid > lo, `ceiling rises with level (L1 ${lo.toFixed(0)} < L3 ${mid.toFixed(0)} < L5 ${hi.toFixed(0)})`);
-  assert.ok(hi - lo >= 8, 'the level gap is meaningful');
+  const lo = batch(1), hi = batch(5);
+  const share = (arr) => arr.filter((x) => x >= 78).length / arr.length;
+  assert.ok(share(hi) > share(lo) + 0.12, `L5 hits 78+ more often (${(share(hi) * 100).toFixed(0)}% vs L1 ${(share(lo) * 100).toFixed(0)}%)`);
+  assert.ok(avg(hi) > avg(lo), `mean still rises from chance, not a higher cap (L1 ${avg(lo).toFixed(0)} < L5 ${avg(hi).toFixed(0)})`);
+  assert.ok(Math.max(...lo) >= 78, 'a weak academy can still roll the top of the shared range');
 });
 
 test('a junior carries a banded ceiling and a small training-baked wage', () => {
@@ -107,7 +113,7 @@ test('selling a player brings in a transfer fee and moves him to an AI club', ()
 test('even a weak academy can occasionally unearth a gem far above its band', () => {
   const g = freshGame(21);
   const gp = g.PPM.gameplay, G = g.PPM.state.G, myId = G.myTeamId;
-  G.infraAcademy = 1; // weakest academy: band ceiling 56-66
+  G.infraAcademy = 1; // weakest academy: same 56–92 range, low peakChance
   const ceils = [];
   for (let i = 0; i < 400; i++) ceils.push(gp.genYouthPlayer(myId, 'PL').ceiling);
   const gems = ceils.filter((c) => c >= 78); // well above the L1 band

@@ -104,12 +104,9 @@ before we move on. Sizes are relative effort, not calendar dates.
 
 ### M2 — The living world (the soul, VISION pillar 3)
 *Goal: a career generates stories you'd tell someone.*
-- **Equipment rework** (`DESIGN-equipment.md`) — rubber *families* with real
-  trade-offs instead of a pay-more-get-more tier ladder; wear/freshness;
-  adaptation cost; player kit preferences (which become inbox threads); partner
-  contracts with terms instead of a flat buff. The owner called the current
-  system "a free boost of money, stats and marketability" — this is the fix, and
-  it gives AI clubs a visible identity too.
+- **Equipment rework** (`DESIGN-equipment.md`) — **scope M shipped** (families,
+  grades as scalers, wear, adaptation, preference, inbox kit demands, AI club
+  identities). Scope L (partner exclusivity / quota / R&D) still later.
 - **Inbox rewritten from the ground up** (see §4) — threads with senders,
   consequences, memory and escalation; a cadence governor so nobody asks the same
   thing twice.

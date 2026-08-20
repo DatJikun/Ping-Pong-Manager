@@ -1,8 +1,8 @@
 ﻿(function(){
 window.PPM = window.PPM || {};
-const { COUNTRIES, COUNTRY_IDS, MUNDIAL_PARTICIPANTS, MUNDIAL_INTERVAL, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
+const { COUNTRIES, COUNTRY_IDS, MUNDIAL_PARTICIPANTS, MUNDIAL_INTERVAL, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS, EQUIPMENT } = window.PPM.constants;
 const styleLabel=id=>(PLAYER_STYLE_INFO[id]||{}).label||id||'?';
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, buyInfraProject, infraProjectCost, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, setRubberFamily, playerIsScouted, observePlayer, statBand, peakDisplay, rubberFitCount, preferredFamilyFor } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -76,6 +76,7 @@ function pageDash(){
   if(store.G.phase==='preseason'){
     if(activeSponsors<3)preseasonMissing.push(`sponsorzy ${activeSponsors}/3`);
     if(!store.G.techPartnership)preseasonMissing.push('partner techniczny');
+    if((store.G.rubberContractYears||0)<=0)preseasonMissing.push('kontrakt okładzin');
   }
   const boardObjective=getBoardObjective();
   const boardProgress=boardObjective?sponsorProg(boardObjective):null;
@@ -351,6 +352,7 @@ function squadCard(p,boardList){
       <span class="k">Forma</span><span class="v">${seasonFormLabel(p)}</span>
       <span class="k">Bilans</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
     </div>
+    ${p.lastMatchMicro?.why?`<div class="fs10 ink3" style="margin:8px 12px 0;line-height:1.4">Ostatni mecz: ${p.lastMatchMicro.why}</div>`:''}
     <div class="pc-actions" onclick="event.stopPropagation()">
       ${p.role==='youth'?`<button class="btn go sm" onclick="promoteYouth(${p.id})">↑ REZERWA</button>`
         :p.role==='reserve'?`<button class="btn go sm" onclick="promoteToStarter(${p.id})">↑ SKŁAD</button>`:`<button class="btn sm" onclick="demoteToReserve(${p.id})">↓ REZERWA</button>`}
@@ -526,7 +528,21 @@ function pageClub(){
           <div class="syne b8 fs18 ${mt.budget<next.cost?'ink3':'cr'}">${next.cost.toLocaleString('pl')} €</div>
           <button class="btn pr sm" onclick="upgradeInfra('${type}')" ${mt.budget<next.cost?'disabled':''}>ULEPSZ</button>
         </div>
-      </div>`:`<div class="infra-next tac cg b7 fs11">✓ POZIOM MAKSYMALNY</div>`}
+      </div>`:(()=>{
+        const n=(store.G.infraProjects&&store.G.infraProjects[type])||0;
+        const cost=infraProjectCost(type);
+        const titles={hall:'Trybuny',med:'Sezonowa odnowa medyczna',academy:'Internat / dodatkowy junior',merch:'Kolekcja kibica'};
+        const blurb={hall:'Więcej miejsc. Nie podnosi mocy na korcie.',med:'Krótszy i rzadszy uraz w tym sezonie — bez plusa do OVR.',academy:'Szansa na dodatkowego juniora. Peak nadal 56–92.',merch:'Lekki plus merchu, nie OVR.'};
+        return `<div class="infra-next">
+        <div class="fs10 ink3 up ls1">Klub kompletny · projekt ${n+1}</div>
+        <div class="b7 fs12 mb2">${titles[type]||'Projekt klubowy'}</div>
+        <div class="fs11 ink3 mb10">${blurb[type]||'Kasa i tożsamość, nie kolejny plus do OVR.'}</div>
+        <div class="infra-buy">
+          <div class="syne b8 fs18 ${mt.budget<cost?'ink3':'cr'}">${cost.toLocaleString('pl')} €</div>
+          <button class="btn pr sm" onclick="buyInfraProject('${type}')" ${mt.budget<cost?'disabled':''}>KUP PROJEKT</button>
+        </div>
+      </div>`;
+      })()}
       ${curLevel>0?`<div class="tar mt-8"><button class="btn sm fs10 op8" onclick="downgradeInfra('${type}')" title="Cofnij o poziom (za darmo, bez zwrotu) — obniża roczne utrzymanie">↓ Cofnij poziom</button></div>`:''}
     </div>`;
   }
@@ -543,17 +559,34 @@ function pageClub(){
       <div class="history-badge">Poziom obiektu: ${Math.max(store.G.infraHall||0,store.G.infraMed||0,store.G.infraAcademy||0,store.G.infraMerchandising||0)} / 5</div>
     </div>
   </div>
-  <div class="card"><div class="ct">SPRZĘT — OKŁADZINY KLUBOWE</div>
-    <div class="fs11 ink3 mb10">Deska i gąbka to osobisty setup zawodnika (dopasowany do stylu — zobacz kartę zawodnika). Okładziny zużywają się: świeżość to koszt klubu płatny przy każdym rozliczeniu sezonu.</div>
+  <div class="card"><div class="ct">SPRZĘT — RODZINA OKŁADZIN</div>
+    ${(()=>{
+      const yearsLeft=store.G.rubberContractYears||0;
+      const pre=store.G.phase==='preseason';
+      const open=pre&&yearsLeft<=0;
+      const y=ui.rubberYears||3;
+      const yearPick=`<div class="flex aic gp8 mb10 fwrap"><span class="fs10 ink3 up ls1">Długość kontraktu</span>${[1,2,3,4,5].map(n=>`<button class="btn sm ${y===n?'on':''}" onclick="ui.rubberYears=${n};render()">${n} ${n===1?'rok':n===5?'lat':'lata'}</button>`).join('')}</div>`;
+      return `<div class="fs11 ink3 mb10">Rodzina ustala, <b>jak</b> gra skład. Klasa tylko skaluje efekt i zużycie. Zmiana tylko w <b>przedsezonie</b>, na kontrakt 1–5 lat. Adaptacja 4–6 kolejek. Dopasowanie: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji.</div>
+    <div class="fs12 mb10">${yearsLeft>0?`Kontrakt: <b>${EQUIPMENT.rubberFamilies[store.G.rubberFamily||'TENSOR']?.label||'?'}</b> · zostało <b>${yearsLeft}</b> ${yearsLeft===1?'sezon':'sezony'}.`:'Brak podpisanego kontraktu — wybierz rodzinę i długość, zanim wystartuje sezon.'}</div>
+    ${pre?yearPick:`<div class="fs10 ink3 mb10">Okno zmian otwiera się w przedsezonie${yearsLeft>0?' (inna rodzina po wygaśnięciu kontraktu)':''}.</div>`}
+    <div class="grid gtcfit220 gp10 mb12">
+    ${Object.values(EQUIPMENT.rubberFamilies).map(f=>{const active=(store.G.rubberFamily||'TENSOR')===f.id;const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' / ');const canSign=pre&&(open||active);return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
+      <div class="b8 fs13">${f.label}${active?' <span class="fs9 cg">KLUBOWA</span>':''}</div>
+      <div class="fs10 ink3" style="margin:4px 0 6px">${f.desc}</div>
+      <div class="fs10 mb8"><b>${mods}</b></div>
+      ${canSign?`<button class="btn pr sm" onclick="setRubberFamily('${f.id}',ui.rubberYears||3)">${active?(yearsLeft>0?'PRZEDŁUŻ':'PODPISZ'):'PODPISZ KONTRAKT'}</button>`:(pre?`<div class="fs10 ink3">Zablokowane do końca kontraktu</div>`:'')}
+    </div>`;}).join('')}
+    </div>
+    <div class="fs10 ink3 up ls1 mb8">Klasa / świeżość (koszt sezonowy${pre?'':' · zmiana w przedsezonie'})</div>
     <div class="grid gtcfit220 gp10">
     ${EQUIPMENT.rubberTiers.map(t=>{const active=(store.G.rubberTier||0)===t.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
       <div class="b8 fs13">${t.label}${active?' <span class="fs9 cg">AKTYWNE</span>':''}</div>
       <div class="fs10 ink3" style="margin:4px 0 6px">${t.desc}</div>
-      <div class="fs10 mb8">${Object.keys(t.mods).length?Object.entries(t.mods).map(([k,v])=>`<b>${SL[k]||k} ${v>0?'+':''}${v}</b>`).join(' / '):'Bez bonusu'}</div>
       <div class="fs10 ink3 mb8">Koszt: <b>${t.costPerPlayer?`${t.costPerPlayer.toLocaleString('pl')} €/zaw. (${(t.costPerPlayer*squad).toLocaleString('pl')} €/sezon)`:'darmowe'}</b></div>
-      ${active?'':`<button class="btn pr sm" onclick="setRubberTier(${t.tier})">USTAW</button>`}
+      ${pre&&!active?`<button class="btn pr sm" onclick="setRubberTier(${t.tier})">USTAW KLASĘ</button>`:''}
     </div>`;}).join('')}
-    </div>
+    </div>`;
+    })()}
   </div>
   <div class="g4 mb14">
     ${infraBlock('hall','HALA TRENINGOWA','',INFRA_HALL,store.G.infraHall||0)}
@@ -798,6 +831,7 @@ function pageMarket(){
       kind:'player',role:'player',id:p.id,data:p,item,
       name:p.name,nat:(p.nationality||store.G.countryId||'PL'),age:p.age||0,
       ovr:o,stars:ovrStars(o),
+      peak:peakDisplay(p),
       teamId:p.teamId,club:p.teamId!==null?teamName(p.teamId):'',
       series:p.teamId!==null?(teamLeague(p.teamId)===1?'I Liga':'II Liga'):'',
       salary:isLoan?Math.round((p.salary||0)*(item.share||0.6)):contractExpect(p).salary,
@@ -820,6 +854,7 @@ function pageMarket(){
       kind:'staff',role:s.type,id:s.id,data:s,
       name:s.name,nat:(s.nationality||store.G.countryId||'PL'),age:s.age||0,
       ovr:o,stars:ovrStars(o),
+      peak:s.teamId===store.G.myTeamId?staffCeiling(s):'?',
       teamId:s.teamId,club:s.teamId!==null?teamName(s.teamId):'',
       series:s.teamId!==null?(teamLeague(s.teamId)===1?'I Liga':'II Liga'):'',
       salary:s.salary||0,fee:0,until:s.contractYears||0,
@@ -847,7 +882,7 @@ function pageMarket(){
     return true;
   });
   const sortVal=r=>({
-    name:r.name,nat:r.nat,age:r.age,ovr:r.ovr,club:r.club||'\uffff',
+    name:r.name,nat:r.nat,age:r.age,ovr:r.ovr,peak:typeof r.peak==='number'?r.peak:-1,club:r.club||'\uffff',
     series:r.series||'\uffff',salary:r.salary,fee:r.fee,until:r.until,
   })[sortKey]??r.ovr;
   market.sort((a,b)=>{
@@ -872,8 +907,8 @@ function pageMarket(){
           <div><div class="b7">${p.name}</div><div class="fs10 ink3">${teamName(p.teamId)} / ${p.age}l / ${styleLabel(p.playStyle)}</div></div>
           <div class="syne b8 fs28 cr">${ovr(p)}</div>
         </div>
-        <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${p[s]}</div></div>`).join('')}</div>
-        <div class="fs11 ink3">Pensja oczekiwana: ${contractExpect(p).salary.toLocaleString('pl')} € / punkty+ ${(p.seasonPointsWon||0)} / punkty- ${(p.seasonPointsLost||0)}</div>
+        <div class="grid gtc4 gp6 mb8">${SK.map(s=>`<div class="pd6 bbs3l tac"><div class="fs9 ink3">${SL[s]}</div><div class="b7">${statBand(p,s)}</div></div>`).join('')}</div>
+        <div class="fs11 ink3">Peak: <b>${peakDisplay(p)}</b> / pensja: ${contractExpect(p).salary.toLocaleString('pl')} € / punkty+ ${(p.seasonPointsWon||0)} / punkty- ${(p.seasonPointsLost||0)}</div>
       </div>`).join('')}
     </div>
   </div>`:'';
@@ -939,6 +974,7 @@ function pageMarket(){
         ${th('nat','Kraj')}
         ${th('age','Wiek','n')}
         ${th('ovr','Ocena')}
+        ${th('peak','Peak')}
         ${th('club','Klub')}
         ${th('series','Rozgrywki')}
         ${th('salary','Pensja','n')}
@@ -957,6 +993,7 @@ function pageMarket(){
           <td><span class="nat">${r.nat}</span></td>
           <td class="n dim">${r.age||'-'}</td>
           <td>${starsHtml(r.stars)} <span class="dim fs11">${r.ovr}</span></td>
+          <td class="n ${r.peak==='?'?'dim':''}">${r.peak}</td>
           <td class="${r.club?'':'dim'}">${r.club||'-'}</td>
           <td class="dim">${r.series||'-'}</td>
           <td class="n">${money(r.salary)}</td>
@@ -965,7 +1002,7 @@ function pageMarket(){
           <td><span class="pill ${r.dealTone}">${r.deal}</span></td>
           <td class="n">${r.action}</td>
         </tr>`;
-      }).join('')||`<tr><td colspan="12"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
+      }).join('')||`<tr><td colspan="13"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
       </tbody>
     </table>
   </div>`;
@@ -1022,6 +1059,7 @@ function pageInbox(){
       </div>
       <div class="fs10 ink3" style="margin:2px 0 6px">Od: ${m.from||'Klub'}</div>
       <div class="fs12 ink2 lh155">${m.body||''}</div>
+      ${m.effectsYes||m.effectsNo?`<div class="fs11 mt-8 ink3">TAK: ${m.effectsYes||'—'} · NIE: ${m.effectsNo||'—'}</div>`:''}
       ${m.type==='decision'?(isPending?`<div class="btn-row mt-10" onclick="event.stopPropagation()">
         <button class="btn go sm" onclick="answerMail(${m.id},true)">✔ TAK</button>
         <button class="btn sm bcr cr" onclick="answerMail(${m.id},false)">✘ NIE</button>
@@ -1443,6 +1481,7 @@ function renderMainMenu(){
       ${menuBtn('IMPORTUJ KARIERĘ (.json)','menuFilePicker()','','tworzy osobną karierę')}
       ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'','wkr&oacute;tce')}
       ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'','wkr&oacute;tce')}
+      ${menuBtn('PRZEWODNIK','openGuide()','','jak grać, cechy, klub')}
       ${menuBtn('OPCJE','openSettings()','')}
       ${menuBtn('WYJD&#377; Z GRY','menuExit()','')}
     </div>

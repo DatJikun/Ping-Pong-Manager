@@ -2,11 +2,10 @@
 
 Map of every doc, what it's for, and how fresh it is. Read in this order.
 
-## Quick facts — what is ACTUALLY shipped right now (2026-07-24)
-- **Headless test harness + 112 passing tests** (`npm test`) + long-career probe
+## Quick facts — what is ACTUALLY shipped right now (2026-08-20)
+- **Headless test harness + `npm test`** + long-career probe
   (`node tests/stress.js`) + academy balance probe (`node tests/stress.js youth`).
-- **Academy** (vertical slice): 6 levels, age-curve dev, youth sales/loans, challenge
-  club Akademia Orłów. See `DESIGN-academy.md`.
+- **Academy** (vertical slice): 6 levels, shared peak range 56–92 (upgrade raises chance, not the cap), age-curve dev, youth sales/loans, challenge club Akademia Orłów. See `DESIGN-academy.md`.
 - **5 playing styles** with **live counter-pentagon** (equal-stat counters ~57–65%;
   large OVR favorites still beat weak counters). See styles tests.
 - **EUR economy**: convex wage curves, no renewal shock; AI real income + wage
@@ -16,7 +15,7 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 - **Traits:** expanded catalog (incl. FAST_FEET, SPIN_WIZARD, WALL, CLUTCH, MENTOR,
   BIG_MATCH) with **match/growth effects** (not flavor-only).
 - **Staff impact:** coach development stronger; physio fatigue/injury; psychologist
-  morale + clutch. Scout fog / fitness coach / analyst still unbuilt.
+  morale + clutch. Scout fog (bands + observe) is in. Fitness coach / analyst still unbuilt.
 - **AI parity:** hall training, youth promote at 21, injuries for both clubs;
   soft budget→OVR retune (half-gap only when clearly under target).
 - **Avatars (2026-07-24 rewrite):** real head/neck/shoulder construction, hairline
@@ -26,9 +25,10 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 - **UI (2026-07-24 pass):** surfaces are theme tokens → **dark theme actually works**;
   header regrouped (no truncation); Squad / Dashboard / Budget / Club / Market /
   Staff / Preseason decluttered; one market row component for players + staff.
-- **Principals / club traits / inbox** (partial living world).
-- **Still open:** deeper living world (life-events, poaching drama, bankruptcy),
-  scout stat-band fog, Steam wrap, `gameplay.js` split, full next-year fee
+- **Principals / club traits / inbox** (quiet rounds, reserve-by-contract, club projects, life-event catalogue, kit demands).
+- **Equipment families** (scope M: identity + wear + adaptation; grade is a scaler, not a free boost).
+- **Scout fog:** OVR always visible; unscouted stats are bands and peak is `?` until observe / play / sign.
+- **Still open:** partner kit-deal terms (scope L), poaching/bankruptcy, Steam wrap, `gameplay.js` split, full next-year fee
   rebalance (owner: not buy-now transfer meta). See `HANDOFF.md` + `AUDIT-*.md`.
 
 ## Read first (current, authoritative)

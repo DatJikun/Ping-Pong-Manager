@@ -145,7 +145,7 @@ function persistGame(){
 }
 // Bump when save layout changes in a non-idempotent way. Idempotent if(!field)
 // guards still run; schemaVersion records the highest migration floor applied.
-const SAVE_SCHEMA_VERSION=21;
+const SAVE_SCHEMA_VERSION=22;
 function validateSaveObject(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Zapis musi być obiektem.');
   if(!Number.isFinite(parsed.season))throw new Error('Zapis nie ma poprawnego numeru sezonu.');
@@ -527,6 +527,12 @@ function migrateLoadedGame(parsed){
   // The player's infra levels are authoritative on game.infra*; mirror them onto
   // the team object so club-strength scoring and the team-overview panel (which
   // read team.infra*, like they do for AI clubs) see the real levels.
+  if(!game.rubberFamily)game.rubberFamily='TENSOR';
+  if(typeof game.rubberContractYears!=='number')game.rubberContractYears=0;
+  if(!game.infraProjects||typeof game.infraProjects!=='object')game.infraProjects={hall:0,med:0,academy:0,merch:0};
+  ['hall','med','academy','merch'].forEach(k=>{if(typeof game.infraProjects[k]!=='number')game.infraProjects[k]=0;});
+  if(!game.lifeFlags||typeof game.lifeFlags!=='object')game.lifeFlags={scandalSeason:0};
+  if(typeof game.lifeFlags.scandalSeason!=='number')game.lifeFlags.scandalSeason=0;
   const myTeamObj=(game.teams||[]).find(t=>t.id===game.myTeamId);
   if(myTeamObj){
     myTeamObj.infraHall=game.infraHall||0;
