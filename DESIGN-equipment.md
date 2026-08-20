@@ -67,8 +67,9 @@ small extra penalty against blockers. Gear becomes part of the counter game.
 - Physio/facility level can slow wear slightly (existing systems get a new use).
 
 ### C. Adaptation cost
-- Changing a player's family costs **2–4 rounds at −2 to the affected stats**
-  while he adapts. Younger players and high-MEN players adapt faster.
+- Changing a player's family costs **4–6 rounds at −2 to the affected stats**
+  while he adapts (was 2–4; owner 2026-08-20: a bit longer). Younger players and high-MEN players adapt faster.
+- Family and grade changes are **preseason-only**. The club family is a **1–5 year contract**.
 - Prevents free per-round min-maxing and makes a kit switch a *decision*.
 
 ### D. Player preference

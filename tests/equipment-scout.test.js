@@ -116,7 +116,7 @@ test('playing the opponent reveals their match squad', () => {
   assert.equal(gp.playerIsScouted(oppPlayed), true);
 });
 
-test('kit demand in the inbox switches family and starts adaptation', () => {
+test('kit demand in the inbox waits for preseason instead of swapping mid-season', () => {
   const g = fresh(87);
   const gp = g.PPM.gameplay, G = g.PPM.state.G;
   const p = ownStarter(G);
@@ -126,9 +126,31 @@ test('kit demand in the inbox switches family and starts adaptation', () => {
   gp.pushMail({ type: 'decision', from: p.name, subject: 'kit', decision: { kind: 'kitDemand', playerId: p.id, familyId: 'LONG_PIPS' } });
   const mail = G.inbox[G.inbox.length - 1];
   gp.answerMail(mail.id, true);
-  assert.equal(p.equipment.family, 'LONG_PIPS');
-  assert.ok((p.equipment.adaptLeft || 0) >= 2);
+  assert.equal(p.equipment.family, 'TENSOR', 'no mid-season swap');
+  assert.equal(p._promisedFamily, 'LONG_PIPS');
   assert.ok(p.morale > morale);
+  gp.applyPromisedKitChanges();
+  assert.equal(p.equipment.family, 'LONG_PIPS');
+  assert.ok((p.equipment.adaptLeft || 0) >= 4);
+});
+
+test('club rubber family is a 1-5 year preseason contract', () => {
+  const g = fresh(89);
+  const gp = g.PPM.gameplay, G = g.PPM.state.G;
+  const p = ownStarter(G);
+  G.phase = 'pre';
+  G.rubberContractYears = 0;
+  gp.setRubberFamily('CONTROL', 3);
+  assert.equal(G.rubberFamily, 'TENSOR', 'blocked in-season');
+  G.phase = 'preseason';
+  gp.setRubberFamily('CONTROL', 3);
+  assert.equal(G.rubberFamily, 'CONTROL');
+  assert.equal(G.rubberContractYears, 3);
+  assert.ok((p.equipment.adaptLeft || 0) >= 4 && (p.equipment.adaptLeft || 0) <= 6);
+  gp.setRubberFamily('LONG_PIPS', 1);
+  assert.equal(G.rubberFamily, 'CONTROL', 'other family locked until expiry');
+  gp.setRubberFamily('CONTROL', 5);
+  assert.equal(G.rubberContractYears, 5, 'same family can be extended');
 });
 
 test('newGame gives AI clubs a rubber family identity', () => {

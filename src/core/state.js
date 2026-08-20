@@ -528,6 +528,7 @@ function migrateLoadedGame(parsed){
   // the team object so club-strength scoring and the team-overview panel (which
   // read team.infra*, like they do for AI clubs) see the real levels.
   if(!game.rubberFamily)game.rubberFamily='TENSOR';
+  if(typeof game.rubberContractYears!=='number')game.rubberContractYears=0;
   if(!game.infraProjects||typeof game.infraProjects!=='object')game.infraProjects={hall:0,med:0,academy:0,merch:0};
   ['hall','med','academy','merch'].forEach(k=>{if(typeof game.infraProjects[k]!=='number')game.infraProjects[k]=0;});
   if(!game.lifeFlags||typeof game.lifeFlags!=='object')game.lifeFlags={scandalSeason:0};

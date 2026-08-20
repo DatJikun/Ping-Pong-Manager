@@ -34,9 +34,10 @@ Liczby z `DESIGN-equipment.md`, zaakceptowane przez właściciela.
 
 - Pięć rodzin: TENSOR / TACKY / CONTROL / SHORT_PIPS / LONG_PIPS. Każda ma plusy **i** minusy.
 - Klasa magazyn / turniej / PRO tylko **skaluje** wybraną rodzinę (×0,5 / ×1 / ×1,3) i tempo zużycia. Drożej ≠ zawsze lepiej.
-- Świeżość 100→0 przy meczach. Zużyte okładziny słabną; dno to zero efektu, nie kara poniżej magazynu.
-- Zmiana rodziny: 2–4 kolejki adaptacji (−2 do zmienionych cech).
-- Preferencja ze stylu. Trafienie: +1 MEN. Gwiazda (OVR ≥ 74) może zażądać swojej rodziny w skrzynce.
+- Zmiana rodziny i klasy **tylko w przedsezonie**. Klubowa rodzina to **kontrakt 1–5 lat**; inna rodzina po wygaśnięciu.
+- Świeżość 100→0 przy meczach (wymiana świeżości w sezonie zostaje). Zużyte okładziny słabną; dno to zero efektu.
+- Zmiana rodziny: **4–6 kolejek** adaptacji (−2 do zmienionych cech).
+- Preferencja ze stylu. Trafienie: +1 MEN. Gwiazda (OVR ≥ 74) może zażądać swoich okładzin — TAK to **obietnica na przedsezon**, nie zmiana w kolejce.
 - Kluby AI dostają rodzinę z większości starterów.
 
 **Nie w tym zakresie:** klauzule partnera (wyłączność, quota, R&D) oraz ręczne deski/gąbki (zostaje `fitEquipmentToStyle`).
@@ -55,7 +56,7 @@ Mail tylko gdy sprawa dojrzała. Nadal 0–3 na kolejkę, cisza OK, skutek przed
 | Mentorship | Weteran + junior, raz na sezon | Extra stół (zmęczenie weta, forma juniora) / odpuszczamy |
 | Sprawa rodzinna | Lojalny senior, rzadko | Pauza meczu / gra, lojalność spada |
 | Złamana gwarancja składu | Kontrakt „pierwszy skład”, a jest w rezerwie | Obietnica stołu / serio zła krew (eskalacja, max 2 listy) |
-| Żądanie okładzin | Gwiazda na obcej rodzinie | Wymiana + adaptacja / zła krew |
+| Żądanie okładzin | Gwiazda na obcej rodzinie | Obietnica wymiany w przedsezonie / zła krew |
 
 ---
 

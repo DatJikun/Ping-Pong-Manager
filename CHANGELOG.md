@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-20 — Okładziny: przedsezon, kontrakt 1–5 lat, dłuższa adaptacja
+
+- Rodzinę i klasę zmieniasz tylko w przedsezonie. Klubowa rodzina to kontrakt na 1–5 lat.
+- Adaptacja po zmianie: 4–6 kolejek. Żądanie gwiazdy to obietnica na przedsezon, nie wymiana w kolejce.
+
 ## 2026-08-20 — Rodziny okładzin i pełny skaut
 
 - Okładziny to teraz **rodzina + klasa**, nie drabinka „płać więcej = lepszy”. Tensor / tacky / control / krótki kip / długi kip mają plusy i minusy. Magazyn / turniej / PRO tylko skalują wybrany efekt i zużycie.

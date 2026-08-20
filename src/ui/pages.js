@@ -76,6 +76,7 @@ function pageDash(){
   if(store.G.phase==='preseason'){
     if(activeSponsors<3)preseasonMissing.push(`sponsorzy ${activeSponsors}/3`);
     if(!store.G.techPartnership)preseasonMissing.push('partner techniczny');
+    if((store.G.rubberContractYears||0)<=0)preseasonMissing.push('kontrakt okładzin');
   }
   const boardObjective=getBoardObjective();
   const boardProgress=boardObjective?sponsorProg(boardObjective):null;
@@ -558,24 +559,33 @@ function pageClub(){
     </div>
   </div>
   <div class="card"><div class="ct">SPRZĘT — RODZINA OKŁADZIN</div>
-    <div class="fs11 ink3 mb10">Rodzina ustala, <b>jak</b> gra skład (prędkość vs kontrola vs kipy). Klasa (magazyn / turniej / PRO) tylko skaluje ten efekt i tempo zużycia. Dopasowanie do stylów: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji.</div>
+    ${(()=>{
+      const yearsLeft=store.G.rubberContractYears||0;
+      const pre=store.G.phase==='preseason';
+      const open=pre&&yearsLeft<=0;
+      const y=ui.rubberYears||3;
+      const yearPick=`<div class="flex aic gp8 mb10 fwrap"><span class="fs10 ink3 up ls1">Długość kontraktu</span>${[1,2,3,4,5].map(n=>`<button class="btn sm ${y===n?'on':''}" onclick="ui.rubberYears=${n};render()">${n} ${n===1?'rok':n===5?'lat':'lata'}</button>`).join('')}</div>`;
+      return `<div class="fs11 ink3 mb10">Rodzina ustala, <b>jak</b> gra skład. Klasa tylko skaluje efekt i zużycie. Zmiana tylko w <b>przedsezonie</b>, na kontrakt 1–5 lat. Adaptacja 4–6 kolejek. Dopasowanie: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji.</div>
+    <div class="fs12 mb10">${yearsLeft>0?`Kontrakt: <b>${EQUIPMENT.rubberFamilies[store.G.rubberFamily||'TENSOR']?.label||'?'}</b> · zostało <b>${yearsLeft}</b> ${yearsLeft===1?'sezon':'sezony'}.`:'Brak podpisanego kontraktu — wybierz rodzinę i długość, zanim wystartuje sezon.'}</div>
+    ${pre?yearPick:`<div class="fs10 ink3 mb10">Okno zmian otwiera się w przedsezonie${yearsLeft>0?' (inna rodzina po wygaśnięciu kontraktu)':''}.</div>`}
     <div class="grid gtcfit220 gp10 mb12">
-    ${Object.values(EQUIPMENT.rubberFamilies).map(f=>{const active=(store.G.rubberFamily||'TENSOR')===f.id;const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' / ');return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
+    ${Object.values(EQUIPMENT.rubberFamilies).map(f=>{const active=(store.G.rubberFamily||'TENSOR')===f.id;const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' / ');const canSign=pre&&(open||active);return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
       <div class="b8 fs13">${f.label}${active?' <span class="fs9 cg">KLUBOWA</span>':''}</div>
       <div class="fs10 ink3" style="margin:4px 0 6px">${f.desc}</div>
       <div class="fs10 mb8"><b>${mods}</b></div>
-      ${active?'':`<button class="btn pr sm" onclick="setRubberFamily('${f.id}')">USTAW RODZINĘ</button>`}
+      ${canSign?`<button class="btn pr sm" onclick="setRubberFamily('${f.id}',ui.rubberYears||3)">${active?(yearsLeft>0?'PRZEDŁUŻ':'PODPISZ'):'PODPISZ KONTRAKT'}</button>`:(pre?`<div class="fs10 ink3">Zablokowane do końca kontraktu</div>`:'')}
     </div>`;}).join('')}
     </div>
-    <div class="fs10 ink3 up ls1 mb8">Klasa / świeżość (koszt sezonowy)</div>
+    <div class="fs10 ink3 up ls1 mb8">Klasa / świeżość (koszt sezonowy${pre?'':' · zmiana w przedsezonie'})</div>
     <div class="grid gtcfit220 gp10">
     ${EQUIPMENT.rubberTiers.map(t=>{const active=(store.G.rubberTier||0)===t.tier;const squad=myPlayers().filter(p=>p.role!=='youth').length;return`<div style="padding:12px;border:1px solid ${active?'var(--g)':'var(--b1)'};background:${active?'var(--s2)':'var(--s1)'};border-radius:10px">
       <div class="b8 fs13">${t.label}${active?' <span class="fs9 cg">AKTYWNE</span>':''}</div>
       <div class="fs10 ink3" style="margin:4px 0 6px">${t.desc}</div>
       <div class="fs10 ink3 mb8">Koszt: <b>${t.costPerPlayer?`${t.costPerPlayer.toLocaleString('pl')} €/zaw. (${(t.costPerPlayer*squad).toLocaleString('pl')} €/sezon)`:'darmowe'}</b></div>
-      ${active?'':`<button class="btn pr sm" onclick="setRubberTier(${t.tier})">USTAW KLASĘ</button>`}
+      ${pre&&!active?`<button class="btn pr sm" onclick="setRubberTier(${t.tier})">USTAW KLASĘ</button>`:''}
     </div>`;}).join('')}
-    </div>
+    </div>`;
+    })()}
   </div>
   <div class="g4 mb14">
     ${infraBlock('hall','HALA TRENINGOWA','',INFRA_HALL,store.G.infraHall||0)}
