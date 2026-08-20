@@ -49,6 +49,7 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 | **DESIGN-staff.md** | Staff roles, two-curve, scout fog. | ⚠️ coach/physio/psych stronger; scout fog / fitness / analyst still open |
 | **DESIGN-ai-world.md** | Living AI layers. | ⚠️ Layer 1–2 partial; 3–4 open |
 | **DESIGN-academy.md** | Academy + youth challenge. | ✅ vertical slice shipped |
+| **DESIGN-alive-career.md** | Owner-agreed living-world slice (inbox, kit, life, scout, buildings). | 🟡 talk-locked, not coded |
 
 ## Owner feedback archive
 | Doc | Purpose | Status |

@@ -88,9 +88,18 @@ Owner picks 1 / 2 / 3 (or a mix). Do not start until that call.
 
 ### 2026-08-20 later — direction 1, talk first
 Owner chose **alive career** and the rule: **design conversation → owner accepts →
-then code**. No living-world implementation until a slice is signed off in chat.
-First slice on the table: inbox as the spine (see ROADMAP §4). Equipment, life
-events, scout fog and buildings wait behind that.
+then code**. Agreed detail is in `DESIGN-alive-career.md`.
+
+Locked in conversation (not coded yet):
+- Inbox: lots of *kinds* of mail, **0–3 per round**, quiet rounds allowed; reserve
+  asks depend on contract (prospect almost never / rotation sometimes / starter
+  never nags).
+- Equipment: squad-style fit is the performance indicator (scope M).
+- Life events: yes, small catalogue after inbox.
+- Scout: OVR always visible; stats as bands; **numeric peak OVR** when scouted
+  (own squad counts as scouted).
+- Buildings: owner dislikes the hard max and weak med. Counter-proposal in the
+  design file — **wait for yes** before coding.
 
 ### 2026-08-20 — three new UI proposals (archive, not applied)
 Clickable skins Stół / Księga / Gabinet live under `prototypes/`. Avatars were not
