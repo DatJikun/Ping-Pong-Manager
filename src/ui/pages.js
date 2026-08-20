@@ -352,6 +352,7 @@ function squadCard(p,boardList){
       <span class="k">Forma</span><span class="v">${seasonFormLabel(p)}</span>
       <span class="k">Bilans</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
     </div>
+    ${p.lastMatchMicro?.why?`<div class="fs10 ink3" style="margin:8px 12px 0;line-height:1.4">Ostatni mecz: ${p.lastMatchMicro.why}</div>`:''}
     <div class="pc-actions" onclick="event.stopPropagation()">
       ${p.role==='youth'?`<button class="btn go sm" onclick="promoteYouth(${p.id})">↑ REZERWA</button>`
         :p.role==='reserve'?`<button class="btn go sm" onclick="promoteToStarter(${p.id})">↑ SKŁAD</button>`:`<button class="btn sm" onclick="demoteToReserve(${p.id})">↓ REZERWA</button>`}
@@ -1480,6 +1481,7 @@ function renderMainMenu(){
       ${menuBtn('IMPORTUJ KARIERĘ (.json)','menuFilePicker()','','tworzy osobną karierę')}
       ${menuBtn('EDYTOR BAZY DANYCH',"menuTbd('Edytor bazy danych')",'','wkr&oacute;tce')}
       ${menuBtn('WYZWANIA',"menuTbd('Wyzwania')",'','wkr&oacute;tce')}
+      ${menuBtn('PRZEWODNIK','openGuide()','','jak grać, cechy, klub')}
       ${menuBtn('OPCJE','openSettings()','')}
       ${menuBtn('WYJD&#377; Z GRY','menuExit()','')}
     </div>

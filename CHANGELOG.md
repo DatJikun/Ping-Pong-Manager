@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-20 — Przewodnik w menu i cechy na meczu
+
+- Menu startowe (i przycisk w nagłówku) otwiera krótki przewodnik: jak grać, cechy→mecz, klub, style.
+- Na karcie pojedynku widać cztery kanały (ATK / ODB / SRV / GŁOWA) i po secie zdanie, czemu padł taki wynik. To samo w profilu po meczu.
+
 ## 2026-08-20 — Okładziny: przedsezon, kontrakt 1–5 lat, dłuższa adaptacja
 
 - Rodzinę i klasę zmieniasz tylko w przedsezonie. Klubowa rodzina to kontrakt na 1–5 lat.

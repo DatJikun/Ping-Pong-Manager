@@ -721,6 +721,53 @@ function engineStats(p){
     men,
   };
 }
+function matchChannels(p){
+  const e=engineStats(p);
+  return{atk:Math.round(e.atk),def:Math.round(e.def),srv:Math.round(e.srv),men:Math.round(e.men)};
+}
+function matchChannelHtml(p){
+  const c=matchChannels(p);
+  const cell=(k,label,tip)=>`<div title="${tip}" style="flex:1;min-width:52px;text-align:center"><div class="fs9 ink3">${label}</div><div class="b8 fs14">${c[k]}</div></div>`;
+  return `<div class="flex gp4 mt-6" style="border:1px solid rgba(122,91,52,.14);border-radius:8px;padding:6px 4px;background:rgba(255,255,255,.35)">
+    ${cell('atk','ATK','Atak na korcie: silniejsze skrzydło FH/BH. Robi winnery.')}
+    ${cell('def','ODB','Odbiór: noga + BH + RET. Dłuższe wymiany, mniej błędów.')}
+    ${cell('srv','SRV','Serwis. Robi asy i stawia odbiorcę pod presją.')}
+    ${cell('men','GŁOWA','Głowa (MEN). Trzyma błędy, gdy set jest na styku.')}
+  </div>`;
+}
+function explainDuel(ph,pa,micro){
+  if(!ph||!pa)return '';
+  const h=matchChannels(ph),a=matchChannels(pa);
+  const m=micro||{};
+  const facts=[];
+  const atkGap=h.atk-a.atk,defGap=h.def-a.def,srvGap=h.srv-a.srv,menGap=h.men-a.men;
+  const wH=m.homeWinners||0,wA=m.awayWinners||0;
+  const acH=m.homeAces||0,acA=m.awayAces||0;
+  const eH=m.homeErrors||0,eA=m.awayErrors||0;
+  if(Math.abs(atkGap)>=3){
+    if(atkGap>0&&wH>=wA)facts.push({w:Math.abs(atkGap)+wH,t:`Atak (FH/BH ${h.atk} vs ${a.atk}) dał winnery ${wH}:${wA}.`});
+    else if(atkGap<0&&wA>=wH)facts.push({w:Math.abs(atkGap)+wA,t:`Słabszy atak (FH/BH ${h.atk} vs ${a.atk}) — rywal miał więcej winnerów (${wA}:${wH}).`});
+  }
+  if(Math.abs(srvGap)>=3){
+    if(srvGap>0&&acH>=acA)facts.push({w:Math.abs(srvGap)+acH,t:`Serwis (${h.srv} vs ${a.srv}) zrobił asy ${acH}:${acA}.`});
+    else if(srvGap<0&&acA>=acH)facts.push({w:Math.abs(srvGap)+acA,t:`Słabszy serwis (${h.srv} vs ${a.srv}) — asy ${acH}:${acA}.`});
+  }
+  if(Math.abs(defGap)>=3){
+    if(defGap>0)facts.push({w:Math.abs(defGap),t:`Odbiór i noga (${h.def} vs ${a.def}) trzymały wymiany${m.longestRally?` (najdłuższa ${m.longestRally})`:''}.`});
+    else facts.push({w:Math.abs(defGap),t:`Słabszy odbiór (${h.def} vs ${a.def}) — trudniej było zatrzymać atak.`});
+  }
+  if(Math.abs(menGap)>=4){
+    if(menGap>0&&eH<=eA)facts.push({w:Math.abs(menGap),t:`Głowa (MEN ${h.men} vs ${a.men}) ograniczyła błędy (${eH}:${eA}).`});
+    else if(menGap<0)facts.push({w:Math.abs(menGap),t:`Słabsza głowa (MEN ${h.men} vs ${a.men}) — więcej błędów pod presją (${eH}:${eA}).`});
+  }
+  facts.sort((x,y)=>y.w-x.w);
+  if(!facts.length){
+    const top=[['atak',atkGap],['odbiór',defGap],['serwis',srvGap],['głowa',menGap]].sort((x,y)=>Math.abs(y[1])-Math.abs(x[1]))[0];
+    if(Math.abs(top[1])>=2)return `Przewaga w kanale „${top[0]}" (${top[1]>0?'+':''}${Math.round(top[1])}) zaważyła bardziej niż jedna cecha.`;
+    return 'Pojedynek na styku — styl i forma zaważyły bardziej niż różnica cech.';
+  }
+  return facts.slice(0,2).map(f=>f.t).join(' ');
+}
 function getActiveBrand(){return null;}
 function myTeam(){return store.G.teams.find(t=>t.isPlayer);}
 function myPlayers(){return store.G.players.filter(p=>p.teamId===myTeam().id&&!p.retired);}
@@ -2855,7 +2902,7 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
     }
     firstServer=firstServer==='home'?'away':'home';
   }
-  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4)};
+  return{hs,as,homeWin:hs>as,isDraw:false,setResults,setScores,micro,styleEdge:styleEdge.label,momentum:Math.round(diff/4),why:explainDuel(ph,pa,micro)};
 }
 
 // ── Real match protocol (owner 2026-07-02, per the league dossier) ─────────────
@@ -2989,8 +3036,9 @@ function simTeamMatch(homeId,awayId,isCup){
     credit(hReal,r.micro,game.double?Math.round(hPts/2):hPts,game.double?Math.round(aPts/2):aPts,r.homeWin);
     credit(aReal,r.micro,game.double?Math.round(aPts/2):aPts,game.double?Math.round(hPts/2):hPts,!r.homeWin);
     if(!game.double){
-      hReal[0].lastMatchMicro={score:`${r.hs}:${r.as}`,...r.micro,styleEdge:r.styleEdge};
-      aReal[0].lastMatchMicro={score:`${r.as}:${r.hs}`,homePoints:aPts,awayPoints:hPts,homeAces:r.micro?.awayAces||0,awayAces:r.micro?.homeAces||0,homeWinners:r.micro?.awayWinners||0,awayWinners:r.micro?.homeWinners||0,homeErrors:r.micro?.awayErrors||0,awayErrors:r.micro?.homeErrors||0,longestRally:r.micro?.longestRally||0,closestSets:r.micro?.closestSets||0,styleEdge:r.styleEdge};
+      const awayMicro={homePoints:aPts,awayPoints:hPts,homeAces:r.micro?.awayAces||0,awayAces:r.micro?.homeAces||0,homeWinners:r.micro?.awayWinners||0,awayWinners:r.micro?.homeWinners||0,homeErrors:r.micro?.awayErrors||0,awayErrors:r.micro?.homeErrors||0,longestRally:r.micro?.longestRally||0,closestSets:r.micro?.closestSets||0};
+      hReal[0].lastMatchMicro={score:`${r.hs}:${r.as}`,...r.micro,styleEdge:r.styleEdge,why:r.why||explainDuel(hReal[0],aReal[0],r.micro)};
+      aReal[0].lastMatchMicro={score:`${r.as}:${r.hs}`,...awayMicro,styleEdge:r.styleEdge,why:explainDuel(aReal[0],hReal[0],awayMicro)};
     }
     if(r.homeWin)hW++;else aW++;
   }
@@ -4251,6 +4299,7 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
         <div style="padding:10px 12px 12px">
           <div style="margin:0 0 7px 0;min-height:22px">${traitHtml(p)}</div>
           <div class="vme-pcard-stats">${SK.map(s=>`<div class="vme-pcard-stat"><div class="lbl">${SL[s]}</div><div class="val" style="color:${({fh:'var(--r2)',bh:'#c04890',srv:'#d4a830',ret:'#8060c0',foot:'#5090d0',men:'#60c878'}[s]||'var(--ink)')}">${p[s]}</div></div>`).join('')}</div>
+          ${matchChannelHtml(p)}
           <div class="grid gtc1a gp8 aic mt-8">
             <div><div class="fs9 mb4" style="color:#555">Zmęczenie</div><div class="vme-pcard-fat"><div class="vme-pcard-fat-fill" style="width:${p.fatigue||0}%;background:${(p.fatigue||0)>70?'var(--r2)':'var(--orange)'}"></div></div></div>
             <div class="fs10 ink3">Morale <b>${p.morale||50}</b></div>
@@ -4295,7 +4344,8 @@ function renderVME(homeTeam,awayTeam,matchups,currentIdx,homeScore,awayScore,hid
         <div><div class="ink3">B\u0142\u0119dy</div><div class="b7">${micro.homeErrors}:${micro.awayErrors}</div></div>
         <div><div class="ink3">D\u0142. wymiana</div><div class="b7">${micro.longestRally}</div></div>
         <div><div class="ink3">Sety na styku</div><div class="b7">${micro.closestSets}</div></div>
-      </div>`:''}
+      </div>
+      <div class="fs11 mt-8 pd8-10 r8" style="background:rgba(36,26,18,.06);line-height:1.45"><span class="fs9 ink3 up ls1">Dlaczego ten wynik</span><div class="mt-3">${explainDuel(hp,ap,micro)||'Styl i forma.'}</div></div>`:''}
     </div>`:''}
   </div>`;
   return html;
@@ -5501,7 +5551,8 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
     </div>
     <div>
       ${SK.map(s=>`<div class="mb10"><div class="flex jcb mb3"><span class="fs10 ink3">${SL[s]}</span><span class="b7 fs16">${statBand(p,s)}</span></div><div class="h10 bgs3 r3"><div style="height:100%;width:${playerIsScouted(p)?p[s]:50}%;background:${p[s]>=85?'var(--g)':p[s]>=75?'var(--blue)':p[s]>=62?'var(--gold)':'var(--orange)'};border-radius:3px;${playerIsScouted(p)?'':'opacity:.45'}"></div></div></div>`).join('')}
-      ${playerIsScouted(p)?'':`<div class="fs10 ink3">Cechy jako pasma, aż zeskautujesz. OVR ${o} jest jawny.</div>`}
+      ${playerIsScouted(p)?`<div class="fs10 ink3 mb6">Na korcie te 6 cech składa się na 4 kanały:</div>${matchChannelHtml(p)}<div class="fs10 ink3 mt-6">ATK = FH/BH (winnery). ODB = noga+BH+RET (wymiany). SRV = asy. GŁOWA = MEN (błędy pod presją).</div>`:`<div class="fs10 ink3">Cechy jako pasma, aż zeskautujesz. OVR ${o} jest jawny.</div>`}
+      ${p.lastMatchMicro?.why?`<div class="fs11 mt-8 pd8-10 r8 bgs1">Ostatni pojedynek (${p.lastMatchMicro.score||''}): ${p.lastMatchMicro.why}</div>`:''}
     </div>
   </div>
   <div class="g4 gp8 mb14">
@@ -6370,5 +6421,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, contractMailRole, reserveAskChance, starterGuaranteeBreachChance, hallCapacity, buyInfraProject, infraProjectCost, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, runMundial, runOlympics, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, clubRubberFamily, playerRubberFamily, preferredFamilyFor, setRubberTier, setRubberFamily, setPlayerRubberFamily, refreshPlayerRubbers, adaptRoundsFor, rubberChangeOpen, rubberClubContractOpen, applyPromisedKitChanges, playerIsScouted, observePlayer, observePlayerCost, statBand, peakDisplay, rubberFitCount, simulateBackgroundSeasons };
+window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, matchChannels, matchChannelHtml, explainDuel, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, contractMailRole, reserveAskChance, starterGuaranteeBreachChance, hallCapacity, buyInfraProject, infraProjectCost, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, runMundial, runOlympics, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, clubRubberFamily, playerRubberFamily, preferredFamilyFor, setRubberTier, setRubberFamily, setPlayerRubberFamily, refreshPlayerRubbers, adaptRoundsFor, rubberChangeOpen, rubberClubContractOpen, applyPromisedKitChanges, playerIsScouted, observePlayer, observePlayerCost, statBand, peakDisplay, rubberFitCount, simulateBackgroundSeasons };
 })();

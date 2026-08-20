@@ -21,3 +21,8 @@ test('career actions use the save manager and import creates a separate career',
   assert.match(main, /async function restoreCareerBackup/);
   assert.match(main, /\.importCareer\(/);
 });
+
+test('main menu exposes the in-game guide', () => {
+  assert.match(pages, /openGuide\(\)/);
+  assert.match(pages, /PRZEWODNIK/);
+});

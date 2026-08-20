@@ -69,3 +69,17 @@ test('initiative bar reflects the live situation (not static)', () => {
   assert.ok(width(homeLeading) > width(awayLeading),
     `home-leading initiative (${width(homeLeading)}%) should exceed away-leading (${width(awayLeading)}%)`);
 });
+
+test('finished duel explains how stats produced the scoreline', () => {
+  const { gp, home, away, r } = setup(7);
+  const total = r.matchups[0].setScores.length;
+  const html = gp.renderVME(home, away, r.matchups, 0, 0, 0, false, { home: 0, away: 0, setIndex: total });
+  assert.ok(html.includes('Dlaczego ten wynik'), 'why-block after a finished duel');
+  assert.ok(html.includes('ATK') && html.includes('ODB'), 'match channels on player cards');
+  const why = gp.explainDuel(
+    { fh: 90, bh: 88, srv: 50, ret: 50, foot: 50, men: 50, playStyle: 'FH_LOOPER', equipment: { blade: 'OFF', sponge: 'GRUBA', freshness: 100 } },
+    { fh: 40, bh: 40, srv: 50, ret: 50, foot: 50, men: 50, playStyle: 'BLOCKER', equipment: { blade: 'ALL', sponge: 'SREDNIA', freshness: 100 } },
+    { homeWinners: 14, awayWinners: 2, homeAces: 1, awayAces: 0, homeErrors: 3, awayErrors: 3, longestRally: 9 }
+  );
+  assert.match(why, /atak|FH\/BH/i);
+});
