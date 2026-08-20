@@ -59,7 +59,21 @@ Design references live in the repo and in the owner's research docs:
 
 ## 2. Current state (updated each session)
 
-**Last updated:** 2026-07-26 (proto-final design language applied game-wide)
+**Last updated:** 2026-08-20 (three new UI skins for owner review — avatars unchanged)
+
+### 2026-08-20 — three new UI proposals (not applied to the live game)
+Owner asked for a fresh UI round **without touching avatars**. Live `index.html` /
+`styles/main.css` / `gameplay.visuals.js` are unchanged. Three clickable skins sit
+next to the old A–E experiments:
+
+- `prototypes/index.html` — Polish comparison page
+- **F Stół** (`proto-f-rubber.html`) — ITTF hall: table green, rubber red, four boards
+- **G Księga** (`proto-g-ledger.html`) — dense 1280px ops desk, 28px spreadsheet rows
+- **H Gabinet** (`proto-h-clubhouse.html`) — warm night office, decisions/stories first
+
+Same dummy club and the **live portrait generator**. Nothing ships into the career
+client until the owner picks a direction. The locked July skin (`proto-final`)
+stays the in-game look until then.
 
 ### 2026-07-26 — the design language is now the game's skin
 `prototypes/proto-final.html` has been applied to the whole app: `styles/main.css`

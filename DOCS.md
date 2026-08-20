@@ -23,6 +23,9 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
   curves + 15 hair styles × 4 textures, jaw-clipped beards, age marks, glasses/cap/
   headband, 4 staff outfits, club jersey colours. **Region/ethnicity model unchanged.**
   Preview: `tools/avatar-preview.html`.
+- **UI proposals (2026-08-20, review only):** three new skins in `prototypes/`
+  (Stół / Księga / Gabinet). Hub: `prototypes/index.html`. Avatars unchanged.
+  Live game still uses the July proto-final carbon skin.
 - **UI (2026-07-24 pass):** surfaces are theme tokens → **dark theme actually works**;
   header regrouped (no truncation); Squad / Dashboard / Budget / Club / Market /
   Staff / Preseason decluttered; one market row component for players + staff.

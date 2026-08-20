@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-20 — Three UI skins for review (avatars unchanged)
+
+- Added clickable proposals **Stół**, **Księga** and **Gabinet** under `prototypes/`.
+  Hub: `prototypes/index.html`. They reuse the live portrait generator.
+- Live career UI, `styles/main.css` and avatar code are not changed.
+
 ## 2026-07-28 — Fictional official database
 
 - Replaced shipped real-world club, sponsor and technical-partner identities

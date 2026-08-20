@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PingPong Manager — trzy nowe propozycje UI</title>
+<style>
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-ExtraBold.ttf') format('truetype');font-weight:800;font-display:swap}
+:root{--bg:#101319;--panel:#181d26;--line:#2b3442;--ink:#eef2f8;--ink2:#a9b6c8;--ink3:#6e7c92;--club:#e23a2e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 Barlow,sans-serif;padding:40px 28px 80px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font:800 40px/1 'Saira Condensed';text-transform:uppercase;margin:8px 0 10px}
+.lead{color:var(--ink2);max-width:68ch;margin-bottom:28px}
+.note{border:1px solid var(--line);background:var(--panel);padding:14px 16px;margin-bottom:28px;color:var(--ink2);font-size:13.5px}
+.note b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{border:1px solid var(--line);background:var(--panel);padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;min-height:100%}
+.card h2{font:800 22px/1 'Saira Condensed';text-transform:uppercase}
+.tag{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ink3)}
+.card p{color:var(--ink2);font-size:13.5px;flex:1}
+.card ul{color:var(--ink2);font-size:13px;padding-left:18px;display:grid;gap:4px}
+a.btn{display:inline-block;margin-top:8px;background:var(--club);color:#fff;text-decoration:none;font:700 12px Barlow;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px}
+a.quiet{color:var(--ink2);font-size:13px}
+hr{border:none;border-top:1px solid var(--line);margin:32px 0}
+.old{font-size:13.5px;color:var(--ink3)}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">Kierunek gry · nie silnik</div>
+  <h1>Trzy nowe skóry</h1>
+  <p class="lead">Gra zostaje ta sama: te same liczby, te same decyzje, <b>te same twarze i herby</b>. Zmienia się tylko sala, w której siedzisz jako prezes. Otwórz każdą propozycję, przełącz Pulpit / Skład / Transfery / Skrzynka i powiedz, która atmosfera ma zostać.</p>
+  <div class="note"><b>Awatary nie ruszamy.</b> Portrety biorą się z obecnego generatora (<code>gameplay.visuals.js</code>). Żadna z tych trzech skór nie przerabia twarzy — tylko ramkę UI wokół nich.</div>
+  <div class="grid">
+    <article class="card">
+      <div class="tag">F · sport</div>
+      <h2>Stół</h2>
+      <p>Sala tenisowa: zieleń blatu ITTF, czerwona guma, biała linia. Cienki pasek ikon zamiast szerokiej szyny. Czwórka na stoły widać od razu jako cztery plansze.</p>
+      <ul>
+        <li>Najbardziej „to jest ping pong”, nie motorsport.</li>
+        <li>Zaokrąglone panele, CTA w kolorze gumy.</li>
+        <li>Rynek nadal jako gęsta tabela.</li>
+      </ul>
+      <a class="btn" href="./proto-f-rubber.html">Otwórz Stół</a>
+    </article>
+    <article class="card">
+      <div class="tag">G · operacje</div>
+      <h2>Księga</h2>
+      <p>Biurko menedżera: wąski ekran (nie „za szeroko”), wiersze 28 px, arkusz transferów jak dobry Excel. Jeden pasek zakładek u góry — więcej miejsca na dane.</p>
+      <ul>
+        <li>Najgęstsza, najszybsza do skanowania.</li>
+        <li>Bursztynowy akcent, bez czerwonego glow.</li>
+        <li>Pasuje do rynku-spreadsheet z VISION.</li>
+      </ul>
+      <a class="btn" href="./proto-g-ledger.html">Otwórz Księgę</a>
+    </article>
+    <article class="card">
+      <div class="tag">H · klub</div>
+      <h2>Gabinet</h2>
+      <p>Nocne biuro prezesa: ciepłe drewno, mosiądz, wino. Pulpit zaczyna od historii (ultimatum, zmęczenie, agent), a tabela jest wsparciem, nie gwiazdą.</p>
+      <ul>
+        <li>Najbliżej „żywej” kariery.</li>
+        <li>Miękkie karty, większe portrety (ten sam generator).</li>
+        <li>Transfery nadal w jednej księdze.</li>
+      </ul>
+      <a class="btn" href="./proto-h-clubhouse.html">Otwórz Gabinet</a>
+    </article>
+  </div>
+  <hr>
+  <p class="old">Aktualnie w grze siedzi skóra z lipca: <a class="quiet" href="./proto-final.html">proto-final (Paddock / carbon)</a>. Starsze eksperymenty A–E zostają w folderze jako archiwum. Nic z tej trójki nie wchodzi do <code>index.html</code>, dopóki nie wskażesz kierunku.</p>
+</div>
+</body>
+</html>

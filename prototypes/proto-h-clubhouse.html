@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Propozycja H — Gabinet</title>
+<style>
+/* GABINET — nocne biuro prezesa: ciepłe drewno, mosiądz, decyzje na pierwszym planie.
+   Świat żyje historiami. Awatary bez zmian. */
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Medium.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Saira Condensed';src:url('../assets/fonts/SairaCondensed-ExtraBold.ttf') format('truetype');font-weight:800;font-display:swap}
+:root{
+  --night:#140f0c; --panel:#1d1612; --raise:#271e18; --line:#3a2e26; --line2:#5a4638;
+  --ink:#f3e8d8; --ink2:#cbb79a; --ink3:#8c7760;
+  --brass:#c9a227; --wine:#9b2e2a; --pos:#7dba6a; --neg:#e07058;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--night);color:var(--ink);font:13.5px/1.5 Barlow,Georgia,serif;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(800px 420px at 18% -8%,rgba(201,162,39,.16),transparent 55%),
+             radial-gradient(700px 380px at 92% 0,rgba(155,46,42,.14),transparent 60%)}
+#app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;position:relative}
+#rail{background:linear-gradient(180deg,#1a1410,#100c0a);border-right:1px solid var(--line);padding:18px 0 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{padding:0 18px 16px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.brand small{display:block;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);font-weight:700}
+.brand b{display:block;font-size:18px;margin-top:4px}
+.rgrp{padding:14px 18px 4px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.rnav{display:block;width:100%;text-align:left;border:none;background:none;color:var(--ink2);padding:8px 18px;font:600 13.5px Barlow;cursor:pointer;border-left:3px solid transparent}
+.rnav:hover{color:var(--ink);background:#ffffff08}
+.rnav.on{color:var(--ink);border-left-color:var(--brass);background:linear-gradient(90deg,rgba(201,162,39,.14),transparent)}
+.rfoot{margin-top:auto;padding:12px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase}
+#head{position:sticky;top:0;z-index:20;background:rgba(29,22,18,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.mast{display:flex;align-items:center;gap:16px;padding:12px 22px}
+.crest{width:44px;height:44px;border-radius:14px;background:linear-gradient(160deg,var(--wine),#5c1816);display:grid;place-items:center;font:800 15px 'Saira Condensed';color:#fff;box-shadow:0 8px 20px rgba(155,46,42,.35)}
+.who h2{font:800 22px/1.05 'Saira Condensed'}
+.who p{font-size:12px;color:var(--ink3)}
+.mstats{margin-left:auto;display:flex}
+.mstat{padding:0 16px;border-left:1px solid var(--line);text-align:right}
+.mstat i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.mstat b{font:800 20px/1.1 'Saira Condensed'}
+.mstat b.pos{color:var(--pos)}
+.go{margin-left:14px;border:none;background:var(--brass);color:#1a1408;font:800 13px 'Saira Condensed';letter-spacing:.06em;text-transform:uppercase;padding:12px 18px;border-radius:var(--r);cursor:pointer}
+main{padding:20px 24px 56px;max-width:1520px}
+.screen{display:none}.screen.on{display:block}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.ph h3{font:800 28px/1 'Saira Condensed'}
+.ph p{color:var(--ink3);font-size:12.5px;margin-top:4px;max-width:56ch}
+.tools{display:flex;gap:8px}
+.btn{border:1px solid var(--line2);background:var(--raise);color:var(--ink);font:600 11.5px Barlow;padding:8px 13px;border-radius:999px;cursor:pointer}
+.btn:hover{border-color:var(--brass);color:#fff}
+.btn.acc{background:var(--wine);border-color:var(--wine);color:#fff}
+.btn.ghost{background:transparent}
+.btn.xs{padding:5px 10px;font-size:11px}
+.btn.on{background:var(--brass);border-color:var(--brass);color:#1a1408}
+.kpis{display:flex;gap:18px;margin-bottom:16px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.kpi{flex:1}
+.kpi i{display:block;font-style:normal;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.kpi b{display:block;font:800 30px/1.05 'Saira Condensed';margin-top:4px}
+.kpi s{text-decoration:none;font-size:11.5px;color:var(--ink3)}
+.cols{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+.panel>header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.panel>header h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);font-weight:700}
+.pad{padding:14px}
+.grid{display:grid;gap:14px}
+.dec{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px;border-bottom:1px solid var(--line)}
+.dec:last-child{border-bottom:none}
+.dec h5{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.dec p{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.face,.f{width:48px;height:48px;border-radius:50%;background:var(--raise) center/cover no-repeat;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--brass)}
+.face.lg{width:72px;height:72px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:8px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl td.n,.n{text-align:right;font-variant-numeric:tabular-nums;font-family:'Saira Condensed',sans-serif;font-weight:700}
+.tbl tr.on td{background:rgba(201,162,39,.1)}
+.pname{font-weight:650}
+.dim{color:var(--ink3)}
+.pill{display:inline-flex;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:700;border:1px solid var(--line2);color:var(--ink2)}
+.pill.pos{color:var(--pos);border-color:#3d5a32;background:#7dba6a18}
+.pill.neg,.pill.club{color:#f0b4a8;border-color:#6a322c;background:#9b2e2a22}
+.pill.warn{color:var(--brass);border-color:#5a4a20;background:#c9a22718}
+.v5{color:#c8e8b8}.v4{color:var(--pos)}.v3{color:var(--brass)}.v2{color:var(--ink2)}.v1,.neg{color:var(--neg)}
+.attr-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.bar{display:block;height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:9px}
+.bar i{display:block;height:100%;background:var(--brass);border-radius:99px}
+.story{font-size:14px;color:var(--ink2);line-height:1.55}
+.inbox{display:grid;grid-template-columns:1fr 360px;gap:14px}
+.mrow{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.mrow.on{background:rgba(201,162,39,.08)}
+.mrow p{font-size:12.5px;color:var(--ink2)}
+.quote{margin:14px;padding:14px;border-radius:var(--r);background:#ffffff06;color:var(--ink2);font-size:14.5px;line-height:1.5;font-style:italic}
+.out{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
+@media(max-width:1100px){#app{grid-template-columns:1fr}.cols,.inbox{grid-template-columns:1fr}#rail{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="brand"><small>Prezes klubu</small><b>PingPong Mgr</b></div>
+    <div class="rgrp">Klub</div>
+    <button class="rnav on" data-go="hub">Pulpit</button>
+    <button class="rnav" data-go="squad">Skład</button>
+    <div class="rgrp">Operacje</div>
+    <button class="rnav" data-go="market">Transfery</button>
+    <button class="rnav" data-go="inbox">Skrzynka</button>
+    <div class="rfoot">Sezon 4 · kolejka 7</div>
+  </nav>
+  <div>
+    <header id="head">
+      <div class="mast">
+        <div class="crest">KP</div>
+        <div class="who"><h2>KS Piorun</h2><p>I liga · trzecie miejsce · sala pełna</p></div>
+        <div class="mstats">
+          <div class="mstat"><i>Budżet</i><b class="pos">412,9k</b></div>
+          <div class="mstat"><i>Kolejka</i><b>7/22</b></div>
+          <div class="mstat"><i>OVR</i><b>79</b></div>
+          <div class="mstat"><i>Prestiż</i><b>46</b></div>
+        </div>
+        <button class="go">Graj kolejkę 8</button>
+      </div>
+    </header>
+    <main>
+      <section class="screen on" id="s-hub">
+        <div class="ph"><div><h3>Wieczór przed kolejką</h3><p>Trzy sprawy nie poczekają do jutra. Reszta — tabela, budżet, skład — jest pod ręką, ale to historie rządzą klubem.</p></div>
+          <div class="tools"><button class="btn">Nominacja</button><button class="btn ghost">Autosezon</button></div></div>
+        <div class="kpis">
+          <div class="kpi"><i>Liga</i><b>3.</b><s>14 pkt · 4W 2R 1P</s></div>
+          <div class="kpi"><i>Budżet</i><b style="color:var(--pos)">412,9k</b><s>+71k prognoza</s></div>
+          <div class="kpi"><i>Siła</i><b>79</b><s>trzeci skład w lidze</s></div>
+          <div class="kpi"><i>Morale</i><b>72%</b><s>Pewni siebie</s></div>
+          <div class="kpi"><i>Cel zarządu</i><b>TOP 4</b><s>premia 45,9k</s></div>
+        </div>
+        <div class="cols">
+          <div class="grid">
+            <div class="panel"><header><h4>Sprawy otwarte</h4><span class="pill club">3</span></header>
+              <div class="dec"><div class="f" data-av="0"></div>
+                <div><h5>Ignaczak stawia ultimatum</h5><p>Rezerwa z formą 8/10. Obiecałeś mu mecz w kolejce 5 — i nie dotrzymałeś.</p></div>
+                <div class="tools"><button class="btn acc xs">Obiecaj</button><button class="btn xs">Odmów</button></div></div>
+              <div class="dec"><div class="f" data-av="1"></div>
+                <div><h5>Czerwonka jest na granicy</h5><p>81% zmęczenia. Jeśli wystawisz go jutro, ryzyko urazu się podwaja.</p></div>
+                <button class="btn xs">Skład</button></div>
+              <div class="dec"><div class="f" data-av="2"></div>
+                <div><h5>Ostatni rok Jasińskiego</h5><p>Peak 84, dwadzieścia dwa lata. Agent już odbiera telefony.</p></div>
+                <button class="btn xs">Negocjuj</button></div>
+            </div>
+            <div class="panel"><header><h4>Czwórka na jutro</h4></header>
+              <table class="tbl"><thead><tr><th>#</th><th>Zawodnik</th><th>Styl</th><th class="n">Forma</th><th class="n">Fat</th><th class="n">OVR</th></tr></thead>
+                <tbody id="hubRows"></tbody></table></div>
+          </div>
+          <div class="grid">
+            <div class="panel"><header><h4>Opowieść sezonu</h4></header>
+              <div class="pad story">
+                <p>Mroczek w kolejce 7 wygrał pięciosetowy mecz z zawodnikiem 88 OVR. Trzy zwycięstwa z rzędu uspokoiły zarząd. W akademii czeka 17-latek ze Śląska — jeśli go nie weźmiesz, weźmie ktoś inny.</p>
+              </div></div>
+            <div class="panel"><header><h4>I liga · top 6</h4></header>
+              <table class="tbl"><thead><tr><th>#</th><th>Klub</th><th class="n">Pkt</th><th class="n">OVR</th></tr></thead><tbody id="tableRows"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="s-squad">
+        <div class="ph"><div><h3>Ludzie klubu</h3><p>Stoły 1–4 rozstrzygają mecz. Reszta czeka na swoją kolej — albo na transfer.</p></div>
+          <div class="tools"><button class="btn on">Pierwsza</button><button class="btn ghost">Rezerwa</button><button class="btn ghost">Akademia</button></div></div>
+        <div class="cols">
+          <div class="panel" style="overflow-x:auto">
+            <table class="tbl"><thead><tr>
+              <th>#</th><th>Zawodnik</th><th>Styl</th><th class="n">Wiek</th><th class="n">OVR</th><th class="n">Peak</th>
+              <th class="n">FH</th><th class="n">BH</th><th class="n">SRV</th><th class="n">RET</th><th class="n">FTW</th><th class="n">MEN</th>
+              <th class="n">Forma</th><th class="n">Fat</th><th class="n">Pensja</th><th class="n">Lata</th></tr></thead>
+              <tbody id="squadRows"></tbody></table></div>
+          <aside class="panel"><header><h4>Mściwoj Mroczek</h4><span class="pill club">Stół 1</span></header>
+            <div class="pad" style="display:flex;gap:14px;align-items:center">
+              <div class="face lg" data-av="3"></div>
+              <div><div style="font:800 48px/1 'Saira Condensed'">83</div><div class="dim">peak 86 · 29 lat · passa</div></div>
+            </div>
+            <div class="pad" id="inspStats"></div>
+            <div class="pad" style="display:flex;gap:8px"><button class="btn acc xs" style="flex:1">Kontrakt</button><button class="btn xs" style="flex:1">Wypożycz</button><button class="btn xs" style="flex:1">Sprzedaj</button></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen" id="s-market">
+        <div class="ph"><div><h3>Rynek</h3><p>Jedna księga: zawodnicy i sztab. Nadal gęsta tabela — tylko w ciepłym świetle gabinetu.</p></div>
+          <div class="tools"><input class="btn" style="width:220px;border-radius:999px" placeholder="Szukaj…"><button class="btn">Filtry</button></div></div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="tbl"><thead><tr><th></th><th>Nazwisko</th><th>Klub</th><th>Typ</th><th class="n">Wiek</th><th class="n">OVR</th><th class="n">Peak</th><th class="n">Pensja</th><th class="n">Kwota</th><th>Status</th><th></th></tr></thead>
+            <tbody id="marketRows"></tbody></table></div>
+      </section>
+
+      <section class="screen" id="s-inbox">
+        <div class="ph"><div><h3>Listy na biurku</h3><p>Nie ma spamu. Każda wiadomość to decyzja z konsekwencją pokazaną z góry.</p></div><button class="btn ghost">Oznacz przeczytane</button></div>
+        <div class="inbox">
+          <div class="panel">
+            <div class="mrow on"><div class="f" data-av="4"></div><div><b>Izydor Ignaczak</b><p>„Wygrałem pięć treningów z rzędu, a znowu jestem poza składem…”</p></div><span class="pill">K7</span></div>
+            <div class="mrow"><div class="f" data-av="5"></div><div><b>Zarząd KS Piorun</b><p>Trzecie miejsce jest w porządku. Merch — już nie.</p></div><span class="pill">K7</span></div>
+            <div class="mrow"><div class="f" data-av="6"></div><div><b>Sztab medyczny</b><p>Czerwonka przed meczem u siebie. 81%.</p></div><span class="pill">K7</span></div>
+          </div>
+          <aside class="panel"><header><h4>Ignaczak</h4><span class="pill club">do K8</span></header>
+            <div class="quote">„Wstaw mnie na stół w tej kolejce — albo powiedz wprost, że nie jestem w planach.”</div>
+            <div class="out"><span>Obiecaj i wystaw</span><b style="color:var(--pos)">+4 morale</b></div>
+            <div class="out"><span>Obiecaj i usiądź</span><b style="color:var(--neg)">−12 morale</b></div>
+            <div class="out"><span>Odmów uczciwie</span><b style="color:var(--brass)">−6 morale</b></div>
+            <div class="pad" style="display:grid;gap:8px"><button class="btn acc">Obiecaj stół</button><button class="btn">Nie w tej kolejce</button><button class="btn ghost">Zaproponuj transfer</button></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>window.store={G:{countryId:'PL',teams:[{id:0,name:'KS Piorun'}]}};</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script src="./_demo.js"></script>
+</body>
+</html>

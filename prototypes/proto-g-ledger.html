@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Propozycja G — Księga</title>
+<style>
+/* KSIĘGA — biurko operacyjne: wąski max-width, niskie wiersze, Excel-like rynek.
+   Odpowiedź na „za szeroko”. Awatary bez zmian. */
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Medium.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:Barlow;src:url('../assets/fonts/Barlow-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+:root{
+  --bg:#12151a; --sheet:#181c22; --raise:#1e242c; --line:#2a313b; --line2:#3d4652;
+  --ink:#e7ecf2; --ink2:#9aa7b6; --ink3:#6b7684;
+  --acc:#d9a441; --pos:#3ecf8e; --neg:#ef6a5c; --link:#6aa8ff;
+  --row:28px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font:13px/1.4 Barlow,system-ui,sans-serif}
+#wrap{max-width:1280px;margin:0 auto;min-height:100vh;border-left:1px solid var(--line);border-right:1px solid var(--line);background:var(--sheet)}
+#head{position:sticky;top:0;z-index:20;background:var(--sheet);border-bottom:1px solid var(--line)}
+.mast{display:flex;align-items:center;gap:14px;padding:8px 16px;height:48px}
+.mark{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+.who{display:flex;align-items:baseline;gap:8px}
+.who h2{font-size:15px;font-weight:700}
+.who p{font-size:11.5px;color:var(--ink3)}
+.mstats{margin-left:auto;display:flex;gap:0}
+.mstat{padding:0 12px;border-left:1px solid var(--line);text-align:right}
+.mstat i{display:block;font-style:normal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.mstat b{font-size:14px;font-variant-numeric:tabular-nums;font-weight:700}
+.mstat b.pos{color:var(--pos)}
+.go{margin-left:10px;border:1px solid var(--acc);background:var(--acc);color:#1a1408;font:700 11.5px Barlow;padding:7px 12px;cursor:pointer}
+.tabs{display:flex;gap:0;padding:0 8px;background:var(--bg);border-top:1px solid var(--line)}
+.tab{border:none;background:none;color:var(--ink3);font:600 12px Barlow;padding:8px 12px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);border-bottom-color:var(--acc)}
+main{padding:14px 16px 48px}
+.screen{display:none}.screen.on{display:block}
+.ph{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.ph h3{font-size:16px;font-weight:700}
+.ph p{font-size:12px;color:var(--ink3)}
+.tools{display:flex;gap:6px}
+.btn{border:1px solid var(--line2);background:var(--raise);color:var(--ink);font:500 11.5px Barlow;padding:5px 10px;cursor:pointer}
+.btn:hover{border-color:var(--acc)}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#1a1408;font-weight:700}
+.btn.ghost{background:transparent}
+.btn.xs{padding:2px 7px;font-size:10.5px}
+.btn.on{border-color:var(--acc);color:var(--acc)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);margin-bottom:10px}
+.kpi{padding:8px 12px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:none}
+.kpi i{display:block;font-style:normal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.kpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums;font-weight:700;margin-top:2px}
+.kpi s{text-decoration:none;font-size:11px;color:var(--ink3)}
+.cols{display:grid;grid-template-columns:1fr 320px;gap:10px}
+.panel{border:1px solid var(--line);background:var(--sheet)}
+.panel>header{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+.panel>header h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700}
+.pad{padding:10px}
+.grid{display:grid;gap:10px}
+.dec{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);min-height:calc(var(--row) + 16px)}
+.dec:last-child{border-bottom:none}
+.dec h5{font-size:13px;font-weight:650}
+.dec p{font-size:11.5px;color:var(--ink2)}
+.face,.f{width:28px;height:28px;border-radius:50%;background:var(--raise) center/cover no-repeat;box-shadow:0 0 0 1px var(--sheet),0 0 0 2px var(--line2)}
+.face.lg{width:48px;height:48px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:6px 8px;border-bottom:1px solid var(--line2);position:sticky;top:48px;background:var(--bg)}
+.tbl td{padding:0 8px;height:var(--row);border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr:nth-child(even) td{background:#1b2027}
+.tbl tr.on td{background:#2a2418}
+.tbl td.n,.n{text-align:right;font-variant-numeric:tabular-nums}
+.pname{font-weight:650}
+.dim{color:var(--ink3)}
+.pill{display:inline-flex;padding:1px 6px;font-size:10px;font-weight:700;border:1px solid var(--line2);color:var(--ink2)}
+.pill.pos{color:var(--pos);border-color:#2a5a44}
+.pill.neg,.pill.club{color:var(--neg);border-color:#5a2a28}
+.pill.warn{color:var(--acc);border-color:#5a4a20}
+.v5{color:#9ee7c6}.v4{color:var(--pos)}.v3{color:var(--acc)}.v2{color:var(--ink2)}.v1,.neg{color:var(--neg)}
+.attr-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px}
+.bar{display:block;height:3px;background:var(--line);margin-bottom:7px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.inbox{display:grid;grid-template-columns:140px 1fr 300px;gap:10px}
+.fold{padding:7px 10px;border-bottom:1px solid var(--line);font-size:12px}
+.fold.on{background:#2a2418;color:#fff}
+.fold b{float:right;color:var(--acc)}
+.mrow{display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line)}
+.mrow.on{background:#2a2418}
+.mrow p{font-size:11.5px;color:var(--ink2)}
+.quote{margin:10px;padding:8px 10px;border-left:2px solid var(--acc);color:var(--ink2);font-size:12.5px}
+.out{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px}
+@media(max-width:900px){.cols,.inbox,.kpis{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header id="head">
+    <div class="mast">
+      <div class="mark">PPM</div>
+      <div class="who"><h2>KS Piorun</h2><p>I liga · 3. miejsce · sezon 4</p></div>
+      <div class="mstats">
+        <div class="mstat"><i>Budżet</i><b class="pos">412,9k</b></div>
+        <div class="mstat"><i>Kolejka</i><b>7/22</b></div>
+        <div class="mstat"><i>OVR</i><b>79</b></div>
+        <div class="mstat"><i>Prestiż</i><b>46</b></div>
+      </div>
+      <button class="go">Kolejka 8 ▸</button>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-go="hub">Pulpit</button>
+      <button class="tab" data-go="squad">Skład</button>
+      <button class="tab" data-go="market">Transfery</button>
+      <button class="tab" data-go="inbox">Skrzynka</button>
+    </div>
+  </header>
+  <main>
+    <section class="screen on" id="s-hub">
+      <div class="ph"><div><h3>Pulpit operacyjny</h3><p>Kolejka 7/22 · okno zamknięte · 3 decyzje</p></div>
+        <div class="tools"><button class="btn">Nominacja</button><button class="btn ghost">Autosezon</button></div></div>
+      <div class="kpis">
+        <div class="kpi"><i>Liga</i><b>3.</b><s>14 pkt · 4-2-1</s></div>
+        <div class="kpi"><i>Budżet</i><b style="color:var(--pos)">412,9k</b><s>+71k prognoza</s></div>
+        <div class="kpi"><i>Skład</i><b>79</b><s>3. siła</s></div>
+        <div class="kpi"><i>Morale</i><b>72%</b><s>Pewni</s></div>
+        <div class="kpi"><i>Cel</i><b>TOP 4</b><s>premia 45,9k</s></div>
+      </div>
+      <div class="cols">
+        <div class="grid">
+          <div class="panel"><header><h4>Do decyzji</h4><span class="pill club">3</span></header>
+            <div class="dec"><div class="f" data-av="0"></div>
+              <div><h5>Ignaczak chce stół</h5><p>Rezerwa · forma 8/10 · obietnica z K5</p></div>
+              <div class="tools"><button class="btn acc xs">Obiecaj</button><button class="btn xs">Odmów</button></div></div>
+            <div class="dec"><div class="f" data-av="1"></div>
+              <div><h5>Rotuj Czerwonkę</h5><p>Zmęczenie 81% · ryzyko urazu ×2</p></div>
+              <button class="btn xs">Skład</button></div>
+            <div class="dec"><div class="f" data-av="2"></div>
+              <div><h5>Jasiński — ostatni rok</h5><p>Rywal może podpisać od S5</p></div>
+              <button class="btn xs">Negocjuj</button></div>
+          </div>
+          <div class="panel"><header><h4>Czwórka</h4></header>
+            <table class="tbl"><thead><tr><th>#</th><th>Zawodnik</th><th>Styl</th><th class="n">Forma</th><th class="n">Fat</th><th class="n">OVR</th></tr></thead>
+              <tbody id="hubRows"></tbody></table></div>
+        </div>
+        <div class="grid">
+          <div class="panel"><header><h4>Tabela</h4></header>
+            <table class="tbl"><thead><tr><th>#</th><th>Klub</th><th class="n">Pkt</th><th class="n">OVR</th></tr></thead><tbody id="tableRows"></tbody></table></div>
+          <div class="panel"><header><h4>Sezon</h4></header>
+            <div class="pad" style="display:grid;gap:8px;font-size:12.5px;color:var(--ink2)">
+              <div><span class="pill warn">K7</span> Mroczek obalił 88 OVR w pięciu.</div>
+              <div><span class="pill pos">Passa</span> Trzy wygrane z rzędu.</div>
+              <div><span class="pill">Akademia</span> 17-latek gotowy do podpisu.</div>
+            </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="s-squad">
+      <div class="ph"><div><h3>Skład</h3><p>Gęsta siatka atrybutów · stoły 1–4</p></div>
+        <div class="tools"><button class="btn on">Pierwsza</button><button class="btn ghost">Rezerwa</button><button class="btn ghost">Akademia</button></div></div>
+      <div class="cols">
+        <div class="panel" style="overflow-x:auto">
+          <table class="tbl"><thead><tr>
+            <th>#</th><th>Zawodnik</th><th>Styl</th><th class="n">Wiek</th><th class="n">OVR</th><th class="n">Pk</th>
+            <th class="n">FH</th><th class="n">BH</th><th class="n">SRV</th><th class="n">RET</th><th class="n">FTW</th><th class="n">MEN</th>
+            <th class="n">Forma</th><th class="n">Fat</th><th class="n">Pensja</th><th class="n">L</th></tr></thead>
+            <tbody id="squadRows"></tbody></table></div>
+        <aside class="panel"><header><h4>Mściwoj Mroczek</h4><span class="pill">Stół 1</span></header>
+          <div class="pad" style="display:flex;gap:10px;align-items:center">
+            <div class="face lg" data-av="3"></div>
+            <div><div style="font-size:32px;font-weight:800;font-variant-numeric:tabular-nums">83</div><div class="dim" style="font-size:11px">peak 86 · 29 lat</div></div>
+          </div>
+          <div class="pad" id="inspStats"></div>
+          <div class="pad" style="display:flex;gap:6px"><button class="btn acc xs" style="flex:1">Kontrakt</button><button class="btn xs" style="flex:1">Wypożycz</button><button class="btn xs" style="flex:1">Sprzedaj</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="s-market">
+      <div class="ph"><div><h3>Transfery</h3><p>Arkusz: niski wiersz, sortowalne kolumny, 645 pozycji</p></div>
+        <div class="tools"><input class="btn" style="width:200px" placeholder="Szukaj…"><button class="btn">Filtry</button></div></div>
+      <div class="panel" style="overflow-x:auto">
+        <table class="tbl"><thead><tr><th></th><th>Nazwisko</th><th>Klub</th><th>Typ</th><th class="n">Wiek</th><th class="n">OVR</th><th class="n">Peak</th><th class="n">Pensja</th><th class="n">Kwota</th><th>Status</th><th></th></tr></thead>
+          <tbody id="marketRows"></tbody></table></div>
+    </section>
+
+    <section class="screen" id="s-inbox">
+      <div class="ph"><div><h3>Skrzynka</h3><p>3 decyzje · K7</p></div><button class="btn ghost">Przeczytane</button></div>
+      <div class="inbox">
+        <div class="panel">
+          <div class="fold on">Decyzje <b>3</b></div><div class="fold">Zarząd <b>1</b></div><div class="fold">Zawodnicy <b>2</b></div><div class="fold">Sztab <b>1</b></div>
+        </div>
+        <div class="panel">
+          <div class="mrow on"><div class="f" data-av="4"></div><div><b>Izydor Ignaczak</b><p>Chce stół w K8 albo jasną decyzję.</p></div></div>
+          <div class="mrow"><div class="f" data-av="5"></div><div><b>Zarząd</b><p>Merch stoi w miejscu.</p></div></div>
+          <div class="mrow"><div class="f" data-av="6"></div><div><b>Medycyna</b><p>Czerwonka 81% zmęczenia.</p></div></div>
+        </div>
+        <aside class="panel"><header><h4>Ignaczak</h4><span class="pill club">K8</span></header>
+          <div class="quote">„Wstaw mnie albo powiedz wprost, że nie jestem w planach.”</div>
+          <div class="out"><span>Obiecaj i wystaw</span><b style="color:var(--pos)">+4</b></div>
+          <div class="out"><span>Obiecaj i usiądź</span><b style="color:var(--neg)">−12</b></div>
+          <div class="out"><span>Odmów uczciwie</span><b style="color:var(--acc)">−6</b></div>
+          <div class="pad" style="display:grid;gap:6px"><button class="btn acc">Obiecaj stół</button><button class="btn">Nie teraz</button></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+<script>window.store={G:{countryId:'PL',teams:[{id:0,name:'KS Piorun'}]}};</script>
+<script src="../src/core/gameplay.visuals.js"></script>
+<script src="./_demo.js"></script>
+</body>
+</html>
