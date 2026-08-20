@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-20 — Żywa kariera: skrzynka, budynki, akademia
+
+- Skrzynka: 0–3 sprawy, ciche kolejki OK. Rezerwa prosi o stół według roli w kontrakcie (projekt / rotacja / pierwszy skład), nie 50% przy formie ≥4. Skutek TAK/NIE widać przed kliknięciem.
+- Budynki: miękki sufit mocy na korcie. Po poziomie 5 kupujesz projekty (trybuny, internat, odnowa, merch), nie kolejny plus do OVR. Medycyna skraca i rzadzi uraz u tych, którzy grali. Nazwy bliżej klubu TT.
+- Akademia: ten sam zakres peak OVR (56–92) na każdym poziomie. Upgrade podnosi szansę na górę skali, nie sam sufit. Schema zapisów 22 (`infraProjects`).
+- Rynek: kolumna Peak — liczba u swoich, `?` u obcych (pełna mgła skauta później).
+
 ## 2026-07-28 — Fictional official database
 
 - Replaced shipped real-world club, sponsor and technical-partner identities

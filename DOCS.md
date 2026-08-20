@@ -2,11 +2,10 @@
 
 Map of every doc, what it's for, and how fresh it is. Read in this order.
 
-## Quick facts — what is ACTUALLY shipped right now (2026-07-24)
+## Quick facts — what is ACTUALLY shipped right now (2026-08-20)
 - **Headless test harness + 112 passing tests** (`npm test`) + long-career probe
   (`node tests/stress.js`) + academy balance probe (`node tests/stress.js youth`).
-- **Academy** (vertical slice): 6 levels, age-curve dev, youth sales/loans, challenge
-  club Akademia Orłów. See `DESIGN-academy.md`.
+- **Academy** (vertical slice): 6 levels, shared peak range 56–92 (upgrade raises chance, not the cap), age-curve dev, youth sales/loans, challenge club Akademia Orłów. See `DESIGN-academy.md`.
 - **5 playing styles** with **live counter-pentagon** (equal-stat counters ~57–65%;
   large OVR favorites still beat weak counters). See styles tests.
 - **EUR economy**: convex wage curves, no renewal shock; AI real income + wage
@@ -26,7 +25,7 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 - **UI (2026-07-24 pass):** surfaces are theme tokens → **dark theme actually works**;
   header regrouped (no truncation); Squad / Dashboard / Budget / Club / Market /
   Staff / Preseason decluttered; one market row component for players + staff.
-- **Principals / club traits / inbox** (partial living world).
+- **Principals / club traits / inbox** (living world start: quiet rounds, reserve-by-contract, club projects after building cap).
 - **Still open:** deeper living world (life-events, poaching drama, bankruptcy),
   scout stat-band fog, Steam wrap, `gameplay.js` split, full next-year fee
   rebalance (owner: not buy-now transfer meta). See `HANDOFF.md` + `AUDIT-*.md`.

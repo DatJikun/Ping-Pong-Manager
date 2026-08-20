@@ -2,7 +2,7 @@
 window.PPM = window.PPM || {};
 const { COUNTRIES, COUNTRY_IDS, MUNDIAL_PARTICIPANTS, MUNDIAL_INTERVAL, RECORDS_KEYS, TRAITS, SK, SL, FN, LN, TNAMES_L1, TNAMES_L2, TNAMES_AMATEUR, CNAMES, SCOUTNAMES, PHYSIONAMES, PSYCHNAMES, SNAMES, SFULL, SGOALS, SPONSOR_TIERS, COACH_STYLES, PLAYER_STYLES, PLAYER_STYLE_INFO, TECH_PARTNERSHIPS, INFRA_HALL, INFRA_MED, INFRA_ACADEMY, INFRA_MERCH, PR_DIRECTORS, SCOUT_SPECIALTIES, POLISH_REGIONS, TOTAL_MATCHDAYS, CHART_COLORS } = window.PPM.constants;
 const styleLabel=id=>(PLAYER_STYLE_INFO[id]||{}).label||id||'?';
-const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
+const { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, returnLoans, getMerchIncome, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, initCanvasVME, stopCanvasVME, renderVME, safeCloseMatchday, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, pullYouth, signAcademyProspect, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, buyInfraProject, infraProjectCost, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, simIndividualTournamentMatch, miniChart, getBoardObjective, selectBoardObjective, openTeamOverview, getAvatarData, calcPlayerMarketability, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling } = window.PPM.gameplay;
 const updateHeader = (...args)=>window.PPM.updateHeader?.(...args);
 const syncNavState = (...args)=>window.PPM.syncNavState?.(...args);
 const setShellMode = (...args)=>window.PPM.setShellMode?.(...args);
@@ -526,7 +526,21 @@ function pageClub(){
           <div class="syne b8 fs18 ${mt.budget<next.cost?'ink3':'cr'}">${next.cost.toLocaleString('pl')} €</div>
           <button class="btn pr sm" onclick="upgradeInfra('${type}')" ${mt.budget<next.cost?'disabled':''}>ULEPSZ</button>
         </div>
-      </div>`:`<div class="infra-next tac cg b7 fs11">✓ POZIOM MAKSYMALNY</div>`}
+      </div>`:(()=>{
+        const n=(store.G.infraProjects&&store.G.infraProjects[type])||0;
+        const cost=infraProjectCost(type);
+        const titles={hall:'Trybuny',med:'Sezonowa odnowa medyczna',academy:'Internat / dodatkowy junior',merch:'Kolekcja kibica'};
+        const blurb={hall:'Więcej miejsc. Nie podnosi mocy na korcie.',med:'Krótszy i rzadszy uraz w tym sezonie — bez plusa do OVR.',academy:'Szansa na dodatkowego juniora. Peak nadal 56–92.',merch:'Lekki plus merchu, nie OVR.'};
+        return `<div class="infra-next">
+        <div class="fs10 ink3 up ls1">Klub kompletny · projekt ${n+1}</div>
+        <div class="b7 fs12 mb2">${titles[type]||'Projekt klubowy'}</div>
+        <div class="fs11 ink3 mb10">${blurb[type]||'Kasa i tożsamość, nie kolejny plus do OVR.'}</div>
+        <div class="infra-buy">
+          <div class="syne b8 fs18 ${mt.budget<cost?'ink3':'cr'}">${cost.toLocaleString('pl')} €</div>
+          <button class="btn pr sm" onclick="buyInfraProject('${type}')" ${mt.budget<cost?'disabled':''}>KUP PROJEKT</button>
+        </div>
+      </div>`;
+      })()}
       ${curLevel>0?`<div class="tar mt-8"><button class="btn sm fs10 op8" onclick="downgradeInfra('${type}')" title="Cofnij o poziom (za darmo, bez zwrotu) — obniża roczne utrzymanie">↓ Cofnij poziom</button></div>`:''}
     </div>`;
   }
@@ -798,6 +812,7 @@ function pageMarket(){
       kind:'player',role:'player',id:p.id,data:p,item,
       name:p.name,nat:(p.nationality||store.G.countryId||'PL'),age:p.age||0,
       ovr:o,stars:ovrStars(o),
+      peak:p.teamId===store.G.myTeamId?playerCeiling(p):'?',
       teamId:p.teamId,club:p.teamId!==null?teamName(p.teamId):'',
       series:p.teamId!==null?(teamLeague(p.teamId)===1?'I Liga':'II Liga'):'',
       salary:isLoan?Math.round((p.salary||0)*(item.share||0.6)):contractExpect(p).salary,
@@ -820,6 +835,7 @@ function pageMarket(){
       kind:'staff',role:s.type,id:s.id,data:s,
       name:s.name,nat:(s.nationality||store.G.countryId||'PL'),age:s.age||0,
       ovr:o,stars:ovrStars(o),
+      peak:s.teamId===store.G.myTeamId?staffCeiling(s):'?',
       teamId:s.teamId,club:s.teamId!==null?teamName(s.teamId):'',
       series:s.teamId!==null?(teamLeague(s.teamId)===1?'I Liga':'II Liga'):'',
       salary:s.salary||0,fee:0,until:s.contractYears||0,
@@ -847,7 +863,7 @@ function pageMarket(){
     return true;
   });
   const sortVal=r=>({
-    name:r.name,nat:r.nat,age:r.age,ovr:r.ovr,club:r.club||'\uffff',
+    name:r.name,nat:r.nat,age:r.age,ovr:r.ovr,peak:typeof r.peak==='number'?r.peak:-1,club:r.club||'\uffff',
     series:r.series||'\uffff',salary:r.salary,fee:r.fee,until:r.until,
   })[sortKey]??r.ovr;
   market.sort((a,b)=>{
@@ -939,6 +955,7 @@ function pageMarket(){
         ${th('nat','Kraj')}
         ${th('age','Wiek','n')}
         ${th('ovr','Ocena')}
+        ${th('peak','Peak')}
         ${th('club','Klub')}
         ${th('series','Rozgrywki')}
         ${th('salary','Pensja','n')}
@@ -957,6 +974,7 @@ function pageMarket(){
           <td><span class="nat">${r.nat}</span></td>
           <td class="n dim">${r.age||'-'}</td>
           <td>${starsHtml(r.stars)} <span class="dim fs11">${r.ovr}</span></td>
+          <td class="n ${typeof r.peak==='number'?'':'dim'}">${typeof r.peak==='number'?r.peak:r.peak||'?'}</td>
           <td class="${r.club?'':'dim'}">${r.club||'-'}</td>
           <td class="dim">${r.series||'-'}</td>
           <td class="n">${money(r.salary)}</td>
@@ -965,7 +983,7 @@ function pageMarket(){
           <td><span class="pill ${r.dealTone}">${r.deal}</span></td>
           <td class="n">${r.action}</td>
         </tr>`;
-      }).join('')||`<tr><td colspan="12"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
+      }).join('')||`<tr><td colspan="13"><div class="empty-state">Nikt nie pasuje do tych filtrów. Poluzuj wiek albo próg oceny.</div></td></tr>`}
       </tbody>
     </table>
   </div>`;
@@ -1022,6 +1040,7 @@ function pageInbox(){
       </div>
       <div class="fs10 ink3" style="margin:2px 0 6px">Od: ${m.from||'Klub'}</div>
       <div class="fs12 ink2 lh155">${m.body||''}</div>
+      ${m.effectsYes||m.effectsNo?`<div class="fs11 mt-8 ink3">TAK: ${m.effectsYes||'—'} · NIE: ${m.effectsNo||'—'}</div>`:''}
       ${m.type==='decision'?(isPending?`<div class="btn-row mt-10" onclick="event.stopPropagation()">
         <button class="btn go sm" onclick="answerMail(${m.id},true)">✔ TAK</button>
         <button class="btn sm bcr cr" onclick="answerMail(${m.id},false)">✘ NIE</button>

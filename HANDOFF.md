@@ -59,7 +59,13 @@ Design references live in the repo and in the owner's research docs:
 
 ## 2. Current state (updated each session)
 
-**Last updated:** 2026-07-26 (proto-final design language applied game-wide)
+**Last updated:** 2026-08-20 (żywa kariera: skrzynka, budynki, akademia peakChance)
+
+### 2026-08-20 — living career, first slice
+Owner accepted: inbox by contract role (quiet rounds OK), buildings with a soft
+on-court cap then **projects**, academy upgrade raises **chance** of a high peak
+OVR (range stays 56–92). Equipment families and life-event catalogue wait.
+Design lock: `DESIGN-alive-career.md`. Tests: `tests/alive-career.test.js`.
 
 ### 2026-07-26 — the design language is now the game's skin
 `prototypes/proto-final.html` has been applied to the whole app: `styles/main.css`
@@ -93,8 +99,9 @@ how both were found.
 
 **What is NOT done (this was the skin plus two flows, not the architecture):**
 the season stage rail and "the season is one flow" (pre/season/post as phases of
-one hub, post-season owning the club change), the season-end flow, the inbox
-rewrite, and i18n. Those are the rest of M1 (see `ROADMAP.md` §M1); the
+one hub, post-season owning the club change), the season-end flow, equipment
+families, life events, full scout fog, and i18n. First inbox + buildings slice
+is in (2026-08-20). Those remaining items are the rest of M1 (see `ROADMAP.md` §M1); the
 components they need (`.stagebar/.stg/.inbox/.fold/.mrow/.quote/.out`) are
 already in the stylesheet.
 
