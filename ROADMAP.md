@@ -212,9 +212,12 @@ it's what makes the world feel alive.
 
 ## 7. Right now (next working sessions)
 
-1. **Owner picks a UI prototype** (A / B / C, or a mix) → locks the design system.
-2. Build the design system + shell on the chosen direction, with **English as the
-   default language** and the i18n scaffolding in place.
-3. Rebuild in this order: shell/nav → hub → squad → **pre-season flow** →
-   **academy flow** → **season-end flow** → market grid → the rest.
-4. Then M2 starts with the inbox rewrite.
+**2026-08-20:** owner rejected the new UI skins (Stół / Księga / Gabinet). Do not
+run another visual round. Keep the July carbon skin. Next call is **what to build
+in the game**, not how it looks:
+
+1. Alive career (inbox, life events, equipment identity, scout fog) — recommended.
+2. Season as one road (pre → season → post, season-end, club change).
+3. Stranger-ready (English, tutorial, challenges).
+
+Steam wrap, DB editor and a new look wait until the career is worth telling.

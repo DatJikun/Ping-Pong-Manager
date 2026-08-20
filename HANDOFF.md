@@ -59,21 +59,36 @@ Design references live in the repo and in the owner's research docs:
 
 ## 2. Current state (updated each session)
 
-**Last updated:** 2026-08-20 (three new UI skins for owner review — avatars unchanged)
+**Last updated:** 2026-08-20 (owner rejected the new UI skins; development direction open)
 
-### 2026-08-20 — three new UI proposals (not applied to the live game)
-Owner asked for a fresh UI round **without touching avatars**. Live `index.html` /
-`styles/main.css` / `gameplay.visuals.js` are unchanged. Three clickable skins sit
-next to the old A–E experiments:
+### 2026-08-20 — UI skins rejected; next work is gameplay, not chrome
+Owner reviewed Stół / Księga / Gabinet and **none of them**. Live career stays on
+the July carbon skin. Do **not** spend another session inventing skins until the
+owner asks. Prototypes remain in `prototypes/` as archive.
 
-- `prototypes/index.html` — Polish comparison page
-- **F Stół** (`proto-f-rubber.html`) — ITTF hall: table green, rubber red, four boards
-- **G Księga** (`proto-g-ledger.html`) — dense 1280px ops desk, 28px spreadsheet rows
-- **H Gabinet** (`proto-h-clubhouse.html`) — warm night office, decisions/stories first
+**What is actually left (from the .md files, stale claims stripped):**
 
-Same dummy club and the **live portrait generator**. Nothing ships into the career
-client until the owner picks a direction. The locked July skin (`proto-final`)
-stays the in-game look until then.
+The simulation is playable. The product around it is not Steam-ready. The gap that
+changes *how the game feels* is pillar 3 (alive world), not another coat of paint.
+
+Still open, grouped for the owner to pick:
+
+1. **Alive career (VISION pillar 3, recommended)** — inbox rewrite (threads,
+   consequences, no repeat spam); life events; equipment as identity not a free
+   boost (`DESIGN-equipment.md`, numbers need owner OK); scout fog; buildings that
+   are worth buying; deeper AI (poaching, bankruptcy, gazette).
+2. **Season as one road (rest of M1, no new skin)** — pre-season → season →
+   post-season as one hub; season-end flow; club change only after the season.
+3. **Stranger-ready product** — English + i18n; first-run guidance; challenge
+   scenarios; crash/safe-mode. Needed for Steam, thin without (1).
+4. **Later, not now** — Tauri/Steam wrapper, file Steam Cloud, database editor,
+   music, new visual identity.
+
+Owner picks 1 / 2 / 3 (or a mix). Do not start until that call.
+
+### 2026-08-20 — three new UI proposals (archive, not applied)
+Clickable skins Stół / Księga / Gabinet live under `prototypes/`. Avatars were not
+changed. Owner said none of them.
 
 ### 2026-07-26 — the design language is now the game's skin
 `prototypes/proto-final.html` has been applied to the whole app: `styles/main.css`
@@ -435,8 +450,9 @@ Each becomes its own vertical slice (logic + tests + UX/guide note).
 2. **Default database + database editor** — ship a real default DB per country and
    an in-menu editor. *Owner note: do this LAST, once leagues/cups/all systems
    work, because DBs are built per-country.*
-3. **Better avatars** — current ones are weak (`gameplay.visuals.js`).
-4. **UI polish** — font feels slightly uneven in places; tighten spacing.
+3. `[x]` **Better avatars** — DONE (2026-07-24 rewrite). Owner 2026-08-20: leave them.
+4. **UI polish** — still open as *feel*, but owner rejected a new-skin round
+   (2026-08-20). Do not start another visual pass unprompted.
 5. **Staff negotiation parity** — staff use a separate system (only years offered).
    Give them player-like negotiation: wage + signing bonus + years.
 6. **Re-evaluate the buildings/infrastructure system** — currently weak; e.g.
