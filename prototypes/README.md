@@ -1,15 +1,22 @@
-# Propozycje UI (nowa runda)
+# Jak oglądać propozycje UI
 
-Otwarte w przeglądarce: [`prototypes/index.html`](index.html).
+**Nie klikaj pliku `.html` na GitHubie ani w Cursorze.** Tam zawsze widać kod źródłowy. To nie jest błąd.
 
-Trzy nowe skóry na **tych samych ekranach** (pulpit, skład, transfery, skrzynka) i **tym samym generatorze awatarów**. Silnik gry, `styles/main.css` i portrety nie są ruszane.
+## 1. Zdjęcia (najprościej)
 
-| Plik | Nazwa | Co czuć |
-|------|--------|---------|
-| `proto-f-rubber.html` | **Stół** | Sala tenisowa, blat ITTF, gumy, czwórka jako cztery stoły |
-| `proto-g-ledger.html` | **Księga** | Wąski, gęsty arkusz — odpowiedź na „UI za szerokie” |
-| `proto-h-clubhouse.html` | **Gabinet** | Ciepły gabinet prezesa, decyzje i historie na pierwszym planie |
+Są w pull requescie i w `prototypes/previews/`. Pulpit każdej skóry:
 
-Awatary: `src/core/gameplay.visuals.js` (bez zmian). Dummy dane: `_demo.js`.
+- Stół: `previews/stol-pulpit.png`
+- Księga: `previews/ksiega-pulpit.png`
+- Gabinet: `previews/gabinet-pulpit.png`
 
-Dopóki właściciel nie wskaże kierunku, żywa gra zostaje na `proto-final.html`.
+## 2. Klikalny podgląd w przeglądarce
+
+Po wgraniu gałęzi otwórz (zwykły Chrome / Edge):
+
+- [Porównanie](https://raw.githack.com/DatJikun/Ping-Pong-Manager/cursor/ui-proposals-e6b2/prototypes/index.html)
+- [Stół](https://raw.githack.com/DatJikun/Ping-Pong-Manager/cursor/ui-proposals-e6b2/prototypes/proto-f-rubber.html)
+- [Księga](https://raw.githack.com/DatJikun/Ping-Pong-Manager/cursor/ui-proposals-e6b2/prototypes/proto-g-ledger.html)
+- [Gabinet](https://raw.githack.com/DatJikun/Ping-Pong-Manager/cursor/ui-proposals-e6b2/prototypes/proto-h-clubhouse.html)
+
+Tam działają przyciski Pulpit / Skład / Transfery / Skrzynka.
