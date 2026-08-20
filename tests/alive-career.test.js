@@ -70,3 +70,59 @@ test('upgradeInfra at max level buys a club project instead of a higher peak', (
   assert.equal(gp.myTeam().budget, budgetBefore - cost);
   assert.ok(gp.hallCapacity() > g.PPM.constants.INFRA_HALL[5].capacity, 'project adds seats, not OVR');
 });
+
+test('starter guarantee breach is rare and only for a benched first-team contract', () => {
+  const g = freshGame(64);
+  const gp = g.PPM.gameplay;
+  assert.equal(gp.starterGuaranteeBreachChance(reserve({ promisedRole: 'prospect' })), 0);
+  assert.equal(gp.starterGuaranteeBreachChance(reserve({ promisedRole: 'rotation' })), 0);
+  const ch = gp.starterGuaranteeBreachChance(reserve({ promisedRole: 'starter', preferredRole: 'starter' }));
+  assert.ok(ch > 0 && ch < 0.35, `breach chance is real but not spam (${ch})`);
+});
+
+test('injury care is a once-per-injury decision that can shorten the layoff', () => {
+  const g = freshGame(65);
+  const gp = g.PPM.gameplay, G = g.PPM.state.G, myId = G.myTeamId;
+  G.matchday = 2;
+  G.inbox = [];
+  G.players.filter((x) => x.teamId === myId && x.role === 'reserve').forEach((p) => {
+    p.promisedRole = 'prospect';
+    p.preferredRole = 'prospect';
+    p.seasonForm = 0;
+  });
+  const p = G.players.find((x) => x.teamId === myId && x.role === 'starter' && !x.retired);
+  p.injuredFor = 3;
+  p._injMd = 1;
+  gp.myTeam().budget = 80000;
+  gp.generateInboxForMatchday();
+  const mail = G.inbox.find((m) => m.decision?.kind === 'injuryCare' && m.decision.playerId === p.id);
+  assert.ok(mail, 'injury care arrived');
+  assert.ok(mail.effectsYes && mail.effectsNo, 'consequences are visible before the click');
+  gp.answerMail(mail.id, true);
+  assert.equal(p.injuredFor, 2, 'specialist shortens the remaining layoff');
+});
+
+test('family leave / rest removes the player from the next nomination pool', () => {
+  const g = freshGame(66);
+  const gp = g.PPM.gameplay, G = g.PPM.state.G, myId = G.myTeamId;
+  const p = G.players.find((x) => x.teamId === myId && x.role === 'starter' && !x.retired && !x.injuredFor);
+  p._skipNextMatch = true;
+  const eligible = gp.getEligibleMatchPlayers(myId).map((x) => x.id);
+  assert.ok(!eligible.includes(p.id), 'absent player is not match-eligible');
+});
+
+test('life events never push the matchday inbox past 3 new items', () => {
+  const g = freshGame(67);
+  const gp = g.PPM.gameplay, G = g.PPM.state.G, myId = G.myTeamId;
+  G.matchday = 5;
+  G.inbox = [];
+  G.players.filter((x) => x.teamId === myId && !x.retired).forEach((p) => {
+    p.role = p.role === 'youth' ? 'youth' : 'starter';
+    p.promisedRole = 'prospect';
+    p.injuredFor = 3;
+    p._injMd = 1;
+    p.fatigue = 10;
+  });
+  gp.generateInboxForMatchday();
+  assert.ok(G.inbox.length <= 3, `0–3 mails (${G.inbox.length})`);
+});

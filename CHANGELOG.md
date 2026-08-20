@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-20 — Katalog życia w skrzynce
+
+- Mały katalog: opieka po urazie, wypalenie, sprawa rodzinna, mentorship, szum okołoklubowy, złamana gwarancja pierwszego składu.
+- Nadal 0–3 sprawy, ciche kolejki, skutek TAK/NIE przed kliknięciem. Pauza (rodzina/wypalenie) wyłącza zawodnika z najbliższego meczu.
+
 ## 2026-08-20 — Żywa kariera: skrzynka, budynki, akademia
 
 - Skrzynka: 0–3 sprawy, ciche kolejki OK. Rezerwa prosi o stół według roli w kontrakcie (projekt / rotacja / pierwszy skład), nie 50% przy formie ≥4. Skutek TAK/NIE widać przed kliknięciem.

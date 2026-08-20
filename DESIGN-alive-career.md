@@ -1,7 +1,7 @@
 # Żywa kariera — ustalenia z właścicielem (2026-08-20)
 
-> **Status: pierwszy kawałek W GRZE** (skrzynka + budynki + peak akademii).
-> Sprzęt (rodziny), katalog życia i pełna mgła skauta **nie** wchodzą w tym commicie.
+> **Status: w grze** — skrzynka, budynki, akademia peakChance, **mały katalog życia**.
+> Sprzęt (rodziny) i pełna mgła skauta **nie** wchodzą, dopóki nie będzie osobnej zgody na liczby / pasma.
 
 ---
 
@@ -33,9 +33,18 @@ Zakres M z `DESIGN-equipment.md` po osobnej zgodzie na liczby. **Nie w tym commi
 
 ---
 
-## 3. Życie poza stołem — później
+## 3. Życie poza stołem (wdrożone — mały katalog)
 
-Mały katalog **po** skrzynce. **Nie w tym commicie.**
+Mail tylko gdy sprawa dojrzała. Nadal 0–3 na kolejkę, cisza OK, skutek przed kliknięciem.
+
+| Wątek | Kiedy | TAK / NIE |
+|---|---|---|
+| Opieka po urazie | Pauza ≥2 kolejki, raz na uraz | Konsultacja (kasa, krótszy uraz) / gabinet klubu |
+| Wypalenie | Starter, głęboki dołek formy | Pauza meczu i oddech / gra dalej, większe ryzyko urazu |
+| Styl życia | Rzadko, od ok. 4. kolejki, raz na sezon | PR wycisza za kasę / merch i morale dostają rykoszet |
+| Mentorship | Weteran + junior, raz na sezon | Extra stół (zmęczenie weta, forma juniora) / odpuszczamy |
+| Sprawa rodzinna | Lojalny senior, rzadko | Pauza meczu / gra, lojalność spada |
+| Złamana gwarancja składu | Kontrakt „pierwszy skład”, a jest w rezerwie | Obietnica stołu / serio zła krew (eskalacja, max 2 listy) |
 
 ---
 
@@ -65,6 +74,6 @@ Poziom podnosi tylko **szansę** na górę skali (`peakChance` 0.08 → 0.58), p
 
 1. ~~Skrzynka + rezerwa + ciche kolejki~~
 2. Sprzęt (po zgodzie na liczby)
-3. Katalog życia
+3. ~~Katalog życia~~
 4. Pełny skaut / pasma
 5. ~~Budynki / projekty / akademia peakChance~~

@@ -529,6 +529,8 @@ function migrateLoadedGame(parsed){
   // read team.infra*, like they do for AI clubs) see the real levels.
   if(!game.infraProjects||typeof game.infraProjects!=='object')game.infraProjects={hall:0,med:0,academy:0,merch:0};
   ['hall','med','academy','merch'].forEach(k=>{if(typeof game.infraProjects[k]!=='number')game.infraProjects[k]=0;});
+  if(!game.lifeFlags||typeof game.lifeFlags!=='object')game.lifeFlags={scandalSeason:0};
+  if(typeof game.lifeFlags.scandalSeason!=='number')game.lifeFlags.scandalSeason=0;
   const myTeamObj=(game.teams||[]).find(t=>t.id===game.myTeamId);
   if(myTeamObj){
     myTeamObj.infraHall=game.infraHall||0;

@@ -64,7 +64,9 @@ Design references live in the repo and in the owner's research docs:
 ### 2026-08-20 — living career, first slice
 Owner accepted: inbox by contract role (quiet rounds OK), buildings with a soft
 on-court cap then **projects**, academy upgrade raises **chance** of a high peak
-OVR (range stays 56–92). Equipment families and life-event catalogue wait.
+OVR (range stays 56–92). **Life-event catalogue** is in the inbox (injury care,
+burnout, family, mentorship, scandal, broken starter guarantee). Equipment
+families still wait for number sign-off; scout stat bands wait.
 Design lock: `DESIGN-alive-career.md`. Tests: `tests/alive-career.test.js`.
 
 ### 2026-07-26 — the design language is now the game's skin
