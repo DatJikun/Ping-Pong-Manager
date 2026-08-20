@@ -48,7 +48,7 @@ function pageDash(){
   let nextActionStyle='btn pr';
   const pendingMail=(window.PPM.gameplay.pendingDecisions?.()||[]).length;
   if(store.G.phase==='pre'&&pendingMail){
-    nextActionLabel=t('dash.inboxDecisions',{count:pendingMail}).toUpperCase();
+    nextActionLabel=plural('dash.inboxDecisions',pendingMail).toUpperCase();
     nextActionCall="go('inbox')";
     nextActionStyle='btn gl';
   }else if(store.G.phase==='preseason'){
@@ -270,7 +270,7 @@ function pageSquad(){
     ${academyScouts.length?`<div class="grid gp12 mt-14" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
       ${academyScouts.map(s=>{const mission=(store.G.scoutMissions||[]).find(m=>m.scoutId===s.id&&!m.done);const current=staffOvr(s);const cost=Math.max(2500,Math.round(1800+current*45));return`<div class="scout-card academy cur" onclick="openStaffModal(${s.id})">
         <div class="flex jcb mb8"><div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?'})} · ${scoutSpecialtyLabel(s)}</div></div></div>${window.PPM.ratingStars.renderRating(ratingProfile(current,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>
-        ${mission?`<div class="tile fs11">${t('squad.inField',{region:mission.region})}<br>${t('squad.remaining',{count:Math.max(0,mission.startMatchday+mission.duration-store.G.matchday)})}<br>${t('squad.missionCost',{amount:formatCurrency(mission.cost||cost)})}</div>`
+        ${mission?`<div class="tile fs11">${t('squad.inField',{region:mission.region})}<br>${plural('squad.remaining',Math.max(0,mission.startMatchday+mission.duration-store.G.matchday))}<br>${t('squad.missionCost',{amount:formatCurrency(mission.cost||cost)})}</div>`
           :`<div class="grid gtc1a gp6" onclick="event.stopPropagation()"><select id="academy-reg-${s.id}">${POLISH_REGIONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bl sm" onclick="sendScout(${s.id},document.getElementById('academy-reg-${s.id}').value)">${t('squad.send')}</button></div>
              <div class="fs11 ink3 mt-6">${t('squad.missionCost',{amount:formatCurrency(cost)})} · ${t('squad.reportCount')} · ${t('squad.specialty',{name:scoutSpecialtyLabel(s)})}</div>`}
       </div>`;}).join('')}
@@ -337,7 +337,7 @@ function squadCard(p,selectionView){
     </div>
     <div class="pc-tags">
       ${inj?`<span class="pc-tag bad">⚕ ${t('squad.injury',{count:p.injuredFor})}</span>`:''}
-      ${isYouth?`<span class="pc-tag youth">${t('squad.academyYears',{count:Math.max(0,21-p.age)})}</span>`:`<span class="pc-tag ${status.available?(slotIndex>=0?'board':''):'bad'}">${statusText}</span><span class="pc-tag">${t('squad.expectation',{role:roleGuaranteeLabel(p.preferredRole||'starter')})}</span>`}
+      ${isYouth?`<span class="pc-tag youth">${plural('squad.academyYears',Math.max(0,21-p.age))}</span>`:`<span class="pc-tag ${status.available?(slotIndex>=0?'board':''):'bad'}">${statusText}</span><span class="pc-tag">${t('squad.expectation',{role:roleGuaranteeLabel(p.preferredRole||'starter')})}</span>`}
     </div>
     <div class="pc-stats">${SK.map(s=>`<div class="pcs"><span class="l">${SL[s]}</span><span class="bar"><span class="fill" style="width:${p[s]}%;background:${statTone(p[s])}"></span></span><span class="v">${p[s]}</span></div>`).join('')}</div>
     ${p.traits.length?`<div class="traits">${p.traits.map(id=>`<span class="has-tooltip tb ${TRAITS[id]?.type||'men'}">${t(`trait.${id}.label`)}<span class="tip">${t(`trait.${id}.desc`)}</span></span>`).join('')}</div>`:''}
@@ -390,7 +390,7 @@ function pageLeague(){
     }).join('')}</table>`;
   }
   function teamStatsTable(teams,statLabel,mode){
-    return`<table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>${statLabel}</th><th>Pts</th><th>${t('league.record')}</th><th>${t('league.difference')}</th></tr>
+    return`<table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>${statLabel}</th><th>${t('dash.points')}</th><th>${t('league.record')}</th><th>${t('league.difference')}</th></tr>
     ${teams.map((team,i)=>`<tr class="${team.isPlayer?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-family:'Saira Condensed',sans-serif;font-weight:${team.isPlayer?700:400};cursor:pointer" onclick="openTeamOverview(${team.id})">${team.name}</td><td class="ink3">${teamOvr(team.id)}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${mode==='won'?(team.pointsWon||0):(team.pointsLost||0)}</td><td>${team.pts}</td><td class="fs10 ink3">${team.w}W/${team.d||0}D/${team.l}L</td><td style="font-weight:700;color:${teamPointDiff(team)>=0?'var(--g)':'var(--r)'}">${teamPointDiff(team)>=0?'+':''}${teamPointDiff(team)}</td></tr>`).join('')}</table>`;
   }
   
@@ -407,7 +407,7 @@ function pageLeague(){
     <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">${t('league.teamPointsAgainst')}</div>
   </div>
   ${statsTab==='table'?`<div class="card"><div class="ct">${t('league.tableTitle',{division:league===1?'I':'II'})}</div>
-  <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>W</th><th>D</th><th>L</th><th>${t('league.duels')}</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>Pts</th></tr>
+  <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>${t('dash.winShort')}</th><th>${t('dash.drawShort')}</th><th>${t('dash.lossShort')}</th><th>${t('league.duels')}</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>${t('dash.points')}</th></tr>
   ${sorted.map((t,i)=>{
     const isRelegation=league===1&&i>=sorted.length-2;
     const isPromotion=league===2&&i<2;
@@ -969,19 +969,19 @@ function pageHistory(){
     <div class="rtab ${tab==='coaches'?'on':''}" onclick="ui.historyTab='coaches';render()">${t('history.coaches')}</div>
   </div>
   ${tab==='seasons'?`${seasons.length?`<div class="card"><div class="ct">${t('history.seasonHistory')}</div>
-  <table class="t"><tr><th>${t('common.season')}</th><th>${t('history.league')}</th><th>${t('history.position')}</th><th>W</th><th>D</th><th>L</th><th>Pts</th><th>OVR</th><th>${t('history.budget')}</th></tr>
+  <table class="t"><tr><th>${t('common.season')}</th><th>${t('history.league')}</th><th>${t('history.position')}</th><th>${t('dash.winShort')}</th><th>${t('dash.drawShort')}</th><th>${t('dash.lossShort')}</th><th>${t('dash.points')}</th><th>OVR</th><th>${t('history.budget')}</th></tr>
   ${seasons.map(s=>`<tr><td>S${s.season}</td><td><span class="league-badge ${s.league===1?'l1':'l2'}">${s.league===1?'I':'II'}</span></td><td><b style="color:${s.position<=3?'var(--gold)':'inherit'}">#${s.position}</b></td><td class="cg">${s.w}</td><td class="cgold">${s.d||0}</td><td class="cr">${s.l}</td><td class="b7">${s.pts}</td><td>${s.teamOvr}</td><td class="cg">${s.budget!=null?formatCurrency(s.budget):'-'}</td></tr>`).join('')}
   </table></div>`:`<div class="card">${t('history.noSeasons')}</div>`}
   <div class="card"><div class="ct">${t('history.playerOvr')}</div>
   <div class="grid gp10" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
-  ${myPlayers().sort((a,b)=>ovr(b)-ovr(a)).slice(0,8).map(p=>{const hist=store.G.playerHistory[p.id]||[];const vals=hist.map(h=>h.ovr);const latest=vals.length?vals[vals.length-1]:ovr(p);return`<div class="bgs2 bb1 pd10 cur r4" onclick="openPlayerModal(${p.id})"><div class="syne b7 fs13">${p.name}</div><div class="fs9 ink3">${p.age}l / OVR ${latest}</div>${miniChart(vals)}<div class="fs9 ink3 mt-4">${vals.join(' → ')}</div></div>`;}).join('')}
+  ${myPlayers().sort((a,b)=>ovr(b)-ovr(a)).slice(0,8).map(p=>{const hist=store.G.playerHistory[p.id]||[];const vals=hist.map(h=>h.ovr);const latest=vals.length?vals[vals.length-1]:ovr(p);return`<div class="bgs2 bb1 pd10 cur r4" onclick="openPlayerModal(${p.id})"><div class="syne b7 fs13">${p.name}</div><div class="fs9 ink3">${plural('player.ageOvr',p.age,{age:p.age,ovr:latest})}</div>${miniChart(vals)}<div class="fs9 ink3 mt-4">${vals.join(' → ')}</div></div>`;}).join('')}
   </div></div>`:''}
   ${tab==='manager'?`<div class="g2"><div class="card"><div class="ct">${t('history.managerPath')}</div>${managerHistory.length?managerHistory.map(h=>`<div class="pnl-row"><div><b>${h.clubName}</b><div class="fs10 ink3">S${h.season} / ${h.league===1?'I':'II'} / ${t('history.goal',{goal:h.boardGoal?goalDesc(h.boardGoal):'-'})} ${h.boardMet===null?'':h.boardMet?'✓':'✗'}</div></div><div class="pnl-pos">#${h.position} / P${h.prestige}</div></div>`).join(''):`<div class="fs12 ink3">${t('history.noManager')}</div>`}</div><div class="card"><div class="ct">${t('history.reputation')}</div><div class="sb"><div class="l">${t('history.currentPrestige')}</div><div class="v gold fs40">${store.G.managerPrestige||0}</div><div class="sub">${t((store.G.managerPrestige||0)>=65?'history.prestigeTop':(store.G.managerPrestige||0)>=45?'history.prestigeFirst':'history.prestigeProjects')}</div></div></div></div>`:''}
   ${tab==='club'?`<div class="g2"><div class="card"><div class="ct">${t('history.clubChronicle')}</div>${clubHistory.length?clubHistory.map(h=>`<div class="pnl-row"><div><b>S${h.season}</b><div class="fs10 ink3">${h.league===1?'I':'II'} / OVR ${h.ovr}</div></div><div class="pnl-pos">#${h.position} / ${t('history.pointsShort',{points:h.pts})}</div></div>`).join(''):`<div class="fs12 ink3">${t('history.noClub')}</div>`}</div><div class="card"><div class="ct">${t('history.clubIdentity')}</div><div class="flex aic gp14 mb10"><img src="${getTeamLogoData(myTeam())}" alt="${myTeam().name}" class="club-logo lg"><div><div class="syne fs22 b8">${myTeam().name}</div><div class="fs11 ink3">${getTeamBranding(myTeam()).nickname} / ${getTeamBranding(myTeam()).motto}</div></div></div><div class="fs12 ink2">${t('history.loyalPlayers',{names:myPlayers().slice().sort((a,b)=>(b.loyalty||0)-(a.loyalty||0)).slice(0,3).map(p=>p.name).join(', ')||t('history.noData')})}</div></div></div>`:''}
   ${tab==='coaches'?`<div class="g2">
-    <div class="card"><div class="ct">${t('history.coachHistory')}</div>${coachHistory.length?coachHistory.map(h=>`<div class="pnl-row"><div><b>${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${h.clubName} / ${h.style}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):`<div class="fs12 ink3">${t(store.G.staff.some(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?'history.coachStarts':'history.hireCoach')}</div>`}
+    <div class="card"><div class="ct">${t('history.coachHistory')}</div>${coachHistory.length?coachHistory.map(h=>`<div class="pnl-row"><div><b>${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${h.clubName} / ${coachStyleLabel({styleId:h.styleId,styleName:h.style})}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):`<div class="fs12 ink3">${t(store.G.staff.some(s=>s.teamId===store.G.myTeamId&&s.type==='coach')?'history.coachStarts':'history.hireCoach')}</div>`}
       <div class="mt-14" style="padding-top:12px;border-top:1px solid var(--b1)"><div class="ct mb8">${t('history.bestCoaches')}</div>
-      ${coachHistory.length?[...coachHistory].sort((a,b)=>b.coachOvr-a.coachOvr||b.season-a.season).slice(0,5).map((h,i)=>`<div class="pnl-row"><div><b>#${i+1} ${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${h.style}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):`<div class="fs12 ink3">${t('history.rankingStarts')}</div>`}
+      ${coachHistory.length?[...coachHistory].sort((a,b)=>b.coachOvr-a.coachOvr||b.season-a.season).slice(0,5).map((h,i)=>`<div class="pnl-row"><div><b>#${i+1} ${h.coachName}</b><div class="fs10 ink3">S${h.season} / ${coachStyleLabel({styleId:h.styleId,styleName:h.style})}</div></div><div class="pnl-pos">OVR ${h.coachOvr}</div></div>`).join(''):`<div class="fs12 ink3">${t('history.rankingStarts')}</div>`}
       </div></div>
     <div class="card"><div class="ct">${t('history.currentStaff')}</div>
       ${store.G.staff.filter(s=>s.teamId===store.G.myTeamId).length?store.G.staff.filter(s=>s.teamId===store.G.myTeamId).sort((a,b)=>staffOvr(b)-staffOvr(a)).map(s=>{const current=staffOvr(s);const hist=store.G.staffHistory?.[s.id]||[];const vals=hist.map(h=>h.ovr);const best=Math.max(current,...vals,0);return`<div class="pd10 bb1 bgs2 r10 mb10"><div class="row-bet"><div><div class="b7">${s.name}</div><div class="fs10 ink3">${staffRoleLabel(s.type)} / ${s.type==='coach'?coachStyleLabel(s):s.type==='scout'?scoutSpecialtyLabel(s):t('staff.clubSpecialist')} / ${s.age||'?'}</div></div>${window.PPM.ratingStars.renderRating(ratingProfile(current,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</div>${miniChart(vals.length>1?vals:[current,current])}<div class="fs9 ink3 mt-4">${t('history.timeline',{values:(vals.length?vals:[current]).join(' → ')})} / ${t('history.recordedHighOvr',{ovr:best})}</div></div>`;}).join(''):`<div class="fs12 ink3">${t('history.noStaff')}</div>`}
@@ -994,7 +994,7 @@ function pageInbox(){
   const inbox=(store.G.inbox||[]).slice().reverse();
   const pending=inbox.filter(m=>m.type==='decision'&&!m.answered).length;
   const text=(m,field)=>m[`${field}Key`]?t(m[`${field}Key`],m[`${field}Params`]||{}):(m[field]||'');
-  return`<div class="ph"><div><div class="pt">${t('inbox.title')}</div><div class="ps">${t('inbox.summary',{count:inbox.length})}${pending?` / <b class="cr">${t('inbox.pending',{count:pending})}</b>`:''}</div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('inbox.title')}</div><div class="ps">${plural('inbox.summary',inbox.length)}${pending?` / <b class="cr">${plural('inbox.pending',pending)}</b>`:''}</div></div></div>
   ${pending?`<div class="banner" style="border-left-color:var(--r)"><div class="dot bgr"></div>${t('inbox.blocked')}</div>`:''}
   <div class="grid gp8">
   ${inbox.length?inbox.map(m=>{
@@ -1203,7 +1203,7 @@ function pagePreseason(){
     {id:'sponsors',label:t('pre.sponsors'),done:sponsorCount>=3,status:`${sponsorCount}/3`},
     {id:'tech',    label:t('pre.tech'),done:hasTech,status:hasTech?(activeTp?.name||t('pre.selected')):t('pre.none')},
     {id:'tickets', label:t('pre.tickets'),done:true,status:formatCurrency(store.G.ticketPrice||50)},
-    {id:'board',   label:t('pre.board'),done:!!boardObjective,status:boardObjective?boardObjective.label:t('pre.none')},
+    {id:'board',   label:t('pre.board'),done:!!boardObjective,status:boardObjective?t(`board.choice.${boardObjective.id}`):t('pre.none')},
   ];
   // Land on the first unsettled step rather than always on step 1.
   if(ui.preStep==null||ui.preStep<0||ui.preStep>3){
@@ -1219,12 +1219,12 @@ function pagePreseason(){
     body=`<div class="over">${t('pre.step',{current:1})}</div>
       <h3>${t('pre.sponsorQuestion')}</h3>
       <p class="why">${t('pre.sponsorWhy')}</p>
-      ${activeSponsors.length?`<div class="mt-14">${activeSponsors.map(s=>`<div class="opt on"><div><b>${s.name}</b><p>${goalDesc(s.goal)}${(s.yearsLeft||1)>1?` · ${t('pre.seasons',{count:s.yearsLeft})}`:''}</p></div><div class="m pos">${formatCurrency(s.reward)}<s>${t('pre.perSeason')}</s></div><span class="pill pos">${t('pre.signed')}</span></div>`).join('')}</div>`:''}
+      ${activeSponsors.length?`<div class="mt-14">${activeSponsors.map(s=>`<div class="opt on"><div><b>${s.name}</b><p>${goalDesc(s.goal)}${(s.yearsLeft||1)>1?` · ${plural('pre.seasons',s.yearsLeft)}`:''}</p></div><div class="m pos">${formatCurrency(s.reward)}<s>${t('pre.perSeason')}</s></div><span class="pill pos">${t('pre.signed')}</span></div>`).join('')}</div>`:''}
       ${sponsorCount<3?`<div class="mt-14">${offers.length?offers.map(s=>`<div class="opt">
         <div><b>${s.name} <span class="pill">${sponsorTierLabel(s.tier)}</span></b><p>${goalDesc(s.goal)}</p></div>
         <div class="m pos">${formatCurrency(s.reward)}<s>${t('pre.perSeason')}</s></div>
         <div class="tools" onclick="event.stopPropagation()">
-          ${(s.maxYears||1)>1?`<select id="spy-${s.id}">${Array.from({length:s.maxYears},(_,i)=>i+1).map(y=>`<option value="${y}">${t('pre.seasons',{count:y})}</option>`).join('')}</select>`:''}
+          ${(s.maxYears||1)>1?`<select id="spy-${s.id}">${Array.from({length:s.maxYears},(_,i)=>i+1).map(y=>`<option value="${y}">${plural('pre.seasons',y)}</option>`).join('')}</select>`:''}
           <button class="btn pr" onclick="signSponsorPreseason(${s.id},(document.getElementById('spy-${s.id}')||{}).value||1)">${t('pre.sign')}</button>
         </div></div>`).join(''):`<div class="empty-state">${t('pre.noOffers')}</div>`}</div>`
       :`<div class="opt on mt-14"><div><b>${t('pre.sponsorsComplete')}</b><p>${t('pre.sponsorsCompleteHint')}</p></div><span class="pill pos">${t('pre.ready')}</span></div>`}`;
@@ -1273,7 +1273,7 @@ function pagePreseason(){
       <div class="mt-14">${boardOptions.map(opt=>{
         const active=boardObjective?.id===opt.id;
         return`<div class="opt ${active?'on':''}" onclick="selectBoardObjective('${opt.id}');render()">
-          <div><b>${opt.label}</b><p>${opt.summary} · ${t(opt.id==='ambitious'?'pre.ambitiousRisk':opt.id==='safe'?'pre.safePath':'pre.standardPath')}</p></div>
+          <div><b>${t(`board.choice.${opt.id}`)}</b><p>${goalDesc(opt.goal)} · ${t(opt.id==='ambitious'?'pre.ambitiousRisk':opt.id==='safe'?'pre.safePath':'pre.standardPath')}</p></div>
           <div class="m ${opt.id==='ambitious'?'neg':'pos'}">${formatCurrency(opt.reward)}<s>${t('pre.bonus')}</s></div>
           <button class="btn ${active?'pr':''}">${t(active?'pre.chosen':'pre.choose')}</button>
         </div>`;}).join('')}</div>`;
@@ -1445,10 +1445,10 @@ function renderNewGameWizard(){
     hint=t('wizard.difficultyHint');
     const chosenName=(ui._ngLeague===1?l1:l2)[(ui._ngLeague===1?ui._selClub:ui._selClub-12)]||'&mdash;';
     body=`<div class="tac mb14 fs13">${t('nav.club')}: <b>${chosenName}</b> (${t(ui._ngLeague===1?'league.divisionOne':'league.divisionTwo')}, ${t(`country.${country.id}`)})</div>
-      <div class="grid gtc4 gp8 maxw520" style="margin:0 auto 10px">${[['easy','Easy'],['normal','Normal'],['hard','Hard'],['legend','Legend']].map(([id,label])=>`<button class="btn ${ui._newSaveDifficulty===id?'pr':'sm'} w100" onclick="selectNewSaveDifficulty('${id}')">${label}</button>`).join('')}</div>
+      <div class="grid gtc4 gp8 maxw520" style="margin:0 auto 10px">${['easy','normal','hard','legend'].map(id=>`<button class="btn ${ui._newSaveDifficulty===id?'pr':'sm'} w100" onclick="selectNewSaveDifficulty('${id}')">${t(`difficulty.${id}`)}</button>`).join('')}</div>
       <div class="maxw520" style="margin:0 auto 10px">
         <div class="fs10 ink3 up ls1 mb6 tac">${t('wizard.worldHistory')}</div>
-        <div class="grid gtc4 gp8">${[[0,t('wizard.freshWorld')],[3,t('wizard.seasons',{count:3})],[5,t('wizard.seasons',{count:5})],[10,t('wizard.seasons',{count:10})]].map(([n,label])=>`<button class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="ui._ngHistory=${n};renderStart();playClick()">${label}</button>`).join('')}</div>
+        <div class="grid gtc4 gp8">${[[0,t('wizard.freshWorld')],[3,plural('wizard.seasons',3)],[5,plural('wizard.seasons',5)],[10,plural('wizard.seasons',10)]].map(([n,label])=>`<button class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="ui._ngHistory=${n};renderStart();playClick()">${label}</button>`).join('')}</div>
         <div class="fs10 ink3 mt-6 tac">${t('wizard.historyHint')}</div>
       </div>
       <div class="maxw520 mxauto fs11 ink2 lh17 pd10-12 bgs1 bb1 r8">${(window.PPM.gameplay.difficultyEffectsSummary(ui._newSaveDifficulty||'hard')).map(e=>`&bull; ${e}`).join('<br>')}</div>`;

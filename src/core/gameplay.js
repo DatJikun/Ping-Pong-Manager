@@ -20,11 +20,11 @@ function checkpointCareer(kind){
   try{
     pending=manager.createCheckpoint(kind,window.PPM.stateApi.serializeGame());
   }catch(error){
-    safeLog(`Nie udało się zapisać punktu odzyskiwania (${kind}).`,'bd');
+    safeLog(t('career.checkpointFailed',{kind}),'bd');
     return Promise.resolve(null);
   }
   return Promise.resolve(pending).catch(()=>{
-    safeLog(`Nie udało się zapisać punktu odzyskiwania (${kind}).`,'bd');
+    safeLog(t('career.checkpointFailed',{kind}),'bd');
     return null;
   });
 }
@@ -376,7 +376,7 @@ function generateBoardObjective(teamId){
   // The board expects you to finish around where your resources place you.
   const pos=clamp(predictedLeaguePosition(tid),1,n);
   const goal='top'+pos;
-  return{goal,reward:Math.round((league===1?90000:45000)*goalDiff(goal)),summary:goalDesc(goal),baseOvr:teamOvr(tid),predictedPos:pos,risk:'expected',multiplier:1};
+  return{goal,reward:Math.round((league===1?90000:45000)*goalDiff(goal)),baseOvr:teamOvr(tid),predictedPos:pos,risk:'expected',multiplier:1};
 }
 function generateBoardObjectiveChoices(teamId){
   const tid=teamId??store.G?.myTeamId;
@@ -386,11 +386,11 @@ function generateBoardObjectiveChoices(teamId){
   const pos=clamp(predictedLeaguePosition(tid),1,n);
   const safePos=clamp(pos+2,1,n);   // easier: a lower finish is acceptable
   const ambPos=clamp(pos-2,1,n);    // harder: push above your resources
-  const mk=(id,label,gp,mult,risk,failure)=>{const goal='top'+gp;return{id,label,goal,multiplier:mult,reward:Math.round(baseReward*goalDiff(goal)*mult),summary:goalDesc(goal),predictedPos:pos,risk,failure};};
+  const mk=(id,gp,mult,risk,failure)=>{const goal='top'+gp;return{id,goal,multiplier:mult,reward:Math.round(baseReward*goalDiff(goal)*mult),predictedPos:pos,risk,failure};};
   return[
-    mk('safe','Bezpieczny',safePos,0.72,'safe','soft'),
-    mk('expected','Oczekiwany',pos,1,'expected','normal'),
-    mk('ambitious','Ambitny',ambPos,1.45,'ambitious','fired'),
+    mk('safe',safePos,0.72,'safe','soft'),
+    mk('expected',pos,1,'expected','normal'),
+    mk('ambitious',ambPos,1.45,'ambitious','fired'),
   ];
 }
 function selectBoardObjective(choiceId){
@@ -943,7 +943,17 @@ function startStaffTenure(s, teamId, season){
   const openTenure=s.careerHistory.find(h=>h.teamId===teamId&&!h.endSeason);
   if(!openTenure)s.careerHistory.push({teamId, startSeason:season, endSeason:null, role:s.type});
 }
-function staffSnap(s){return{season:store.G.season,age:s.age||0,ovr:staffOvr(s),contractYears:s.contractYears||0,type:s.type,style:s.styleName||s.type,teamId:s.teamId??null,teamName:s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):'Wolny rynek'};}
+function localizedStaffRole(type){return t(type==='coach'?'staff.coach':type==='physio'?'staff.physio':type==='psychologist'?'staff.psychologist':type==='scout'?'staff.scout':'staff.prDirector');}
+function localizedCoachStyle(styleId,legacyStyle){
+  const id=styleId||Object.values(COACH_STYLES).find(style=>style.label===legacyStyle)?.id;
+  return id?t(`coachStyle.${id}`):t('staff.generalCoach');
+}
+function staffSnapshotDescription(snapshot){
+  const team=snapshot.teamId!==null&&snapshot.teamId!==undefined?teamName(snapshot.teamId):t('staff.freeMarket');
+  const specialty=snapshot.type==='coach'?localizedCoachStyle(snapshot.styleId,snapshot.style):localizedStaffRole(snapshot.type);
+  return`${team} / ${specialty}`;
+}
+function staffSnap(s){return{season:store.G.season,age:s.age||0,ovr:staffOvr(s),contractYears:s.contractYears||0,type:s.type,styleId:s.styleId||null,teamId:s.teamId??null};}
 function staffCeiling(s){ensureStaffMeta(s);return Math.max(staffOvr(s),s.ceiling||staffOvr(s));}
 function getOwnedSingleStaffByType(type){
   if(type==='pr')return store.G.prDirector||null;
@@ -1126,7 +1136,7 @@ function recordCoachSeason(){
     coachName:coach.name,
     coachOvr:staffOvr(coach),
     age:coach.age||0,
-    style:coach.styleName||coach.type,
+    styleId:coach.styleId||null,
   });
 }
 function generateClubOffers(){
@@ -5554,7 +5564,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
       <div class="pnl-row"><div>${t('player.coachMotivation')}</div><div class="${mods.coachMorale>0?'pnl-pos':''}">${mods.coachMorale>0?`+${mods.coachMorale}`:'0'}</div></div>
       <div class="pnl-row"><div>${t('player.seasonForm')}</div><div class="${mods.formBonus>=0?'pnl-pos':'pnl-neg'}">${mods.formBonus>0?`+${mods.formBonus}`:mods.formBonus}</div></div>
       <div class="pnl-row"><div>${t('player.morale')}</div><div class="${mods.moraleBonus>=0?'pnl-pos':'pnl-neg'}">${mods.moraleBonus>0?`+${mods.moraleBonus}`:mods.moraleBonus}</div></div>
-      <div class="pnl-row"><div>Stamina / MEN</div><div class="pnl-pos">+${mods.staminaBonus}</div></div>
+      <div class="pnl-row"><div>${t('player.staminaMental')}</div><div class="pnl-pos">+${mods.staminaBonus}</div></div>
       <div class="pnl-row"><div>${t('player.fatigue')}</div><div class="pnl-neg">-${mods.fatiguePenalty}</div></div>
       <div class="pnl-row"><div>${t('player.eliteBonus')}</div><div class="${mods.eliteBonus>0?'pnl-pos':''}">${mods.eliteBonus>0?`+${mods.eliteBonus}`:'0'}</div></div>
       <div class="fs11 ink3 mt-8">${t('player.currentMatchStrength')}: <b>${mods.effectiveNow}</b>${mods.coachName?` / ${t('player.coach')}: ${mods.coachName}`:''}</div>
@@ -5595,7 +5605,7 @@ function negUpdate(){
   const p=store.G.players.find(x=>x.id===window._negPid);if(!p)return;
   const exp=contractExpect(p);
   const sl=document.getElementById('neg-sal-lbl');if(sl)sl.textContent=`${formatCurrency(window._negSal)} ${t('neg.perYear')}`;
-  const yl=document.getElementById('neg-yr-lbl');if(yl)yl.textContent=t('neg.yearsValue',{count:window._negYrs});
+  const yl=document.getElementById('neg-yr-lbl');if(yl)yl.textContent=plural('neg.yearsValue',window._negYrs);
   const bl=document.getElementById('neg-bonus-lbl');if(bl)bl.textContent=formatCurrency(window._negBonus||0);
   const pkg=document.getElementById('neg-pkg-lbl');if(pkg)pkg.textContent=formatCurrency((window._negBonus||0)+(window._negFee||0));
   const rl=document.getElementById('neg-role-lbl');if(rl)rl.textContent=roleGuaranteeLabel(window._negRole||exp.role);
@@ -5684,7 +5694,7 @@ function openNegotiate(pid){
   <div style="margin:16px 0">
     <div class="fs10 up ls1 ink3 mb4">${t('neg.salary')}: <b id="neg-sal-lbl" class="cr">${formatCurrency(sal)} ${t('neg.perYear')}</b></div>
     <input type="range" min="1000" max="${maxSal}" step="1000" value="${sal}" class="w100 accr" oninput="window._negSal=+this.value;negUpdate()">
-    <div class="kicker">${t('neg.contractYears')}: <b id="neg-yr-lbl" class="cr">${t('neg.yearsValue',{count:yrs})}</b></div>
+  <div class="kicker">${t('neg.contractYears')}: <b id="neg-yr-lbl" class="cr">${plural('neg.yearsValue',yrs)}</b></div>
     <input type="range" min="1" max="4" step="1" value="${yrs}" class="w100 accr" oninput="window._negYrs=+this.value;negUpdate()">
     <div class="kicker">${t('neg.signingBonus')}: <b id="neg-bonus-lbl" class="cr">${formatCurrency(bonus)}</b></div>
     <input type="range" min="0" max="${maxBonus}" step="1000" value="${bonus}" class="w100 accr" oninput="window._negBonus=+this.value;negUpdate()">
@@ -5697,7 +5707,7 @@ function openNegotiate(pid){
   </div>
   <div class="nfb ok" id="neg-mood">${t('neg.moodBorderline')}</div>
   <div id="neg-reasons" class="fs11 ink3" style="margin:8px 0 10px">${t('neg.waitingPlayer')}</div>
-  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">${t('neg.expectations',{salary:formatCurrency(exp.salary),years:t('neg.yearsValue',{count:exp.years}),bonus:formatCurrency(exp.signingBonus),upfront:`<b id="neg-pkg-lbl">${formatCurrency((marketItem?.fee||0)+bonus)}</b>`,rule:t(isFutureJoin?'neg.ruleFuture':'neg.ruleOneOffer')})}</div>
+  <div class="bb1 fs11 ink3 bgs2 r3 mb12" style="padding:10px 14px">${t('neg.expectations',{salary:formatCurrency(exp.salary),years:plural('neg.yearsValue',exp.years),bonus:formatCurrency(exp.signingBonus),upfront:`<b id="neg-pkg-lbl">${formatCurrency((marketItem?.fee||0)+bonus)}</b>`,rule:t(isFutureJoin?'neg.ruleFuture':'neg.ruleOneOffer')})}</div>
   <div class="btn-row"><button class="btn pr" onclick="doNegotiate(${pid})">${t('neg.propose').toUpperCase()}</button><button class="btn" onclick="closeModal()">${t('neg.withdraw').toUpperCase()}</button></div>`;
   negUpdate();
   openModal();
@@ -5728,7 +5738,7 @@ function doNegotiate(pid){
   // (applySeveranceRelease) can push the account negative mid-season, and if
   // that also blocked free signings the squad could never be rebuilt back to the
   // three players the match protocol needs.
-  if(upfront>0&&myTeam().budget<upfront){toast('Brak bud\u017cetu na ten pakiet!');return;}
+  if(upfront>0&&myTeam().budget<upfront){toast(t('neg.insufficientPackage'));return;}
   const feedback=negResponse(p,sal,yrs,bonus,promisedRole,store.G.myTeamId);
   markNegotiated('player',pid);
   pushNegotiationHistory({kind:'player',targetId:p.id,targetName:p.name,status:feedback.score<0?'rejected':'accepted',salary:sal,years:yrs,bonus,promisedRole,reasons:feedback.reasons});
@@ -5765,7 +5775,7 @@ function doNegotiate(pid){
     clearScoutResult(p.id);
   }
   buildMarket();closeModal();render();updateHeader();
-  if(!joinsNextSeason)toast(t('neg.signed',{name:p.name,salary:formatCurrency(sal),years:t('neg.yearsValue',{count:yrs}),bonus:formatCurrency(bonus),role:roleGuaranteeLabel(promisedRole).toLowerCase()}));
+  if(!joinsNextSeason)toast(t('neg.signed',{name:p.name,salary:formatCurrency(sal),years:plural('neg.yearsValue',yrs),bonus:formatCurrency(bonus),role:roleGuaranteeLabel(promisedRole).toLowerCase()}));
   persistGame();
 }
 
@@ -5802,8 +5812,8 @@ function openStaffModal(sid){
   const hist=(store.G.staffHistory?.[s.id]||[]).slice().reverse();
   const career=(s.careerHistory||[]).slice().reverse();
   const currentTeam=s.teamId!==null&&s.teamId!==undefined?teamName(s.teamId):t('staff.freeMarket');
-  const roleLabel=t(s.type==='coach'?'staff.coach':s.type==='physio'?'staff.physio':s.type==='psychologist'?'staff.psychologist':s.type==='scout'?'staff.scout':'staff.prDirector');
-  const coachStyle=s.styleId?t(`coachStyle.${s.styleId}`):s.styleName||'?';
+  const roleLabel=localizedStaffRole(s.type);
+  const coachStyle=localizedCoachStyle(s.styleId,s.styleName);
   const detail=s.type==='coach'
     ?t('staff.styleDetail',{style:coachStyle,tactics:s.tactics||0,motivation:s.motivation||0})
     :s.type==='physio'
@@ -5831,10 +5841,10 @@ function openStaffModal(sid){
   <div class="card mb12"><div class="ct">${t('staff.bio').toUpperCase()}</div><div class="fs12 lh16">${bio}</div></div>
   <div class="g2">
     <div class="card"><div class="ct">${t('staff.clubHistory').toUpperCase()}</div>
-      ${career.length?career.map(h=>`<div class="pnl-row"><div>${teamName(h.teamId)}<div class="fs10 ink3">S${h.startSeason} - ${h.endSeason?`S${h.endSeason}`:t('staff.now')}</div></div><div class="pnl-pos">${t('staff.tenureYears',{count:(h.endSeason||store.G.season)-h.startSeason+1})}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.clubHistoryEmpty')}</div>`}
+      ${career.length?career.map(h=>`<div class="pnl-row"><div>${teamName(h.teamId)}<div class="fs10 ink3">S${h.startSeason} - ${h.endSeason?`S${h.endSeason}`:t('staff.now')}</div></div><div class="pnl-pos">${plural('staff.tenureYears',(h.endSeason||store.G.season)-h.startSeason+1)}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.clubHistoryEmpty')}</div>`}
     </div>
     <div class="card"><div class="ct">${t('staff.seasons').toUpperCase()}</div>
-      ${hist.length?hist.map(h=>`<div class="pnl-row"><div>S${h.season}<div class="fs10 ink3">${h.teamName||t('staff.freeMarket')} / ${h.style||h.type}</div></div><div class="pnl-pos">OVR ${h.ovr}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.seasonHistoryEmpty')}</div>`}
+      ${hist.length?hist.map(h=>`<div class="pnl-row"><div>S${h.season}<div class="fs10 ink3">${staffSnapshotDescription(h)}</div></div><div class="pnl-pos">OVR ${h.ovr}</div></div>`).join(''):`<div class="fs12 ink3">${t('staff.seasonHistoryEmpty')}</div>`}
     </div>
   </div>
   <div class="btn-row mt-12">
@@ -5885,8 +5895,8 @@ function openStaffNeg(sid){
     <input type="range" min="1000" max="${staffMaxSal}" step="1000" value="${s.salary||staffExpSal}" class="w100 accr" oninput="window._staffNegSal=+this.value;document.getElementById('staff-sal-lbl').firstChild.textContent=formatCurrency(+this.value)+' '+t('neg.perYear');staffNegUpdate()">
     <div class="kicker">${t('neg.signingBonus')}: <b id="staff-bonus-lbl" class="cr">${formatCurrency(staffDefBonus)}</b></div>
     <input type="range" min="0" max="${staffMaxBonus}" step="1000" value="${staffDefBonus}" class="w100 accr" oninput="window._staffNegBonus=+this.value;document.getElementById('staff-bonus-lbl').textContent=formatCurrency(+this.value);staffNegUpdate()">
-    <div class="kicker">${t('neg.contractYears')}: <b id="staff-yr-lbl" class="cr">${t('neg.yearsValue',{count:defaultYrs})}</b></div>
-    <input type="range" min="1" max="4" step="1" value="${defaultYrs}" class="w100 accr" oninput="window._staffNegYrs=+this.value;document.getElementById('staff-yr-lbl').textContent=t('neg.yearsValue',{count:this.value});staffNegUpdate()">
+    <div class="kicker">${t('neg.contractYears')}: <b id="staff-yr-lbl" class="cr">${plural('neg.yearsValue',defaultYrs)}</b></div>
+    <input type="range" min="1" max="4" step="1" value="${defaultYrs}" class="w100 accr" oninput="window._staffNegYrs=+this.value;document.getElementById('staff-yr-lbl').textContent=plural('neg.yearsValue',this.value);staffNegUpdate()">
     <div id="staff-mood" class="nfb ok mt-12">${t('staff.neg.moodBorderline')}</div>
     <div id="staff-reasons" class="fs11 ink3 mt-6"></div>
   </div>
@@ -5955,7 +5965,7 @@ function doHireStaff(sid){
         startStaffTenure(s,store.G.myTeamId,store.G.season);s.contractYears=yrs;
         store.G.prDirector=s;
         store.G.prDirectorPool=(store.G.prDirectorPool||[]).filter(x=>x.id!==sid);
-        toast(t('staff.neg.prHired',{name:s.name,years:t('neg.yearsValue',{count:yrs})}));
+        toast(t('staff.neg.prHired',{name:s.name,years:plural('neg.yearsValue',yrs)}));
       }
     }else if(s.teamId!==null&&s.teamId!==store.G.myTeamId){
       store.G.pendingStaffSignings=store.G.pendingStaffSignings||[];
@@ -5972,13 +5982,13 @@ function doHireStaff(sid){
       if(!store.G.staffHistory[s.id])store.G.staffHistory[s.id]=[staffSnap(s)];
       store.G.staffPool=store.G.staffPool.filter(x=>x.id!==sid);
       if(store.G.scoutPool)store.G.scoutPool=store.G.scoutPool.filter(x=>x.id!==sid);
-      toast(t('staff.neg.hired',{name:s.name,years:t('neg.yearsValue',{count:yrs})}));
+      toast(t('staff.neg.hired',{name:s.name,years:plural('neg.yearsValue',yrs)}));
     }
   }else if(existing){
     existing.contractYears=yrs;
     if(negSal>0)existing.salary=negSal;
     if(negBonus>0){mt.budget-=negBonus;const f=ensureSeasonFinance();if(f)f.other-=negBonus;}
-    toast(t('staff.neg.renewed',{name:existing.name,years:t('neg.yearsValue',{count:yrs})}));
+    toast(t('staff.neg.renewed',{name:existing.name,years:plural('neg.yearsValue',yrs)}));
   }
   closeModal();render();updateHeader();persistGame();
 }
@@ -5996,21 +6006,21 @@ function upgradeInfra(type){
   if(type==='merch'){
     const cur=store.G.infraMerchandising||0;const next=INFRA_MERCH[cur+1];if(!next){toast(t('infra.maximum'));return;}
     if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
-    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMerchandising=cur+1;toast(`${next.name}!`);
+    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMerchandising=cur+1;toast(`${infraDisplayName(type,cur+1)}!`);
     syncMyTeamInfra();render();updateHeader();persistGame();return;
   }
   if(type==='hall'){
     const cur=store.G.infraHall||0;const next=INFRA_HALL[cur+1];if(!next){toast(t('infra.maximum'));return;}
     if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
-    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraHall=cur+1;toast(`${next.name}!`);
+    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraHall=cur+1;toast(`${infraDisplayName(type,cur+1)}!`);
   }else if(type==='med'){
     const cur=store.G.infraMed||0;const next=INFRA_MED[cur+1];if(!next){toast(t('infra.maximum'));return;}
     if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
-    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMed=cur+1;toast(`${next.name}!`);
+    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraMed=cur+1;toast(`${infraDisplayName(type,cur+1)}!`);
   }else if(type==='academy'){
     const cur=store.G.infraAcademy||0;const next=INFRA_ACADEMY[cur+1];if(!next){toast(t('infra.maximum'));return;}
     if(mt.budget<next.cost){toast(t('infra.noBudget'));return;}
-    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraAcademy=cur+1;toast(`${next.name}!`);
+    mt.budget-=next.cost;const finance=ensureSeasonFinance();if(finance)finance.infraCost+=next.cost;store.G.infraAcademy=cur+1;toast(`${infraDisplayName(type,cur+1)}!`);
   }
   syncMyTeamInfra();render();updateHeader();persistGame();
 }
@@ -6032,6 +6042,11 @@ const INFRA_FIELDS={
   academy:{key:'infraAcademy',arr:INFRA_ACADEMY},
   merch:{key:'infraMerchandising',arr:INFRA_MERCH},
 };
+function infraDisplayName(type,level){
+  const field=INFRA_FIELDS[type];
+  const group={hall:'infraHall',med:'infraMed',academy:'infraAcademy',merch:'infraMerch'}[type];
+  return gameDataText(group,level,'name',field?.arr[level]?.name||'');
+}
 // Downgrade an infra building one level (owner request): FREE, no refund of the
 // build cost. The point is to cut a recurring cost (e.g. academy upkeep) in a cash
 // crisis — a deliberate, reversible escape valve rather than a money-maker.
@@ -6039,10 +6054,10 @@ function downgradeInfra(type){
   const f=INFRA_FIELDS[type];if(!f)return;
   const cur=store.G[f.key]||0;
   if(cur<=0){toast(t('infra.minimum'));return;}
-  const prev=f.arr[cur-1];
-  if(!confirm(t('infra.downgradeConfirm',{name:prev.name})))return;
+  const name=infraDisplayName(type,cur-1);
+  if(!confirm(t('infra.downgradeConfirm',{name})))return;
   store.G[f.key]=cur-1;
-  toast(t('infra.downgraded',{name:prev.name}));
+  toast(t('infra.downgraded',{name}));
   syncMyTeamInfra();render();updateHeader();persistGame();
 }
 

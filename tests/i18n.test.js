@@ -738,3 +738,134 @@ test('matchday modal title follows the active locale', () => {
   g.PPM.i18n.setLocale('pl');
   assert.match(g.PPM.gameplay.matchdayModalTitle(1, 1), /Kolejka 1\/22 \(I Liga\)/i);
 });
+
+test('board objective choices and selected status render from semantic data in the active locale', () => {
+  const g = boot(3135);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  g.PPM.ui.preStep = 3;
+
+  const english = g.PPM.pages.pagePreseason();
+  assert.match(english, /Safe|Expected|Ambitious/);
+  assert.doesNotMatch(english, /Bezpieczny|Oczekiwany|Ambitny/);
+
+  g.PPM.state.G.boardObjectiveOptions[0].label = 'Bezpieczny';
+  g.PPM.state.G.boardObjectiveOptions[0].summary = 'Top 10 w lidze';
+  g.PPM.gameplay.selectBoardObjective('safe');
+  const legacyEnglish = g.PPM.pages.pagePreseason();
+  assert.match(legacyEnglish, /Safe/);
+  assert.doesNotMatch(legacyEnglish, /Bezpieczny|Top 10 w lidze/);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pagePreseason();
+  assert.match(polish, /Bezpieczny/);
+  assert.doesNotMatch(polish, /Safe|Expected|Ambitious/);
+});
+
+test('infrastructure actions use the active locale for all four facility types', () => {
+  const facilities = [
+    ['hall', 'Sports hall', 'No hall'],
+    ['med', 'Medical office', 'No medical centre'],
+    ['academy', 'Youth section', 'No academy'],
+    ['merch', 'Fan stall', 'No shop'],
+  ];
+  for (const [type, upgraded, downgraded] of facilities) {
+    const g = boot(3140 + facilities.findIndex(row => row[0] === type));
+    g.PPM.gameplay.newGame(0, 'PL');
+    let message = '';
+    g.toast = value => { message = value; };
+    g.confirm = () => true;
+    g.PPM.gameplay.upgradeInfra(type);
+    assert.equal(message, `${upgraded}!`, `English ${type} upgrade`);
+    g.PPM.gameplay.downgradeInfra(type);
+    assert.equal(message, `Downgraded to ${downgraded}.`, `English ${type} downgrade`);
+  }
+});
+
+test('localized action failures and checkpoint logs never fall back to Polish in English', async () => {
+  const g = boot(3145);
+  g.PPM.gameplay.newGame(0, 'PL');
+  let message = '';
+  g.toast = value => { message = value; };
+  const candidate = g.PPM.state.G.players.find(player => player.teamId === null && !player.retired);
+  g.PPM.state.G.teams.find(team => team.id === g.PPM.state.G.myTeamId).budget = 0;
+  g._negBonus = 1;
+  g.PPM.gameplay.doNegotiate(candidate.id);
+  assert.match(message, /budget.*package/i);
+  assert.doesNotMatch(message, /Brak budżetu/i);
+
+  (g.PPM.state.G.sponsorOffers || []).slice(0, 3).forEach(sponsor => g.PPM.gameplay.signSponsorPreseason(sponsor.id, 1));
+  g.PPM.gameplay.selectTechPartnership('tp_local', 1);
+  g.PPM.gameplay.selectBoardObjective('safe');
+  g.PPM.gameplay.startSeason();
+  g.PPM.saveManager = {
+    isInitialized: () => true,
+    getActiveCareerId: () => 'career',
+    createCheckpoint: () => { throw new Error('storage failure'); },
+    requestAutosave: () => true,
+    flush: () => true,
+  };
+  g.PPM.ui.autoPlay = true;
+  await g.PPM.gameplay.runMatchday();
+  const checkpointLog = g.PPM.state.G.gameLog.map(entry => entry.msg).find(entry => /recovery point/i.test(entry));
+  assert.match(checkpointLog, /Could not save recovery point/);
+  assert.doesNotMatch(checkpointLog, /Nie udało się zapisać/);
+});
+
+test('legacy coach history, compact table labels, age text, and difficulty choices follow the active locale', () => {
+  const g = boot(3146);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  g.PPM.state.G.coachHistory = [{ season: 1, clubName: 'Rakieta Wrocław', coachName: 'Test Coach', coachOvr: 70, style: 'Ofensywny' }];
+  g.PPM.ui.historyTab = 'coaches';
+  const coachHistory = g.PPM.pages.pageHistory();
+  assert.match(coachHistory, /Attacking/);
+  assert.doesNotMatch(coachHistory, /Ofensywny/);
+
+  g.PPM.ui.historyTab = 'seasons';
+  const seasonHistory = g.PPM.pages.pageHistory();
+  assert.match(seasonHistory, /\d+ yrs \/ OVR/);
+  assert.doesNotMatch(seasonHistory, /\d+l \/ OVR/);
+
+  g.PPM.ui._startView = 'newgame';
+  g.PPM.ui._ngStep = 3;
+  g.PPM.pages.renderStart();
+  const start = g.document.getElementById('content').innerHTML;
+  assert.match(start, /Easy|Normal|Hard|Legend/);
+  assert.match(g.PPM.pages.pageLeague(), /<th>W<\/th>.*<th>D<\/th>.*<th>L<\/th>/s);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.pages.renderStart();
+  const polishStart = g.document.getElementById('content').innerHTML;
+  assert.match(polishStart, /Łatwy|Normalny|Trudny|Legenda/);
+  assert.match(g.PPM.pages.pageLeague(), /<th>W<\/th>.*<th>R<\/th>.*<th>P<\/th>/s);
+});
+
+test('locale-aware plural forms handle English and Polish reachable counts', () => {
+  const g = boot(3147);
+  const { plural, setLocale } = g.PPM.i18n;
+  setLocale('en');
+  assert.equal(plural('neg.yearsValue', 1), '1 year');
+  assert.equal(plural('neg.yearsValue', 2), '2 years');
+  assert.equal(plural('inbox.summary', 5), '5 messages');
+
+  setLocale('pl');
+  assert.equal(plural('neg.yearsValue', 1), '1 rok');
+  assert.equal(plural('neg.yearsValue', 2), '2 lata');
+  assert.equal(plural('neg.yearsValue', 5), '5 lat');
+  assert.equal(plural('inbox.summary', 1), '1 wiadomość');
+  assert.equal(plural('inbox.summary', 2), '2 wiadomości');
+  assert.equal(plural('inbox.summary', 5), '5 wiadomości');
+});
+
+test('player match modifier stamina label follows the active locale', () => {
+  const g = boot(3148);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const player = g.PPM.state.G.players.find(entry => entry.teamId === g.PPM.state.G.myTeamId);
+  g.PPM.gameplay.openPlayerModal(player.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Stamina \/ MEN/);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openPlayerModal(player.id);
+  assert.match(g.document.getElementById('modal').innerHTML, /Kondycja \/ MEN/);
+});
