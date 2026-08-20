@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-20 — Rodziny okładzin i pełny skaut
+
+- Okładziny to teraz **rodzina + klasa**, nie drabinka „płać więcej = lepszy”. Tensor / tacky / control / krótki kip / długi kip mają plusy i minusy. Magazyn / turniej / PRO tylko skalują wybrany efekt i zużycie.
+- Świeżość spada po meczach. Zmiana rodziny = 2–4 kolejki adaptacji. Gwiazda może zażądać swoich okładzin w skrzynce. Kluby AI mają własną rodzinę.
+- Rynek: OVR widać zawsze. Cechy obcych to pasma, peak to `?`, dopóki nie zeskautujesz (2000 €, skaut na etacie), nie zagracie meczu albo nie podpiszesz. Własny skład jest zawsze odkryty.
+
 ## 2026-08-20 — Katalog życia w skrzynce
 
 - Mały katalog: opieka po urazie, wypalenie, sprawa rodzinna, mentorship, szum okołoklubowy, złamana gwarancja pierwszego składu.

@@ -31,8 +31,9 @@ partners are the highest-value/most-distinctive addition.
   **individual stats (ATK/DEF/SRV/MEN) are shown as BANDS/ranges** until scouted —
   a better scout narrows those stat bands. So you always know HOW GOOD overall, but
   not the exact composition, until you scout. Same idea for the ceiling/potential.
-- **Fog-of-war = stat bands + potential + hidden traits.** Higher-OVR scout → tighter
-  bands, for players AND staff. This is where scouting earns its money.
+- **Fog-of-war = stat bands + potential + hidden traits.** Player bands + peak `?`
+  until observe / play / sign are in the live game (2026-08-20). Tighter bands from
+  higher-OVR scouts, and staff fog, are still later.
 - **Scouting cost model — AGREED (owner 2026-06-29):** salary + a small per-mission
   cost scaled by mission size. **One scout runs ONE mission at a time** (the choice
   is the gameplay). Better scout → higher chance of a high peak OVR + tighter bands.

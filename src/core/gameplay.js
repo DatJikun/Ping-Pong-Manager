@@ -462,16 +462,23 @@ function getTechPartnershipBonus(teamId){
   if(teamId!==store.G.myTeamId)return{};
   return getTechPartnership()?.bonus||{};
 }
-// ── EQUIPMENT (owner research 2026-07-03): blade + sponge are the player's
-// personal setup (fitted to his style at generation); rubber freshness is a
-// CLUB-level tier (rubbers wear out → recurring seasonal cost; AI clubs get a
-// tier from their budget). Mods flow through getPlayerAdjustedStats, so OVR,
-// the match engine and every display see the same numbers.
+// ── EQUIPMENT: family + grade + wear. Blade/sponge stay personal; rubber family
+// is a club identity (player can override). Grade scales magnitude; wear scales
+// effective mods. Wrong family is a real downside, not a cheaper version of PRO.
+function preferredFamilyFor(p){
+  const st=p?.playStyle;
+  if(st==='DEFENDER')return 'LONG_PIPS';
+  if(st==='FISHER')return 'SHORT_PIPS';
+  if(st==='BLOCKER')return 'CONTROL';
+  if(st==='FH_LOOPER')return 'TENSOR';
+  return 'TACKY';
+}
 function fitEquipmentToStyle(p){
   const st=p?.playStyle;
   const blade=(st==='DEFENDER'||st==='FISHER')?'DEF':st==='BLOCKER'?'ALL':st==='FH_LOOPER'?'OFF':(Math.random()<0.5?'OFF':'ALL');
   const sponge=(st==='DEFENDER'||st==='FISHER')?'CIENKA':st==='BLOCKER'?(Math.random()<0.5?'SREDNIA':'CIENKA'):st==='FH_LOOPER'?'GRUBA':(Math.random()<0.5?'GRUBA':'SREDNIA');
-  return{blade,sponge};
+  const family=null;
+  return{blade,sponge,family,freshness:100,adaptLeft:0};
 }
 function clubRubberTier(teamId){
   if(teamId===null||teamId===undefined||!store.G)return 0;
@@ -479,27 +486,186 @@ function clubRubberTier(teamId){
   if(teamId===store.G.myTeamId)return clamp(store.G.rubberTier||0,0,maxTier);
   const t=store.G.teams?.find(x=>x.id===teamId);
   if(!t)return 0;
+  if(typeof t.rubberTier==='number')return clamp(t.rubberTier,0,maxTier);
   return (t.budget||0)>350000?2:(t.budget||0)>120000?1:0;
+}
+function clubRubberFamily(teamId){
+  if(teamId===null||teamId===undefined||!store.G)return 'CONTROL';
+  if(teamId===store.G.myTeamId)return store.G.rubberFamily||'TENSOR';
+  const t=store.G.teams?.find(x=>x.id===teamId);
+  return t?.rubberFamily||'CONTROL';
+}
+function playerRubberFamily(p){
+  return p?.equipment?.family||clubRubberFamily(p?.teamId)||preferredFamilyFor(p);
+}
+function equipmentStyleNudge(p,oppStyle){
+  const fam=playerRubberFamily(p);
+  if(fam==='LONG_PIPS'){
+    if(oppStyle==='FH_LOOPER'||oppStyle==='TWO_SIDED')return 0.08;
+    if(oppStyle==='BLOCKER')return -0.08;
+  }
+  if(fam==='SHORT_PIPS'){
+    if(oppStyle==='FH_LOOPER'||oppStyle==='TWO_SIDED')return 0.05;
+    if(oppStyle==='DEFENDER')return -0.04;
+  }
+  return 0;
 }
 function equipmentMods(p){
   if(!p||!p.equipment||typeof EQUIPMENT==='undefined')return{};
   const out={};
-  const add=m=>{if(m)SK.forEach(k=>{if(m[k])out[k]=(out[k]||0)+m[k];});};
-  add(EQUIPMENT.blades[p.equipment.blade]?.mods);
-  add(EQUIPMENT.sponges[p.equipment.sponge]?.mods);
-  add(EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.mods);
+  const add=(m,scale)=>{
+    if(!m)return;
+    SK.forEach(k=>{
+      if(!m[k])return;
+      out[k]=(out[k]||0)+Math.round(m[k]*scale);
+    });
+  };
+  add(EQUIPMENT.blades[p.equipment.blade]?.mods,1);
+  add(EQUIPMENT.sponges[p.equipment.sponge]?.mods,1);
+  const famId=playerRubberFamily(p);
+  const fam=EQUIPMENT.rubberFamilies[famId];
+  const grade=EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]||EQUIPMENT.rubberTiers[0];
+  const fresh=clamp(typeof p.equipment.freshness==='number'?p.equipment.freshness:100,0,100)/100;
+  const adapt=p.equipment.adaptLeft>0?1:0;
+  if(fam){
+    SK.forEach(k=>{
+      if(!fam.mods[k])return;
+      let v=Math.round(fam.mods[k]*(grade.scale||1)*fresh);
+      if(adapt)v-=2;
+      if(v)out[k]=(out[k]||0)+v;
+    });
+  }
+  if(famId===(p.preferredFamily||preferredFamilyFor(p)))out.men=(out.men||0)+1;
   return out;
+}
+function rubberFitCount(teamId){
+  const fam=clubRubberFamily(teamId);
+  return store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&p.role!=='youth'&&(p.preferredFamily||preferredFamilyFor(p))===fam).length;
 }
 function setRubberTier(tier){
   const t=EQUIPMENT.rubberTiers[tier];if(!t)return;
-  const squad=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth').length;
-  const cost=t.costPerPlayer*squad;
+  const squad=store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired&&p.role!=='youth');
+  const cost=t.costPerPlayer*squad.length;
   if(tier>(store.G.rubberTier||0)&&cost>0){
-    if(!confirm(`${t.label}: ${t.costPerPlayer.toLocaleString('pl')} €/zawodnika × ${squad} = ${cost.toLocaleString('pl')} €/sezon (płatne przy każdym rozliczeniu sezonu). Ustawić?`))return;
+    if(!confirm(`${t.label}: ${t.costPerPlayer.toLocaleString('pl')} €/zawodnika × ${squad.length} = ${cost.toLocaleString('pl')} €/sezon (płatne przy rozliczeniu). Świeżość wraca do 100. Ustawić?`))return;
   }
   store.G.rubberTier=tier;
-  toast(`Okładziny klubowe: ${t.label}`);
+  squad.forEach(p=>{ensurePlayerMeta(p);p.equipment.freshness=100;});
+  toast(`Klasa okładzin: ${t.label}`);
   render();updateHeader();persistGame();
+}
+function setRubberFamily(familyId){
+  const fam=EQUIPMENT.rubberFamilies[familyId];if(!fam)return;
+  if(store.G.rubberFamily===familyId){toast('Ta rodzina już jest klubowa.');return;}
+  if(!confirm(`Przejść na ${fam.label}? Skład adaptuje się 2–4 kolejki (tymczasowo −2 do zmienionych cech).`))return;
+  store.G.rubberFamily=familyId;
+  store.G.players.filter(p=>p.teamId===store.G.myTeamId&&!p.retired).forEach(p=>{
+    ensurePlayerMeta(p);
+    const rounds=clamp(4-((p.age||24)<=21?1:0)-((p.men||50)>=70?1:0),2,4);
+    p.equipment.family=familyId;
+    p.equipment.adaptLeft=rounds;
+    p.equipment.freshness=100;
+  });
+  toast(`Rodzina okładzin: ${fam.label}`);
+  render();updateHeader();persistGame();
+}
+function applyPlayerFamilyChange(p,familyId,opts={}){
+  const fam=EQUIPMENT.rubberFamilies[familyId];
+  if(!p||!fam)return false;
+  const grade=EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)];
+  const cost=opts.free?0:(grade?.costPerPlayer||0);
+  if(cost>0&&!chargeClubLife(cost))return false;
+  const rounds=clamp(4-((p.age||24)<=21?1:0)-((p.men||50)>=70?1:0),2,4);
+  ensurePlayerMeta(p);
+  p.equipment.family=familyId;
+  p.equipment.adaptLeft=rounds;
+  p.equipment.freshness=100;
+  return true;
+}
+function setPlayerRubberFamily(pid,familyId){
+  const p=store.G.players.find(x=>x.id===pid);const fam=EQUIPMENT.rubberFamilies[familyId];
+  if(!p||!fam||p.teamId!==store.G.myTeamId)return;
+  const grade=EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)];
+  const cost=grade?.costPerPlayer||0;
+  if(!confirm(`${p.name}: ${fam.label}${cost?` (−${cost.toLocaleString('pl')} €)`:''}. Adaptacja 2–4 kolejek.`))return;
+  if(!applyPlayerFamilyChange(p,familyId)){toast('Brak budżetu na wymianę okładzin.');return;}
+  toast(`${p.name}: ${fam.label}`);
+  render();updateHeader();persistGame();
+}
+function refreshPlayerRubbers(pid){
+  const p=store.G.players.find(x=>x.id===pid);if(!p||p.teamId!==store.G.myTeamId)return;
+  const grade=EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)];
+  const cost=Math.round((grade?.costPerPlayer||0)*0.55);
+  if(cost>0&&!chargeClubLife(cost)){toast('Brak budżetu na świeże okładziny.');return;}
+  ensurePlayerMeta(p);
+  p.equipment.freshness=100;
+  toast(`${p.name}: świeże okładziny${cost?` (−${cost.toLocaleString('pl')} €)`:''}.`);
+  render();updateHeader();persistGame();
+}
+function wearPlayerRubber(p){
+  if(!p?.equipment)return;
+  ensurePlayerMeta(p);
+  const grade=EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]||EQUIPMENT.rubberTiers[0];
+  let wear=grade.wear||4;
+  const phy=getTeamPhysio(p.teamId);
+  if(phy)wear*=(1-(staffOvr(phy)/100)*0.18);
+  const medLv=p.teamId===store.G?.myTeamId?(store.G.infraMed||0):(store.G.teams.find(t=>t.id===p.teamId)?.infraMed||0);
+  wear*=(1-clamp(medLv,0,5)*0.04);
+  p.equipment.freshness=clamp(Math.round((p.equipment.freshness||100)-wear),0,100);
+  if(p.equipment.adaptLeft>0)p.equipment.adaptLeft--;
+}
+function playerIsScouted(p){
+  if(!p||!store.G)return false;
+  if(p.teamId===store.G.myTeamId)return true;
+  if(p.revealedToManager)return true;
+  return false;
+}
+function observePlayerCost(){return 2000;}
+function observePlayer(pid){
+  const p=store.G.players.find(x=>x.id===pid);if(!p)return;
+  if(playerIsScouted(p)){toast('Ten zawodnik jest już zeskautowany.');return;}
+  if(!getMyScouts().length){toast('Potrzebujesz skauta na etacie, żeby ściągnąć raport.');return;}
+  const cost=observePlayerCost();
+  if(!chargeClubLife(cost)){toast(`Brak budżetu na obserwację (${cost.toLocaleString('pl')} €).`);return;}
+  p.revealedToManager=true;
+  toast(`${p.name}: pełny raport (peak ${playerCeiling(p)}, cechy liczby).`);
+  render();updateHeader();persistGame();
+}
+function revealOpponents(ids){
+  (ids||[]).forEach(id=>{
+    const p=store.G.players.find(x=>x.id===id);
+    if(p&&p.teamId!==store.G.myTeamId)p.revealedToManager=true;
+  });
+}
+function statBand(p,key){
+  const v=p?.[key]||0;
+  if(playerIsScouted(p))return String(v);
+  const seed=((p.id||0)*33+(key||'').charCodeAt(0)*17)&255;
+  const width=8+(seed%5);
+  const snap=4;
+  const lo=Math.max(10,Math.floor((v-width)/snap)*snap);
+  const hi=Math.min(96,lo+12+snap);
+  return `${lo}–${hi}`;
+}
+function peakDisplay(p){
+  if(!p)return '?';
+  return playerIsScouted(p)?playerCeiling(p):'?';
+}
+function assignAiRubberIdentities(){
+  (store.G.teams||[]).forEach(t=>{
+    if(t.isPlayer)return;
+    if(!t.rubberFamily){
+      const starters=store.G.players.filter(p=>p.teamId===t.id&&p.role==='starter'&&!p.retired);
+      const counts={};
+      starters.forEach(p=>{const f=preferredFamilyFor(p);counts[f]=(counts[f]||0)+1;});
+      t.rubberFamily=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'CONTROL';
+    }
+    if(typeof t.rubberTier!=='number')t.rubberTier=clubRubberTier(t.id);
+    store.G.players.filter(p=>p.teamId===t.id).forEach(p=>{
+      ensurePlayerMeta(p);
+      if(!p.equipment.family)p.equipment.family=t.rubberFamily;
+    });
+  });
 }
 function getPlayerAdjustedStats(p,teamId){
   const bonus=getTechPartnershipBonus(teamId??p?.teamId);
@@ -926,6 +1092,9 @@ function ensurePlayerMeta(p){
   if(typeof p.stamina!=='number')p.stamina=derivePlayerStamina(p);
   if(typeof p.ceiling!=='number')p.ceiling=estimatePlayerCeiling(p);
   if(!p.equipment)p.equipment=fitEquipmentToStyle(p);
+  if(typeof p.equipment.freshness!=='number')p.equipment.freshness=100;
+  if(typeof p.equipment.adaptLeft!=='number')p.equipment.adaptLeft=0;
+  if(!p.preferredFamily)p.preferredFamily=preferredFamilyFor(p);
   if(!p.preferredRole)p.preferredRole=p.role==='reserve'?'rotation':'starter';
   if(!Array.isArray(p.clubHistory))p.clubHistory=p.teamId!==null?[p.teamId]:[];
   if(typeof p.leagueSeasonW!=='number')p.leagueSeasonW=0;
@@ -1245,10 +1414,12 @@ function describePlayerIdentity(p){
     note:`Mocna strona: ${names[top]}${second?` + ${names[second]}`:''}. S\u0142abszy punkt: ${names[low]}.`
   };
 }
-function getStyleEdge(homeStyle,awayStyle){
+function getStyleEdge(homeStyle,awayStyle,homePlayer,awayPlayer){
   // Extra nudge on top of engine mults. Tuned so equal-stat counters land
   // ~57–65% and a large OVR gap still usually beats a style underdog.
-  const delta=((STYLE_EDGE[homeStyle]||{})[awayStyle]||0)*0.65;
+  let delta=((STYLE_EDGE[homeStyle]||{})[awayStyle]||0)*0.65;
+  if(homePlayer)delta+=equipmentStyleNudge(homePlayer,awayStyle);
+  if(awayPlayer)delta-=equipmentStyleNudge(awayPlayer,homeStyle);
   return{delta,label:delta>0?`${styleLabel(homeStyle)} ma przewag\u0119 nad ${styleLabel(awayStyle)}`:delta<0?`${styleLabel(awayStyle)} dobrze kontruje ${styleLabel(homeStyle)}`:'style neutralizuj\u0105 si\u0119'};
 }
 // Team psychologist: morale floor + clutch MEN boost (staff impact goal batch).
@@ -1424,6 +1595,22 @@ function mailScandal(p){
     decision:{kind:'lifestyleScandal',playerId:p.id,cost},_tag:tag});
   return true;
 }
+function mailKitDemand(p){
+  const pref=p.preferredFamily||preferredFamilyFor(p);
+  const have=playerRubberFamily(p);
+  const tag=`kit_${p.id}_${store.G.season}`;
+  if(pref===have||inboxHasTag(tag)||(store.G.matchday||0)<2)return false;
+  if(ovr(p)<74||Math.random()>=0.22)return false;
+  const fam=EQUIPMENT.rubberFamilies[pref];
+  if(!fam)return false;
+  const cost=(EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.costPerPlayer||0);
+  pushMail({type:'decision',from:p.name,subject:`${p.name} chce swoje okładziny`,
+    body:`Gram ${styleLabel(p.playStyle).toLowerCase()}, a klub każe mi jechać na ${EQUIPMENT.rubberFamilies[have]?.label||have}. Chcę ${fam.label} — albo czuję się jak rekwizyt.`,
+    effectsYes:`Wymiana na ${fam.label}${cost?` (−${cost.toLocaleString('pl')} €)`:''} · adaptacja · +6 morale`,
+    effectsNo:'Zostaje klubowa rodzina · −8 morale · −1 lojalność',
+    decision:{kind:'kitDemand',playerId:p.id,familyId:pref},_tag:tag});
+  return true;
+}
 function mailStarterBreach(p){
   const ch=starterGuaranteeBreachChance(p);
   if(ch<=0||Math.random()>=ch)return false;
@@ -1461,6 +1648,7 @@ function tryLifeEvents(added,budget){
   const face=squad.filter(p=>p.role!=='youth'&&(p.age||0)<=30&&ovr(p)>=70).sort((a,b)=>calcPlayerMarketability(b)-calcPlayerMarketability(a))[0]
     ||squad.filter(p=>p.role!=='youth').sort((a,b)=>ovr(b)-ovr(a))[0];
   if(face)optional.push(()=>mailScandal(face));
+  squad.filter(p=>p.role!=='youth'&&ovr(p)>=74).forEach(p=>optional.push(()=>mailKitDemand(p)));
   for(let i=optional.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[optional[i],optional[j]]=[optional[j],optional[i]];}
   optional.forEach(fn=>run(fn));
   return added;
@@ -2198,7 +2386,7 @@ function newGame(clubIdx, countryId){
     equipBrand:null,infraHall:0,infraMed:0,infraAcademy:0,infraMerchandising:0,
     budgetLog:[],cup:null,cupPlayedThisSeason:false,
     academyUsedThisSeason:false,academyProspects:[],_pid:ui._pid,
-    inbox:[],matchNomination:null,rubberTier:0,
+    inbox:[],matchNomination:null,rubberTier:0,rubberFamily:'TENSOR',
     infraProjects:{hall:0,med:0,academy:0,merch:0},
     lifeFlags:{scandalSeason:0},
     techPartnership:null,ticketPrice:50,newsFeed:[],
@@ -2229,6 +2417,7 @@ function newGame(clubIdx, countryId){
     store.G.infraMerchandising=myTeamObj.infraMerchandising||0;
   }
   teams.forEach(t=>assignAiStaff(t));
+  assignAiRubberIdentities();
   store.G.principalPool=Array.from({length:6},()=>genPrincipal(countryId));
   teams.forEach(t=>assignAiPrincipal(t));
   if(!useDb)teams.forEach(t=>tuneGeneratedLeagueRoster(t.id));
@@ -2581,7 +2770,7 @@ function simIndividual(ph,pa,hCoach,aCoach,duelOpts){
   ensurePlayerMeta(ph);ensurePlayerMeta(pa);
   const homeProfile=buildPointSimProfile(ph,hCoach);
   const awayProfile=buildPointSimProfile(pa,aCoach);
-  const styleEdge=getStyleEdge(ph.playStyle,pa.playStyle);
+  const styleEdge=getStyleEdge(ph.playStyle,pa.playStyle,ph,pa);
   // Apply counter once as a modest home-relative lift (do NOT also subtract the
   // full edge from away — that doubled the gap and inverted large OVR favorites).
   const edge=styleEdge.delta||0;
@@ -2797,6 +2986,7 @@ function simTeamMatch(homeId,awayId,isCup){
       const duelLoad=fatigueGain.get(p.id)||10;
       const playedAdd=Math.round((duelLoad*(0.28+(100-playerStamina(p))/180))*intensityFactor*cupFactor*fatMult);
       p.fatigue=Math.min(100,(p.fatigue||0)+playedAdd);
+      wearPlayerRubber(p);
     }else{
       const restGain=Math.round(clamp(15+((playerStamina(p)-50)/10),10,22))+physioRestBonus(p.teamId);
       p.fatigue=Math.max(0,(p.fatigue||0)-restGain);
@@ -3000,6 +3190,17 @@ function applyMailDecision(m,yes){
       p.morale=Math.max(10,(p.morale||50)-(stage>1?14:12));
       p.loyalty=Math.max(0,(p.loyalty||0)-(stage>1?2:1));
     }
+    return;
+  }
+  if(d.kind==='kitDemand'){
+    if(!p)return;
+    if(yes){
+      if(!applyPlayerFamilyChange(p,d.familyId))toast('Brak budżetu — zostaje klubowa rodzina.');
+      else p.morale=Math.min(100,(p.morale||50)+6);
+    }else{
+      p.morale=Math.max(10,(p.morale||50)-8);
+      p.loyalty=Math.max(0,(p.loyalty||0)-1);
+    }
   }
 }
 // Generates the pre-matchday mail. Called after each matchday commit and at the
@@ -3186,6 +3387,13 @@ function applyResult(r){
   store.G.results.push({...r,matchday:store.G.matchday,season:store.G.season});
   // Injuries for both clubs (AI parity — was player-only via tryInjuries(myId)).
   if(!r.forfeit)tryInjuriesAfterMatch(r.homeId,r.awayId,playingIdsFromResult(r));
+  if(!r.forfeit&&(r.homeId===store.G.myTeamId||r.awayId===store.G.myTeamId)){
+    const mine=r.homeId===store.G.myTeamId?r.awayId:r.homeId;
+    revealOpponents([...playingIdsFromResult(r)].filter(id=>{
+      const pl=store.G.players.find(x=>x.id===id);
+      return pl&&pl.teamId===mine;
+    }));
+  }
   // Morale after the match for BOTH clubs (psych softens losses / boosts wins).
   [r.homeId,r.awayId].forEach(tid=>{
     if(tid===null||tid===undefined)return;
@@ -5231,7 +5439,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
         <img src="${getAvatarData(p,'player')}" alt="${p.name}" class="avatar xl">
         <div>
           <div class="syne b8 fs52 cr lh1 mb6">${o}</div>
-          <div class="pc-meta">${p.age}l / Peak:${p.peakAge} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span>${p.teamId===store.G.myTeamId?` / Peak OVR bazowy: ${playerCeiling(p)}`:''}</div>
+          <div class="pc-meta">${p.age}l / Peak wieku:${p.peakAge} / <span style="color:${phaseColor(p)}">${phaseLabel(p)}</span> / Peak OVR: ${peakDisplay(p)}</div>
           <div class="fs11 ink3 mt-4">Marketability: <b class="cgold">${marketability}</b></div>
         </div>
       </div>
@@ -5242,8 +5450,14 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
       </div>
       ${p.equipment?`<div class="mt-8 pd8-10 bb1 r10 bgs1 fs11">
         <div class="b7 mb3">Sprzęt</div>
-        <div class="ink3">${EQUIPMENT.blades[p.equipment.blade]?.label||'?'} + ${EQUIPMENT.sponges[p.equipment.sponge]?.label||'?'} + ${EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.label||'?'}</div>
+        <div class="ink3">${EQUIPMENT.blades[p.equipment.blade]?.label||'?'} + ${EQUIPMENT.sponges[p.equipment.sponge]?.label||'?'}</div>
+        <div class="ink3 mt-2">Okładzina: <b>${EQUIPMENT.rubberFamilies[playerRubberFamily(p)]?.label||'?'}</b> · ${EQUIPMENT.rubberTiers[clubRubberTier(p.teamId)]?.label||'?'} · świeżość ${Math.round(p.equipment.freshness??100)}%${p.equipment.adaptLeft>0?` · adaptacja ${p.equipment.adaptLeft} kol.`:''}</div>
+        <div class="fs10 ink3 mt-2">Preferencja: ${EQUIPMENT.rubberFamilies[p.preferredFamily||preferredFamilyFor(p)]?.label||'?'}</div>
         <div class="mt-3">${(()=>{const m=equipmentMods(p);const parts=SK.filter(k=>m[k]).map(k=>`${SL[k]} ${m[k]>0?'+':''}${m[k]}`);return parts.length?parts.join(' / '):'Neutralny setup';})()}</div>
+        ${p.teamId===store.G.myTeamId?`<div class="btn-row mt-8" onclick="event.stopPropagation()">
+          ${Object.values(EQUIPMENT.rubberFamilies).map(f=>`<button class="btn sm ${playerRubberFamily(p)===f.id?'on':''}" onclick="setPlayerRubberFamily(${p.id},'${f.id}')">${f.label}</button>`).join('')}
+          <button class="btn sm" onclick="refreshPlayerRubbers(${p.id})">ŚWIEŻE OKŁADZINY</button>
+        </div>`:''}
       </div>`:''}
       <div class="traits mt-8">${p.traits.map(t=>`<span class="has-tooltip tb ${TRAITS[t]?.type||'men'}">${TRAITS[t]?.label||t}<span class="tip">${TRAITS[t]?.desc||''}</span></span>`).join('')||'<span class="fs10 ink3">Brak cech</span>'}</div>
       <div class="grid gtc3 gp8 mt-12">
@@ -5253,7 +5467,8 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
       </div>
     </div>
     <div>
-      ${SK.map(s=>`<div class="mb10"><div class="flex jcb mb3"><span class="fs10 ink3">${SL[s]}</span><span class="b7 fs16">${p[s]}</span></div><div class="h10 bgs3 r3"><div style="height:100%;width:${p[s]}%;background:${p[s]>=85?'var(--g)':p[s]>=75?'var(--blue)':p[s]>=62?'var(--gold)':'var(--orange)'};border-radius:3px"></div></div></div>`).join('')}
+      ${SK.map(s=>`<div class="mb10"><div class="flex jcb mb3"><span class="fs10 ink3">${SL[s]}</span><span class="b7 fs16">${statBand(p,s)}</span></div><div class="h10 bgs3 r3"><div style="height:100%;width:${playerIsScouted(p)?p[s]:50}%;background:${p[s]>=85?'var(--g)':p[s]>=75?'var(--blue)':p[s]>=62?'var(--gold)':'var(--orange)'};border-radius:3px;${playerIsScouted(p)?'':'opacity:.45'}"></div></div></div>`).join('')}
+      ${playerIsScouted(p)?'':`<div class="fs10 ink3">Cechy jako pasma, aż zeskautujesz. OVR ${o} jest jawny.</div>`}
     </div>
   </div>
   <div class="g4 gp8 mb14">
@@ -5295,7 +5510,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
         ${p.name} ma ${p.age} lat i profil <b>${p.profileTag||identity.label}</b>. Najmocniej punktuje przez <b>${SL[identity.topStat]||identity.topStat}</b>, a jego słabszym obszarem pozostaje <b>${SL[identity.weakStat]||identity.weakStat}</b>.
       </div>
       <div class="fs11 ink3 mt-8">Ścieżka klubowa: <b>${clubs.join(' → ')||'debiut w obecnym klubie / wolny rynek'}</b></div>
-      ${p.teamId===store.G.myTeamId?`<div class="fs11 ink3 mt-6">Peak OVR bazowy: <b>${playerCeiling(p)}</b></div>`:''}
+      ${p.teamId===store.G.myTeamId||playerIsScouted(p)?`<div class="fs11 ink3 mt-6">Peak OVR: <b>${peakDisplay(p)}</b></div>`:`<div class="fs11 ink3 mt-6">Peak OVR: <b>?</b> — zeskautuj, żeby poznać sufit.</div>`}
       <div class="fs11 ink3 mt-6">Wydolność meczowa: <b>${playerStamina(p)}/100</b> ${playerStamina(p)>=75?'(może dłużej ciągnąć serię meczów)':playerStamina(p)<=45?'(szybciej łapie przeciążenie i potrzebuje rotacji)':'(standardowy profil obciążeń)'}</div>
       <div class="fs11 ink3 mt-6">Punkty w karierze: <b>${(p.careerPointsWon||0).toLocaleString('pl')}</b> zdobytych / <b>${(p.careerPointsLost||0).toLocaleString('pl')}</b> straconych</div>
     </div>
@@ -5312,6 +5527,7 @@ function openPlayerModal(pid,pendingSource,pendingIndex){
   ${p.awards?.length?`<div class="mb14"><div class="fs10 ink3 mb6 up ls1">Trofea sezon po sezonie</div><div>${p.awards.map(a=>`<span class="award">${a.label}</span>`).join('')}</div></div>`:''}
   <div class="btn-row">
     ${p.teamId===store.G.myTeamId?`<button class="btn pr" onclick="closeModal();openNegotiate(${p.id})">NEGOCJUJ KONTRAKT</button>`:''}
+    ${!playerIsScouted(p)?`<button class="btn bl" onclick="observePlayer(${p.id})">ZESKAUTUJ (${observePlayerCost().toLocaleString('pl')} €)</button>`:''}
     <button class="btn" onclick="closeModal()">ZAMKNIJ</button>
   </div>`;
   openModal();
@@ -5469,6 +5685,7 @@ function doNegotiate(pid){
     p.joinedSeason=store.G.season;
     p.joinedViaTransfer=previousTeamId!==store.G.myTeamId;
     p.promisedRole=promisedRole;
+    p.revealedToManager=true;
     if(previousTeamId!==store.G.myTeamId&&!p.clubHistory.includes(store.G.myTeamId))p.clubHistory.push(store.G.myTeamId);
     // Place the new signing sensibly: fill an empty starter slot (so the player
     // never ends up fielding only 3), otherwise go to the bench. Youth stay youth.
@@ -6120,5 +6337,5 @@ function miniChart(vals){
 // HEADER UPDATE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, contractMailRole, reserveAskChance, starterGuaranteeBreachChance, hallCapacity, buyInfraProject, infraProjectCost, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, runMundial, runOlympics, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, setRubberTier, simulateBackgroundSeasons };
+window.PPM.gameplay = { getLoanedOut, getLoanedIn, canLoanOut, openLoanModal, doLoanOut, doBorrowIn, returnLoans, getMerchIncome, estimateAttendance, ticketPriceDemand, calcTVRights, getPRDirector, getPRDirectorMarket, getRivalPRDirectors, getTeamPRDirector, hirePRDirector, genNewsFeed, pushNews, generateMatchdayNews, getTechPartnership, ovr, ovrBase, engineStats, equipmentMods, getPlayerAdjustedStats, getActiveBrand, myTeam, myPlayers, myStarters, myReserves, teamName, playerName, teamLeague, myLeague, teamOvr, getMax, phaseLabel, phaseColor, seasonFormLabel, staffOvr, staffOvrColor, sleep, rnd, safeLog, calcPrestige, goalDiff, goalDesc, checkGoal, sponsorProg, contractExpect, negResponse, roleGuaranteeLabel, contractMailRole, reserveAskChance, starterGuaranteeBreachChance, hallCapacity, buyInfraProject, infraProjectCost, getNextSeasonCommitments, randName, totalWages, totalWageBreakdown, getMyScouts, getPolishClubStaffMarket, getAllExternalStaffMarket, calcTeamMorale, moraleLabel, calcLeagueMaint, snap, calcGoat, genPlayer, genYouthPlayer, myYouth, promoteYouth, staffSalary, staffEffectiveBonus, genStaff, genSponsorOffers, genScoutPool, buildMarket, toggleMarketShortlist, toggleMarketCompare, makeSchedule, genCupBracket, newGame, getMatchStarters, moveLineup, getCoach, effectiveRating, simIndividual, simTeamMatch, simCupMatch, applyResult, tryInjuries, tryInjuriesForTeam, tryInjuriesAfterMatch, getTeamPsychologist, psychMatchBoost, getTeamPhysio, physioFatigueMult, physioRestBonus, getStyleEdge, buildPointSimProfile, getLivePointStats, applyLongRallyFatigue, coachDevMultiplier, tickInjuries, applyGrowth, retirePlayer, updateRecords, giveSeasonAwards, doPromotionRelegation, buildMatchProgression, buildBudgetEntry, shouldPlayCup, playCupRound, initCanvasVME, stopCanvasVME, renderVME, runMatchday, safeCloseMatchday, autoPlaySeason, endSeason, startSeason, aiSignPlayers, getMundialNationalTeams, getNatTeamOvr, simNatMatch, runMundial, runOlympics, checkNatTeamOffer, acceptNatTeam, acceptClubOffer, getFilteredClubOffers, setClubOfferFilter, refreshClubOfferPicker, openClubOfferPicker, pullYouth, signAcademyProspect, genAcademyIntake, runAcademyMiniTournament, signTrialProspect, resolvePlayerProfile, openPlayerModal, negUpdate, openNegotiate, doNegotiate, promoteToStarter, demoteToReserve, openSwapModal, doSwap, releasePlayer, openStaffModal, openStaffNeg, doHireStaff, fireStaff, upgradeInfra, downgradeInfra, academyUpkeep, sellPlayer, youthSaleValue, youthSaleInterest, selectTechPartnership, signSponsor, signSponsorPreseason, genScoutPlayer, sendScout, checkScoutReturns, hireScout, scoutSign, shouldPlayTop12, getTop12Participants, openTop12Picker, simIndividualTournamentMatch, runTop12Masters, miniChart, calcTeamMarketability, calcPlayerMarketability, getBoardObjective, boardObjectiveLabel, generateBoardObjective, generateBoardObjectiveChoices, selectBoardObjective, difficultyEffectsSummary, getClubHistory, openTeamOverview, getAvatarData, getTeamLogoData, getTeamBranding, playerCeiling, staffCeiling, styleLabel, pruneCareerData, hofRankScore, playerWageForOvr, staffWageForOvr, contractExpect, staffNegResponse, staffNegUpdate, findStaffById, leagueStrengthTopForBudget, getLeagueStrengthTargets, teamOvr, coachDevMultiplier, coachDevPercent, genPrincipal, principalLifecycle, assignAiPrincipal, principalStrategyLabel, handleManagerFired, pushMail, unreadMailCount, pendingDecisions, markMailRead, answerMail, generateInboxForMatchday, settleMatchPromises, openMatchNomination, nomToggle, nomConfirm, getMatchNomination, autoNomination, getEligibleMatchPlayers, replenishStaffPools, runSeededEvent, makeDoublesPair, getLeagueFormat, tablePointsFor, protocolDescription, peakAgeFor, equipmentMods, fitEquipmentToStyle, clubRubberTier, clubRubberFamily, playerRubberFamily, preferredFamilyFor, setRubberTier, setRubberFamily, setPlayerRubberFamily, refreshPlayerRubbers, playerIsScouted, observePlayer, observePlayerCost, statBand, peakDisplay, rubberFitCount, simulateBackgroundSeasons };
 })();

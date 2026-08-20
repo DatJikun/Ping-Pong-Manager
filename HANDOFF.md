@@ -59,15 +59,18 @@ Design references live in the repo and in the owner's research docs:
 
 ## 2. Current state (updated each session)
 
-**Last updated:** 2026-08-20 (żywa kariera: skrzynka, budynki, akademia peakChance)
+**Last updated:** 2026-08-20 (żywa kariera: sprzęt M + pełny skaut)
 
-### 2026-08-20 — living career, first slice
+### 2026-08-20 — living career (inbox, buildings, kit families, scout fog)
 Owner accepted: inbox by contract role (quiet rounds OK), buildings with a soft
 on-court cap then **projects**, academy upgrade raises **chance** of a high peak
 OVR (range stays 56–92). **Life-event catalogue** is in the inbox (injury care,
-burnout, family, mentorship, scandal, broken starter guarantee). Equipment
-families still wait for number sign-off; scout stat bands wait.
-Design lock: `DESIGN-alive-career.md`. Tests: `tests/alive-career.test.js`.
+burnout, family, mentorship, scandal, broken starter guarantee, kit demand).
+**Equipment families (scope M)** and **full scout fog** (stat bands + peak `?`
+until observe / play / sign) are in the live game. Partner contract terms (L)
+and manual blade/sponge still wait.
+Design lock: `DESIGN-alive-career.md`, `DESIGN-equipment.md`.
+Tests: `tests/alive-career.test.js`, `tests/equipment-scout.test.js`.
 
 ### 2026-07-26 — the design language is now the game's skin
 `prototypes/proto-final.html` has been applied to the whole app: `styles/main.css`
@@ -203,9 +206,9 @@ Gameplay *has* changed a lot since baseline. Next owner value is **playtest feel
 (are staff/traits/styles obvious?) then living-world depth / UI / Steam.
 
 ### Backlog (ordered for next work — owner can reorder)
-1. **Playtest pass** — does elite coach/psych/physio *feel* strong? style counters readable?
-2. **Scout fog** (stat bands) — designed, not built (`DESIGN-staff.md`).
-3. **Living world** — denser inbox, poaching drama, life-events (`DESIGN-ai-world.md`).
+1. **Playtest pass** — kit fit vs pay-more; scout fog; elite staff/style feel.
+2. **Equipment L** — partner exclusivity / quota / R&D (`DESIGN-equipment.md`).
+3. **Living world extras** — poaching drama, bankruptcy (`DESIGN-ai-world.md`).
 4. **Engineering** — split `gameplay.js` by domain; sim vs mutate; event delegation (§4).
 5. **UI**: main pass shipped 2026-07-24 (see §2). Remaining: market grid view,
    match micro-animations, mobile/narrow-width polish. Then **Steam/Tauri**.

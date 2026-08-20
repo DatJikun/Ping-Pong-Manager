@@ -1,7 +1,8 @@
 # Żywa kariera — ustalenia z właścicielem (2026-08-20)
 
-> **Status: w grze** — skrzynka, budynki, akademia peakChance, **mały katalog życia**.
-> Sprzęt (rodziny) i pełna mgła skauta **nie** wchodzą, dopóki nie będzie osobnej zgody na liczby / pasma.
+> **Status: w grze** — skrzynka, budynki, akademia peakChance, katalog życia,
+> **rodziny okładzin (zakres M)** i **pełna mgła skauta**. Partner z klauzulami
+> (zakres L) oraz ręczne deski/gąbki zostają na później.
 
 ---
 
@@ -23,13 +24,22 @@ Rozmowa → akceptacja → dopiero wtedy kod.
 |---|---|
 | **Projekt** | Prawie nigdy. Jedynie przy **bardzo wysokiej formie** (`seasonFormImpact` ≥ 8, ~7%). |
 | **Rotacja** | Od czasu do czasu (`≥5` ~16%, `≥3` ~6%), cooldown 6 kolejek. |
-| **Pierwszy skład** | Nie prosi o szansę. Złamana gwarancja — osobny, jeszcze nie zbudowany wątek. |
+| **Pierwszy skład** | Nie prosi o szansę. Złamana gwarancja — osobny wątek w skrzynce. |
 
 ---
 
-## 2. Sprzęt — później
+## 2. Sprzęt — rodziny okładzin (wdrożone, zakres M)
 
-Zakres M z `DESIGN-equipment.md` po osobnej zgodzie na liczby. **Nie w tym commicie.**
+Liczby z `DESIGN-equipment.md`, zaakceptowane przez właściciela.
+
+- Pięć rodzin: TENSOR / TACKY / CONTROL / SHORT_PIPS / LONG_PIPS. Każda ma plusy **i** minusy.
+- Klasa magazyn / turniej / PRO tylko **skaluje** wybraną rodzinę (×0,5 / ×1 / ×1,3) i tempo zużycia. Drożej ≠ zawsze lepiej.
+- Świeżość 100→0 przy meczach. Zużyte okładziny słabną; dno to zero efektu, nie kara poniżej magazynu.
+- Zmiana rodziny: 2–4 kolejki adaptacji (−2 do zmienionych cech).
+- Preferencja ze stylu. Trafienie: +1 MEN. Gwiazda (OVR ≥ 74) może zażądać swojej rodziny w skrzynce.
+- Kluby AI dostają rodzinę z większości starterów.
+
+**Nie w tym zakresie:** klauzule partnera (wyłączność, quota, R&D) oraz ręczne deski/gąbki (zostaje `fitEquipmentToStyle`).
 
 ---
 
@@ -45,14 +55,15 @@ Mail tylko gdy sprawa dojrzała. Nadal 0–3 na kolejkę, cisza OK, skutek przed
 | Mentorship | Weteran + junior, raz na sezon | Extra stół (zmęczenie weta, forma juniora) / odpuszczamy |
 | Sprawa rodzinna | Lojalny senior, rzadko | Pauza meczu / gra, lojalność spada |
 | Złamana gwarancja składu | Kontrakt „pierwszy skład”, a jest w rezerwie | Obietnica stołu / serio zła krew (eskalacja, max 2 listy) |
+| Żądanie okładzin | Gwiazda na obcej rodzinie | Wymiana + adaptacja / zła krew |
 
 ---
 
-## 4. Skaut + peak OVR (częściowo)
+## 4. Skaut + peak OVR (wdrożone)
 
 - OVR zawsze widać.
-- **Peak OVR jako liczba** u własnego składu (zawsze „zeskautowany”). Na rynku obcy = `?` do pełnej mgły skauta.
-- Pełne pasma statystyk — jeszcze nie.
+- **Własny skład** jest zawsze zeskautowany: liczby cech i peak.
+- **Obcy:** cechy jako pasma (np. 56–72), peak `?`, dopóki nie: obserwacja za 2000 € (potrzebny skaut na etacie), mecz przeciwko nim, albo podpis.
 
 ---
 
@@ -70,10 +81,12 @@ Poziom podnosi tylko **szansę** na górę skali (`peakChance` 0.08 → 0.58), p
 
 ---
 
-## Kolejność, która została
+## Kolejność
 
 1. ~~Skrzynka + rezerwa + ciche kolejki~~
-2. Sprzęt (po zgodzie na liczby)
+2. ~~Sprzęt zakres M (rodziny, zużycie, adaptacja, preferencja, żądania)~~
 3. ~~Katalog życia~~
-4. Pełny skaut / pasma
+4. ~~Pełny skaut / pasma~~
 5. ~~Budynki / projekty / akademia peakChance~~
+
+Zostaje: playtest odczucia; partner z klauzulami (L); ręczne deski.

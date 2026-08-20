@@ -1,9 +1,10 @@
 # DESIGN — Equipment & kit deals (rework proposal)
 
-> **Status: PROPOSAL, not built.** Owner asked (2026-07-24): *"the kits system for
+> **Status: zakres M w grze (2026-08-20).** Owner asked (2026-07-24): *"the kits system for
 > the players sucks, it's just a free boost of money, stats and marketability —
-> it needs better variety."* This is the redesign. **Numbers need owner sign-off
-> before any code**, per the working rule in `HANDOFF.md`.
+> it needs better variety."* Numbers from the table below were signed off and shipped
+> (families, grades, wear, adaptation, preference, kit demands). **Partner contract
+> terms (scope L) and manager blade/sponge overrides are still later.**
 
 ---
 
@@ -121,6 +122,7 @@ vs a "control club" — which feeds the living-world work in M2.
 | **L — full** | M + contract terms (exclusivity/quota/performance/lock-in) + relationship level + R&D | ~3–4 batches |
 
 **Recommendation: build M for Early Access, L as a post-launch content patch.**
+**Shipped: M.** Scope L (exclusivity / quota / R&D) remains unbuilt. Worn rubbers floor at zero (Q3). AI clubs get family identities at generation (Q4).
 
 ## 6. Do it in the same pass as the brand rename
 

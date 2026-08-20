@@ -365,12 +365,21 @@ const EQUIPMENT={
     SREDNIA:{id:'SREDNIA',label:'Gąbka 1.9 mm',desc:'Kompromis prędkość/kontrola.',mods:{}},
     CIENKA:{id:'CIENKA',label:'Gąbka 1.5 mm',desc:'Kontrola i czucie — wybór defensorów i blokerów.',mods:{ret:1,men:1,fh:-1}},
   },
+  // Club grade (old "tier"): scales the chosen FAMILY. Money buys freshness/scale, not a free all-stats boost.
   rubberTiers:[
-    {tier:0,label:'Okładziny magazynowe',desc:'Zużyte, wielosezonowe — bez bonusu.',mods:{},costPerPlayer:0},
-    {tier:1,label:'Okładziny turniejowe',desc:'Świeże okładziny klasy turniejowej.',mods:{fh:1,srv:1},costPerPlayer:900},
-    {tier:2,label:'Okładziny PRO',desc:'Topowe, wymieniane co miesiąc jak u zawodowców.',mods:{fh:2,srv:1,ret:1},costPerPlayer:2600},
+    {tier:0,grade:0,label:'Magazynowe',desc:'Połowa efektu rodziny. Tanie, wolniej się zużywają.',scale:0.5,costPerPlayer:0,wear:4,mods:{}},
+    {tier:1,grade:1,label:'Turniejowe',desc:'Pełny efekt rodziny. Standard sezonu.',scale:1,costPerPlayer:900,wear:6,mods:{}},
+    {tier:2,grade:2,label:'PRO',desc:'+30% efektu rodziny, szybsze zużycie.',scale:1.3,costPerPlayer:2600,wear:8,mods:{}},
   ],
+  rubberFamilies:{
+    TENSOR:{id:'TENSOR',label:'Tensor speed',desc:'Prędkość forhendu. Krzywdzi blok i obronę.',mods:{fh:3,srv:1,ret:-2},suits:['FH_LOOPER','TWO_SIDED'],hurts:['BLOCKER','DEFENDER']},
+    TACKY:{id:'TACKY',label:'Tacky spin',desc:'Rotacja i serwis. Słabszy odbiór i noga.',mods:{srv:3,fh:1,foot:-1,ret:-1},suits:['TWO_SIDED','FH_LOOPER'],hurts:['BLOCKER']},
+    CONTROL:{id:'CONTROL',label:'All-round control',desc:'Odbiór i głowa. Zabiera ostrość ataku.',mods:{ret:2,men:1,fh:-1},suits:['BLOCKER','FISHER'],hurts:['FH_LOOPER']},
+    SHORT_PIPS:{id:'SHORT_PIPS',label:'Krótki kip',desc:'Kontra i blok. Boli napastników.',mods:{ret:2,men:2,srv:-1,fh:-1},suits:['BLOCKER','FISHER'],hurts:['FH_LOOPER','TWO_SIDED']},
+    LONG_PIPS:{id:'LONG_PIPS',label:'Długi kip / anti',desc:'Broń defensora. Prawie wszystkim innym szkodzi.',mods:{ret:4,men:1,fh:-3,srv:-2},suits:['DEFENDER'],hurts:['TWO_SIDED','FH_LOOPER','BLOCKER']},
+  },
 };
+EQUIPMENT.rubberGrades=EQUIPMENT.rubberTiers;
 
 // ── 10x name pools (owner 2026-07-02) ─────────────────────────────────────────
 // src/data/names.js (loaded just before this file) defines window.PPM_NAMES with
