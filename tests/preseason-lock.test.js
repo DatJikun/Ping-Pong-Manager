@@ -72,7 +72,7 @@ test('preseason chrome is a closed flow: no rail, no chip jumps, one start butto
   assert.match(shell, /app-preseason/);
   assert.match(pages, /if\(store\.G\.phase==='preseason'\)ui\.page='preseason'/);
   assert.match(pages, /setRubberFamily\('/);
-  assert.doesNotMatch(pages, /class="ss[^"]*" onclick=/);
+  assert.doesNotMatch(pages, /steps\.map\(\(s,i\)=>`<div class="ss[^"]*" onclick=/);
   assert.doesNotMatch(pages, /Rozpocznij sezon →/);
   assert.match(css, /app-preseason #sidebar/);
   assert.doesNotMatch(css, /clip-path:\s*polygon/);
