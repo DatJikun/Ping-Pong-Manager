@@ -1278,20 +1278,34 @@ function pageMundial(){
 // what is left. The season only unlocks on the last step, and only when every
 // step is actually settled — so "am I done?" is never a question.
 // ═══════════════════════════════════════════════════════════════════════════
+function preseasonStepNav(steps,step,canStart){
+  return`<div class="stage-f">
+      <button class="btn" ${step>0?'':'disabled'} onclick="ui.preStep=${Math.max(0,step-1)};render()">← ${step>0?steps[step-1].label:'Wstecz'}</button>
+      <span class="dim fs12">${canStart?'Wszystkie decyzje zamknięte — sezon czeka u góry.':`Do startu brakuje: ${steps.filter(s=>!s.done).map(s=>s.label.toLowerCase()).join(', ')}`}</span>
+      ${step<3
+        ?`<button class="btn ${steps[step].done?'pr':''}" onclick="ui.preStep=${step+1};render()">${steps[step+1].label} →</button>`
+        :`<span class="dim fs12">Start sezonu: przycisk u góry ekranu.</span>`}
+    </div>`;
+}
 function pagePreseason(){
   const mt=myTeam();const offers=store.G.sponsorOffers||[];
   const activeSponsors=store.G.sponsors.filter(s=>s.active);
   const sponsorCount=activeSponsors.length;
   const hasTech=!!store.G.techPartnership;
+  const rubberYears=store.G.rubberContractYears||0;
+  const hasRubber=rubberYears>0;
   const pres=calcPrestige();
   if(!(store.G.boardObjectiveOptions||[]).length)store.G.boardObjectiveOptions=window.PPM.gameplay.generateBoardObjectiveChoices(store.G.myTeamId);
   const boardObjective=getBoardObjective();
   const boardOptions=store.G.boardObjectiveOptions||[];
   const activeTp=store.G.techPartnership?TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership):null;
+  const rubberFam=EQUIPMENT.rubberFamilies[store.G.rubberFamily||'TENSOR'];
+  const y=ui.rubberYears||3;
+  const rubberOpen=rubberYears<=0;
 
   const steps=[
     {id:'sponsors',label:'Sponsorzy',done:sponsorCount>=3,status:`${sponsorCount}/3`},
-    {id:'tech',    label:'Partner techniczny',done:hasTech,status:hasTech?(activeTp?.name||'wybrany'):'brak'},
+    {id:'tech',    label:'Partner i okładziny',done:hasTech&&hasRubber,status:[hasTech?(activeTp?.name||'partner'):'brak partnera',hasRubber?`${rubberFam?.label||'okładziny'} · ${rubberYears} l.`:'brak kontraktu okładzin'].join(' · ')},
     {id:'tickets', label:'Cena biletów',done:true,status:`${store.G.ticketPrice||50} €`},
     {id:'board',   label:'Cel zarządu',done:!!boardObjective,status:boardObjective?boardObjective.label:'brak'},
   ];
@@ -1303,6 +1317,7 @@ function pagePreseason(){
   const step=ui.preStep;
   const canStart=steps.every(s=>s.done);
   const doneCount=steps.filter(s=>s.done).length;
+  const nav=preseasonStepNav(steps,step,canStart);
 
   let body='';
   if(step===0){
@@ -1321,7 +1336,7 @@ function pagePreseason(){
   }else if(step===1){
     body=`<div class="over">Krok 2 z 4</div>
       <h3>Kto ubiera i wyposaża zespół?</h3>
-      <p class="why">Jedna umowa na sezon: sprzęt dla całego składu plus pakiet marketingowy. Twój prestiż <b class="cgold">${pres}</b> decyduje, którzy partnerzy są w zasięgu. Zablokowane po starcie sezonu.</p>
+      <p class="why">Najpierw partner techniczny (pakiet marketingowy na sezon), potem kontrakt okładzin 1–5 lat — bez niego sezon się nie otworzy. Prestiż <b class="cgold">${pres}</b> ogranicza listę partnerów. Zmiana rodziny w trakcie kontraktu jest zablokowana.</p>
       <div class="mt-14">${TECH_PARTNERSHIPS.map(tp=>{
         const ok=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
         const active=store.G.techPartnership===tp.id;
@@ -1330,7 +1345,23 @@ function pagePreseason(){
           <div><b>${tp.name} <span class="pill ${active?'pos':''}">Tier ${tp.tier}</span></b><p>${tp.bonusDesc} · prestiż ${tp.prestige[0]}–${tp.prestige[1]}</p></div>
           <div class="m ${cost>0?'pos':cost<0?'neg':''}">${cost>0?'+':''}${cost.toLocaleString('pl')}<s>za sezon</s></div>
           <button class="btn ${active?'acc pr':''}" ${ok?'':'disabled'}>${active?'Wybrany':ok?'Wybierz':'Za niski prestiż'}</button>
-        </div>`;}).join('')}</div>`;
+        </div>`;}).join('')}</div>
+      <div class="mt-14">
+        <div class="over">Kontrakt okładzin</div>
+        <p class="why">Rodzina ustala, jak gra skład. Dopasowanie: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji. ${hasRubber?`Aktywne: <b>${rubberFam?.label||'?'}</b> · zostało <b>${rubberYears}</b> ${rubberYears===1?'sezon':'sezony'}.`:'Wybierz rodzinę i długość (1–5 lat).'}</p>
+        <div class="flex aic gp8 mb10 fwrap mt-14"><span class="fs10 ink3 up ls1">Długość kontraktu</span>${[1,2,3,4,5].map(n=>`<button class="btn sm ${y===n?'on':''}" onclick="ui.rubberYears=${n};render()">${n} ${n===1?'rok':n===5?'lat':'lata'}</button>`).join('')}</div>
+        <div class="grid gtcfit220 gp10">
+        ${Object.values(EQUIPMENT.rubberFamilies).map(f=>{
+          const active=(store.G.rubberFamily||'TENSOR')===f.id;
+          const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' / ');
+          const canSign=rubberOpen||active;
+          return`<div class="opt ${active&&hasRubber?'on':''}" style="grid-template-columns:minmax(0,1fr);cursor:default">
+            <div><b>${f.label}${active&&hasRubber?' · klubowa':''}</b><p>${f.desc}</p><p><b>${mods}</b></p>
+            ${canSign?`<button class="btn pr sm mt-8" onclick="event.stopPropagation();setRubberFamily('${f.id}',ui.rubberYears||3)">${active?(hasRubber?'PRZEDŁUŻ':'PODPISZ'):'PODPISZ KONTRAKT'}</button>`:`<div class="fs10 ink3 mt-8">Zablokowane do końca kontraktu</div>`}
+            </div></div>`;
+        }).join('')}
+        </div>
+      </div>`;
   }else if(step===2){
     const gpx=window.PPM.gameplay;
     const price=store.G.ticketPrice||50;
@@ -1369,19 +1400,14 @@ function pagePreseason(){
     <button class="btn ${canStart?'go':''} fs13" onclick="startSeason()" style="padding:12px 26px" ${canStart?'':'disabled'}>▶ ROZPOCZNIJ SEZON</button>
   </div>
   <div class="substeps">
-    ${steps.map((s,i)=>`<div class="ss ${s.done?'done':''} ${i===step?'on':''}" onclick="ui.preStep=${i};render()">
+    ${steps.map((s,i)=>`<div class="ss ${s.done?'done':''} ${i===step?'on':''}">
       <div class="n">${s.done?'✓':i+1}</div>${s.label}<span class="dim fs11">${s.status}</span>
     </div>`).join('')}
   </div>
   <div class="stage">
+    ${nav}
     ${body}
-    <div class="stage-f">
-      <button class="btn" ${step>0?'':'disabled'} onclick="ui.preStep=${Math.max(0,step-1)};render()">← ${step>0?steps[step-1].label:'Wstecz'}</button>
-      <span class="dim fs12">${canStart?'Wszystkie decyzje zamknięte — sezon czeka.':`Do startu brakuje: ${steps.filter(s=>!s.done).map(s=>s.label.toLowerCase()).join(', ')}`}</span>
-      ${step<3
-        ?`<button class="btn ${steps[step].done?'pr':''}" onclick="ui.preStep=${step+1};render()">${steps[step+1].label} →</button>`
-        :`<button class="btn ${canStart?'go':''}" ${canStart?'':'disabled'} onclick="startSeason()">Rozpocznij sezon →</button>`}
-    </div>
+    ${nav}
   </div>`;
 }
 
@@ -1390,6 +1416,7 @@ function pagePreseason(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function renderApp(){
   if(!store.G){renderStart();return;}
+  if(store.G.phase==='preseason')ui.page='preseason';
   setShellMode('game');
   checkScoutReturns();
   const el=document.getElementById('content');
@@ -1492,12 +1519,13 @@ function renderMainMenu(){
 }
 function ngCountryCard(cid){
   const c=COUNTRIES[cid];const sel=ui._selCountry===cid;
-  return`<div onclick="ngSelectCountry('${cid}')" style="padding:14px 10px;border:2px solid ${sel?'var(--r)':'var(--line)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:14px;text-align:center">
-    <div class="fs30 mb6">${c.flag}</div>
-    <div class="syne b7 fs13">${c.name}</div>
-    <div class="fs9 ink3 mt-2">Ranking #${c.worldRank}</div>
-    <div class="fs9 cr b7">OVR &times;${c.ovrMult} / Bud&#380;et &times;${c.budgetMult}</div>
-  </div>`;
+  const flag=(window.PPM.flags&&window.PPM.flags.flagSvg)?window.PPM.flags.flagSvg(cid):'';
+  return`<button type="button" class="country-card${sel?' on':''}" onclick="ngSelectCountry('${cid}')">
+    <span class="country-flag">${flag}</span>
+    <span class="country-name">${c.name}</span>
+    <span class="country-meta">Ranking #${c.worldRank}</span>
+    <span class="country-meta cr">OVR ×${c.ovrMult} · budżet ×${c.budgetMult}</span>
+  </button>`;
 }
 function ngTeamCard(n,idx,league){
   const CI=(window.PPM.constants.CLUB_IDENTITIES)||{};
@@ -1519,7 +1547,7 @@ function renderNewGameWizard(){
     hint='Wybierz kraj &mdash; ka&#380;dy ma w&#322;asn&#261; I i II Lig&#281; (12 dru&#380;yn). Bud&#380;et i poziom zawodnik&oacute;w zale&#380;&#261; od kraju.';
     body=`<div class="country-grid">${COUNTRY_IDS.map(ngCountryCard).join('')}</div>`;
   }else if(step===1){
-    hint=`${country.flag} ${country.name}. Wybierz poziom rozgrywek, na kt&oacute;rym zaczniesz.`;
+    hint=`<span class="hint-flag">${(window.PPM.flags&&window.PPM.flags.flagSvg)?window.PPM.flags.flagSvg(ui._selCountry):''}</span> ${country.name}. Wybierz poziom rozgrywek, na kt&oacute;rym zaczniesz.`;
     const lbtn=(l,name,desc)=>`<div onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};border-radius:16px;cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
       <span class="league-badge ${l===1?'l1':'l2'} fs14" style="padding:6px 14px">${name}</span>
       <div class="fs12 ink3 mt-12">${desc}</div></div>`;
@@ -1544,7 +1572,7 @@ function renderNewGameWizard(){
   const nav=step<3
     ?`<button class="btn pr" ${canNext?'':'disabled'} onclick="ngNext()" style="padding:11px 30px">DALEJ &rarr;</button>`
     :`<button class="btn pr fs14" onclick="startGame()" style="padding:11px 34px">ROZPOCZNIJ GR&#280;</button>`;
-  return`<div class="mxauto flex fdc" style="max-width:820px;min-height:calc(100vh - 40px);padding:18px 16px">
+  return`<div class="mxauto flex fdc" style="max-width:1100px;min-height:calc(100vh - 40px);padding:18px 16px">
     <div class="flex aic gp10 mb16">
       <button class="btn sm" onclick="ngBack()">&larr; ${step===0?'Menu':'Wstecz'}</button>
       <div class="flx1 flex aic gp8">${stepper}</div>
