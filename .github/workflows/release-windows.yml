@@ -1,0 +1,80 @@
+name: Release Windows
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-windows
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Build .exe and publish GitHub Release
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> src-tauri/target
+
+      - name: Install JS tooling
+        run: npm install
+
+      - name: Fast checks
+        run: |
+          npm run check
+          npm test
+
+      - name: Pack desktop frontend
+        run: npm run desktop:pack
+
+      - name: Release tag from version + date
+        id: meta
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          DATE=$(date -u +%Y%m%d)
+          TAG="v${VERSION}-${DATE}"
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+            TAG="${TAG}-${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "title=PingPong Manager ${VERSION} beta (${DATE})" >> "$GITHUB_OUTPUT"
+
+      - name: Build Windows installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src-tauri
+          tagName: ${{ steps.meta.outputs.tag }}
+          releaseName: ${{ steps.meta.outputs.title }}
+          releaseBody: |
+            Publiczna **beta ${{ steps.meta.outputs.version }}** (nie 1.0).
+
+            - Instalator Windows (.exe) w załącznikach.
+            - Numer gry: **${{ steps.meta.outputs.version }}**. Data w nazwie wydania to dzień buildu, nie nowa wersja.
+            - 1.0 będzie pierwszym pełnym wydaniem (Steam / „prawdziwy release”).
+            - Zapisy z przeglądarki nadal działają; po instalacji kariery są w IndexedDB WebView2.
+
+            Commit: ${{ github.sha }}
+          releaseDraft: false
+          prerelease: true
+          includeUpdater: false

@@ -14,17 +14,16 @@
 
 | | |
 |---|---|
-| Engine | Works. 112 regression tests, headless harness, long-career + academy probes |
-| Systems | League + cup + Top 12 + Mundial/Olympics, 5 playing styles with counters, EUR economy, staff, academy, equipment, principals, inbox (thin), AI transfers |
-| Content | 6 countries × 2 divisions × 12 clubs, procedural players/staff, procedural portraits |
-| UI | Just rebuilt (2026-07-24): theme tokens, working dark theme, decluttered screens. Still Polish-only, still "sections stacked on a page" in the long flows |
+| Version | **0.1.0 beta** (1.0 = first real release) |
+| Engine | Works. Headless harness, long-career + academy probes |
+| Systems | Liga, puchar, style, ekonomia EUR, sztab, akademia, rodziny okładzin, skaut (mgła), skrzynka + katalog życia, przewodnik |
+| Content | 6 krajów × 2 ligi × 12 klubów, proceduralni zawodnicy i portrety |
+| UI | Dark carbon (proto-final). Polski. Długie flow jeszcze nie wszędzie „jeden etap” |
 | Language | Polish only |
-| Packaging | Browser app, opened from disk. No installer, no menu-driven saves, no Steam |
-| Playtime | Playable for hours by the owner; never tested by a stranger |
+| Packaging | Przeglądarka **albo** instalator Windows (Tauri, GitHub Releases po każdym `master`) |
+| Playtime | Właściciel gra godzinami; obcy jeszcze nie testowali |
 
-**The honest gap:** the *simulation* is close to release quality. The *product*
-around it — language, onboarding, flow, story, packaging, store presence — is
-roughly 20% done. That's normal, and it's the work this roadmap covers.
+**Luka do 1.0:** angielski, onboarding dla obcego, crash/export, Steam. Silnik jest dużo bliżej niż opakowanie.
 
 ---
 
@@ -125,12 +124,10 @@ before we move on. Sizes are relative effort, not calendar dates.
 - *Done when:* a stranger finishes a first season without help.
 
 ### M4 — Desktop shell
-- **Tauri wrap** (WebView2, ~3–10 MB) — no game-logic changes.
-- **File saves + slots + autosave rotation**, migration policy, Steam Cloud paths.
-- Window/fullscreen/resolution handling, in-game settings, key bindings.
-- Audio: licensed music/SFX or none at all.
-- *Done when:* installs and runs offline on a clean Windows machine, alt-tab safe,
-  saves survive an update.
+- **[x] Tauri wrap (Windows `.exe`)** — 0.1: ten sam HTML w WebView2, instalator NSIS, release przy każdym update na `master`.
+- **[ ] File saves + Steam Cloud** — IndexedDB w becie; pliki na dysku pod Steam.
+- Window/fullscreen, audio (albo nic, albo licencjonowane).
+- *Done when:* czysta Windows, offline, alt-tab, zapis przeżywa update.
 
 ### M5 — Store readiness
 - Steam app, store page: capsules, 6–8 screenshots, ~60s trailer, description,
@@ -209,9 +206,7 @@ it's what makes the world feel alive.
 
 ## 7. Right now (next working sessions)
 
-1. **Owner picks a UI prototype** (A / B / C, or a mix) → locks the design system.
-2. Build the design system + shell on the chosen direction, with **English as the
-   default language** and the i18n scaffolding in place.
-3. Rebuild in this order: shell/nav → hub → squad → **pre-season flow** →
-   **academy flow** → **season-end flow** → market grid → the rest.
-4. Then M2 starts with the inbox rewrite.
+1. Właściciel: **playtest sezonu 0.1** (sprzęt, skaut, skrzynka, przewodnik).
+2. Potem: crash/export + jaśniejszy pierwszy przedsezon (pętla dla obcego).
+3. Angielski (`t('key')`), potem Steam (Cloud, strona).
+4. Świadomie później: edytor bazy, wyzwania, partner sprzętu L, poaching.

@@ -1,12 +1,18 @@
 {
   "name": "pingpong-manager",
-  "version": "17.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "PingPong Manager — table tennis club management sim (browser app).",
+  "description": "PingPong Manager — Polish table tennis club manager (beta).",
   "scripts": {
     "test": "node --test --test-skip-pattern=\"^\\[slow\\]\"",
     "test:full": "node --test",
-    "check": "node -e \"['src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
-    "test:cleanup": "node --test tests/cleanup.test.js"
+    "check": "node -e \"['src/data/version.js','src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
+    "test:cleanup": "node --test tests/cleanup.test.js",
+    "desktop:pack": "node scripts/pack-desktop.js",
+    "desktop:icons": "python3 scripts/make-icons.py",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.4"
   }
 }

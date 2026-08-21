@@ -1473,6 +1473,7 @@ function renderMainMenu(){
     <div class="tac">
       <div class="syne b8 up" style="font-size:68px;letter-spacing:.01em;line-height:.9"><span class="cr">PING</span><span class="cgold">PONG</span></div>
       <div class="syne fs14 b7 ink3 up mt-2" style="letter-spacing:.9em">MANAGER</div>
+      <div class="fs11 ink3 mt-6" id="app-version-label">${(window.PPM.appVersionLabel&&window.PPM.appVersionLabel())||window.PPM.APP_VERSION||'0.1.0'}</div>
     </div>
     <div class="flex fdc gp8" style="width:680px;max-width:94vw">
       ${menuBtn('&#9654; NOWA GRA','startNewGameFlow()','pr')}

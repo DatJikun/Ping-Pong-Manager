@@ -159,7 +159,7 @@ function openSettings(){
     <button class="btn" onclick="backToMainMenu()">MENU GŁÓWNE</button>
     <button class="btn pr" onclick="closeModal()">ZAMKNIJ</button>
   </div>
-  <div class="fs10 ink3 mt-6">„Menu główne" nie kasuje kariery — możesz ją wznowić z menu („Wznów ostatni zapis").</div>`;
+  <div class="fs10 ink3 mt-6">Wersja ${(window.PPM.appVersionLabel&&window.PPM.appVersionLabel())||window.PPM.APP_VERSION||'0.1.0'}. „Menu główne” nie kasuje kariery — możesz ją wznowić z listy karier.</div>`;
   openModal();
 }
 // Return to the main menu without destroying the current career (it stays saved and

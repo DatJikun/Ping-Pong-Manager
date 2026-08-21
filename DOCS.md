@@ -1,73 +1,28 @@
-# Documentation index — START HERE
+# Dokumentacja
 
-Map of every doc, what it's for, and how fresh it is. Read in this order.
+Zaczynaj od **[README.md](README.md)** (gra, beta 0.1, pobieranie `.exe`).
 
-## Quick facts — what is ACTUALLY shipped right now (2026-08-20)
-- **Headless test harness + `npm test`** + long-career probe
-  (`node tests/stress.js`) + academy balance probe (`node tests/stress.js youth`).
-- **Academy** (vertical slice): 6 levels, shared peak range 56–92 (upgrade raises chance, not the cap), age-curve dev, youth sales/loans, challenge club Akademia Orłów. See `DESIGN-academy.md`.
-- **5 playing styles** with **live counter-pentagon** (equal-stat counters ~57–65%;
-  large OVR favorites still beat weak counters). See styles tests.
-- **EUR economy**: convex wage curves, no renewal shock; AI real income + wage
-  discipline. Market is **next-season pre-sign first** (not mid-season contracted buys).
-- **Match protocols** per country + doubles; **equipment** in match engine;
-  **fatigue** only for the two clubs in a fixture.
-- **Traits:** expanded catalog (incl. FAST_FEET, SPIN_WIZARD, WALL, CLUTCH, MENTOR,
-  BIG_MATCH) with **match/growth effects** (not flavor-only).
-- **Staff impact:** coach development stronger; physio fatigue/injury; psychologist
-  morale + clutch. Scout fog (bands + observe) is in. Fitness coach / analyst still unbuilt.
-- **AI parity:** hall training, youth promote at 21, injuries for both clubs;
-  soft budget→OVR retune (half-gap only when clearly under target).
-- **Avatars (2026-07-24 rewrite):** real head/neck/shoulder construction, hairline
-  curves + 15 hair styles × 4 textures, jaw-clipped beards, age marks, glasses/cap/
-  headband, 4 staff outfits, club jersey colours. **Region/ethnicity model unchanged.**
-  Preview: `tools/avatar-preview.html`.
-- **UI (2026-07-24 pass):** surfaces are theme tokens → **dark theme actually works**;
-  header regrouped (no truncation); Squad / Dashboard / Budget / Club / Market /
-  Staff / Preseason decluttered; one market row component for players + staff.
-- **Principals / club traits / inbox** (quiet rounds, reserve-by-contract, club projects, life-event catalogue, kit demands).
-- **Equipment families** (scope M: identity + wear + adaptation; grade is a scaler, not a free boost).
-- **Scout fog:** OVR always visible; unscouted stats are bands and peak is `?` until observe / play / sign.
-- **Still open:** partner kit-deal terms (scope L), poaching/bankruptcy, Steam wrap, `gameplay.js` split, full next-year fee
-  rebalance (owner: not buy-now transfer meta). See `HANDOFF.md` + `AUDIT-*.md`.
+Mapa plików: **[docs/README.md](docs/README.md)**.
 
-## Read first (current, authoritative)
-| Doc | Purpose | Status |
-|-----|---------|--------|
-| **HANDOFF.md** | Working state, roadmap, how to test. **"What now".** | ✅ current |
-| **VISION.md** | North-star: 4 pillars + Tauri/Steam. | ✅ current |
-| **AUDIT-design-calculations-realism-gameplay.md** | Audit + progress of honesty fixes. | ✅ current (batch fixed 2026-07-11) |
-| **CHANGELOG.md** | What actually shipped (dated). | ✅ current |
+## Teraz (0.1.0 beta)
 
-## Design decisions (owner-agreed)
-| Doc | Purpose | Status |
-|-----|---------|--------|
-| **DESIGN-economy.md** | Wages / EUR scale. | ✅ core shipped |
-| **DESIGN-staff.md** | Staff roles, two-curve, scout fog. | ⚠️ coach/physio/psych stronger; scout fog / fitness / analyst still open |
-| **DESIGN-ai-world.md** | Living AI layers. | ⚠️ Layer 1–2 partial; 3–4 open |
-| **DESIGN-academy.md** | Academy + youth challenge. | ✅ vertical slice shipped |
+- Polski menedżer klubu TT, offline, jedna osoba.
+- Testy: `npm test` / `npm run check`.
+- Zapisy: biblioteka karier (IndexedDB), schema 22.
+- W grze: style, ekonomia EUR, akademia, sprzęt (rodziny), skaut (mgła), skrzynka, przewodnik.
 
-## Owner feedback archive
-| Doc | Purpose | Status |
-|-----|---------|--------|
-| **OPEN-ISSUES.md** | Early-July playtest bugs. | ✅ all fixed — archive |
+## Czytać na bieżąco
 
-## Reference (v17 — PARTLY STALE)
-| Doc | Purpose | Status |
-|-----|---------|--------|
-| **ARCHITECTURE-v17.md** | File map. | ⚠️ layout OK; counts lag |
-| **GDD-v17.md** | Full design intent. | ⚠️ lags many 2026-07 systems |
-| **BALANCING-v17.md** | Old formulas. | ⚠️ match §0.4 partly obsolete; trust code + DESIGN-economy |
+| Plik | Po co |
+|---|---|
+| [HANDOFF.md](HANDOFF.md) | Stan prac |
+| [CHANGELOG.md](CHANGELOG.md) | Co weszło od 0.1 |
+| [ROADMAP.md](ROADMAP.md) | Droga do 1.0 |
+| [VISION.md](VISION.md) | Po co ta gra |
+| [DESIGN-alive-career.md](DESIGN-alive-career.md) | Skrzynka / życie / akademia |
+| [DESIGN-equipment.md](DESIGN-equipment.md) | Okładziny |
+| [CLAUDE.md](CLAUDE.md) | Zasady z właścicielem |
 
-**On conflict:** `HANDOFF` + `DESIGN-*` + `AUDIT` + **code/tests** win.
+## Archiwum
 
-## How we work
-- **`npm test` (112 tests)** after every change; `npm run check` for syntax;
-  `node tests/stress.js 100` for long careers.
-- Balance/feel: agree with owner before coding when numbers change feel.
-- One logical change per commit when using git.
-
-## Maintenance debt
-- Optional: rewrite stale sections of `*-v17.md` when next touched.
-- Playtest whether staff/traits *feel* strong enough in-browser (tests prove
-  direction; owner feel is final).
+`docs/archive/` — GDD v17, stare changelogi, audyty. **Nie** opisują obecnej gry. Przy konflikcie wygrywa kod + testy.

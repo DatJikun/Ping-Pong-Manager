@@ -39,13 +39,13 @@ function slugifySavePart(value){
     .toLowerCase()||'save';
 }
 function buildSaveFilename(){
-  if(!store.G)return 'ppm-v17-save.json';
+  if(!store.G)return `ppm-${window.PPM.APP_VERSION||'0.1.0'}-save.json`;
   const myClub=store.G.teams?.find?.(t=>t.id===store.G.myTeamId);
   const clubSlug=slugifySavePart(myClub?.name||'club');
   const phaseSlug=slugifySavePart(store.G.phase||'season');
   const seasonPart=`s${store.G.season||1}`;
   const matchdayPart=`k${store.G.matchday||0}`;
-  return `ppm-v17-${clubSlug}-${seasonPart}-${matchdayPart}-${phaseSlug}.json`;
+  return `ppm-${window.PPM.APP_VERSION||'0.1.0'}-${clubSlug}-${seasonPart}-${matchdayPart}-${phaseSlug}.json`;
 }
 function saveGame(){
   if(!store.G)return;
@@ -114,7 +114,7 @@ async function exportCareer(id){
   const career=await window.PPM.saveManager.getCareer(id);
   if(!career)return;
   const s=career.summary||{};
-  const filename=`ppm-v17-${slugifySavePart(s.clubName||career.name)}-s${s.season||1}-k${s.matchday||0}.json`;
+  const filename=`ppm-${window.PPM.APP_VERSION||'0.1.0'}-${slugifySavePart(s.clubName||career.name)}-s${s.season||1}-k${s.matchday||0}.json`;
   downloadCareerText(career.data,filename);
   shell.toast(`Wyeksportowano ${career.name}.`);
 }
