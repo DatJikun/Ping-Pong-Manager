@@ -79,6 +79,7 @@ function saveSettings(nextSettings){
 function setShellMode(mode){
   document.body.classList.toggle('app-start',mode==='start');
   document.body.classList.toggle('app-game',mode==='game');
+  document.body.classList.toggle('app-preseason',mode==='game'&&store.G?.phase==='preseason');
 }
 function syncNavState(){
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
@@ -95,6 +96,13 @@ function animateUi(el,keyframes,options){
 function go(p){
   if(ui.running)return;
   if(!store.G&&p!=='dash')return;
+  if(store.G?.phase==='preseason'&&p!=='preseason'){
+    toast('Przedsezon to tylko przygotowania. Reszta klubu otworzy się po starcie sezonu.');
+    ui.page='preseason';
+    render();
+    syncNavState();
+    return;
+  }
   ui.page=p;
   const el=document.getElementById('content');
   render();

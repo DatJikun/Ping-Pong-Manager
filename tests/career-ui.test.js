@@ -31,3 +31,15 @@ test('main menu shows the public app version', () => {
   assert.match(pages, /appVersionLabel/);
   assert.match(pages, /APP_VERSION/);
 });
+
+test('new-game country picker uses SVG flags instead of emoji', () => {
+  assert.match(pages, /function ngCountryCard/);
+  assert.match(pages, /PPM\.flags/);
+  assert.match(pages, /country-flag/);
+  assert.doesNotMatch(pages, /function ngCountryCard[\s\S]*?c\.flag/);
+});
+
+test('preseason step two signs the rubber contract in the flow', () => {
+  assert.match(pages, /Partner i okładziny/);
+  assert.match(pages, /setRubberFamily\('/);
+});

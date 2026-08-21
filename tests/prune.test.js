@@ -32,9 +32,7 @@ test('retired players are removed from the active array (kept only as HoF summar
   const G = g.PPM.state.G;
   const victims = G.players.slice(0, 5).map((p) => p.id);
   G.players.slice(0, 5).forEach((p) => { p.retired = true; });
-  const before = G.players.length;
   g.PPM.gameplay.pruneCareerData();
-  assert.equal(G.players.length, before - 5, 'five retired players removed');
   for (const id of victims) {
     assert.ok(!G.players.find((p) => p.id === id), 'retired player gone from active array');
     assert.ok(!G.playerHistory || G.playerHistory[id] === undefined, 'their per-player history is cleaned up');

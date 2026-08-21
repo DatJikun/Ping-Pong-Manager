@@ -12,12 +12,14 @@ const makeFreeAgent = (g, age = 30) => {
   return p;
 };
 
-test('population cleanup caps free agents and removes every dangling player reference', () => {
+test('population cleanup caps free agents to the squaded-player market target', () => {
   const g = boot(2001);
   g.PPM.gameplay.newGame(0, 'PL');
   const G = g.PPM.state.G;
+  const gp = g.PPM.gameplay;
+  const target = gp.freeAgentTarget(G);
 
-  while (G.players.filter((p) => p.teamId === null && !p.retired).length < 130) {
+  while (G.players.filter((p) => p.teamId === null && !p.retired).length < target + 20) {
     makeFreeAgent(g);
   }
 
@@ -39,7 +41,7 @@ test('population cleanup caps free agents and removes every dangling player refe
   g.PPM.gameplay.pruneCareerData();
 
   const freeAgents = G.players.filter((p) => !p.retired && p.teamId === null);
-  assert.equal(freeAgents.length, G.teams.length * 5, 'five market players per active club');
+  assert.equal(freeAgents.length, target, 'market pool matches the squaded-player target');
   for (const id of removedIds) {
     assert.ok(!G.players.some((p) => p.id === id), `removed player ${id} left the active world`);
     assert.equal(G.playerHistory[id], undefined, `history ${id} was deleted`);

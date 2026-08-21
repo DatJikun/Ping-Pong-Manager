@@ -1,0 +1,12 @@
+---
+description: Keep PingPong Manager UI rectangular, dense, and readable. No decorative slop.
+globs: styles/**/*.css, src/ui/**/*.js, index.html
+---
+
+# Unslop UI (this game)
+
+- Rectangles only. No parallelograms, no `clip-path: polygon(...)` on buttons, logos, crests, pills, or rank chips.
+- Fill the viewport: country/club pickers use large cards, not tiny tiles in empty dark space.
+- Flags are inline SVG (`src/ui/flags.js`), never emoji regional indicators (Windows WebView2 shows letters).
+- Preseason is a single flow. Hide the club rail. Status chips are display-only; prev/next sit at the top of the step.
+- Do not invent a second visual language. Stay on the existing dark-carbon skin.
