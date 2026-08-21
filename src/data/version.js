@@ -4,7 +4,7 @@
 // (tests/version-sync.test.js enforces it).
 (function () {
   window.PPM = window.PPM || {};
-  window.PPM.APP_VERSION = '0.1.0';
+  window.PPM.APP_VERSION = '0.1.2';
   window.PPM.APP_CHANNEL = 'beta';
   window.PPM.appVersionLabel = function () {
     const v = window.PPM.APP_VERSION || '0.1.0';

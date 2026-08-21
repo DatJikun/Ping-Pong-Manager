@@ -2,6 +2,15 @@
 
 Numeracja od **0.1.0** (publiczna beta). Starszy dziennik prac: [docs/archive/CHANGELOG-pre-beta.md](docs/archive/CHANGELOG-pre-beta.md).
 
+## 0.1.2 — 2026-08-21 (beta)
+
+Połączenie aktualnej gry z mastera z poprawkami z Codex 0.1.1 (wersja produktu **0.1.2** — tag 0.1.1 był na złej gałęzi).
+
+- Cichszy klik przy przyciskach + przełącznik w ustawieniach (można wyłączyć).
+- Krótka animacja wciśnięcia (`.ui-pressed`) przy klikaniu w UI.
+- Zakładki i kreator nowej gry: prawdziwe przyciski — lepsza obsługa klawiatury.
+- Podłoga kontuzji: klub nie traci zdrowych seniorów poniżej 3 gotowych do meczu.
+
 ## 0.1.0 — 2026-08-21 (beta)
 
 Pierwsza numerowana beta. **1.0 to dopiero prawdziwy release.**
