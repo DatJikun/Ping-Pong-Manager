@@ -1,8 +1,18 @@
-# Documentation index — START HERE
+# Documentation index
 
 Map of every doc, what it's for, and how fresh it is. Read in this order.
 
-## Quick facts — what is ACTUALLY shipped right now (2026-07-24)
+## Current release (2026-08-21)
+
+- Windows x64 prerelease: `17.0.0-beta.2`.
+- Product name: `PingPong Manager`.
+- Release package: `PingPong-Manager-17.0.0-beta.2-windows-x64.zip`.
+- English and Polish UI, multi-career saves, import/export and legacy-save
+  migration are included.
+- Desktop build, full tests, five-season soak and isolated-profile startup smoke
+  passed for beta.2. See `docs/DESKTOP-RELEASE.md` for exact results.
+
+## Project snapshot (2026-07-24, retained for design context)
 - **Headless test harness + regression suite** (`npm test`, `npm run test:full`),
   a **30-season soak runner** (`npm run test:soak`) that plays real careers and
   checks world invariants + a save/load round trip after every season, plus the
@@ -36,10 +46,13 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 ## Read first (current, authoritative)
 | Doc | Purpose | Status |
 |-----|---------|--------|
-| **HANDOFF.md** | Working state, roadmap, how to test. **"What now".** | ✅ current |
+| **HANDOFF.md** | Engineering history, season loop and save-system notes. | ⚠️ predates beta.2; release pointer current |
 | **VISION.md** | North-star: 4 pillars + Tauri/Steam. | ✅ current |
 | **AUDIT-design-calculations-realism-gameplay.md** | Audit + progress of honesty fixes. | ✅ current (batch fixed 2026-07-11) |
 | **CHANGELOG.md** | What actually shipped (dated). | ✅ current |
+| **README.md** | Player-facing start, current package name and basic commands. | ✅ current |
+| **docs/DESKTOP-RELEASE.md** | Current Windows build and verification record. | ✅ current |
+| **docs/releases/ITCH-BETA-17.0.0.md** | Short beta instructions for players. | ✅ current |
 
 ## Design decisions (owner-agreed)
 | Doc | Purpose | Status |
@@ -60,6 +73,7 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 | **ARCHITECTURE-v17.md** | File map. | ⚠️ layout OK; counts lag |
 | **GDD-v17.md** | Full design intent. | ⚠️ lags many 2026-07 systems |
 | **BALANCING-v17.md** | Old formulas. | ⚠️ match §0.4 partly obsolete; trust code + DESIGN-economy |
+| **docs/release/RELEASE-READINESS.md** | Release audit captured on 2026-07-28. | 🗄️ archived snapshot |
 
 **On conflict:** `HANDOFF` + `DESIGN-*` + `AUDIT` + **code/tests** win.
 

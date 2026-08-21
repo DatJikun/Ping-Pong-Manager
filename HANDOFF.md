@@ -1,5 +1,10 @@
 # HANDOFF — PingPong Manager engineering work
 
+> Release note: this engineering handoff predates `17.0.0-beta.2`. For the
+> current package name, verified test results and download link, read
+> `README.md` and `docs/DESKTOP-RELEASE.md`. Keep the historical engineering
+> notes below when working on the simulation and save system.
+
 ## Update 2026-07-28 — long-career stability
 
 **Read this before touching the season loop or the save migration.**

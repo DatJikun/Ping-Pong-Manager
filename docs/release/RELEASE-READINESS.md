@@ -1,10 +1,15 @@
-# Ping Pong Manager — release readiness
+# PingPong Manager release readiness audit (archived)
+
+> This file records the audit performed on 2026-07-28. It is not the current
+> release checklist. See `README.md`, `CHANGELOG.md`, `docs/DESKTOP-RELEASE.md`
+> and `docs/releases/ITCH-BETA-17.0.0.md` for the shipped beta.
 
 Last verified: 2026-07-28  
 Evidence branch: `audit/release-readiness` at `88a21e4`
 
-This is the release-facing source of truth. It records the product that exists
-in code, not features remembered from older design documents.
+This was the release-facing snapshot when the audit was written. Later work
+added localization, offline assets, Electron packaging, Windows branding and
+release-grade save handling.
 
 ## Executive verdict
 

@@ -4,7 +4,7 @@
   "private": true,
   "author": "DatJikun",
   "main": "desktop/main.cjs",
-  "description": "PingPong Manager — table tennis club management sim (browser app).",
+  "description": "PingPong Manager: table tennis club management sim for Windows.",
   "scripts": {
     "test": "node --test --test-skip-pattern=\"^\\[slow\\]\"",
     "test:full": "node --test",

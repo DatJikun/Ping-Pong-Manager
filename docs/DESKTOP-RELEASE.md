@@ -42,6 +42,20 @@ and stayed alive for a 12-second isolated-profile startup smoke test. The final
 friend ZIP is 88,403,846 bytes with SHA-256
 `DBEB9410C98945420F6221FB2A60126CE0C37941FDD0808BEC7350DE95C1141B`.
 
+## Verified beta.2 candidate
+
+On 2026-08-21 version `17.0.0-beta.2` passed 352/352 non-slow tests,
+386/386 full tests and a separate five-season soak. The portable Windows x64
+build stayed alive for a 12-second startup smoke test with an isolated data
+profile.
+
+Release package:
+`PingPong-Manager-17.0.0-beta.2-windows-x64.zip` (88,406,962 bytes).
+SHA-256:
+`CF920D7B0629768375CA8782AB9A22EB1776F56627F946CC785DFE3539B4DACF`.
+The prerelease is available on
+[GitHub](https://github.com/DatJikun/Ping-Pong-Manager/releases/tag/v17.0.0-beta.2).
+
 ## Required before a public store build
 
 - Add Windows code signing; unsigned downloads trigger SmartScreen warnings.
