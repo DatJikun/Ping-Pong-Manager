@@ -257,9 +257,9 @@ test('the squad page and dashboard use one ordered senior match squad', () => {
   for (const locale of ['en', 'pl']) {
     g.PPM.i18n.setLocale(locale);
     const squad = g.PPM.pages.pageSquad();
-    const visibleText = squad.replace(/<[^>]*>/g, ' ');
     for (const player of gp.getClubSeniorPlayers(G.myTeamId, true)) {
-      assert.equal(visibleText.split(player.name).length - 1, 1, `${locale}: ${player.name} appears once`);
+      const cardLinks = squad.match(new RegExp(`openPlayerModal\\(${player.id}\\)`, 'g')) || [];
+      assert.equal(cardLinks.length, 1, `${locale}: player ${player.id} appears once`);
     }
     assert.doesNotMatch(squad, /First team|Skład główny|promoteToStarter|demoteToReserve/);
     assert.match(squad, /A —|A —/);

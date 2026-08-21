@@ -37,16 +37,16 @@
 </div>
 <div class="mobile-nav">
   <div class="mobile-nav-scroll">
-    <button class="mn-btn on" onclick="go('dash')" data-page="dash" data-i18n="nav.dashboard">Dashboard</button>
-    <button class="mn-btn" onclick="go('squad')" data-page="squad" data-i18n="nav.squad">Squad</button>
-    <button class="mn-btn" onclick="go('staff')" data-page="staff" data-i18n="nav.staff">Staff</button>
-    <button class="mn-btn" onclick="go('club')" data-page="club" data-i18n="nav.club">Club</button>
-    <button class="mn-btn" onclick="go('budget')" data-page="budget" data-i18n="nav.budget">Budget</button>
-    <button class="mn-btn" onclick="go('market')" data-page="market" data-i18n="nav.transfers">Transfers</button>
-    <button class="mn-btn" onclick="go('news')" data-page="news" data-i18n="nav.news">News</button>
-    <button class="mn-btn" onclick="go('inbox')" data-page="inbox" data-i18n="nav.inbox">Inbox</button>
-    <button class="mn-btn" onclick="go('league')" data-page="league" data-i18n="nav.league">League</button>
-    <button class="mn-btn" onclick="go('preseason')" data-page="preseason" data-i18n="nav.season">Season</button>
+    <button class="mn-btn on" onclick="activateUi(()=>go('dash'))" data-page="dash" data-i18n="nav.dashboard">Dashboard</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('squad'))" data-page="squad" data-i18n="nav.squad">Squad</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('staff'))" data-page="staff" data-i18n="nav.staff">Staff</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('club'))" data-page="club" data-i18n="nav.club">Club</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('budget'))" data-page="budget" data-i18n="nav.budget">Budget</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('market'))" data-page="market" data-i18n="nav.transfers">Transfers</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('news'))" data-page="news" data-i18n="nav.news">News</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('inbox'))" data-page="inbox" data-i18n="nav.inbox">Inbox</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('league'))" data-page="league" data-i18n="nav.league">League</button>
+    <button class="mn-btn" onclick="activateUi(()=>go('preseason'))" data-page="preseason" data-i18n="nav.season">Season</button>
   </div>
 </div>
 <div id="main">
@@ -57,22 +57,22 @@
     <!-- Rail icons are monochrome SVG, not emoji: they inherit currentColor so
          they take the club livery on the active row, the way the skin intends. -->
     <div class="nav-sep" data-label="Club" data-i18n-label="nav.club"></div>
-    <button class="nb on" onclick="go('dash')" id="n-dash"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="9"/><rect x="9" y="1" width="6" height="5"/><rect x="9" y="8" width="6" height="7"/><rect x="1" y="12" width="6" height="3"/></svg></span><span class="nb-lb" data-i18n="nav.dashboard">Dashboard</span></button>
-    <button class="nb" onclick="go('squad')" id="n-squad"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="5" r="3"/><circle cx="12" cy="6" r="2.2"/><path d="M0 15c0-3 2.5-5 5.5-5s5.5 2 5.5 5z"/><path d="M11 15c0-2 .6-3.4 1.6-4.3 2 .3 3.4 2 3.4 4.3z"/></svg></span><span class="nb-lb" data-i18n="nav.squad">Squad</span></button>
-    <button class="nb" onclick="go('staff')" id="n-staff"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 4-8 4-8-4z"/><path d="M2 7v4c0 2 3 4 6 4s6-2 6-4V7l-6 3z"/></svg></span><span class="nb-lb" data-i18n="nav.staff">Staff</span></button>
-    <button class="nb" onclick="go('club')" id="n-club"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 15V6l7-5 7 5v9h-5v-5H6v5z"/></svg></span><span class="nb-lb" data-i18n="nav.club">Club</span></button>
-    <button class="nb" onclick="go('budget')" id="n-budget"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><circle cx="8" cy="8" r="2.8"/></svg></span><span class="nb-lb" data-i18n="nav.budget">Budget</span></button>
+    <button class="nb on" onclick="activateUi(()=>go('dash'))" id="n-dash"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="9"/><rect x="9" y="1" width="6" height="5"/><rect x="9" y="8" width="6" height="7"/><rect x="1" y="12" width="6" height="3"/></svg></span><span class="nb-lb" data-i18n="nav.dashboard">Dashboard</span></button>
+    <button class="nb" onclick="activateUi(()=>go('squad'))" id="n-squad"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="5" r="3"/><circle cx="12" cy="6" r="2.2"/><path d="M0 15c0-3 2.5-5 5.5-5s5.5 2 5.5 5z"/><path d="M11 15c0-2 .6-3.4 1.6-4.3 2 .3 3.4 2 3.4 4.3z"/></svg></span><span class="nb-lb" data-i18n="nav.squad">Squad</span></button>
+    <button class="nb" onclick="activateUi(()=>go('staff'))" id="n-staff"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 4-8 4-8-4z"/><path d="M2 7v4c0 2 3 4 6 4s6-2 6-4V7l-6 3z"/></svg></span><span class="nb-lb" data-i18n="nav.staff">Staff</span></button>
+    <button class="nb" onclick="activateUi(()=>go('club'))" id="n-club"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 15V6l7-5 7 5v9h-5v-5H6v5z"/></svg></span><span class="nb-lb" data-i18n="nav.club">Club</span></button>
+    <button class="nb" onclick="activateUi(()=>go('budget'))" id="n-budget"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><circle cx="8" cy="8" r="2.8"/></svg></span><span class="nb-lb" data-i18n="nav.budget">Budget</span></button>
     <div class="nav-sep" data-label="Operations" data-i18n-label="nav.operations"></div>
-    <button class="nb" onclick="go('sponsors')" id="n-sponsors"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h5l1 1 1-1h5v3l-4 4-2-2-2 2-4-4z"/><path d="M4 2h3v3H4zM9 2h3v3H9z" opacity=".55"/></svg></span><span class="nb-lb" data-i18n="nav.sponsors">Sponsors</span></button>
-    <button class="nb" onclick="go('market')" id="n-market"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 5l4-4v2.5h12V6.5H4V9z"/><path d="M16 11l-4 4v-2.5H0V10h12V7.5z"/></svg></span><span class="nb-lb" data-i18n="nav.transfers">Transfers</span></button>
-    <button class="nb" onclick="go('inbox')" id="n-inbox"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><path d="M0 3l8 6 8-6z"/></svg><span id="inbox-badge" class="nb-badge" style="display:none"></span></span><span class="nb-lb" data-i18n="nav.inbox">Inbox</span></button>
+    <button class="nb" onclick="activateUi(()=>go('sponsors'))" id="n-sponsors"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h5l1 1 1-1h5v3l-4 4-2-2-2 2-4-4z"/><path d="M4 2h3v3H4zM9 2h3v3H9z" opacity=".55"/></svg></span><span class="nb-lb" data-i18n="nav.sponsors">Sponsors</span></button>
+    <button class="nb" onclick="activateUi(()=>go('market'))" id="n-market"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 5l4-4v2.5h12V6.5H4V9z"/><path d="M16 11l-4 4v-2.5H0V10h12V7.5z"/></svg></span><span class="nb-lb" data-i18n="nav.transfers">Transfers</span></button>
+    <button class="nb" onclick="activateUi(()=>go('inbox'))" id="n-inbox"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v10H0z" opacity=".5"/><path d="M0 3l8 6 8-6z"/></svg><span id="inbox-badge" class="nb-badge" style="display:none"></span></span><span class="nb-lb" data-i18n="nav.inbox">Inbox</span></button>
     <div class="nav-sep" data-label="Competitions" data-i18n-label="nav.competitions"></div>
-    <button class="nb" onclick="go('league')" id="n-league"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h10v4a5 5 0 0 1-10 0z"/><path d="M6 10h4v4H6z"/><path d="M3 15h10v1H3z"/></svg></span><span class="nb-lb" data-i18n="nav.league">League</span></button>
-    <button class="nb" onclick="go('cup')" id="n-cup"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="10" r="5"/><path d="M5 0h6l-1.5 4h-3z"/></svg></span><span class="nb-lb" data-i18n="nav.cup">Cup</span></button>
+    <button class="nb" onclick="activateUi(()=>go('league'))" id="n-league"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h10v4a5 5 0 0 1-10 0z"/><path d="M6 10h4v4H6z"/><path d="M3 15h10v1H3z"/></svg></span><span class="nb-lb" data-i18n="nav.league">League</span></button>
+    <button class="nb" onclick="activateUi(()=>go('cup'))" id="n-cup"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="10" r="5"/><path d="M5 0h6l-1.5 4h-3z"/></svg></span><span class="nb-lb" data-i18n="nav.cup">Cup</span></button>
     <div class="nav-sep" data-label="Reports" data-i18n-label="nav.reports"></div>
-    <button class="nb" onclick="go('news')" id="n-news"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2h13v12H0z" opacity=".5"/><path d="M2 4h9v2H2zM2 7h9v1.2H2zM2 9.4h9v1.2H2z"/><path d="M14 5h2v7a2 2 0 0 1-2 2z"/></svg></span><span class="nb-lb">News</span></button>
-    <button class="nb" onclick="go('history')" id="n-history"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 14L6 7l3 3 5-8 2 1-6 10-3-3-4 5z"/></svg></span><span class="nb-lb" data-i18n="nav.history">History</span></button>
-    <button class="nb" onclick="go('hof')" id="n-hof"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2.2 5H16l-4.6 3.4 1.8 5.4L8 10.6 2.8 13.8l1.8-5.4L0 5h5.8z"/></svg></span><span class="nb-lb">Hall of Fame</span></button>
+    <button class="nb" onclick="activateUi(()=>go('news'))" id="n-news"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2h13v12H0z" opacity=".5"/><path d="M2 4h9v2H2zM2 7h9v1.2H2zM2 9.4h9v1.2H2z"/><path d="M14 5h2v7a2 2 0 0 1-2 2z"/></svg></span><span class="nb-lb">News</span></button>
+    <button class="nb" onclick="activateUi(()=>go('history'))" id="n-history"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 14L6 7l3 3 5-8 2 1-6 10-3-3-4 5z"/></svg></span><span class="nb-lb" data-i18n="nav.history">History</span></button>
+    <button class="nb" onclick="activateUi(()=>go('hof'))" id="n-hof"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2.2 5H16l-4.6 3.4 1.8 5.4L8 10.6 2.8 13.8l1.8-5.4L0 5h5.8z"/></svg></span><span class="nb-lb">Hall of Fame</span></button>
     <button class="nb" onclick="openGuide()" id="n-guide"><span class="nb-ic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h6.2v14H1z" opacity=".55"/><path d="M8.8 1H15v14H8.8z"/></svg></span><span class="nb-lb" data-i18n="nav.help">Help</span></button>
     <div class="rfoot" id="rail-foot">&nbsp;</div>
   </div>

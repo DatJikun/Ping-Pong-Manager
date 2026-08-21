@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-21 — Beta.2
+
+Pełne tłumaczenia EN/PL obejmują teraz także starsze zapisy. Interfejs dostał
+krótki, opcjonalny dźwięk kliknięcia, szybsze potwierdzenie wciśnięcia oraz
+obsługiwane klawiaturą zakładki i wybory kreatora. Tożsamość aplikacji i format
+zapisów pozostają bez zmian.
+
 ## 2026-08-08 — Kandydat beta.1
 
 Beta otrzymała docelowe logo, wielorozmiarową ikonę Windows, favicon i komplet

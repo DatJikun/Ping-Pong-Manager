@@ -285,6 +285,29 @@ test('post-match injury rolls target actual participants, not an old permanent l
   assert.equal(seniors.filter((player) => player.id !== participant.id).some((player) => player.injuredFor > 0), false);
 });
 
+test('injuries cannot soft-lock a club below the three-player match minimum', () => {
+  const g = boot(4210);
+  const gp = g.PPM.gameplay;
+  gp.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const seniors = gp.getClubSeniorPlayers(G.myTeamId);
+  seniors.forEach((player, index) => {
+    player.injuredFor = index < 3 ? 0 : 2;
+    player.fatigue = 100;
+    player.traits = [];
+  });
+  const healthy = seniors.slice(0, 3);
+  const originalRandom = g.Math.random;
+  g.Math.random = () => 0;
+  try {
+    gp.tryInjuriesForTeam(G.myTeamId, new Set(healthy.map((player) => player.id)));
+  } finally {
+    g.Math.random = originalRandom;
+  }
+  assert.equal(gp.getEligibleMatchPlayers(G.myTeamId).length, 3);
+  assert.equal(healthy.some((player) => player.injuredFor > 0), false);
+});
+
 test('league champions award every active senior in the winning club', () => {
   const g = boot(4209);
   const gp = g.PPM.gameplay;

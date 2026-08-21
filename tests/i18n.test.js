@@ -762,6 +762,27 @@ test('board objective choices and selected status render from semantic data in t
   assert.doesNotMatch(polish, /Safe|Expected|Ambitious/);
 });
 
+test('legacy board objectives without ids keep a localized selected status', () => {
+  const g = boot(3149);
+  g.PPM.gameplay.newGame(0, 'PL');
+  vm.runInContext(read('src/ui/pages.js'), g, { filename: 'src/ui/pages.js' });
+  const G = g.PPM.state.G;
+  const expected = G.boardObjectiveOptions.find(option => option.risk === 'expected');
+  G.boardObjectiveOptions = G.boardObjectiveOptions.map(({ id, ...option }) => option);
+  G.boardObjective = { ...expected };
+  delete G.boardObjective.id;
+  g.PPM.ui.preStep = 3;
+
+  const english = g.PPM.pages.pagePreseason();
+  assert.match(english, /Expected/);
+  assert.doesNotMatch(english, /board\.choice\.undefined/);
+
+  g.PPM.i18n.setLocale('pl');
+  const polish = g.PPM.pages.pagePreseason();
+  assert.match(polish, /Oczekiwany/);
+  assert.doesNotMatch(polish, /board\.choice\.undefined/);
+});
+
 test('infrastructure actions use the active locale for all four facility types', () => {
   const facilities = [
     ['hall', 'Sports hall', 'No hall'],
@@ -780,6 +801,27 @@ test('infrastructure actions use the active locale for all four facility types',
     g.PPM.gameplay.downgradeInfra(type);
     assert.equal(message, `Downgraded to ${downgraded}.`, `English ${type} downgrade`);
   }
+});
+
+test('club overview localizes every infrastructure level name', () => {
+  const g = boot(3150);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const club = G.teams.find(team => team.id === G.myTeamId);
+  club.infraHall = 0;
+  club.infraMed = 0;
+  club.infraAcademy = 0;
+  club.infraMerchandising = 0;
+
+  g.PPM.gameplay.openTeamOverview(club.id);
+  const english = g.document.getElementById('modal').innerHTML;
+  assert.match(english, /No hall|No medical centre|No academy|No shop/);
+  assert.doesNotMatch(english, /Brak hali|Brak akademii|Brak sklepu/);
+
+  g.PPM.i18n.setLocale('pl');
+  g.PPM.gameplay.openTeamOverview(club.id);
+  const polish = g.document.getElementById('modal').innerHTML;
+  assert.match(polish, /Brak hali|Brak akademii|Brak sklepu/);
 });
 
 test('localized action failures and checkpoint logs never fall back to Polish in English', async () => {
@@ -841,6 +883,46 @@ test('legacy coach history, compact table labels, age text, and difficulty choic
   assert.match(g.PPM.pages.pageLeague(), /<th>W<\/th>.*<th>R<\/th>.*<th>P<\/th>/s);
 });
 
+test('new season snapshots preserve semantic data from legacy coaches', async () => {
+  const g = boot(3151);
+  g.PPM.gameplay.newGame(0, 'PL');
+  const G = g.PPM.state.G;
+  const coach = G.staff.find(entry => entry.type === 'coach');
+  coach.teamId = G.myTeamId;
+  delete coach.styleId;
+  coach.styleName = 'Ofensywny';
+  const expectedTeamName = G.teams.find(team => team.id === coach.teamId).name;
+  G.staffHistory = G.staffHistory || {};
+  G.staffHistory[coach.id] = [];
+  const freeStaff = G.staff.find(entry => entry.id !== coach.id);
+  freeStaff.teamId = null;
+  G.staffHistory[freeStaff.id] = [];
+
+  await g.PPM.gameplay.endSeason();
+  const staffSnapshot = G.staffHistory[coach.id].at(-1);
+  assert.equal(staffSnapshot.styleId, 'OFENSYWNY');
+  assert.equal(staffSnapshot.teamName, expectedTeamName);
+  assert.equal(G.staffHistory[freeStaff.id].at(-1).teamName, null);
+
+  const season = boot(3152);
+  season.PPM.gameplay.newGame(0, 'PL');
+  const seasonGame = season.PPM.state.G;
+  const seasonCoach = seasonGame.staff.find(entry => entry.type === 'coach');
+  seasonCoach.teamId = seasonGame.myTeamId;
+  delete seasonCoach.styleId;
+  seasonCoach.styleName = 'Ofensywny';
+  seasonGame.phase = 'pre';
+  seasonGame.matchday = 21;
+  season.PPM.ui.autoPlay = true;
+  const closeGala = setInterval(() => { season._galaResolved = true; }, 5);
+  try {
+    await season.PPM.gameplay.runMatchday();
+  } finally {
+    clearInterval(closeGala);
+  }
+  assert.equal(seasonGame.coachHistory.at(-1).styleId, 'OFENSYWNY');
+});
+
 test('locale-aware plural forms handle English and Polish reachable counts', () => {
   const g = boot(3147);
   const { plural, setLocale } = g.PPM.i18n;
@@ -856,6 +938,17 @@ test('locale-aware plural forms handle English and Polish reachable counts', () 
   assert.equal(plural('inbox.summary', 1), '1 wiadomość');
   assert.equal(plural('inbox.summary', 2), '2 wiadomości');
   assert.equal(plural('inbox.summary', 5), '5 wiadomości');
+  assert.equal(plural('budget.deals', 1), '1 umowa');
+  assert.equal(plural('budget.deals', 2), '2 umowy');
+  assert.equal(plural('budget.deals', 5), '5 umów');
+  assert.equal(plural('news.archiveCount', 1), '1 wpis w archiwum');
+  assert.equal(plural('hof.matchdays', 1), '1 kolejka');
+  assert.equal(plural('matchLog.otherDivision', 1, { division: 'II' }), '// II Liga: rozegrano 1 mecz');
+  assert.equal(plural('cupLog.header', 2, { round: '1/8' }), '// PUCHAR KRAJOWY: 1/8 (2 mecze)');
+  assert.equal(plural('cupLog.nextRound', 5), '// Następna runda: 5 drużyn');
+  assert.equal(plural('club.contractTotal', 1), '1 sezonu');
+  assert.equal(plural('club.contractTotal', 2), '2 sezonów');
+  assert.equal(plural('club.contractTerm', 1, { total: plural('club.contractTotal', 2) }), 'Kontrakt: pozostał 1 sezon z 2 sezonów');
 });
 
 test('player match modifier stamina label follows the active locale', () => {

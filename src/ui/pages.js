@@ -180,9 +180,9 @@ function pageSquad(){
   if(ui.squadTab==='loans'){
     return`<div class="ph"><div><div class="pt">${t('squad.title')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab" onclick="ui.squadTab='squad';render()">${t('squad.seniorSquad')} (${seniors.length})</div>
-    <div class="rtab" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
-    <div class="rtab on" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${_loanedOut.length})</div>
+    <button type="button" class="rtab" onclick="activateUi(()=>{ui.squadTab='squad';render()})">${t('squad.seniorSquad')} (${seniors.length})</button>
+    <button type="button" class="rtab" onclick="activateUi(()=>{ui.squadTab='youth';render()})">${t('squad.academy')} (${youth.length})</button>
+    <button type="button" class="rtab on" onclick="activateUi(()=>{ui.squadTab='loans';render()})">${t('squad.loans')} (${_loanedOut.length})</button>
   </div>
     <div class="grid gp10">
     ${_loanedOut.length?_loanedOut.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bbb bgs1 bl4-blue r4">
@@ -233,9 +233,9 @@ function pageSquad(){
 
   return`<div class="ph"><div><div class="pt">${t('squad.title')}</div><div class="ps">${t('squad.subtitle')}</div></div></div>
   <div class="rtabs">
-    <div class="rtab ${ui.squadTab==='squad'?'on':''}" onclick="ui.squadTab='squad';render()">${t('squad.seniorSquad')} (${seniors.length})</div>
-    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">${t('squad.academy')} (${youth.length})</div>
-    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">${t('squad.loans')} (${getLoanedOut().length})</div>
+    <button type="button" class="rtab ${ui.squadTab==='squad'?'on':''}" onclick="activateUi(()=>{ui.squadTab='squad';render()})">${t('squad.seniorSquad')} (${seniors.length})</button>
+    <button type="button" class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="activateUi(()=>{ui.squadTab='youth';render()})">${t('squad.academy')} (${youth.length})</button>
+    <button type="button" class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="activateUi(()=>{ui.squadTab='loans';render()})">${t('squad.loans')} (${getLoanedOut().length})</button>
   </div>
   ${ui.squadTab==='youth'?`
   <div class="g4 mb14">
@@ -347,7 +347,7 @@ function squadCard(p,selectionView){
     </div>
     <div class="pc-facts">
       <span class="k">${t('squad.salary')}</span><span class="v">${formatCurrency(p.salary)}</span>
-      <span class="k">${t('squad.contract')}</span><span class="v ${p.contractYears<=1?'cr b7':''}">${p.contractYears} ${t(p.contractYears===1?'common.year':'common.years')}</span>
+      <span class="k">${t('squad.contract')}</span><span class="v ${p.contractYears<=1?'cr b7':''}">${plural('neg.yearsValue',p.contractYears)}</span>
       <span class="k">${t('squad.form')}</span><span class="v">${seasonFormLabel(p)}</span>
       <span class="k">${t('squad.record')}</span><span class="v">${p.seasonW}W / ${p.seasonL}L</span>
     </div>
@@ -386,7 +386,7 @@ function pageLeague(){
     ${players.map((p,i)=>{
       const isMine=p.teamId===myId;
       const val=mode==='won'?(p.leagueSeasonPointsWon||0):(p.leagueSeasonPointsLost||0);
-      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${p.contractYears||0} ${t((p.contractYears||0)===1?'common.year':'common.years')}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">${t('market.preSign')}</button>`:'-'}</td></tr>`;
+      return`<tr class="${isMine?'mine':''}"><td><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span></td><td style="font-weight:${isMine?700:400};cursor:pointer" onclick="openPlayerModal(${p.id})">${p.name}</td><td class="fs11 ink3 cur" onclick="openTeamOverview(${p.teamId})">${teamName(p.teamId)}</td><td>${p.age}</td><td>${plural('neg.yearsValue',p.contractYears||0)}</td><td style="font-family:'Saira Condensed',sans-serif;font-weight:800;color:${mode==='won'?'var(--g)':'var(--blue)'}">${val}</td><td>${window.PPM.ratingStars.renderRating(ratingProfile(ovr(p),playerCeiling(p)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}</td><td>${!isMine&&p.contractYears===1?`<button class="btn sm pr" onclick="openNegotiate(${p.id})">${t('market.preSign')}</button>`:'-'}</td></tr>`;
     }).join('')}</table>`;
   }
   function teamStatsTable(teams,statLabel,mode){
@@ -396,15 +396,15 @@ function pageLeague(){
   
   return`<div class="ph"><div><div class="pt">${t('league.title',{season:store.G.season})}</div><div class="ps">${t('league.matchday',{current:store.G.matchday,total:TOTAL_MATCHDAYS})}</div></div></div>
   <div class="rtabs mb10">
-    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">${t('league.divisionOne')}</div>
-    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">${t('league.divisionTwo')}</div>
+    <button type="button" class="rtab ${tab==='l1'?'on':''}" onclick="activateUi(()=>{ui.leagueTab='l1';render()})">${t('league.divisionOne')}</button>
+    <button type="button" class="rtab ${tab==='l2'?'on':''}" onclick="activateUi(()=>{ui.leagueTab='l2';render()})">${t('league.divisionTwo')}</button>
   </div>
   <div class="rtabs mb14">
-    <div class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">${t('league.table')}</div>
-    <div class="rtab ${statsTab==='points_for'?'on':''}" onclick="ui.leagueStatsTab='points_for';render()">${t('league.playerPointsFor')}</div>
-    <div class="rtab ${statsTab==='points_against'?'on':''}" onclick="ui.leagueStatsTab='points_against';render()">${t('league.playerPointsAgainst')}</div>
-    <div class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="ui.leagueStatsTab='team_points_for';render()">${t('league.teamPointsFor')}</div>
-    <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">${t('league.teamPointsAgainst')}</div>
+    <button type="button" class="rtab ${statsTab==='table'?'on':''}" onclick="activateUi(()=>{ui.leagueStatsTab='table';render()})">${t('league.table')}</button>
+    <button type="button" class="rtab ${statsTab==='points_for'?'on':''}" onclick="activateUi(()=>{ui.leagueStatsTab='points_for';render()})">${t('league.playerPointsFor')}</button>
+    <button type="button" class="rtab ${statsTab==='points_against'?'on':''}" onclick="activateUi(()=>{ui.leagueStatsTab='points_against';render()})">${t('league.playerPointsAgainst')}</button>
+    <button type="button" class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="activateUi(()=>{ui.leagueStatsTab='team_points_for';render()})">${t('league.teamPointsFor')}</button>
+    <button type="button" class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="activateUi(()=>{ui.leagueStatsTab='team_points_against';render()})">${t('league.teamPointsAgainst')}</button>
   </div>
   ${statsTab==='table'?`<div class="card"><div class="ct">${t('league.tableTitle',{division:league===1?'I':'II'})}</div>
   <table class="t"><tr><th>#</th><th>${t('league.team')}</th><th>OVR</th><th>${t('dash.winShort')}</th><th>${t('dash.drawShort')}</th><th>${t('dash.lossShort')}</th><th>${t('league.duels')}</th><th>${t('league.points')}</th><th>${t('league.difference')}</th><th>${t('dash.points')}</th></tr>
@@ -477,7 +477,7 @@ function pageStaff(){
     return`<div class="staff-card hired cur" onclick="openStaffModal(${s.id})">
       <div class="flex jcb aifs mb10">
         <div class="staff-head"><img src="${getAvatarData(s,'staff')}" alt="${s.name}" class="avatar"><div><div class="syne b7 fs15">${roleIcon} ${s.name}</div>
-        <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(s.salary),years:`${s.contractYears||0} ${t((s.contractYears||0)===1?'common.year':'common.years')}`})}</div>
+        <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(s.salary),years:plural('neg.yearsValue',s.contractYears||0)})}</div>
         <div class="fs10 mt-2">${t('staff.agePeak',{age:s.age||'?',peak:s.peakAge||'?'})}</div></div></div>
         ${window.PPM.ratingStars.renderRating(ratingProfile(sOvr,staffCeiling(s)),{size:'compact',peakKnown:true,disclosure:'summary',showCurrentOvr:true})}
       </div>
@@ -562,7 +562,7 @@ function pageClub(){
     ${prDir?`<div class="pd12 bg-ok bbg r4">
       <div class="syne b7 fs15">\u2713 ${prDir.name}</div>
       <div class="fs11 ink3 mt-4">${t('club.commercialBonus',{percent:Math.round(prDir.bonus*100),seasons:prDir.cooldownReduce})}</div>
-      <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(prDir.salary),years:`${prDir.contractYears||0} ${t((prDir.contractYears||0)===1?'common.year':'common.years')}`})}</div>
+      <div class="fs10 ink3 mt-2">${t('staff.salaryContract',{salary:formatCurrency(prDir.salary),years:plural('neg.yearsValue',prDir.contractYears||0)})}</div>
       <div class="btn-row mt-8"><button class="btn gl sm" onclick="openStaffNeg(${prDir.id})">${t('staff.extend')}</button></div>
     </div>`:
     `<div class="fs11 ink3 lh155">${t('club.noPr')}</div>`}
@@ -579,7 +579,7 @@ function pageClub(){
     return`<div class="academy-inline-banner">
       <div class="flex aic jcb gp10 fwrap"><div><div class="syne b8 fs18">${techPartnership.icon} ${techPartnership.name}</div><div class="fs11 cg mt-3">${t(`equipment.profile.${techPartnership.profileId}`)}</div></div><span class="pill pos">${t('club.active')}</span></div>
       <div class="grid gtc2 gp8 mt-10 fs11"><div>${t('club.contractRubber',{rubber:t(`equipment.rubber.${techContract.rubberId}`)})}</div><div>${t('club.contractFit',{styles:fit})}</div><div>${t('club.contractEffects',{effects})}</div><div>${t('club.contractAnnualCashflow',{cashflow:signed})}</div></div>
-      <div class="mt-10 fs11">${t('club.contractTerm',{left:techContract.yearsLeft,total:techContract.termYears})}</div>
+      <div class="mt-10 fs11">${plural('club.contractTerm',techContract.yearsLeft,{total:plural('club.contractTotal',techContract.termYears)})}</div>
       <div class="mt-4 fs11 ink3">${t('club.terminationFee',{fee:formatCurrency(techContractBreakFee(techContract))})}</div>
       <button class="btn rd sm mt-8" onclick="terminateTechPartnership()">${t('club.terminatePartnership')}</button>
     </div>`;
@@ -649,7 +649,7 @@ function pageBudget(){
       <div class="pnl-group-head"><span>${title}</span><span class="${rowClass(total)}">${formatSignedMoney(total)}</span></div>
       ${shown.length?shown.map(([label,val])=>`<div class="pnl-row"><div>${label}</div><div class="${rowClass(val)}">${formatSignedMoney(val)}</div></div>`).join('')
         :`<div class="pnl-row"><div class="ink3">${t('budget.noEntries')}</div><div class="ink3">${formatCurrency(0)}</div></div>`}
-      ${hidden?`<div class="fs10 ink3 mt-4">${t('budget.zeroHidden',{count:hidden})}</div>`:''}
+      ${hidden?`<div class="fs10 ink3 mt-4">${plural('budget.zeroHidden',hidden)}</div>`:''}
     </div>`;
   };
   return`<div class="ph"><div><div class="pt">${t('budget.title')}</div></div></div>
@@ -657,7 +657,7 @@ function pageBudget(){
     <div class="sb"><div class="l">${t('budget.cash')}</div><div class="v g fs26">${formatCurrency(mt.budget)}</div></div>
     <div class="sb"><div class="l">${t('budget.totalWages')}</div><div class="v r fs26">${formatCurrency(wages)}</div><div class="sub">${t('budget.perSeason')}</div></div>
     <div class="sb"><div class="l">${t('budget.upkeep')}</div><div class="v r fs26">${formatCurrency(maint)}</div></div>
-    <div class="sb"><div class="l">${t('budget.nextSeasonCommitments')}</div><div class="v ${nextSeason.total>0?'gold':'g'} fs26">${formatSignedMoney(-nextSeason.total)}</div><div class="sub">${t('budget.deals',{count:nextSeason.entries.length})}</div></div>
+    <div class="sb"><div class="l">${t('budget.nextSeasonCommitments')}</div><div class="v ${nextSeason.total>0?'gold':'g'} fs26">${formatSignedMoney(-nextSeason.total)}</div><div class="sub">${plural('budget.deals',nextSeason.entries.length)}</div></div>
   </div>
   <div class="card mb14"><div class="ct">${t('budget.forecast')}</div>
     <div class="pnl-block">
@@ -963,10 +963,10 @@ function pageHistory(){
   const tab=ui.historyTab||'seasons';
   return`<div class="ph"><div><div class="pt">${t('history.title')}</div></div></div>
   <div class="rtabs mb14">
-    <div class="rtab ${tab==='seasons'?'on':''}" onclick="ui.historyTab='seasons';render()">${t('history.seasons')}</div>
-    <div class="rtab ${tab==='manager'?'on':''}" onclick="ui.historyTab='manager';render()">${t('history.manager')}</div>
-    <div class="rtab ${tab==='club'?'on':''}" onclick="ui.historyTab='club';render()">${t('history.club')}</div>
-    <div class="rtab ${tab==='coaches'?'on':''}" onclick="ui.historyTab='coaches';render()">${t('history.coaches')}</div>
+    <button type="button" class="rtab ${tab==='seasons'?'on':''}" onclick="activateUi(()=>{ui.historyTab='seasons';render()})">${t('history.seasons')}</button>
+    <button type="button" class="rtab ${tab==='manager'?'on':''}" onclick="activateUi(()=>{ui.historyTab='manager';render()})">${t('history.manager')}</button>
+    <button type="button" class="rtab ${tab==='club'?'on':''}" onclick="activateUi(()=>{ui.historyTab='club';render()})">${t('history.club')}</button>
+    <button type="button" class="rtab ${tab==='coaches'?'on':''}" onclick="activateUi(()=>{ui.historyTab='coaches';render()})">${t('history.coaches')}</button>
   </div>
   ${tab==='seasons'?`${seasons.length?`<div class="card"><div class="ct">${t('history.seasonHistory')}</div>
   <table class="t"><tr><th>${t('common.season')}</th><th>${t('history.league')}</th><th>${t('history.position')}</th><th>${t('dash.winShort')}</th><th>${t('dash.drawShort')}</th><th>${t('dash.lossShort')}</th><th>${t('dash.points')}</th><th>OVR</th><th>${t('history.budget')}</th></tr>
@@ -1022,7 +1022,7 @@ function pageNews(){
   if(!ui.newsType)ui.newsType='all';
   const filtered=allNews.filter(n=>(ui.newsSeason==='all'||String(n.season)===String(ui.newsSeason))&&(ui.newsType==='all'||(n.type||'')===ui.newsType));
   const typeLabel=type=>t(type==='cup'?'news.cupEvent':type==='hot'?'news.sensation':type==='good'?'news.positive':'news.neutral');
-  return`<div class="ph"><div><div class="pt">${t('news.title')}</div><div class="ps">${t('news.archiveCount',{count:allNews.length})}</div></div></div>
+  return`<div class="ph"><div><div class="pt">${t('news.title')}</div><div class="ps">${plural('news.archiveCount',allNews.length)}</div></div></div>
   <div class="card mb14">
     <div class="ct">${t('news.filters')}</div>
     <div class="grid gtc2 gp10">
@@ -1063,8 +1063,8 @@ function pageHoF(){
   const rec=store.G.records||{};
   
   const tabsHtml=`<div class="rtabs mb14">
-    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">${t('hof.gallery')}</div>
-    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">${t('hof.records')}</div>
+    <button type="button" class="rtab ${hofRealTab==='hof'?'on':''}" onclick="activateUi(()=>{ui.hofRealTab='hof';render()})">${t('hof.gallery')}</button>
+    <button type="button" class="rtab ${hofRealTab==='records'?'on':''}" onclick="activateUi(()=>{ui.hofRealTab='records';render()})">${t('hof.records')}</button>
   </div>`;
   
   let bodyHtml='';
@@ -1072,10 +1072,10 @@ function pageHoF(){
   if(hofRealTab==='hof'){
     const filterTabs=`<div class="g2 mb14">
       <div class="rtabs" style="margin-bottom:0">
-        <div class="rtab ${tab==='all'?'on':''}" onclick="ui.hofTab='all';render()">${t('hof.everyone')}</div>
-        <div class="rtab ${tab==='mine'?'on':''}" onclick="ui.hofTab='mine';render()">${t('hof.myClub')}</div>
+        <button type="button" class="rtab ${tab==='all'?'on':''}" onclick="activateUi(()=>{ui.hofTab='all';render()})">${t('hof.everyone')}</button>
+        <button type="button" class="rtab ${tab==='mine'?'on':''}" onclick="activateUi(()=>{ui.hofTab='mine';render()})">${t('hof.myClub')}</button>
       </div>
-      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold',t('hof.trophies')],['ovr','Peak OVR'],['w',t('hof.wins')],['wrate','%W']].map(([v,l])=>`<div class="rtab ${sk===v?'on':''}" onclick="ui.hofSort='${v}';render()">${l}</div>`).join('')}</div>
+      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold',t('hof.trophies')],['ovr','Peak OVR'],['w',t('hof.wins')],['wrate','%W']].map(([v,l])=>`<button type="button" class="rtab ${sk===v?'on':''}" onclick="activateUi(()=>{ui.hofSort='${v}';render()})">${l}</button>`).join('')}</div>
     </div>`;
     
     const rows=list.length?list.slice(0,20).map((e,i)=>`<div class="hof-row">
@@ -1143,7 +1143,7 @@ function pageHoF(){
     const topClubsByLeague=[...clubTallies.values()].sort((a,b)=>b.league-a.league||b.total-a.total).slice(0,5);
     const recordEmpty=label=>`<div class="ink3 fs11 pd8-0">${label} — ${t('hof.notSet')}</div>`;
     const psRow=rec.PERFECT_SEASON?`<div class="pnl-row"><div><b>${t('hof.perfectSeason')}</b><div class="fs10 ink3">${rec.PERFECT_SEASON.club} / ${t('common.season')} ${rec.PERFECT_SEASON.season}</div></div><div class="pnl-pos">${t('history.pointsShort',{points:rec.PERFECT_SEASON.pts})}</div></div>`:recordEmpty(t('hof.perfectSeason'));
-    const strRow=rec.LONGEST_STREAK?`<div class="pnl-row"><div><b>${t('hof.longestStreak')}</b><div class="fs10 ink3">${rec.LONGEST_STREAK.club} / ${t('common.season')} ${rec.LONGEST_STREAK.season}</div></div><div class="pnl-pos">${t('hof.matchdays',{count:rec.LONGEST_STREAK.streak})}</div></div>`:recordEmpty(t('hof.longestStreak'));
+    const strRow=rec.LONGEST_STREAK?`<div class="pnl-row"><div><b>${t('hof.longestStreak')}</b><div class="fs10 ink3">${rec.LONGEST_STREAK.club} / ${t('common.season')} ${rec.LONGEST_STREAK.season}</div></div><div class="pnl-pos">${plural('hof.matchdays',rec.LONGEST_STREAK.streak)}</div></div>`:recordEmpty(t('hof.longestStreak'));
     const setsRow=rec.FEWEST_SETS_LOST?`<div class="pnl-row"><div><b>${t('hof.fewestSets')}</b><div class="fs10 ink3">${rec.FEWEST_SETS_LOST.club} / ${t('common.season')} ${rec.FEWEST_SETS_LOST.season}</div></div><div class="pnl-pos">${rec.FEWEST_SETS_LOST.setsLost}</div></div>`:recordEmpty(t('hof.fewestSets'));
     const winRow=rec.MOST_WINS_PLAYER?`<div class="pnl-row"><div><b>${t('hof.mostWins')}</b><div class="fs10 ink3">${rec.MOST_WINS_PLAYER.playerName} / ${t('common.season')} ${rec.MOST_WINS_PLAYER.season}</div></div><div class="pnl-pos">${rec.MOST_WINS_PLAYER.wins} W</div></div>`:recordEmpty(t('hof.mostWins'));
     const ovrRow=rec.HIGHEST_OVR?`<div class="pnl-row"><div><b>${t('hof.highestOvr')}</b><div class="fs10 ink3">${rec.HIGHEST_OVR.playerName} / ${t('common.season')} ${rec.HIGHEST_OVR.season}</div></div><div class="pnl-pos syne b8 fs22">${rec.HIGHEST_OVR.ovr}</div></div>`:recordEmpty(t('hof.highestOvr'));
@@ -1155,7 +1155,7 @@ function pageHoF(){
           ${psRow}${strRow}${setsRow}
         </div>
         <div class="card"><div class="ct">${t('hof.decoratedClubs')}</div>
-          ${topClubsByTotal.length?topClubsByTotal.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b><div class="fs10 ink3">${t('hof.leaguesCups',{leagues:c.league,cups:c.cup})}</div></div><div class="pnl-pos">${t('hof.trophiesShort',{count:c.total})}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
+          ${topClubsByTotal.length?topClubsByTotal.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b><div class="fs10 ink3">${t('hof.leaguesCups',{leagues:c.league,cups:c.cup})}</div></div><div class="pnl-pos">${plural('hof.trophiesShort',c.total)}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
         <div class="card"><div class="ct">${t('hof.clubLeagueTitles')}</div>
           ${topClubsByLeague.length?topClubsByLeague.map((c,i)=>`<div class="pnl-row"><div><b>#${i+1} ${c.name}</b></div><div class="pnl-pos">${c.league}×</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
@@ -1166,7 +1166,7 @@ function pageHoF(){
           ${winRow}${ovrRow}${mvpRow}
         </div>
         <div class="card"><div class="ct">${t('hof.decoratedPlayers')}</div>
-          ${topPlayersByTotal.length?topPlayersByTotal.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b><div class="fs10 ink3">${t('hof.playerTrophies',{league:p.league,cup:p.cup,masters:p.masters,international:p.international})}</div></div><div class="pnl-pos">${t('hof.trophiesShort',{count:p.total})}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
+          ${topPlayersByTotal.length?topPlayersByTotal.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b><div class="fs10 ink3">${t('hof.playerTrophies',{league:p.league,cup:p.cup,masters:p.masters,international:p.international})}</div></div><div class="pnl-pos">${plural('hof.trophiesShort',p.total)}</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
         </div>
         <div class="card"><div class="ct">${t('hof.playerLeagueTitles')}</div>
           ${topPlayersByLeague.length?topPlayersByLeague.map((p,i)=>`<div class="pnl-row"><div><b>#${i+1} ${p.name}</b></div><div class="pnl-pos">${p.league}×</div></div>`).join(''):`<div class="fs11 ink3">${t('hof.noFullHistory')}</div>`}
@@ -1196,14 +1196,17 @@ function pagePreseason(){
   const pres=calcPrestige();
   if(!(store.G.boardObjectiveOptions||[]).length)store.G.boardObjectiveOptions=window.PPM.gameplay.generateBoardObjectiveChoices(store.G.myTeamId);
   const boardObjective=getBoardObjective();
-  const boardOptions=store.G.boardObjectiveOptions||[];
+  const normalizeBoardChoice=window.PPM.gameplay.normalizeBoardObjectiveChoice;
+  const boardOptions=(store.G.boardObjectiveOptions||[]).map(normalizeBoardChoice);
+  store.G.boardObjectiveOptions=boardOptions;
+  const boardObjectiveId=window.PPM.gameplay.boardObjectiveChoiceId(boardObjective);
   const activeTp=techContract?TECH_PARTNERSHIPS.find(t=>t.id===techContract.partnerId):null;
 
   const steps=[
     {id:'sponsors',label:t('pre.sponsors'),done:sponsorCount>=3,status:`${sponsorCount}/3`},
     {id:'tech',    label:t('pre.tech'),done:hasTech,status:hasTech?(activeTp?.name||t('pre.selected')):t('pre.none')},
     {id:'tickets', label:t('pre.tickets'),done:true,status:formatCurrency(store.G.ticketPrice||50)},
-    {id:'board',   label:t('pre.board'),done:!!boardObjective,status:boardObjective?t(`board.choice.${boardObjective.id}`):t('pre.none')},
+    {id:'board',   label:t('pre.board'),done:!!boardObjective,status:boardObjective?(boardObjectiveId?t(`board.choice.${boardObjectiveId}`):goalDesc(boardObjective.goal)):t('pre.none')},
   ];
   // Land on the first unsettled step rather than always on step 1.
   if(ui.preStep==null||ui.preStep<0||ui.preStep>3){
@@ -1271,10 +1274,11 @@ function pagePreseason(){
       <h3>${t('pre.boardQuestion')}</h3>
       <p class="why">${t('pre.boardWhy',{ovr:`<b>${teamOvr(mt.id)}</b>`})}</p>
       <div class="mt-14">${boardOptions.map(opt=>{
-        const active=boardObjective?.id===opt.id;
-        return`<div class="opt ${active?'on':''}" onclick="selectBoardObjective('${opt.id}');render()">
-          <div><b>${t(`board.choice.${opt.id}`)}</b><p>${goalDesc(opt.goal)} · ${t(opt.id==='ambitious'?'pre.ambitiousRisk':opt.id==='safe'?'pre.safePath':'pre.standardPath')}</p></div>
-          <div class="m ${opt.id==='ambitious'?'neg':'pos'}">${formatCurrency(opt.reward)}<s>${t('pre.bonus')}</s></div>
+        const id=window.PPM.gameplay.boardObjectiveChoiceId(opt);
+        const active=!!id&&boardObjectiveId===id;
+        return`<div class="opt ${active?'on':''}" ${id?`onclick="selectBoardObjective('${id}');render()"`:''}>
+          <div><b>${id?t(`board.choice.${id}`):goalDesc(opt.goal)}</b><p>${goalDesc(opt.goal)} · ${t(id==='ambitious'?'pre.ambitiousRisk':id==='safe'?'pre.safePath':'pre.standardPath')}</p></div>
+          <div class="m ${id==='ambitious'?'neg':'pos'}">${formatCurrency(opt.reward)}<s>${t('pre.bonus')}</s></div>
           <button class="btn ${active?'pr':''}">${t(active?'pre.chosen':'pre.choose')}</button>
         </div>`;}).join('')}</div>`;
   }
@@ -1405,21 +1409,21 @@ function renderMainMenu(){
 }
 function ngCountryCard(cid){
   const c=COUNTRIES[cid];const sel=ui._selCountry===cid;
-  return`<div onclick="ngSelectCountry('${cid}')" style="padding:14px 10px;border:2px solid ${sel?'var(--r)':'var(--line)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:14px;text-align:center">
+  return`<button type="button" class="ng-country" onclick="ngSelectCountry('${cid}')" style="padding:14px 10px;border:2px solid ${sel?'var(--r)':'var(--line)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:14px;text-align:center">
     <div class="fs30 mb6">${c.flag}</div>
     <div class="syne b7 fs13">${t(`country.${cid}`)}</div>
     <div class="fs9 ink3 mt-2">${t('wizard.ranking',{rank:c.worldRank})}</div>
     <div class="fs9 cr b7">OVR &times;${c.ovrMult} / ${t('wizard.budget')} &times;${c.budgetMult}</div>
-  </div>`;
+  </button>`;
 }
 function ngTeamCard(n,idx,league){
   const CI=(window.PPM.constants.CLUB_IDENTITIES)||{};
   const sel=ui._selClub===idx;const budget=clubBudget(n,league===1?idx:idx-12,league);
-  return`<div onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:12px">
+  return`<button type="button" class="ng-team" onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:12px">
     <div class="flex aic" style="gap:9px;margin-bottom:5px"><img src="${getTeamLogoData({id:idx,name:n})}" alt="${n}" class="club-logo"><div class="syne b7 fs12" style="line-height:1.15">${n}</div></div>
     <div class="fs12 b7 cg">${formatCurrency(budget)}</div>
     ${CI[n]?`<div class="mt-4 fs9 cr b8">&#127942; ${t('wizard.challengeClub').toUpperCase()}</div>`:''}
-  </div>`;
+  </button>`;
 }
 function renderNewGameWizard(){
   const step=ui._ngStep||0;
@@ -1433,9 +1437,9 @@ function renderNewGameWizard(){
     body=`<div class="country-grid">${COUNTRY_IDS.map(ngCountryCard).join('')}</div>`;
   }else if(step===1){
     hint=`${country.flag} ${t(`country.${country.id}`)}. ${t('wizard.chooseLeague')}.`;
-    const lbtn=(l,name,desc)=>`<div onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};border-radius:16px;cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
+    const lbtn=(l,name,desc)=>`<button type="button" class="btn ng-league" onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};border-radius:16px;cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
       <span class="league-badge ${l===1?'l1':'l2'} fs14" style="padding:6px 14px">${name}</span>
-      <div class="fs12 ink3 mt-12">${desc}</div></div>`;
+      <div class="fs12 ink3 mt-12">${desc}</div></button>`;
     body=`<div class="flex gp16 mxauto" style="max-width:560px">${lbtn(1,t('league.divisionOne').toUpperCase(),t('wizard.topLeagueDesc'))}${lbtn(2,t('league.divisionTwo').toUpperCase(),t('wizard.secondLeagueDesc'))}</div>`;
   }else if(step===2){
     const league=ui._ngLeague||1;const names=league===1?l1:l2;
@@ -1445,10 +1449,10 @@ function renderNewGameWizard(){
     hint=t('wizard.difficultyHint');
     const chosenName=(ui._ngLeague===1?l1:l2)[(ui._ngLeague===1?ui._selClub:ui._selClub-12)]||'&mdash;';
     body=`<div class="tac mb14 fs13">${t('nav.club')}: <b>${chosenName}</b> (${t(ui._ngLeague===1?'league.divisionOne':'league.divisionTwo')}, ${t(`country.${country.id}`)})</div>
-      <div class="grid gtc4 gp8 maxw520" style="margin:0 auto 10px">${['easy','normal','hard','legend'].map(id=>`<button class="btn ${ui._newSaveDifficulty===id?'pr':'sm'} w100" onclick="selectNewSaveDifficulty('${id}')">${t(`difficulty.${id}`)}</button>`).join('')}</div>
+      <div class="grid gtc4 gp8 maxw520" style="margin:0 auto 10px">${['easy','normal','hard','legend'].map(id=>`<button type="button" class="btn ${ui._newSaveDifficulty===id?'pr':'sm'} w100" onclick="selectNewSaveDifficulty('${id}')">${t(`difficulty.${id}`)}</button>`).join('')}</div>
       <div class="maxw520" style="margin:0 auto 10px">
         <div class="fs10 ink3 up ls1 mb6 tac">${t('wizard.worldHistory')}</div>
-        <div class="grid gtc4 gp8">${[[0,t('wizard.freshWorld')],[3,plural('wizard.seasons',3)],[5,plural('wizard.seasons',5)],[10,plural('wizard.seasons',10)]].map(([n,label])=>`<button class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="ui._ngHistory=${n};renderStart();playClick()">${label}</button>`).join('')}</div>
+        <div class="grid gtc4 gp8">${[[0,t('wizard.freshWorld')],[3,plural('wizard.seasons',3)],[5,plural('wizard.seasons',5)],[10,plural('wizard.seasons',10)]].map(([n,label])=>`<button type="button" class="btn ${(ui._ngHistory??5)===n?'pr':'sm'} w100" onclick="activateUi(()=>{ui._ngHistory=${n};renderStart()})">${label}</button>`).join('')}</div>
         <div class="fs10 ink3 mt-6 tac">${t('wizard.historyHint')}</div>
       </div>
       <div class="maxw520 mxauto fs11 ink2 lh17 pd10-12 bgs1 bb1 r8">${(window.PPM.gameplay.difficultyEffectsSummary(ui._newSaveDifficulty||'hard')).map(e=>`&bull; ${e}`).join('<br>')}</div>`;
@@ -1468,19 +1472,19 @@ function renderNewGameWizard(){
     <div class="flex jcc" style="margin-top:18px">${nav}</div>
   </div>`;
 }
-function startNewGameFlow(){ui._startView='newgame';ui._ngStep=0;ui._selClub=-1;ui._ngLeague=null;renderStart();playClick();}
-function ngBack(){if((ui._ngStep||0)>0)ui._ngStep=(ui._ngStep||0)-1;else ui._startView='menu';renderStart();playClick();}
-function ngNext(){const step=ui._ngStep||0;if(step<3)ui._ngStep=step+1;renderStart();playClick();}
-function ngSelectCountry(cid){ui._selCountry=cid;ui._selClub=-1;ui._ngLeague=null;ui._ngStep=1;renderStart();playClick();}
-function ngSelectLeague(l){ui._ngLeague=l;ui._selClub=-1;ui._ngStep=2;renderStart();playClick();}
-function ngSelectTeam(idx){ui._selClub=idx;ui._ngStep=3;renderStart();playClick();}
+function startNewGameFlow(){activateUi(()=>{ui._startView='newgame';ui._ngStep=0;ui._selClub=-1;ui._ngLeague=null;renderStart();});}
+function ngBack(){activateUi(()=>{if((ui._ngStep||0)>0)ui._ngStep=(ui._ngStep||0)-1;else ui._startView='menu';renderStart();});}
+function ngNext(){activateUi(()=>{const step=ui._ngStep||0;if(step<3)ui._ngStep=step+1;renderStart();});}
+function ngSelectCountry(cid){activateUi(()=>{ui._selCountry=cid;ui._selClub=-1;ui._ngLeague=null;ui._ngStep=1;renderStart();});}
+function ngSelectLeague(l){activateUi(()=>{ui._ngLeague=l;ui._selClub=-1;ui._ngStep=2;renderStart();});}
+function ngSelectTeam(idx){activateUi(()=>{ui._selClub=idx;ui._ngStep=3;renderStart();});}
 function menuLoadGame(){if(typeof resumeSavedGame==='function')resumeSavedGame();}
 function menuFilePicker(){const fi=document.getElementById('fi');if(fi)fi.click();}
 function menuTbd(name){toast(`${name} — ${t('menu.comingSoon')}.`);}
 function menuExit(){if(confirm(t('menu.exitConfirm'))){try{window.close();}catch(e){}toast(t('menu.exitHint'));}}
-function selCountry(cid){ui._selCountry=cid;ui._selClub=-1;renderStart();playClick();}
-function selClub(i){ui._selClub=i;renderStart();}
-function selectNewSaveDifficulty(level){ui._newSaveDifficulty=level;renderStart();playClick();}
+function selCountry(cid){activateUi(()=>{ui._selCountry=cid;ui._selClub=-1;renderStart();});}
+function selClub(i){activateUi(()=>{ui._selClub=i;renderStart();});}
+function selectNewSaveDifficulty(level){activateUi(()=>{ui._newSaveDifficulty=level;renderStart();});}
 async function startGame(){
   if(ui._selClub<0)return;
   const manager=window.PPM.saveManager;
@@ -1527,7 +1531,6 @@ async function startGame(){
   updateHeader();
   persistGame();
   await window.PPM.stateApi.flushPersistence();
-  playClick();
 }
 
 window.PPM.pages = { statBar, toggleMarketFav, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };

@@ -41,7 +41,8 @@ const DEFAULT_APP_SETTINGS = {
   theme: 'dark',
   locale: 'en',
   matchSpeed: 'normal',
-  aiDifficulty: 'hard'
+  aiDifficulty: 'hard',
+  uiSound: true
 };
 
 // ── Core state containers ─────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ function normalizeAppSettings(raw){
     locale:['en','pl'].includes(raw?.locale)?raw.locale:DEFAULT_APP_SETTINGS.locale,
     matchSpeed:['slow','normal','fast'].includes(raw?.matchSpeed)?raw.matchSpeed:DEFAULT_APP_SETTINGS.matchSpeed,
     aiDifficulty:['easy','normal','hard','legend'].includes(raw?.aiDifficulty)?raw.aiDifficulty:DEFAULT_APP_SETTINGS.aiDifficulty,
+    uiSound:typeof raw?.uiSound==='boolean'?raw.uiSound:DEFAULT_APP_SETTINGS.uiSound,
   };
 }
 function loadAppSettings(){

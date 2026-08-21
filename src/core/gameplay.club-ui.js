@@ -236,10 +236,10 @@ function openTeamOverview(tid){
     <div>
       <div class="card"><div class="ct">${tr('clubOverview.infrastructure').toUpperCase()}</div>
         <div class="grid gp8 fs12">
-          <div>${tr('clubOverview.hall')}: <b>${INFRA_HALL[t.infraHall||0]?.name||tr('clubOverview.noData')}</b></div>
-          <div>${tr('clubOverview.medical')}: <b>${INFRA_MED[t.infraMed||0]?.name||tr('clubOverview.noData')}</b></div>
-          <div>${tr('clubOverview.academy')}: <b>${INFRA_ACADEMY[t.infraAcademy||0]?.name||tr('clubOverview.noData')}</b></div>
-          <div>${tr('clubOverview.fanZone')}: <b>${INFRA_MERCH[t.infraMerchandising||0]?.name||tr('clubOverview.noData')}</b></div>
+          <div>${tr('clubOverview.hall')}: <b>${gameDataText('infraHall',t.infraHall||0,'name',INFRA_HALL[t.infraHall||0]?.name||tr('clubOverview.noData'))}</b></div>
+          <div>${tr('clubOverview.medical')}: <b>${gameDataText('infraMed',t.infraMed||0,'name',INFRA_MED[t.infraMed||0]?.name||tr('clubOverview.noData'))}</b></div>
+          <div>${tr('clubOverview.academy')}: <b>${gameDataText('infraAcademy',t.infraAcademy||0,'name',INFRA_ACADEMY[t.infraAcademy||0]?.name||tr('clubOverview.noData'))}</b></div>
+          <div>${tr('clubOverview.fanZone')}: <b>${gameDataText('infraMerch',t.infraMerchandising||0,'name',INFRA_MERCH[t.infraMerchandising||0]?.name||tr('clubOverview.noData'))}</b></div>
         </div>
       </div>
       <div class="card"><div class="ct">${tr('clubOverview.recentSeasons').toUpperCase()}</div>

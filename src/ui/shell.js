@@ -27,7 +27,7 @@ const stateApi = window.PPM.stateApi || {};
 const i18n = window.PPM.i18n;
 
 function getSettings(){
-  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'dark',locale:'en',matchSpeed:'normal',aiDifficulty:'hard'};
+  if(!ui.settings)ui.settings=stateApi.loadAppSettings?stateApi.loadAppSettings():{theme:'dark',locale:'en',matchSpeed:'normal',aiDifficulty:'hard',uiSound:true};
   i18n?.setLocale(ui.settings.locale);
   return ui.settings;
 }
@@ -111,7 +111,6 @@ function go(p){
     });
   }
   syncNavState();
-  playClick();
 }
 function openModal(){
   const ov=document.getElementById('ov');
@@ -158,6 +157,14 @@ function openSettings(){
       </div>
     </div>
     <div class="settings-card">
+      <div class="settings-label">${t('settings.uiSound')}</div>
+      <div class="settings-desc">${t('settings.uiSoundDesc')}</div>
+      <div class="settings-segment">
+        <button class="btn sm ${settings.uiSound?'pr':''}" onclick="saveSettings({uiSound:true})">${t('settings.soundOn').toUpperCase()}</button>
+        <button class="btn sm ${!settings.uiSound?'pr':''}" onclick="saveSettings({uiSound:false})">${t('settings.soundOff').toUpperCase()}</button>
+      </div>
+    </div>
+    <div class="settings-card">
       <div class="settings-label">${t('settings.gameFiles')}</div>
       <div class="settings-desc">${t('settings.gameFilesDesc')}</div>
       <div class="settings-segment">
@@ -193,12 +200,38 @@ async function backToMainMenu(){
 // WEB AUDIO API
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 let _audioCtx=null;
-function getAudioCtx(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();return _audioCtx;}
-function playClick(){
-  try{const ctx=getAudioCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
-  o.frequency.value=420;o.type='sine';g.gain.setValueAtTime(0.08,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.08);
-  o.start();o.stop(ctx.currentTime+0.08);}catch(e){}
+let _lastClickAt=-Infinity;
+function getAudioCtx(){
+  if(_audioCtx)return _audioCtx;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(typeof AudioContextClass!=='function')return null;
+  try{_audioCtx=new AudioContextClass();return _audioCtx;}catch{return null;}
 }
+function playClick(){
+  if(!getSettings().uiSound)return false;
+  const now=globalThis.performance?.now?.()??Date.now();
+  if(now-_lastClickAt<65)return false;
+  try{
+    const ctx=getAudioCtx();if(!ctx)return false;
+    _lastClickAt=now;
+    if(ctx.state==='suspended')ctx.resume?.();
+    const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=250;o.type='sine';g.gain.setValueAtTime(0.03,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.045);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.045);return true;
+  }catch{return false;}
+}
+let _activateUiTimer=null;
+function activateUi(action){
+  clearTimeout(_activateUiTimer);
+  _activateUiTimer=setTimeout(()=>{_activateUiTimer=null;action?.();},60);
+}
+document.addEventListener('click',event=>{
+  const target=event.target?.closest?.('button,.rtab,[role="button"],a[href],[onclick]');
+  if(!target||target.disabled)return;
+  playClick();
+  target.classList?.add('ui-pressed');
+  setTimeout(()=>target.classList?.remove('ui-pressed'),60);
+});
 function playPing(freq){
   try{const ctx=getAudioCtx();const o=ctx.createOscillator();const g=ctx.createGain();const f=ctx.createBiquadFilter();
   f.type='bandpass';f.frequency.value=freq||880;o.connect(f);f.connect(g);g.connect(ctx.destination);
@@ -288,5 +321,5 @@ function updateHeader(){
 }
 
 applyTheme(getSettings().theme);
-window.PPM.shell = { setShellMode, syncNavState, go, openModal, closeModal, toast, getAudioCtx, playClick, playPing, playPong, openGuide, openSettings, updateHeader, applyTheme, saveSettings, backToMainMenu };
+window.PPM.shell = { setShellMode, syncNavState, go, activateUi, openModal, closeModal, toast, getAudioCtx, playClick, playPing, playPong, openGuide, openSettings, updateHeader, applyTheme, saveSettings, backToMainMenu };
 })();

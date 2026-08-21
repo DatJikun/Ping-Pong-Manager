@@ -364,11 +364,22 @@ table.t tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--club);}
 .rtab{
   flex:1;padding:10px;text-align:center;
   font-family:var(--body);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;
-  cursor:pointer;transition:.14s;background:none;color:var(--ink3);position:relative;
+  cursor:pointer;transition:.14s;background:none;border:0;color:var(--ink3);position:relative;
 }
 .rtab:hover:not(.on){color:var(--ink);}
 .rtab.on{color:#fff;font-weight:700;}
 .rtab.on::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;height:2px;background:var(--club);}
+.ng-country,.ng-team,.ng-league{font:inherit;color:inherit;width:100%;}
+
+/* Immediate physical confirmation; the action itself may finish 60 ms later. */
+.ui-pressed{
+  transform:translateY(1px) scale(.985);
+  filter:brightness(.88);
+  transition:transform 50ms ease,filter 50ms ease;
+}
+@media (prefers-reduced-motion:reduce){
+  .ui-pressed{transform:none;filter:brightness(.82);transition:filter 50ms ease;}
+}
 
 /* ── pills / chips / badges: one shape for all of them ── */
 .pill,.pc-tag,.tb,.award,.league-badge,.mkt-badge,.history-badge,.infra-pill{
