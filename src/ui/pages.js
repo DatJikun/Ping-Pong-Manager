@@ -99,7 +99,7 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
   <div class="g5">
     <div class="sb"><div class="l">Miejsce (${myL===1?'I':'II'} Liga)</div><div class="v ${pos<=3?'gold':pos<=6?'':'r'} fs34">#${pos}</div><div class="sub">${mt.pts} pkt / ${mt.w}W/${mt.d||0}R/${mt.l}P</div></div>
     <div class="sb"><div class="l">Bud\u017cet</div><div class="v g fs28">${Math.floor(mt.budget/1000)}k</div><div class="sub">${mt.budget.toLocaleString('pl')} €</div></div>
-    <div class="sb"><div class="l">OVR Dru\u017cyny</div><div class="v fs34">${teamOvr(mt.id)}</div><div class="sub">${myStarters().length}/4 starters</div></div>
+    <div class="sb"><div class="l">OVR Dru\u017cyny</div><div class="v fs34">${teamOvr(mt.id)}</div><div class="sub">${starsHtml(ovrStars(teamOvr(mt.id)))} · ${myStarters().length}/4 starters</div></div>
     <div class="sb"><div class="l">Presti\u017c</div><div class="v gold fs34">${pres}</div></div>
     <div class="sb"><div class="l">Morale</div><div class="v ${morale>=70?'g':morale>=40?'gold':'r'} fs34">${morale}%</div><div class="sub">${moraleLabel(morale)}</div></div>
   </div>
@@ -127,10 +127,10 @@ ${clubOffers.length&&store.G.phase!=='pre'?`<div class="card mb14 bt3-blue"><div
     <div>
       <div class="card"><div class="ct">SK\u0141AD G\u0141\u00d3WNY</div>
       ${myStarters().slice(0,4).map(p=>{const inj=p.injuredFor>0;return`<div class="grid gp8 aic pd8-0 bdb-s3 cur" style="grid-template-columns:1fr auto auto auto" onclick="openPlayerModal(${p.id})">
-        <div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}${inj?` <span class="cr fs9">\u2695${p.injuredFor}</span>`:''}</div><div class="fs10 ink3">${p.age} lat \u00b7 ${styleLabel(p.playStyle)}</div></div></div>
+        <div class="flex aic gp10 minw0"><img src="${getAvatarData(p,'player')}" alt="" class="avatar"><div class="minw0"><div class="b7 fs13">${p.name}${inj?` <span class="cr fs9">\u2695${p.injuredFor}</span>`:''}</div>        <div class="fs10 ink3">${p.age} lat \u00b7 ${styleLabel(p.playStyle)}</div></div></div>
         <div class="fs10 ink3">MOR ${p.morale||50}%</div>
         <div class="fs10 corange">FAT ${p.fatigue||0}%</div>
-        <div style="font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:24px;color:${inj?'var(--ink3)':'var(--r)'}">${ovr(p)}</div>
+        <div class="dash-ovr ${inj?'dim':''}"><span class="stars-lg">${starsHtml(ovrStars(ovr(p)))}</span><div class="dash-ovr-n" style="color:${inj?'var(--ink3)':'var(--r)'}">${ovr(p)}</div></div>
       </div>`;}).join('')}
       </div>
       <div class="card"><div class="ct">OSTATNIE MECZE</div>
@@ -235,7 +235,7 @@ function pageSquad(){
     <button class="btn pr sm w100" onclick="event.stopPropagation();${action}">${label}</button>
   </div>`;
 
-  return`<div class="ph"><div><div class="pt">SKŁAD <span>ZAWODNIKÓW</span></div><div class="ps">Ustaw kolejność stołów 1-4, rotuj zmęczonych, pilnuj kończących się kontraktów</div></div></div>
+  return`<div class="ph"><div><div class="pt">SKŁAD <span>ZAWODNIKÓW</span></div><div class="ps">${squadOrderHint()}</div></div></div>
   <div class="rtabs">
     <button type="button" class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SKŁAD GŁÓWNY ${st.length}/4</button>
     <button type="button" class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</button>
@@ -307,6 +307,20 @@ function pageSquad(){
 
 // Colour a stat bar by its value — six identical red bars carried no information.
 function statTone(v){return v>=85?'var(--g)':v>=75?'var(--blue)':v>=62?'var(--gold)':'var(--orange)';}
+function lineupSlotLabel(i){
+  const proto=(window.PPM.gameplay.getLeagueFormat?.()||{}).protocol||'superliga';
+  if(proto==='olympic'||proto==='tleague'){
+    return i<3?`${['A','B','C'][i]} · mecz`:'poza trójką meczową';
+  }
+  return ['A · stół 1','B · stół 2','C · stół 3','R1 · od G4'][i]||`skład ${i+1}`;
+}
+function squadOrderHint(){
+  const f=window.PPM.gameplay.getLeagueFormat?.()||{};
+  if(f.protocol==='olympic'||f.protocol==='tleague'){
+    return `${f.label||'Ten format'}: mecz gra trójką A/B/C. Skład główny ma 4 miejsca klubowe — czwarty nie startuje, dopóki nie wejdzie za kogoś.`;
+  }
+  return `${f.label||'Superliga'}: mecz ma 3 stoły (A/B/C) i 2 rezerwy od G4. Czwarty z kolejności składu to R1 — nie ma czwartego stołu meczowego.`;
+}
 
 // One squad card, in three tiers: identity + OVR, the six ratings, then
 // condition/contract facts and the actions. Numbers that belong to the full
@@ -329,13 +343,14 @@ function squadCard(p,boardList){
       </div>
       <div class="pc-ovr-wrap">
         <div class="pc-ovr">${o}</div>
+        <div class="pc-stars">${starsHtml(ovrStars(o))}</div>
         ${p.teamId===store.G.myTeamId?`<div class="pc-ovr-sub">peak ${playerCeiling(p)}</div>`:''}
       </div>
     </div>
     ${inj||p.role==='youth'||isStarterTab?`<div class="pc-tags">
       ${inj?`<span class="pc-tag bad">⚕ kontuzja ${p.injuredFor} kol.</span>`:''}
       ${p.role==='youth'?`<span class="pc-tag youth">akademia · do ${21-p.age>0?21-p.age:0} lat</span>`:''}
-      ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">stół ${bi+1}
+      ${bi>=0?`<span class="pc-tag board" onclick="event.stopPropagation()">${lineupSlotLabel(bi)}
         <button class="mini-btn" ${bi===0?'disabled':''} onclick="moveLineup(${p.id},-1)" title="Wyżej (niższy stół)">▲</button>
         <button class="mini-btn" ${bi>=boardList.length-1?'disabled':''} onclick="moveLineup(${p.id},1)" title="Niżej (wyższy stół)">▼</button></span>`
       :isStarterTab?`<span class="pc-tag bad">poza rotacją</span>`:''}
@@ -1274,15 +1289,24 @@ function pageMundial(){
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PRE-SEASON — a flow, not a stack of sections.
-// Four decisions, one at a time, with a step rail that shows what is done and
-// what is left. The season only unlocks on the last step, and only when every
-// step is actually settled — so "am I done?" is never a question.
+// Five decisions, one at a time. Partner and rubber are separate steps so the
+// lists share one visual language. Years for rubber are chosen after Wybierz.
 // ═══════════════════════════════════════════════════════════════════════════
+function rubberYearWord(n){return n===1?'rok':n===5?'lat':'lata';}
+function pickRubberFamily(id){ui._rubberPick=id;render();playClick();}
+function confirmRubberYears(id,years){
+  playClick();
+  setRubberFamily(id,years);
+  if(store.G.rubberFamily===id&&(store.G.rubberContractYears||0)>0){
+    ui._rubberPick=null;
+    render();
+  }
+}
 function preseasonStepNav(steps,step,canStart){
   return`<div class="stage-f">
       <button class="btn" ${step>0?'':'disabled'} onclick="ui.preStep=${Math.max(0,step-1)};render()">← ${step>0?steps[step-1].label:'Wstecz'}</button>
       <span class="dim fs12">${canStart?'Wszystkie decyzje zamknięte — sezon czeka u góry.':`Do startu brakuje: ${steps.filter(s=>!s.done).map(s=>s.label.toLowerCase()).join(', ')}`}</span>
-      ${step<3
+      ${step<steps.length-1
         ?`<button class="btn ${steps[step].done?'pr':''}" onclick="ui.preStep=${step+1};render()">${steps[step+1].label} →</button>`
         :`<span class="dim fs12">Start sezonu: przycisk u góry ekranu.</span>`}
     </div>`;
@@ -1300,19 +1324,19 @@ function pagePreseason(){
   const boardOptions=store.G.boardObjectiveOptions||[];
   const activeTp=store.G.techPartnership?TECH_PARTNERSHIPS.find(t=>t.id===store.G.techPartnership):null;
   const rubberFam=EQUIPMENT.rubberFamilies[store.G.rubberFamily||'TENSOR'];
-  const y=ui.rubberYears||3;
   const rubberOpen=rubberYears<=0;
 
   const steps=[
     {id:'sponsors',label:'Sponsorzy',done:sponsorCount>=3,status:`${sponsorCount}/3`},
-    {id:'tech',    label:'Partner i okładziny',done:hasTech&&hasRubber,status:[hasTech?(activeTp?.name||'partner'):'brak partnera',hasRubber?`${rubberFam?.label||'okładziny'} · ${rubberYears} l.`:'brak kontraktu okładzin'].join(' · ')},
+    {id:'tech',    label:'Partner',done:hasTech,status:hasTech?(activeTp?.name||'partner'):'brak'},
+    {id:'rubber',  label:'Okładziny',done:hasRubber,status:hasRubber?`${rubberFam?.label||'okładziny'} · ${rubberYears} l.`:'brak kontraktu'},
     {id:'tickets', label:'Cena biletów',done:true,status:`${store.G.ticketPrice||50} €`},
     {id:'board',   label:'Cel zarządu',done:!!boardObjective,status:boardObjective?boardObjective.label:'brak'},
   ];
-  // Land on the first unsettled step rather than always on step 1.
-  if(ui.preStep==null||ui.preStep<0||ui.preStep>3){
+  const last=steps.length-1;
+  if(ui.preStep==null||ui.preStep<0||ui.preStep>last){
     const firstOpen=steps.findIndex(s=>!s.done);
-    ui.preStep=firstOpen<0?3:firstOpen;
+    ui.preStep=firstOpen<0?last:firstOpen;
   }
   const step=ui.preStep;
   const canStart=steps.every(s=>s.done);
@@ -1321,7 +1345,7 @@ function pagePreseason(){
 
   let body='';
   if(step===0){
-    body=`<div class="over">Krok 1 z 4</div>
+    body=`<div class="over">Krok 1 z 5</div>
       <h3>Kto finansuje ten sezon?</h3>
       <p class="why">Trzy umowy sponsorskie są warunkiem startu. Każda ma własny cel — jeśli go zrealizujesz, premia wpada na koniec sezonu. Dłuższa umowa daje +6% za każdy dodatkowy sezon, ale zamraża miejsce na liście.</p>
       ${activeSponsors.length?`<div class="mt-14">${activeSponsors.map(s=>`<div class="opt on"><div><b>${s.name}</b><p>${goalDesc(s.goal)}${(s.yearsLeft||1)>1?` · ${s.yearsLeft} sezony`:''}</p></div><div class="m pos">${s.reward.toLocaleString('pl')}<s>za sezon</s></div><span class="pill pos">Podpisany</span></div>`).join('')}</div>`:''}
@@ -1334,9 +1358,9 @@ function pagePreseason(){
         </div></div>`).join(''):'<div class="empty-state">Brak ofert w tym oknie.</div>'}</div>`
       :`<div class="opt on mt-14"><div><b>Komplet sponsorów</b><p>Trzy umowy podpisane — ten krok jest zamknięty.</p></div><span class="pill pos">Gotowe</span></div>`}`;
   }else if(step===1){
-    body=`<div class="over">Krok 2 z 4</div>
-      <h3>Kto ubiera i wyposaża zespół?</h3>
-      <p class="why">Najpierw partner techniczny (pakiet marketingowy na sezon), potem kontrakt okładzin 1–5 lat — bez niego sezon się nie otworzy. Prestiż <b class="cgold">${pres}</b> ogranicza listę partnerów. Zmiana rodziny w trakcie kontraktu jest zablokowana.</p>
+    body=`<div class="over">Krok 2 z 5</div>
+      <h3>Kto ubiera zespół?</h3>
+      <p class="why">Partner techniczny to pakiet marketingowy na sezon. Prestiż <b class="cgold">${pres}</b> ogranicza listę. Okładziny podpiszesz w następnym kroku.</p>
       <div class="mt-14">${TECH_PARTNERSHIPS.map(tp=>{
         const ok=pres>=tp.prestige[0]&&pres<=tp.prestige[1];
         const active=store.G.techPartnership===tp.id;
@@ -1345,31 +1369,32 @@ function pagePreseason(){
           <div><b>${tp.name} <span class="pill ${active?'pos':''}">Tier ${tp.tier}</span></b><p>${tp.bonusDesc} · prestiż ${tp.prestige[0]}–${tp.prestige[1]}</p></div>
           <div class="m ${cost>0?'pos':cost<0?'neg':''}">${cost>0?'+':''}${cost.toLocaleString('pl')}<s>za sezon</s></div>
           <button class="btn ${active?'acc pr':''}" ${ok?'':'disabled'}>${active?'Wybrany':ok?'Wybierz':'Za niski prestiż'}</button>
-        </div>`;}).join('')}</div>
-      <div class="mt-14">
-        <div class="over">Kontrakt okładzin</div>
-        <p class="why">Rodzina ustala, jak gra skład. Dopasowanie: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji. ${hasRubber?`Aktywne: <b>${rubberFam?.label||'?'}</b> · zostało <b>${rubberYears}</b> ${rubberYears===1?'sezon':'sezony'}.`:'Wybierz rodzinę i długość (1–5 lat).'}</p>
-        <div class="flex aic gp8 mb10 fwrap mt-14"><span class="fs10 ink3 up ls1">Długość kontraktu</span>${[1,2,3,4,5].map(n=>`<button class="btn sm ${y===n?'on':''}" onclick="ui.rubberYears=${n};render()">${n} ${n===1?'rok':n===5?'lat':'lata'}</button>`).join('')}</div>
-        <div class="grid gtcfit220 gp10">
-        ${Object.values(EQUIPMENT.rubberFamilies).map(f=>{
-          const active=(store.G.rubberFamily||'TENSOR')===f.id;
-          const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' / ');
-          const canSign=rubberOpen||active;
-          return`<div class="opt ${active&&hasRubber?'on':''}" style="grid-template-columns:minmax(0,1fr);cursor:default">
-            <div><b>${f.label}${active&&hasRubber?' · klubowa':''}</b><p>${f.desc}</p><p><b>${mods}</b></p>
-            ${canSign?`<button class="btn pr sm mt-8" onclick="event.stopPropagation();setRubberFamily('${f.id}',ui.rubberYears||3)">${active?(hasRubber?'PRZEDŁUŻ':'PODPISZ'):'PODPISZ KONTRAKT'}</button>`:`<div class="fs10 ink3 mt-8">Zablokowane do końca kontraktu</div>`}
-            </div></div>`;
-        }).join('')}
-        </div>
-      </div>`;
+        </div>`;}).join('')}</div>`;
   }else if(step===2){
+    const picking=ui._rubberPick;
+    body=`<div class="over">Krok 3 z 5</div>
+      <h3>Jakie okładziny na kontrakt?</h3>
+      <p class="why">Ten sam układ co partner. Najpierw <b>Wybierz</b>, potem długość 1–5 lat. Dopasowanie: <b>${rubberFitCount(mt.id)}</b> seniorów na swojej preferencji. ${hasRubber?`Aktywne: <b>${rubberFam?.label||'?'}</b> · zostało <b>${rubberYears}</b> ${rubberYearWord(rubberYears)}.`:'Bez podpisanego kontraktu sezon się nie otworzy. Zmiana rodziny w trakcie umowy jest zablokowana.'}</p>
+      <div class="mt-14">${Object.values(EQUIPMENT.rubberFamilies).map(f=>{
+        const active=(store.G.rubberFamily||'TENSOR')===f.id&&hasRubber;
+        const mods=Object.entries(f.mods).map(([k,v])=>`${SL[k]||k} ${v>0?'+':''}${v}`).join(' · ');
+        const canSign=rubberOpen||(store.G.rubberFamily||'TENSOR')===f.id;
+        const openYears=picking===f.id;
+        return`<div class="opt ${active?'on':''}${openYears?' years':''}" style="${canSign?'':'opacity:.45'}" onclick="${canSign?`pickRubberFamily('${f.id}')`:''}">
+          <div><b>${f.label}${active?' <span class="pill pos">klubowa</span>':''}</b><p>${f.desc} · <b>${mods}</b></p></div>
+          <div class="m">${canSign?'1–5':'🔒'}<s>${canSign?'lata kontraktu':'do końca umowy'}</s></div>
+          ${openYears
+            ?`<div class="tools" onclick="event.stopPropagation()">${[1,2,3,4,5].map(n=>`<button class="btn pr sm" onclick="confirmRubberYears('${f.id}',${n})">${n} ${rubberYearWord(n)}</button>`).join('')}</div>`
+            :`<button class="btn ${active?'acc pr':''}" ${canSign?'':'disabled'}>${active?'Przedłuż':canSign?'Wybierz':'Zablokowane'}</button>`}
+        </div>`;}).join('')}</div>`;
+  }else if(step===3){
     const gpx=window.PPM.gameplay;
     const price=store.G.ticketPrice||50;
     const est=gpx.estimateAttendance(price);
     const gate=est.attendance*price*11;
     const cheap=gpx.estimateAttendance(Math.max(10,price-25));
     const dear=gpx.estimateAttendance(price+25);
-    body=`<div class="over">Krok 3 z 4</div>
+    body=`<div class="over">Krok 4 z 5</div>
       <h3>Ile kosztuje wejście?</h3>
       <p class="why">Tańsze bilety = pełniejsza hala i więcej merchu, ale mniejszy utarg z każdego biletu. Ultrasi przyjdą zawsze; casualowi kibice rosną przy dobrych wynikach. Nie ma jednego optimum — to wybór strategii.</p>
       <div class="ticket-row mt-14">
@@ -1382,7 +1407,7 @@ function pagePreseason(){
         <div class="sb" style="--tone:var(--volt)"><div class="l">Wrażliwość</div><div class="v" style="font-size:20px">${cheap.attendance} / ${dear.attendance}</div><div class="sub">kibiców przy −25 € i +25 €</div></div>
       </div>`;
   }else{
-    body=`<div class="over">Krok 4 z 4</div>
+    body=`<div class="over">Krok 5 z 5</div>
       <h3>Co obiecujesz zarządowi?</h3>
       <p class="why">OVR twojej drużyny to <b>${teamOvr(mt.id)}</b>. Wyższy cel to wyższa premia i większe ryzyko — ambitny cel niezrealizowany oznacza natychmiastowe zwolnienie. Wybór jest wiążący na cały sezon.</p>
       <div class="mt-14">${boardOptions.map(opt=>{
@@ -1396,7 +1421,7 @@ function pagePreseason(){
 
   return`<div class="ph">
     <div><div class="pt">PRZYGOTOWANIA <span>DO SEZONU ${store.G.season}</span></div>
-      <div class="ps">${myLeague()===1?'I Liga':'II Liga'} · ${doneCount} z 4 decyzji zamkniętych${canStart?' · możesz startować':''}</div></div>
+      <div class="ps">${myLeague()===1?'I Liga':'II Liga'} · ${doneCount} z 5 decyzji zamkniętych${canStart?' · możesz startować':''}</div></div>
     <button class="btn ${canStart?'go':''} fs13" onclick="startSeason()" style="padding:12px 26px" ${canStart?'':'disabled'}>▶ ROZPOCZNIJ SEZON</button>
   </div>
   <div class="substeps">
@@ -1406,8 +1431,7 @@ function pagePreseason(){
   </div>
   <div class="stage">
     ${nav}
-    ${body}
-    ${nav}
+    <div class="wizard-pane pick-stack">${body}</div>
   </div>`;
 }
 
@@ -1517,23 +1541,26 @@ function renderMainMenu(){
     <div class="fs10 ink3">Domy&#347;lna baza danych: dru&#380;yny i zawodnicy s&#261; takie same przy ka&#380;dej nowej grze (per kraj).</div>
   </div>`;
 }
-function ngCountryCard(cid){
+function ngCountryCard(cid,i){
   const c=COUNTRIES[cid];const sel=ui._selCountry===cid;
   const flag=(window.PPM.flags&&window.PPM.flags.flagSvg)?window.PPM.flags.flagSvg(cid):'';
-  return`<button type="button" class="country-card${sel?' on':''}" onclick="ngSelectCountry('${cid}')">
+  return`<button type="button" class="country-card pick-card${sel?' on':''}" style="--i:${i||0}" onclick="ngSelectCountry('${cid}')">
     <span class="country-flag">${flag}</span>
     <span class="country-name">${c.name}</span>
     <span class="country-meta">Ranking #${c.worldRank}</span>
     <span class="country-meta cr">OVR ×${c.ovrMult} · budżet ×${c.budgetMult}</span>
   </button>`;
 }
-function ngTeamCard(n,idx,league){
+function ngTeamCard(n,idx,league,i){
   const CI=(window.PPM.constants.CLUB_IDENTITIES)||{};
   const sel=ui._selClub===idx;const budget=clubBudget(n,league===1?idx:idx-12,league);
-  return`<button type="button" class="ng-team${sel?' on':''}" onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'}">
-    <div class="flex aic" style="gap:9px;margin-bottom:5px"><img src="${getTeamLogoData({id:idx,name:n})}" alt="${n}" class="club-logo"><div class="syne b7 fs12" style="line-height:1.15">${n}</div></div>
-    <div class="fs12 b7 cg">${budget.toLocaleString('pl')} &euro;</div>
-    ${CI[n]?`<div class="mt-4 fs9 cr b8">&#127942; KLUB-WYZWANIE</div>`:''}
+  return`<button type="button" class="ng-team pick-card${sel?' on':''}" style="--i:${i||0}" onclick="ngSelectTeam(${idx})">
+    <img src="${getTeamLogoData({id:idx,name:n})}" alt="${n}" class="club-logo">
+    <div class="ng-team-copy">
+      <div class="ng-team-name">${n}</div>
+      <div class="ng-team-budget">${budget.toLocaleString('pl')} &euro;</div>
+      ${CI[n]?`<div class="ng-team-tag">KLUB-WYZWANIE</div>`:''}
+    </div>
   </button>`;
 }
 function renderNewGameWizard(){
@@ -1545,17 +1572,17 @@ function renderNewGameWizard(){
   let body='',hint='';
   if(step===0){
     hint='Wybierz kraj &mdash; ka&#380;dy ma w&#322;asn&#261; I i II Lig&#281; (12 dru&#380;yn). Bud&#380;et i poziom zawodnik&oacute;w zale&#380;&#261; od kraju.';
-    body=`<div class="country-grid">${COUNTRY_IDS.map(ngCountryCard).join('')}</div>`;
+    body=`<div class="country-grid pick-grid">${COUNTRY_IDS.map((cid,i)=>ngCountryCard(cid,i)).join('')}</div>`;
   }else if(step===1){
     hint=`<span class="hint-flag">${(window.PPM.flags&&window.PPM.flags.flagSvg)?window.PPM.flags.flagSvg(ui._selCountry):''}</span> ${country.name}. Wybierz poziom rozgrywek, na kt&oacute;rym zaczniesz.`;
-    const lbtn=(l,name,desc)=>`<button type="button" class="ng-league" onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
-      <span class="league-badge ${l===1?'l1':'l2'} fs14" style="padding:6px 14px">${name}</span>
-      <div class="fs12 ink3 mt-12">${desc}</div></button>`;
-    body=`<div class="flex gp16 mxauto" style="max-width:560px">${lbtn(1,'I LIGA','Silniejsze, bogatsze kluby. Trudniejszy start, wi&#281;kszy presti&#380;.')}${lbtn(2,'II LIGA','Skromniejsze bud&#380;ety. Zbuduj klub od do&#322;u i awansuj.')}</div>`;
+    const lbtn=(l,name,desc,i)=>`<button type="button" class="ng-league pick-card${ui._ngLeague===l?' on':''}" style="--i:${i}" onclick="ngSelectLeague(${l})">
+      <span class="league-badge ${l===1?'l1':'l2'}">${name}</span>
+      <div class="ng-league-desc">${desc}</div></button>`;
+    body=`<div class="league-pick pick-grid">${lbtn(1,'I LIGA','Silniejsze, bogatsze kluby. Trudniejszy start, wi&#281;kszy presti&#380;.',0)}${lbtn(2,'II LIGA','Skromniejsze bud&#380;ety. Zbuduj klub od do&#322;u i awansuj.',1)}</div>`;
   }else if(step===2){
     const league=ui._ngLeague||1;const names=league===1?l1:l2;
     hint=`${league===1?'I':'II'} Liga ${country.name}. Wybierz klub, kt&oacute;rym pokierujesz.`;
-    body=`<div class="grid gtc3 gp10">${names.map((n,i)=>ngTeamCard(n,league===1?i:i+12,league)).join('')}</div>`;
+    body=`<div class="club-pick pick-grid">${names.map((n,i)=>ngTeamCard(n,league===1?i:i+12,league,i)).join('')}</div>`;
   }else{
     hint='Poziom AI zapisuje si&#281; w karierze i nie zmienia si&#281; p&oacute;&#378;niej z ustawie&#324;.';
     const chosenName=(ui._ngLeague===1?l1:l2)[(ui._ngLeague===1?ui._selClub:ui._selClub-12)]||'&mdash;';
@@ -1579,7 +1606,7 @@ function renderNewGameWizard(){
     </div>
     <div class="tac syne fs26 b8 mb4">${['Wybierz kraj','Wybierz lig&#281;','Wybierz dru&#380;yn&#281;','Poziom trudno&#347;ci'][step]}</div>
     <div class="tac fs11 ink3 mb18">${hint}</div>
-    <div class="flx1">${body}</div>
+    <div class="flx1 wizard-pane">${body}</div>
     <div class="flex jcc" style="margin-top:18px">${nav}</div>
   </div>`;
 }
@@ -1645,5 +1672,5 @@ async function startGame(){
   playClick();
 }
 
-window.PPM.pages = { statBar, toggleMarketFav, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
+window.PPM.pages = { statBar, toggleMarketFav, ovrStars, starsHtml, pageDash, pageSquad, pageLeague, pageCup, pageStaff, pageClub, pageBudget, pageSponsors, pageMarket, pageNews, pageInbox, pageHistory, pageHoF, pagePreseason, pickRubberFamily, confirmRubberYears, renderApp, renderStart, selCountry, selClub, selectNewSaveDifficulty, startGame, startNewGameFlow, ngBack, ngNext, ngSelectCountry, ngSelectLeague, ngSelectTeam, menuLoadGame, menuFilePicker, menuTbd, menuExit };
 })();

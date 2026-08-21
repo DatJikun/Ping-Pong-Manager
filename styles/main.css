@@ -377,6 +377,9 @@ table.t tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--club);}
 }
 @media (prefers-reduced-motion:reduce){
   .ui-pressed{transform:none;filter:brightness(.82);transition:filter 50ms ease;}
+  .pick-card,.country-card,.ng-team,.ng-league,.opt,.wizard-pane,.pc,.sb,.card,.career-row{
+    animation:none!important;transition:none!important;
+  }
 }
 
 /* ── pills / chips / badges: one shape for all of them ── */
@@ -510,11 +513,25 @@ input[type=range]{accent-color:var(--club);background:transparent;border:none;pa
 
 /* ── animations ── */
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes cardEnter{from{opacity:0;transform:translateY(16px) scale(.985);}to{opacity:1;transform:none;}}
 @keyframes popIn{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:scale(1);}}
 @keyframes energyPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 @keyframes blink{from{opacity:1;}to{opacity:.15;}}
 @keyframes pulse{from{border-left-color:var(--blue);}to{border-left-color:var(--purple);}}
-.pc,.sb,.card{animation:fadeSlideIn .2s ease both;}
+.pc,.sb,.card{animation:fadeSlideIn .28s ease both;}
+.wizard-pane{animation:fadeSlideIn .32s ease both;}
+.pick-grid > *,.pick-stack > .opt{
+  animation:cardEnter .4s cubic-bezier(.22,.82,.2,1) both;
+  animation-delay:calc(var(--i,0)*48ms);
+}
+.pick-stack > .opt:nth-child(1){--i:0;}
+.pick-stack > .opt:nth-child(2){--i:1;}
+.pick-stack > .opt:nth-child(3){--i:2;}
+.pick-stack > .opt:nth-child(4){--i:3;}
+.pick-stack > .opt:nth-child(5){--i:4;}
+.pick-stack > .opt:nth-child(6){--i:5;}
+.pick-stack > .opt:nth-child(7){--i:6;}
+.pick-stack > .opt:nth-child(8){--i:7;}
 .energy-active .morale-fill{animation:energyPulse 1.8s ease-in-out infinite;}
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -793,21 +810,48 @@ canvas#vme-canvas{display:block;}
 .hero-metric .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink3);font-weight:700;}
 .hero-metric .v{font-family:var(--display);font-size:27px;font-weight:800;line-height:1.05;margin-top:6px;}
 .start-card{background:var(--sheen),var(--surf);border:1px solid var(--line);padding:22px;}
-.country-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:18px;max-width:1100px;margin-left:auto;margin-right:auto;}
-.country-card{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  min-height:200px;padding:22px 16px;width:100%;
+.country-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:18px;max-width:1100px;margin-left:auto;margin-right:auto;}
+.country-card,.pick-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  min-height:220px;padding:22px 18px;width:100%;
   border:2px solid var(--line);background:var(--s2);color:inherit;
   cursor:pointer;text-align:center;font:inherit;
+  transition:border-color .22s ease,background .22s ease,transform .22s ease,box-shadow .22s ease;
 }
-.country-card:hover{border-color:var(--club);background:var(--raise);}
-.country-card.on{border-color:var(--club);background:var(--tint-bad);}
+.country-card:hover,.pick-card:hover,.ng-team:hover,.ng-league:hover{
+  border-color:var(--club);background:var(--raise);transform:translateY(-4px);
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+.country-card.on,.ng-team.on,.ng-league.on{border-color:var(--club);background:var(--tint-bad);}
 .country-flag,.flag-svg{display:block;width:100%;max-width:160px;height:auto;aspect-ratio:3/2;border:1px solid #0006;}
-.country-name{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.02em;}
-.country-meta{font-size:12px;color:var(--ink3);font-weight:600;}
+.country-name{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1.05;}
+.country-meta{font-size:15px;color:var(--ink3);font-weight:600;}
 .hint-flag{display:inline-block;vertical-align:middle;width:28px;height:18px;margin-right:6px;}
 .hint-flag .flag-svg{width:28px;max-width:28px;}
 .club-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.league-pick{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:720px;margin:0 auto;}
+.ng-league{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  min-height:180px;padding:28px 22px;
+  border:2px solid var(--line);background:var(--s2);cursor:pointer;
+}
+.ng-league .league-badge{font-size:16px;padding:8px 16px;}
+.ng-league-desc{font-size:15px;color:var(--ink2);line-height:1.45;max-width:28ch;}
+.club-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.ng-team{
+  display:flex;flex-direction:row;align-items:center;gap:16px;
+  min-height:108px;padding:16px 18px;text-align:left;
+  border:2px solid var(--line);background:var(--s2);cursor:pointer;
+}
+.ng-team .club-logo{width:72px;height:72px;}
+.ng-team-copy{min-width:0;flex:1;}
+.ng-team-name{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1;letter-spacing:.01em;}
+.ng-team-budget{margin-top:6px;font-family:var(--display);font-weight:800;font-size:20px;color:var(--lime);}
+.ng-team-tag{margin-top:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--club2);}
+.dash-ovr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.dash-ovr-n{font-family:var(--display);font-weight:800;font-size:24px;line-height:1;}
+.stars-lg .stars,.pc-stars .stars{font-size:16px;letter-spacing:3px;}
+.pc-stars{margin-top:4px;}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    6. PROTOTYPE KIT
@@ -885,9 +929,10 @@ canvas#vme-canvas{display:block;}
 .stage .why{color:var(--ink2);font-size:13.5px;max-width:66ch;}
 .stage-f{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
 .stage>.stage-f:first-child{margin-top:0;padding-top:0;border-top:none;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line);}
-.opt{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:18px;align-items:center;padding:15px 18px;background:var(--surf2);border:1px solid var(--line);margin-top:10px;cursor:pointer;transition:.14s;}
-.opt:hover{border-color:var(--line2);background:var(--raise);}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:18px;align-items:center;padding:15px 18px;background:var(--surf2);border:1px solid var(--line);margin-top:10px;cursor:pointer;transition:border-color .22s ease,background .22s ease,transform .22s ease,box-shadow .22s ease;}
+.opt:hover{border-color:var(--line2);background:var(--raise);transform:translateY(-2px);}
 .opt.on{border-color:var(--lime);background:var(--tint-good);box-shadow:inset 3px 0 0 var(--lime);}
+.opt.years .tools{flex-wrap:wrap;max-width:320px;justify-content:flex-end;}
 .opt b{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.02em;}
 .opt p{font-size:12px;color:var(--ink3);margin-top:2px;}
 /* nowrap is load-bearing: a grouped figure like "35 500" has a space in it, so
@@ -1003,7 +1048,7 @@ canvas#vme-canvas{display:block;}
   .gsb3{grid-template-columns:1fr 1fr;}
   .g4,.kpis{grid-template-columns:repeat(3,1fr);}
   .start-hero{grid-template-columns:1fr;}
-  .country-grid,.club-grid{grid-template-columns:repeat(3,1fr);}
+  .country-grid,.club-grid,.club-pick{grid-template-columns:repeat(3,1fr);}
   .inbox{grid-template-columns:1fr;}
 }
 @media(max-width:900px){
@@ -1030,12 +1075,12 @@ canvas#vme-canvas{display:block;}
   .mt2{margin:-18px -18px 16px;padding:12px 18px;}
   .start-shell{padding:20px 14px 32px;}
   .hero-panel,.start-card{padding:18px;}
-  .country-grid,.club-grid{grid-template-columns:repeat(2,1fr);}
+  .country-grid,.club-grid,.club-pick{grid-template-columns:repeat(2,1fr);}
   .hero-metrics,.academy-hero-metrics{grid-template-columns:1fr;}
   .vme-cards{grid-template-columns:1fr;}
 }
 @media(max-width:520px){
-  .g4,.g5,.kpis,.country-grid,.club-grid{grid-template-columns:1fr;}
+  .g4,.g5,.kpis,.country-grid,.club-grid,.club-pick,.league-pick{grid-template-columns:1fr;}
   .pt{font-size:22px;}
 }
 

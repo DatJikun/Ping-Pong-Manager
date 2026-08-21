@@ -3416,7 +3416,7 @@ function renderNominationModal(){
   const slots=fiveSlots?['A — stół 1','B — stół 2','C — stół 3','R1 — od G4','R2 — od G4']:['A — stół 1','B — stół 2','C — stół 3'];
   const modal=document.getElementById('modal');modal.className='modal modal-lg';
   modal.innerHTML=`<div class="mt2">NOMINACJA MECZOWA — ${getLeagueFormat().label}</div>
-  <div class="fs11 ink3 mb10 lh16">${protocolDescription()} Kliknij zawodnika, aby dodać/usunąć. Kolejność wyboru = ${fiveSlots?'A, B, C, R1, R2':'A, B, C'}.</div>
+  <div class="fs11 ink3 mb10 lh16">${fiveSlots?'Skład główny ma 4 miejsca klubowe. Ten mecz gra <b>3 stoły</b> (A/B/C) — czwarty z kolejności składu wchodzi jako <b>R1</b>, nie jako stół 4. Rezerwy od G4.':'Skład główny ma 4 miejsca klubowe, ale ten format meczu gra trójką A/B/C.'} ${protocolDescription()} Kliknij zawodnika, aby dodać/usunąć. Kolejność wyboru = ${fiveSlots?'A, B, C, R1, R2':'A, B, C'}.</div>
   <div class="grid gp6 ova" style="max-height:46vh">
   ${pool.map(p=>{const idx=_nomState.sel.indexOf(p.id);const tag=idx>=0?slots[idx]:null;
     return `<div onclick="nomToggle(${p.id})" style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid ${tag?(idx<3?'var(--g)':'var(--blue)'):'var(--b1)'};background:${tag?'var(--s2)':'var(--s1)'};border-radius:6px;cursor:pointer">
@@ -3424,7 +3424,7 @@ function renderNominationModal(){
     <div><div class="b7 fs13">${p.name}${p._promisedMatch?' <span class="fs9 cgold">OBIECANA SZANSA</span>':''}${p.role==='reserve'?' <span class="fs9 ink3">REZERWA</span>':''}</div>
     <div class="fs10 ink3">Forma: <b>${seasonFormLabel(p)}</b> / Zmęczenie: <b style="color:${(p.fatigue||0)>70?'var(--r)':'inherit'}">${p.fatigue||0}%</b> / Morale: <b>${p.morale||50}</b> / ${styleLabel(p.playStyle)}</div></div>
     <div class="fs10 ink3">${p.seasonW||0}W/${p.seasonL||0}P</div>
-    <div class="syne b8 fs22 cr">${ovr(p)}</div>
+    <div class="dash-ovr"><span class="stars">★★★★★<i style="width:${Math.round(Math.max(0,Math.min(5,(ovr(p)-45)/10))/5*1000)/10}%">★★★★★</i></span><div class="syne b8 fs22 cr">${ovr(p)}</div></div>
     </div>`;}).join('')}
   </div>
   <div class="btn-row mt-12"><button class="btn go" onclick="nomConfirm()" ${_nomState.sel.length>=3?'':'disabled'}>ZATWIERDŹ NOMINACJĘ (${Math.min(3,_nomState.sel.length)}/3 podst. + ${Math.max(0,_nomState.sel.length-3)} rez.)</button></div>`;
