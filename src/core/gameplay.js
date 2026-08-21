@@ -3540,7 +3540,9 @@ function tryInjuriesForTeam(teamId,eligibleIds){
   const medRisk=(med.injRisk||0)+Math.min(0.12,((store.G.infraProjects||{}).med||0)*0.04)*(teamId===store.G.myTeamId?1:0);
   const physio=getTeamPhysio(teamId);
   const physioPrevent=physio?(physio.prevention||0)/100:0;
+  let fieldable=getEligibleMatchPlayers(teamId).length;
   store.G.players.filter(p=>p.teamId===teamId&&!p.retired&&p.injuredFor===0).forEach(p=>{
+    if(fieldable<=3)return;
     const played=eligibleIds?eligibleIds.has(p.id):p.role==='starter';
     if(!played)return;
     const highFatigue=(p.fatigue||0)>70;
@@ -3556,6 +3558,7 @@ function tryInjuriesForTeam(teamId,eligibleIds){
       const physioReduce=physio?(physio.injReduction||0)/100:0;
       const dur=Math.max(1,Math.round(baseDur*(1-medBonus)*(1-physioReduce)));
       p.injuredFor=dur;p.morale=Math.max(10,(p.morale||50)-10);
+      fieldable--;
       p._injMd=store.G.matchday;
       injured.push({name:p.name,dur,teamId});
       if(ovr(p)>=72)pushNews(`Kontuzja gwiazdy: ${p.name} (${teamName(p.teamId)}) wypada na ${dur} kolejek.`,'hot');

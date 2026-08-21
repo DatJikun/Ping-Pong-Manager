@@ -111,7 +111,7 @@ function boot(seed) {
   const NOOP = () => {};
   for (const name of [
     'render', 'renderApp', 'updateHeader', 'closeModal', 'openModal', 'toast',
-    'go', 'syncNavState', 'setShellMode', 'playClick', 'playPing', 'playPong',
+    'go', 'syncNavState', 'setShellMode', 'playClick', 'playPing', 'playPong', 'activateUi',
     'applyTheme', 'openSettings', 'saveSettings', 'showPostSeasonGala',
   ]) {
     if (sandbox[name] === undefined) sandbox[name] = NOOP;

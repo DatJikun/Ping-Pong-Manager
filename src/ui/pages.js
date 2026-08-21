@@ -183,10 +183,10 @@ function pageSquad(){
   if(ui.squadTab==='loans'){
     return`<div class="ph"><div><div class="pt">SK\u0141AD <span>ZAWODNIK\u00d3W</span></div></div></div>
   <div class="rtabs">
-    <div class="rtab" onclick="ui.squadTab='starter';render()">SK\u0141AD G\u0141\u00d3WNY ${st.length}/4</div>
-    <div class="rtab" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
-    <div class="rtab on" onclick="ui.squadTab='loans';render()">WYPO\u017bYCZENIA (${_loanedOut.length})</div>
+    <button type="button" class="rtab" onclick="ui.squadTab='starter';render()">SK\u0141AD G\u0141\u00d3WNY ${st.length}/4</button>
+    <button type="button" class="rtab" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</button>
+    <button type="button" class="rtab" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</button>
+    <button type="button" class="rtab on" onclick="ui.squadTab='loans';render()">WYPO\u017bYCZENIA (${_loanedOut.length})</button>
   </div>
     <div class="grid gp10">
     ${_loanedOut.length?_loanedOut.map(l=>{const p=store.G.players.find(x=>x.id===l.playerId);if(!p)return'';return`<div class="grid gtc1a gp10 aic pd14 bbb bgs1 bl4-blue r4">
@@ -237,10 +237,10 @@ function pageSquad(){
 
   return`<div class="ph"><div><div class="pt">SKŁAD <span>ZAWODNIKÓW</span></div><div class="ps">Ustaw kolejność stołów 1-4, rotuj zmęczonych, pilnuj kończących się kontraktów</div></div></div>
   <div class="rtabs">
-    <div class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SKŁAD GŁÓWNY ${st.length}/4</div>
-    <div class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</div>
-    <div class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</div>
-    <div class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">WYPOŻYCZENIA (${getLoanedOut().length})</div>
+    <button type="button" class="rtab ${ui.squadTab==='starter'?'on':''}" onclick="ui.squadTab='starter';render()">SKŁAD GŁÓWNY ${st.length}/4</button>
+    <button type="button" class="rtab ${ui.squadTab==='reserve'?'on':''}" onclick="ui.squadTab='reserve';render()">REZERWA (${res.length})</button>
+    <button type="button" class="rtab ${ui.squadTab==='youth'?'on':''}" onclick="ui.squadTab='youth';render()">AKADEMIA (${youth.length})</button>
+    <button type="button" class="rtab ${ui.squadTab==='loans'?'on':''}" onclick="ui.squadTab='loans';render()">WYPOŻYCZENIA (${getLoanedOut().length})</button>
   </div>
   ${ui.squadTab==='youth'?`
   <div class="g4 mb14">
@@ -399,15 +399,15 @@ function pageLeague(){
   
   return`<div class="ph"><div><div class="pt">LIGA <span>Sezon ${store.G.season}</span></div><div class="ps">Kolejka ${store.G.matchday}/${TOTAL_MATCHDAYS}</div></div></div>
   <div class="rtabs mb10">
-    <div class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">I LIGA</div>
-    <div class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">II LIGA</div>
+    <button type="button" class="rtab ${tab==='l1'?'on':''}" onclick="ui.leagueTab='l1';render()">I LIGA</button>
+    <button type="button" class="rtab ${tab==='l2'?'on':''}" onclick="ui.leagueTab='l2';render()">II LIGA</button>
   </div>
   <div class="rtabs mb14">
-    <div class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">TABELA</div>
-    <div class="rtab ${statsTab==='points_for'?'on':''}" onclick="ui.leagueStatsTab='points_for';render()">ZAW. PUNKTY+</div>
-    <div class="rtab ${statsTab==='points_against'?'on':''}" onclick="ui.leagueStatsTab='points_against';render()">ZAW. PUNKTY-</div>
-    <div class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="ui.leagueStatsTab='team_points_for';render()">DRUŻ. PUNKTY+</div>
-    <div class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">DRUŻ. PUNKTY-</div>
+    <button type="button" class="rtab ${statsTab==='table'?'on':''}" onclick="ui.leagueStatsTab='table';render()">TABELA</button>
+    <button type="button" class="rtab ${statsTab==='points_for'?'on':''}" onclick="ui.leagueStatsTab='points_for';render()">ZAW. PUNKTY+</button>
+    <button type="button" class="rtab ${statsTab==='points_against'?'on':''}" onclick="ui.leagueStatsTab='points_against';render()">ZAW. PUNKTY-</button>
+    <button type="button" class="rtab ${statsTab==='team_points_for'?'on':''}" onclick="ui.leagueStatsTab='team_points_for';render()">DRUŻ. PUNKTY+</button>
+    <button type="button" class="rtab ${statsTab==='team_points_against'?'on':''}" onclick="ui.leagueStatsTab='team_points_against';render()">DRUŻ. PUNKTY-</button>
   </div>
   ${statsTab==='table'?`<div class="card"><div class="ct">TABELA ${league===1?'I':'II'} LIGI</div>
   <table class="t"><tr><th>#</th><th>Dru\u017cyna</th><th>OVR</th><th>M</th><th>W</th><th>R</th><th>P</th><th>Punkty</th><th>R\u00f3\u017cnica</th><th>Pkt</th></tr>
@@ -1016,10 +1016,10 @@ function pageHistory(){
   const tab=ui.historyTab||'seasons';
   return`<div class="ph"><div><div class="pt">HISTORIA <span>& STATYSTYKI</span></div></div></div>
   <div class="rtabs mb14">
-    <div class="rtab ${tab==='seasons'?'on':''}" onclick="ui.historyTab='seasons';render()">SEZONY</div>
-    <div class="rtab ${tab==='manager'?'on':''}" onclick="ui.historyTab='manager';render()">TRENER</div>
-    <div class="rtab ${tab==='club'?'on':''}" onclick="ui.historyTab='club';render()">KLUB</div>
-    <div class="rtab ${tab==='coaches'?'on':''}" onclick="ui.historyTab='coaches';render()">TRENERZY</div>
+    <button type="button" class="rtab ${tab==='seasons'?'on':''}" onclick="ui.historyTab='seasons';render()">SEZONY</button>
+    <button type="button" class="rtab ${tab==='manager'?'on':''}" onclick="ui.historyTab='manager';render()">TRENER</button>
+    <button type="button" class="rtab ${tab==='club'?'on':''}" onclick="ui.historyTab='club';render()">KLUB</button>
+    <button type="button" class="rtab ${tab==='coaches'?'on':''}" onclick="ui.historyTab='coaches';render()">TRENERZY</button>
   </div>
   ${tab==='seasons'?`${seasons.length?`<div class="card"><div class="ct">HISTORIA SEZONÓW</div>
   <table class="t"><tr><th>Sezon</th><th>Liga</th><th>Poz.</th><th>W</th><th>R</th><th>P</th><th>Pkt</th><th>OVR</th><th>Budżet</th></tr>
@@ -1116,8 +1116,8 @@ function pageHoF(){
   const rec=store.G.records||{};
   
   const tabsHtml=`<div class="rtabs mb14">
-    <div class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">GALERIA EMERYT\u00d3W</div>
-    <div class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">KSI\u0118GA REKORD\u00d3W</div>
+    <button type="button" class="rtab ${hofRealTab==='hof'?'on':''}" onclick="ui.hofRealTab='hof';render()">GALERIA EMERYT\u00d3W</button>
+    <button type="button" class="rtab ${hofRealTab==='records'?'on':''}" onclick="ui.hofRealTab='records';render()">KSI\u0118GA REKORD\u00d3W</button>
   </div>`;
   
   let bodyHtml='';
@@ -1125,10 +1125,10 @@ function pageHoF(){
   if(hofRealTab==='hof'){
     const filterTabs=`<div class="g2 mb14">
       <div class="rtabs" style="margin-bottom:0">
-        <div class="rtab ${tab==='all'?'on':''}" onclick="ui.hofTab='all';render()">WSZYSCY</div>
-        <div class="rtab ${tab==='mine'?'on':''}" onclick="ui.hofTab='mine';render()">M\u00d3J KLUB</div>
+        <button type="button" class="rtab ${tab==='all'?'on':''}" onclick="ui.hofTab='all';render()">WSZYSCY</button>
+        <button type="button" class="rtab ${tab==='mine'?'on':''}" onclick="ui.hofTab='mine';render()">M\u00d3J KLUB</button>
       </div>
-      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold','Trofea'],['ovr','Peak OVR'],['w','Wygrane'],['wrate','%W']].map(([v,l])=>`<div class="rtab ${sk===v?'on':''}" onclick="ui.hofSort='${v}';render()">${l}</div>`).join('')}</div>
+      <div class="rtabs" style="margin-bottom:0">${[['trophies_gold','Trofea'],['ovr','Peak OVR'],['w','Wygrane'],['wrate','%W']].map(([v,l])=>`<button type="button" class="rtab ${sk===v?'on':''}" onclick="ui.hofSort='${v}';render()">${l}</button>`).join('')}</div>
     </div>`;
     
     const rows=list.length?list.slice(0,20).map((e,i)=>`<div class="hof-row">
@@ -1530,11 +1530,11 @@ function ngCountryCard(cid){
 function ngTeamCard(n,idx,league){
   const CI=(window.PPM.constants.CLUB_IDENTITIES)||{};
   const sel=ui._selClub===idx;const budget=clubBudget(n,league===1?idx:idx-12,league);
-  return`<div onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'};border-radius:12px">
+  return`<button type="button" class="ng-team${sel?' on':''}" onclick="ngSelectTeam(${idx})" style="padding:11px;border:1.5px solid ${sel?'var(--r)':'var(--b1)'};cursor:pointer;background:${sel?'var(--tint-bad)':'var(--s2)'}">
     <div class="flex aic" style="gap:9px;margin-bottom:5px"><img src="${getTeamLogoData({id:idx,name:n})}" alt="${n}" class="club-logo"><div class="syne b7 fs12" style="line-height:1.15">${n}</div></div>
     <div class="fs12 b7 cg">${budget.toLocaleString('pl')} &euro;</div>
     ${CI[n]?`<div class="mt-4 fs9 cr b8">&#127942; KLUB-WYZWANIE</div>`:''}
-  </div>`;
+  </button>`;
 }
 function renderNewGameWizard(){
   const step=ui._ngStep||0;
@@ -1548,9 +1548,9 @@ function renderNewGameWizard(){
     body=`<div class="country-grid">${COUNTRY_IDS.map(ngCountryCard).join('')}</div>`;
   }else if(step===1){
     hint=`<span class="hint-flag">${(window.PPM.flags&&window.PPM.flags.flagSvg)?window.PPM.flags.flagSvg(ui._selCountry):''}</span> ${country.name}. Wybierz poziom rozgrywek, na kt&oacute;rym zaczniesz.`;
-    const lbtn=(l,name,desc)=>`<div onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};border-radius:16px;cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
+    const lbtn=(l,name,desc)=>`<button type="button" class="ng-league" onclick="ngSelectLeague(${l})" style="flex:1;padding:26px;border:2px solid ${ui._ngLeague===l?'var(--r)':'var(--b1)'};cursor:pointer;background:${ui._ngLeague===l?'var(--tint-bad)':'var(--s2)'};text-align:center">
       <span class="league-badge ${l===1?'l1':'l2'} fs14" style="padding:6px 14px">${name}</span>
-      <div class="fs12 ink3 mt-12">${desc}</div></div>`;
+      <div class="fs12 ink3 mt-12">${desc}</div></button>`;
     body=`<div class="flex gp16 mxauto" style="max-width:560px">${lbtn(1,'I LIGA','Silniejsze, bogatsze kluby. Trudniejszy start, wi&#281;kszy presti&#380;.')}${lbtn(2,'II LIGA','Skromniejsze bud&#380;ety. Zbuduj klub od do&#322;u i awansuj.')}</div>`;
   }else if(step===2){
     const league=ui._ngLeague||1;const names=league===1?l1:l2;

@@ -40,7 +40,8 @@ const DEFAULT_APP_SETTINGS = {
   // no light variant — see normalizeAppSettings().
   theme: 'dark',
   matchSpeed: 'normal',
-  aiDifficulty: 'hard'
+  aiDifficulty: 'hard',
+  uiSound: true
 };
 
 // ── Core state containers ─────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ function normalizeAppSettings(raw){
     theme:'dark',
     matchSpeed:['slow','normal','fast'].includes(raw?.matchSpeed)?raw.matchSpeed:DEFAULT_APP_SETTINGS.matchSpeed,
     aiDifficulty:['easy','normal','hard','legend'].includes(raw?.aiDifficulty)?raw.aiDifficulty:DEFAULT_APP_SETTINGS.aiDifficulty,
+    uiSound:typeof raw?.uiSound==='boolean'?raw.uiSound:DEFAULT_APP_SETTINGS.uiSound,
   };
 }
 function loadAppSettings(){
