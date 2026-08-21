@@ -39,7 +39,11 @@ test('new-game country picker uses SVG flags instead of emoji', () => {
   assert.doesNotMatch(pages, /function ngCountryCard[\s\S]*?c\.flag/);
 });
 
-test('preseason step two signs the rubber contract in the flow', () => {
-  assert.match(pages, /Partner i okładziny/);
-  assert.match(pages, /setRubberFamily\('/);
+test('preseason signs rubber as its own step after partner, years after Wybierz', () => {
+  assert.match(pages, /id:'rubber'/);
+  assert.match(pages, /label:'Partner'/);
+  assert.match(pages, /label:'Okładziny'/);
+  assert.match(pages, /function pickRubberFamily/);
+  assert.match(pages, /function confirmRubberYears/);
+  assert.doesNotMatch(pages, /Partner i okładziny/);
 });

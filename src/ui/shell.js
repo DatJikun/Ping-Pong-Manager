@@ -267,7 +267,7 @@ function openGuide(tab){
     <p>Nie grasz piłek. Ustawiasz klub, żeby wygrywał. Sezon to pętla: <b>przedsezon → kolejki → rozliczenie</b>.</p>
     <ol style="line-height:1.7;padding-left:18px">
       <li><b>Przedsezon:</b> 3 sponsorów, partner techniczny, cel zarządu i <b>kontrakt okładzin (1–5 lat)</b>. Bez tego sezon się nie startuje.</li>
-      <li><b>Kolejka:</b> najpierw skrzynka (0–3 sprawy; cisza jest OK). Nierozstrzygnięta decyzja blokuje mecz. Potem nominacja stołów i mecz.</li>
+      <li><b>Kolejka:</b> najpierw skrzynka (0–3 sprawy; cisza jest OK). Nierozstrzygnięta decyzja blokuje mecz. Potem nominacja: w Superlidze 3 stoły A/B/C + 2 rezerwy — skład główny ma 4 miejsca, czwarty to R1, nie czwarty stół.</li>
       <li><b>Skład:</b> zmęczenie i urazy rosną u tych, którzy grali. Rotuj. Rezerwa z gwarancją pierwszego składu napisze, jeśli łamie kontrakt.</li>
       <li><b>Rynek:</b> OVR widać zawsze. Cechy obcych to pasma, peak to <b>?</b>, dopóki nie zeskautujesz, nie zagracie albo nie podpiszesz.</li>
     </ol>
