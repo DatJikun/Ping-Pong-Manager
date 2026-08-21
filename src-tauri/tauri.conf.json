@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.datjikun.pingpongmanager",
   "build": {
-    "beforeBuildCommand": "node ../scripts/pack-desktop.js",
+    "beforeBuildCommand": "npm run desktop:pack",
     "frontendDist": "../dist-desktop"
   },
   "app": {

@@ -63,7 +63,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          projectPath: src-tauri
+          projectPath: .
           tagName: ${{ steps.meta.outputs.tag }}
           releaseName: ${{ steps.meta.outputs.title }}
           releaseBody: |
@@ -77,4 +77,4 @@ jobs:
             Commit: ${{ github.sha }}
           releaseDraft: false
           prerelease: true
-          includeUpdater: false
+          includeUpdaterJson: false
