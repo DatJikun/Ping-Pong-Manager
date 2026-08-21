@@ -27,4 +27,6 @@ test('Windows release workflow publishes an exe on master', () => {
   assert.match(yml, /tauri-apps\/tauri-action/);
   assert.match(yml, /branches: \[master\]/);
   assert.match(yml, /prerelease: true/);
+  assert.match(yml, /includeUpdaterJson: false/);
+  assert.match(read('src-tauri/tauri.conf.json'), /npm run desktop:pack/);
 });
