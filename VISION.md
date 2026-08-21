@@ -1,9 +1,8 @@
 # VISION — PingPong Manager
 
-> The north-star for the project. Owner-written direction (2026-06-29), captured
-> verbatim-in-spirit. `HANDOFF.md` is the working state; this is the *why*.
-> Goal: there is **no good ping pong manager on the market** — build the one that
-> is good enough to play for hours and to release on Steam.
+> The north-star for the project. Owner-written direction (2026-06-29).
+> **Today:** public **beta 0.1.x**. **1.0** is the first real release (Steam).
+> `HANDOFF.md` is the working state; this file is the *why*.
 
 ## The four pillars (in priority order)
 
@@ -62,9 +61,7 @@ Many shipped Steam games are web apps in a desktop shell. The plan:
   3. Optional **Steamworks** integration for achievements.
   4. **Audio licensing** — any music/SFX must be cleared for commercial release.
 
-**Bottom line:** the technology is not a risk. Because we keep the code clean and
-framework-free now, the eventual Steam port is a wrapping + saves + menu task, not
-a rewrite. We do it LAST, after pillars 1–3.
+**Bottom line:** HTML/JS stays. **0.1** already wraps the same app in Tauri for a Windows `.exe` (GitHub Releases). Steam Cloud, store page and 1.0 come later — still a wrap, not a rewrite.
 
 ## How this maps to the current plan
 - Pillar 1 ↔ the engineering plan in `HANDOFF.md` §4 + bug fixes §10.

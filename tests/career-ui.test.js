@@ -26,3 +26,8 @@ test('main menu exposes the in-game guide', () => {
   assert.match(pages, /openGuide\(\)/);
   assert.match(pages, /PRZEWODNIK/);
 });
+
+test('main menu shows the public app version', () => {
+  assert.match(pages, /appVersionLabel/);
+  assert.match(pages, /APP_VERSION/);
+});

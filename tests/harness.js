@@ -26,6 +26,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 // Load order mirrors index.html (UI-only files excluded).
 const LOAD_ORDER = [
+  'src/data/version.js',
   'src/data/names.js', // optional 10x name pools (skipped if absent)
   'src/data/constants.js',
   'src/core/utils.js',

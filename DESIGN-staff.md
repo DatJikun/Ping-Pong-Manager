@@ -1,12 +1,6 @@
 # DESIGN — Staff & support roles
 
-> **Status (2026-07-11):** core staff **partially shipped with real impact**.
-> - **Coach:** stronger concave development (`coachDevMultiplier`); tactics/synergy still in match rating.
-> - **Physio:** fatigue gain/rest mults + injury prevention/duration (all clubs).
-> - **Psychologist:** morale after wins/losses + clutch MEN in point sim.
-> - **Sparring:** reserves/youth depth + **MENTOR** trait (+~10% dev per mentor).
-> - **Still open:** scout stat-band fog, fitness coach, video analyst, life-event resistance.
-> Owner research 2026-06-29. See `VISION.md` + `HANDOFF.md` + CHANGELOG.
+> **Status (2026-08-20):** coach / physio / psych **w grze**. Mgła skauta (pasmą + peak `?`) **w grze**. Fitness coach, analityk wideo i ciaśniejsze pasma od OVR skauta — później.
 
 ## Roles (owner research → game mechanic)
 
