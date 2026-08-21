@@ -1,6 +1,6 @@
 {
   "name": "pingpong-manager",
-  "version": "17.0.0-beta.2",
+  "version": "0.1.1",
   "private": true,
   "author": "DatJikun",
   "main": "desktop/main.cjs",
@@ -8,7 +8,7 @@
   "scripts": {
     "test": "node --test --test-skip-pattern=\"^\\[slow\\]\"",
     "test:full": "node --test",
-    "check": "node -e \"['desktop/main.cjs','src/i18n/i18n.js','src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/ui/rating-stars.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
+    "check": "node -e \"['desktop/main.cjs','src/data/version.js','src/i18n/i18n.js','src/data/constants.js','src/core/utils.js','src/core/save-storage.js','src/core/state.js','src/core/save-manager.js','src/ui/shell.js','src/core/gameplay.js','src/ui/rating-stars.js','src/core/gameplay.visuals.js','src/core/gameplay.club-ui.js','src/ui/pages.js','src/main.js'].forEach(f=>{require('child_process').execSync('node --check '+JSON.stringify(f),{stdio:'inherit'})});console.log('syntax OK')\"",
     "test:cleanup": "node --test tests/cleanup.test.js",
     "test:soak": "node tests/soak.js --seasons=30",
     "test:soak:formats": "node tests/soak.js --seasons=20 --country=JP && node tests/soak.js --seasons=20 --country=CN && node tests/soak.js --seasons=20 --country=DE && node tests/soak.js --seasons=20 --country=SE && node tests/soak.js --seasons=20 --country=KR",

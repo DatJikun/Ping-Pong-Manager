@@ -1,7 +1,7 @@
-# PingPong Manager 17.0.0-beta.2 — Windows beta
+# PingPong Manager 0.1.1 beta (20260821)
 
 Przenośne wydanie Windows x64. Rozpakuj ZIP i uruchom
-`PingPong-Manager-17.0.0-beta.2-x64.exe`. Beta jest niepodpisana, więc Windows
+`PingPong-Manager-0.1.1-x64.exe`. Beta jest niepodpisana, więc Windows
 SmartScreen może pokazać ostrzeżenie nieznanego wydawcy.
 
 ## Co nowego
@@ -14,10 +14,11 @@ SmartScreen może pokazać ostrzeżenie nieznanego wydawcy.
 
 ## Pobieranie
 
-[GitHub Release v17.0.0-beta.2](https://github.com/DatJikun/Ping-Pong-Manager/releases/tag/v17.0.0-beta.2)
+[GitHub Release v0.1.1-20260821](https://github.com/DatJikun/Ping-Pong-Manager/releases/tag/v0.1.1-20260821)
 
-- Plik: `PingPong-Manager-17.0.0-beta.2-windows-x64.zip`
-- SHA-256: `CF920D7B0629768375CA8782AB9A22EB1776F56627F946CC785DFE3539B4DACF`
+- Plik: `PingPong-Manager-0.1.1-windows-x64.zip`
+- Rozmiar: 88 422 545 bajtów
+- SHA-256: `E543661CF05A4B60C0CDBAC2C8DFEE63C677D9953AD3F0D2854A8BE823B112A0`
 
 Przed aktualizacją warto wyeksportować najważniejszą karierę. Feedback najlepiej
 przesyłać z numerem sezonu, klubem i zapisem sprzed błędu.

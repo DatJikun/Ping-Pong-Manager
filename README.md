@@ -5,13 +5,15 @@ akademię, transfery i kontrakty, a potem rozgrywasz ligę, puchar oraz Top 12.
 
 ## Aktualne wydanie
 
-Najnowsza wersja testowa to
-[17.0.0-beta.2](https://github.com/DatJikun/Ping-Pong-Manager/releases/tag/v17.0.0-beta.2).
-Paczka dla Windows x64 nazywa się
-`PingPong-Manager-17.0.0-beta.2-windows-x64.zip`. Po rozpakowaniu uruchom
-`PingPong-Manager-17.0.0-beta.2-x64.exe`.
+Najnowsza wersja testowa to `0.1.1`. Wydanie na GitHubie nazywa się
+`PingPong Manager 0.1.1 beta (20260821)`, a jego tag to
+`v0.1.1-20260821`. Data oznacza dzień buildu, nie numer gry.
 
-Beta.2 ma pełniejsze tłumaczenia angielskie i polskie, opcjonalny dźwięk
+Paczka dla Windows x64 nazywa się
+`PingPong-Manager-0.1.1-windows-x64.zip`. Po rozpakowaniu uruchom
+`PingPong-Manager-0.1.1-x64.exe`.
+
+Beta 0.1.1 ma pełniejsze tłumaczenia angielskie i polskie, opcjonalny dźwięk
 interfejsu, szybsze potwierdzenie kliknięć oraz obsługę klawiaturą w głównych
 zakładkach i kreatorze nowej gry. Starsze kariery pozostają zgodne.
 
@@ -40,6 +42,7 @@ npm run dist:win
 Portable EXE trafia do `dist/`. Szczegóły wydania są w
 [`docs/DESKTOP-RELEASE.md`](docs/DESKTOP-RELEASE.md), a zmiany w
 [`CHANGELOG.md`](CHANGELOG.md).
+Zasady numeracji opisuje [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 ## Zapisy gry
 

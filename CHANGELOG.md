@@ -1,17 +1,17 @@
 # Changelog
 
-## 2026-08-21 — Beta.2
+## 2026-08-21: beta 0.1.1
 
 Pełne tłumaczenia EN/PL obejmują teraz także starsze zapisy. Interfejs dostał
 krótki, opcjonalny dźwięk kliknięcia, szybsze potwierdzenie wciśnięcia oraz
 obsługiwane klawiaturą zakładki i wybory kreatora. Tożsamość aplikacji i format
 zapisów pozostają bez zmian.
 
-## 2026-08-08 — Kandydat beta.1
+## 2026-08-08: kandydat z dawnej numeracji beta.1
 
 Beta otrzymała docelowe logo, wielorozmiarową ikonę Windows, favicon i komplet
-materiałów itch.io. Numer paczki to teraz `17.0.0-beta.1`, przy zachowaniu stałej
-tożsamości aplikacji i zgodności zapisów. Kandydat obejmuje też spójny skład z
+materiałów itch.io. Używał jeszcze wycofanej numeracji wewnętrznej, ale zachował
+stałą tożsamość aplikacji i zgodność zapisów. Kandydat obejmuje też spójny skład z
 nominacją 3+2, czytelne OVR i Peak OVR, kontrakty sprzętowe, wyjaśniony Puchar
 Krajowy, naturalne marki sponsorów oraz poprawki wypożyczeń i historii nominacji.
 Finalny przenośny build przeszedł test startu; paczka dla testera ma opublikowaną

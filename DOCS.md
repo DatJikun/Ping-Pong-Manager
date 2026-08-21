@@ -4,13 +4,14 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 
 ## Current release (2026-08-21)
 
-- Windows x64 prerelease: `17.0.0-beta.2`.
+- Windows x64 prerelease: `0.1.1 beta`.
 - Product name: `PingPong Manager`.
-- Release package: `PingPong-Manager-17.0.0-beta.2-windows-x64.zip`.
+- Release title: `PingPong Manager 0.1.1 beta (20260821)`.
+- Release package: `PingPong-Manager-0.1.1-windows-x64.zip`.
 - English and Polish UI, multi-career saves, import/export and legacy-save
   migration are included.
 - Desktop build, full tests, five-season soak and isolated-profile startup smoke
-  passed for beta.2. See `docs/DESKTOP-RELEASE.md` for exact results.
+  passed for beta 0.1.1. See `docs/DESKTOP-RELEASE.md` for exact results.
 
 ## Project snapshot (2026-07-24, retained for design context)
 - **Headless test harness + regression suite** (`npm test`, `npm run test:full`),
@@ -46,13 +47,14 @@ Map of every doc, what it's for, and how fresh it is. Read in this order.
 ## Read first (current, authoritative)
 | Doc | Purpose | Status |
 |-----|---------|--------|
-| **HANDOFF.md** | Engineering history, season loop and save-system notes. | ⚠️ predates beta.2; release pointer current |
+| **HANDOFF.md** | Engineering history, season loop and save-system notes. | ⚠️ predates beta 0.1.1; release pointer current |
 | **VISION.md** | North-star: 4 pillars + Tauri/Steam. | ✅ current |
 | **AUDIT-design-calculations-realism-gameplay.md** | Audit + progress of honesty fixes. | ✅ current (batch fixed 2026-07-11) |
 | **CHANGELOG.md** | What actually shipped (dated). | ✅ current |
 | **README.md** | Player-facing start, current package name and basic commands. | ✅ current |
 | **docs/DESKTOP-RELEASE.md** | Current Windows build and verification record. | ✅ current |
-| **docs/releases/ITCH-BETA-17.0.0.md** | Short beta instructions for players. | ✅ current |
+| **docs/VERSIONING.md** | Public beta numbering and dated release tags. | ✅ current |
+| **docs/releases/WINDOWS-BETA-0.1.1.md** | Short beta instructions for players. | ✅ current |
 
 ## Design decisions (owner-agreed)
 | Doc | Purpose | Status |

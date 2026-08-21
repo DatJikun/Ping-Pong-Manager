@@ -106,9 +106,9 @@ test('beta package identity is stable and every desktop surface uses approved ic
   const html = read('index.html');
 
   assert.equal(pkg.name, 'pingpong-manager');
-  assert.equal(pkg.version, '17.0.0-beta.2');
-  assert.equal(lock.version, '17.0.0-beta.2');
-  assert.equal(lock.packages[''].version, '17.0.0-beta.2');
+  assert.equal(pkg.version, '0.1.1');
+  assert.equal(lock.version, '0.1.1');
+  assert.equal(lock.packages[''].version, '0.1.1');
   assert.equal(pkg.build.appId, 'com.datjikun.pingpongmanager');
   assert.equal(pkg.build.productName, 'PingPong Manager');
   assert.equal(pkg.build.win.icon, 'assets/branding/pingpong-manager.ico');

@@ -34,27 +34,31 @@ application launched, and `app.asar` contained only the game runtime, local
 fonts, licences and desktop entry point. Production dependencies reported zero
 known vulnerabilities with `npm audit --omit=dev`.
 
-## Verified beta.1 candidate
+## Legacy package verification
 
-On 2026-08-08 version `17.0.0-beta.1` passed 336/336 non-slow tests and the
+The first Windows candidates used retired internal version labels. Public beta
+numbering starts at `0.1.0`; patch updates use `0.1.1`, `0.1.2` and so on.
+
+On 2026-08-08 the first candidate passed 336/336 non-slow tests and the
 syntax gate, built as an x64 portable executable with the approved Windows icon,
 and stayed alive for a 12-second isolated-profile startup smoke test. The final
 friend ZIP is 88,403,846 bytes with SHA-256
 `DBEB9410C98945420F6221FB2A60126CE0C37941FDD0808BEC7350DE95C1141B`.
 
-## Verified beta.2 candidate
+The second candidate passed 352/352 non-slow tests, 386/386 full tests and a
+separate five-season soak. Its build stayed alive for a 12-second startup smoke
+test with an isolated data profile. The old package and checksum remain a
+historical record only.
 
-On 2026-08-21 version `17.0.0-beta.2` passed 352/352 non-slow tests,
-386/386 full tests and a separate five-season soak. The portable Windows x64
-build stayed alive for a 12-second startup smoke test with an isolated data
-profile.
+## Current 0.1.1 beta candidate
 
-Release package:
-`PingPong-Manager-17.0.0-beta.2-windows-x64.zip` (88,406,962 bytes).
-SHA-256:
-`CF920D7B0629768375CA8782AB9A22EB1776F56627F946CC785DFE3539B4DACF`.
-The prerelease is available on
-[GitHub](https://github.com/DatJikun/Ping-Pong-Manager/releases/tag/v17.0.0-beta.2).
+The game version is `0.1.1`. The GitHub Release title is
+`PingPong Manager 0.1.1 beta (20260821)` and the tag is
+`v0.1.1-20260821`. The date identifies the build and is not part of the game
+version. The package is 88,422,545 bytes and its SHA-256 is
+`E543661CF05A4B60C0CDBAC2C8DFEE63C677D9953AD3F0D2854A8BE823B112A0`.
+The Windows process stayed alive for a 12-second smoke test with an isolated
+data profile.
 
 ## Required before a public store build
 

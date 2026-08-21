@@ -2,7 +2,7 @@
 
 > This file records the audit performed on 2026-07-28. It is not the current
 > release checklist. See `README.md`, `CHANGELOG.md`, `docs/DESKTOP-RELEASE.md`
-> and `docs/releases/ITCH-BETA-17.0.0.md` for the shipped beta.
+> and `docs/releases/WINDOWS-BETA-0.1.1.md` for the shipped beta.
 
 Last verified: 2026-07-28  
 Evidence branch: `audit/release-readiness` at `88a21e4`
